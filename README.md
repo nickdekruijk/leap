@@ -1,6 +1,6 @@
 # Leap: Laravel Easy Admin Panel
 
-Leap is a Laravel package that provides a simple admin panel for your Laravel application build with Livewire v3. It is designed to be easy to use and customize.
+Leap is a Laravel package that provides a simple admin panel for your Laravel application or use it to start your next Spa or SaaS application. It is build with Livewire v3 components and designed to be easy to use and customizable.
 
 ## Installation
 
