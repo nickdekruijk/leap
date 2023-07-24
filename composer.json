@@ -23,7 +23,7 @@
 				"NickDeKruijk\\Leap\\ServiceProvider"
 			],
 			"aliases": {
-				"Minify": "NickDeKruijk\\Leap\\Facade"
+				"Leap": "NickDeKruijk\\Leap\\Facade"
 			}
 		}
 	}
