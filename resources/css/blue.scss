@@ -1,0 +1,20 @@
+@import url("https://fonts.bunny.net/css?family=open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i");
+
+$main-bg-color: #2c3340;
+$primary-color: #178;
+$secondary-color: #0cb;
+$dark-text-color: #000;
+$lighten: rgba(white,.25);
+$light-text-color: #fff;
+
+BODY {background-color:$main-bg-color;font-family:'Open Sans';font-weight:300;font-size:15px}
+.popup-container {box-shadow:rgba(0,0,0,0.25) 0 4px 10px;padding:20px;border-radius:4px;background-color:$primary-color;color:$light-text-color}
+.form-dark {
+    INPUT,BUTTON {
+        padding:5px 10px;
+        border:1px solid $lighten;
+        border-radius:4px;
+        &:focus {background-color:$lighten;outline:none}
+    }
+    BUTTON:hover {background-color:$secondary-color;cursor:pointer;}
+}
