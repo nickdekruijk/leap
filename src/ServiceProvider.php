@@ -13,7 +13,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/config.php' => config_path('leap.php'),
+            __DIR__ . '/../config/leap.php' => config_path('leap.php'),
         ], 'config');
     }
 
@@ -24,7 +24,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/config.php', 'leap');
+        $this->mergeConfigFrom(__DIR__ . '/../config/leap.php', 'leap');
 
         // Register the main class to use with the facade
         $this->app->singleton('leap', function () {

@@ -4,6 +4,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | auth_routes
+    |--------------------------------------------------------------------------
+    | Register authentication routes for login and logout. Disable these if you
+    | want to use Laravels Auth::routes() or customize it yourself.
+    */
+    'auth_routes' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | route_prefix
     |--------------------------------------------------------------------------
     | The prefix added to the routes added by leap. 
@@ -14,5 +23,13 @@ return [
     | like domain.com/ and domain.com/componentname
     */
     'route_prefix' => 'leap-admin',
+
+    /*
+    |--------------------------------------------------------------------------
+    | theme
+    |--------------------------------------------------------------------------
+    | The CSS theme file to use. For example 'blue' or 'blue-air'.
+    */
+    'theme' => 'blue',
 
 ];
