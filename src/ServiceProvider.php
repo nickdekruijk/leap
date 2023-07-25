@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap;
 
+use Livewire\Livewire;
+use NickDeKruijk\Leap\Livewire\Login;
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
 
@@ -18,6 +20,19 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->publishes([
             __DIR__ . '/../config/leap.php' => config_path('leap.php'),
         ], 'config');
+
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'leap');
+
+        // Register all leap livewire components.
+        foreach (glob(__DIR__ . '/Livewire/*.php') as $file) {
+            Livewire::component('admin.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
+        }
+
+        $this->loadRoutesFrom(__DIR__ . '/routes.php');
+
+        if (config('leap.migrations')) {
+            $this->loadMigrationsFrom(__DIR__ . '/migrations');
+        }
     }
 
     /**

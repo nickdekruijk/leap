@@ -13,6 +13,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | credentials
+    |--------------------------------------------------------------------------
+    | The credentials to use when logging in a user, e.g. ['email', 'password']
+    */
+    'credentials' => ['email', 'password'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | guard
+    |--------------------------------------------------------------------------
+    | The guard to use when trying to login a user, e.g. 'web' that uses the
+    | default User model. To seperate application users from leap users define
+    | a new guard in the config/auth.php file.
+    */
+    'guard' => Auth::getDefaultDriver(),
+
+    /*
+    |--------------------------------------------------------------------------
     | route_prefix
     |--------------------------------------------------------------------------
     | The prefix added to the routes added by leap. 
@@ -28,8 +46,8 @@ return [
     |--------------------------------------------------------------------------
     | theme
     |--------------------------------------------------------------------------
-    | The CSS theme file to use. For example 'blue' or 'blue-air'.
+    | The CSS theme file to use. For example 'admin' or 'saas'.
     */
-    'theme' => 'blue',
+    'theme' => 'admin',
 
 ];

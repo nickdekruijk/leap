@@ -8,13 +8,22 @@ $lighten: rgba(white,.25);
 $light-text-color: #fff;
 
 BODY {background-color:$main-bg-color;font-family:'Open Sans';font-weight:300;font-size:15px}
-.popup-container {box-shadow:rgba(0,0,0,0.25) 0 4px 10px;padding:20px;border-radius:4px;background-color:$primary-color;color:$light-text-color}
+.logo {background-color:$secondary-color;padding:5px 10px}
+.logo-svg {height:30px;float:left;margin-right:10px}
+.logo A {color:$light-text-color;text-decoration:none;font-size:23px}
+.modal {background-color:$main-bg-color}
+.popup {background-color:$primary-color;color:$light-text-color}
 .form-dark {
+    padding:10px;
+    LABEL {margin-bottom:10px}
     INPUT,BUTTON {
         padding:5px 10px;
+        margin-top:5px;
         border:1px solid $lighten;
         border-radius:4px;
         &:focus {background-color:$lighten;outline:none}
     }
     BUTTON:hover {background-color:$secondary-color;cursor:pointer;}
 }
+.form-errors {color:rgba(#f66,.9);font-weight:600;margin-bottom:5px}
+.button-login-svg {height:1em;vertical-align:-.1em}
