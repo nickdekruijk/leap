@@ -25,7 +25,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         // Register all leap livewire components.
         foreach (glob(__DIR__ . '/Livewire/*.php') as $file) {
-            Livewire::component('admin.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
+            Livewire::component('leap.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
         }
 
         $this->loadRoutesFrom(__DIR__ . '/routes.php');
