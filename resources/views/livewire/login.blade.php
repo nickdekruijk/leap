@@ -1,7 +1,7 @@
 <div class="modal">
-    <div class="popup">
+    <div class="popup login">
         @include('leap::logo')
-        <form wire:submit="submit" class="form form-dark">
+        <form wire:submit="submit" class="form">
             @foreach(config('leap.credentials') as $column)
                 <label>
                     @lang($column)
@@ -17,7 +17,7 @@
                     </ul>
                 </div>
             @endif
-            <button type="submit">@svg('fas-sign-in-alt', 'button-login-svg') @lang('login')</button>
+            <button type="submit">@svg('fas-sign-in-alt', 'svg') @lang('login')</button>
         </form>
     </div>
 </div>
