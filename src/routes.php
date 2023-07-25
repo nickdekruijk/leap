@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Auth;
 use NickDeKruijk\Leap\Controllers\AssetController;
+use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Middleware\Leap;
 
@@ -20,4 +21,8 @@ if (config('leap.auth_routes', true)) {
 Route::group(['middleware' => ['web']], function () {
     // Assets, this way we don't need to publish them to public
     Route::get(config('leap.route_prefix') . '/leap.css', [AssetController::class, 'css'])->name('leap.css');
+});
+
+Route::group(['middleware' => ['web', Leap::class]], function () {
+    Route::get(config('leap.route_prefix'), Dashboard::class)->name('leap.dashboard');
 });
