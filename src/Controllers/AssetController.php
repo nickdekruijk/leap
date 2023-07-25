@@ -6,11 +6,15 @@ namespace NickDeKruijk\Leap\Controllers;
 use App;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use ScssPhp\ScssPhp\Compiler;
 use ScssPhp\ScssPhp\Formatter\Crunched;
 
 class AssetController extends Controller
 {
+    // Cache duration in seconds
+    const CACHE_DURATION = 3600;
+
     // Return all stylesheet files as one
     public function css()
     {
@@ -25,10 +29,9 @@ class AssetController extends Controller
         foreach ($files as $file) {
             $filemtime += filemtime($file);
         }
-
-        if ($filemtime != cache()->get('leap.css.filemtime')) {
+        if ($filemtime != Cache::get('leap.css.filemtime') || Cache::get('leap.css')) {
             // Files have changed so recompile and cache
-            cache()->put('leap.css.filemtime', $filemtime);
+            Cache::put('leap.css.filemtime', $filemtime, self::CACHE_DURATION);
 
             // Combine all files into one input string
             $input = '';
@@ -42,10 +45,10 @@ class AssetController extends Controller
             $css = $scss->compile($input);
 
             // Cache it
-            cache(['leap.css' => $css], 3600);
+            Cache::put('leap.css', $css, self::CACHE_DURATION);
         } else {
             // Get the cached css
-            $css = cache('leap.css');
+            $css = Cache::get('leap.css');
         }
 
         // Return the css as a response
@@ -53,12 +56,12 @@ class AssetController extends Controller
         return App::isLocal() ? $response : $this->cacheResponse($response);
     }
 
-    // Cache the response 1 year (31536000 sec)
+    // Cache the response 1 hour (3600 sec)
     protected function cacheResponse(Response $response)
     {
-        $response->setSharedMaxAge(31536000);
-        $response->setMaxAge(31536000);
-        $response->setExpires(new \DateTime('+1 year'));
+        $response->setSharedMaxAge(self::CACHE_DURATION);
+        $response->setMaxAge(self::CACHE_DURATION);
+        $response->setExpires(new \DateTime('+1 hour'));
 
         return $response;
     }
