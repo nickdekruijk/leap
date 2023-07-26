@@ -40,7 +40,7 @@ return [
     | domain.com/app and domain.com/app/componentname or just '/' to have routes 
     | like domain.com/ and domain.com/componentname
     */
-    'route_prefix' => 'leap-admin',
+    'route_prefix' => 'admin',
 
     /*
     |--------------------------------------------------------------------------
