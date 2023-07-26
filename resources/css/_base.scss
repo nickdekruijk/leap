@@ -42,3 +42,20 @@ BODY {
         color: inherit;
     }
 }
+
+.nav {
+    display: flex;
+    flex-direction: column;
+
+    UL {
+        display: flex;
+        flex-basis: 100%;
+        flex-direction: column;
+
+        A {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+    }
+}
