@@ -7,28 +7,43 @@
         <link rel="stylesheet" href="{{ route('leap.css') }}">
     </head>
     <body>
-            <nav class="nav-main">
         @auth(config('leap.guard'))
+            <nav class="nav">
                 @include('leap::logo')
                 <ul>
-                    @foreach($modules ?? [] as $item)
-                        <li class="{{ $item->slug === $current_module->slug ? 'active' : '' }} pr-2">
-                            <a class="block pr-2 py-2" href="{{ route('admin.module', $item->slug) }}">
-                                {!! $item->icon() !!}@lang($item->title)
+                    <li class="{{ empty($currentModule) ? 'active' : '' }}">
+                        <a wire:navigate href="{{ route('leap.dashboard') }}">
+                            @svg('fas-gauge-high', 'nav-icon')@lang('dashboard')
+                        </a>
+                    </li>
+                    @foreach(Leap::modules() as $module)
+                        <li class="{{ $currentModule ?? null == $module ? 'active' : '' }}">
+                            <a wire:navigate href="{{ route('leap.module', $module->getSlug()) }}">
+                                {{ $module->getNavigationIcon() }}@lang($module->getTitle())
                             </a>
                         </li>
                     @endforeach
-                    <li class="pr-2">
-                        <form method="post" action="{{ route('leap.logout') }}" class="pr-2 py-2" onclick="this.submit()">
+                    <li class="bottom-divider"></li>
+                    <li>
+                        <a wire:navigate href="{{ route('leap.profile') }}">
+                            @svg('fas-user-circle', 'nav-icon'){{ auth(config('leap.guard'))->user()->name }}
+                        </a>
+                    </li>
+                    <li class="logout">
+                        <form method="post" action="{{ route('leap.logout') }}" onclick="this.submit()">
                             @csrf
-                            <i class="icon fa-solid fa-right-from-bracket"></i>@lang('Logout')
+                            @svg('fas-sign-out-alt', 'nav-icon')@lang('logout')
                         </form>
                     </li>
                 </ul>
             </nav>
         @endif
         <div class="slot">
-            {{ $slot }}
+            @isset($slot)
+                {{ $slot }}
+            @else
+                @livewire($currentModule->component)
+            @endif
         </div>
     </body>
 </html>
