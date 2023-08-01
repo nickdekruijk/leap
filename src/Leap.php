@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap;
 
+use NickDeKruijk\Leap\Controllers\ModuleController;
+
 class Leap
 {
     /**
@@ -11,27 +13,6 @@ class Leap
      */
     public static function modules()
     {
-        // dd(svg('far-images'));
-        $modules = [
-            'dashboard' => (object) [
-                'slug' => '/',
-                'isActive' => true,
-                'icon' => svg('fas-gauge-high', 'nav-icon'),
-                'title' => 'Dashboard',
-            ],
-            'media' => (object) [
-                'slug' => 'media',
-                'isActive' => false,
-                'icon' => svg('far-images', 'nav-icon'),
-                'title' => 'Media',
-            ],
-            'users' => (object) [
-                'slug' => 'users',
-                'isActive' => false,
-                'icon' => svg('fas-users', 'nav-icon'),
-                'title' => 'Users',
-            ],
-        ];
-        return $modules;
+        return ModuleController::getModules();
     }
 }
