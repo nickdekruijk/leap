@@ -4,6 +4,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | app_modules
+    |--------------------------------------------------------------------------
+    | Leap modules are loaded from a directory inside the app directory of the
+    | Laravel project. The default 'Leap' means app_path('Leap'), which 
+    | resolves to 'app/Leap', will be used to search for modules and the class
+    | namespace should be App\Leap. Each class in this directory should extend 
+    | the NickDeKruijk\Leap\Module class. 
+    */
+    'app_modules' => 'Leap',
+
+    /*
+    |--------------------------------------------------------------------------
     | auth_routes
     |--------------------------------------------------------------------------
     | Register authentication routes for login and logout. Disable these if you
