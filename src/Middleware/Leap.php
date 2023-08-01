@@ -14,8 +14,6 @@ class Leap extends Middleware
      */
     protected function redirectTo($request)
     {
-        if (!$request->expectsJson()) {
-            return route('leap.login');
-        }
+        return $request->expectsJson() ? null : route('leap.login');
     }
 }
