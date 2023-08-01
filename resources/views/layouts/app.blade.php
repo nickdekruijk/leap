@@ -7,8 +7,8 @@
         <link rel="stylesheet" href="{{ route('leap.css') }}">
     </head>
     <body>
-        @auth(config('admin.guard'))
             <nav class="nav-main">
+        @auth(config('leap.guard'))
                 @include('leap::logo')
                 <ul>
                     @foreach($modules ?? [] as $item)
