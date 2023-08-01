@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
 use NickDeKruijk\Leap\Controllers\AssetController;
+use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Middleware\Leap;
@@ -13,11 +13,7 @@ Route::group(['middleware' => ['web']], function () {
     // Set login and logout routes if required
     if (config('leap.auth_routes')) {
         Route::get(config('leap.route_prefix') . '/login',  Login::class)->name('leap.login');
-        Route::post(config('leap.route_prefix') . '/logout', function () {
-            Auth::logout();
-            request()->session()->regenerateToken();
-            return redirect()->route('leap.login');
-        })->name('leap.logout');
+        Route::post(config('leap.route_prefix') . '/logout', LogoutController::class)->name('leap.logout');
     }
 });
 
