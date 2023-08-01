@@ -3,7 +3,8 @@
 namespace NickDeKruijk\Leap;
 
 use Livewire\Livewire;
-use NickDeKruijk\Leap\Livewire\Login;
+use NickDeKruijk\Leap\Commands\UserCommand;
+
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
 
@@ -32,6 +33,12 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/migrations');
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                UserCommand::class,
+            ]);
         }
     }
 
