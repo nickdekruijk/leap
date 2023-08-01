@@ -4,23 +4,32 @@ $main-bg-color: #2c3340;
 $primary-color: #178;
 $secondary-color: #0cb;
 $dark-text-color: #000;
-$lighten: rgba(white, .25);
+$lighten-high: rgba(white, 0.25);
+$lighten-medium: rgba(white, 0.12);
+$lighten-low: rgba(white, 0.06);
+$darken-medium: rgba(black, 0.15);
 $light-text-color: #fff;
+$nav-color: rgba(white, 0.6);
+$nav-color-active: white;
+$slot-bg-color: #d3d3d3;
 
 BODY {
     background-color: $main-bg-color;
-    font-family: 'Open Sans';
+    font-family: "Open Sans";
     font-weight: 300;
-    font-size: 15px
+    font-size: 15px;
 }
 
 .logo {
     background-color: $secondary-color;
-    padding: 5px 10px;
+    line-height: 40px;
+    padding: 0 10px;
+    white-space: nowrap;
 
     .svg {
+        width: 30px;
         height: 30px;
-        float: left;
+        vertical-align: middle;
         margin-right: 10px;
     }
 
@@ -32,7 +41,16 @@ BODY {
 }
 
 .modal {
-    background-color: rgba($main-bg-color, .7);
+    background-color: rgba($main-bg-color, 0.7);
+}
+
+.slot {
+    background-color: $slot-bg-color;
+    flex-basis: 100%;
+
+    .modal {
+        background-color: $main-bg-color;
+    }
 }
 
 .popup {
@@ -50,12 +68,12 @@ BODY {
         BUTTON {
             padding: 5px 10px;
             margin-top: 5px;
-            border: 1px solid $lighten;
+            border: 1px solid $lighten-high;
             border-radius: 4px;
 
             &:focus {
-                background-color: $lighten;
-                outline: none
+                background-color: $lighten-high;
+                outline: none;
             }
 
             &:hover {
@@ -65,14 +83,66 @@ BODY {
 
             .svg {
                 height: 1em;
-                vertical-align: -.1em;
+                vertical-align: -0.1em;
             }
         }
     }
 }
 
 .form-errors {
-    color: rgba(#f66, .9);
+    color: rgba(#f66, 0.9);
     font-weight: 600;
     margin-bottom: 5px;
+}
+
+.nav {
+    .logo {
+        height: 50px;
+        line-height: 48px;
+    }
+
+    UL {
+        font-weight: 400;
+        color: $nav-color;
+        line-height: 40px;
+
+        LI.active {
+            color: $nav-color-active;
+            background-color: $darken-medium;
+            font-weight: 600;
+        }
+
+        LI.bottom-divider + LI::before {
+            content: "";
+            display: block;
+            border-bottom: 1px solid $lighten-medium;
+        }
+
+        A {
+            white-space: nowrap;
+            padding-right: 15px;
+        }
+
+        LI.logout:hover,
+        A:hover {
+            cursor: pointer;
+            background-color: $lighten-low;
+        }
+    }
+
+    .nav-icon {
+        height: 1em;
+        width: 50px;
+        vertical-align: -0.1em;
+    }
+}
+
+.header {
+    background-color: $main-bg-color;
+    color: $light-text-color;
+    padding: 10px;
+    font-weight: 300;
+    font-size: 23px;
+    line-height: 30px;
+    height: 50px;
 }
