@@ -29,7 +29,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             Livewire::component('leap.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
         }
 
-        $this->loadRoutesFrom(__DIR__ . '/routes.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/migrations');
