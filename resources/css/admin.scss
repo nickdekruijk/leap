@@ -9,7 +9,7 @@ $lighten-medium: rgba(white, 0.12);
 $lighten-low: rgba(white, 0.06);
 $darken-medium: rgba(black, 0.15);
 $light-text-color: #fff;
-$nav-color: rgba(white, 0.6);
+$nav-color: rgba(white, 0.5);
 $nav-color-active: white;
 $slot-bg-color: #d3d3d3;
 
@@ -98,14 +98,13 @@ BODY {
     }
 
     UL {
-        font-weight: 400;
+        font-weight: 500;
         color: $nav-color;
         line-height: 40px;
 
         LI.active {
             color: $nav-color-active;
             background-color: $darken-medium;
-            font-weight: 600;
         }
 
         LI.bottom-divider+LI::before {
