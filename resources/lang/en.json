@@ -4,5 +4,6 @@
     "login": "Login",
     "logout": "Logout",
     "password": "Password",
-    "profile": "Profile"
+    "profile": "Profile",
+    "Users": "Users"
 }
