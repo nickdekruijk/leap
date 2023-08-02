@@ -41,8 +41,8 @@ return [
 
     */
     'default_modules' => [
-        new Dashboard,
-        new Profile,
+        new Dashboard(['priority' => 0]),
+        Profile::class,
     ],
 
     /*

@@ -22,13 +22,15 @@ class ModuleController extends Controller
     public static function getModules(): Collection
     {
         // Get default modules from config
-        $modules = config('leap.default_modules');
+        foreach (config('leap.default_modules') as $module) {
+            $modules[] = is_string($module) ? new $module : $module;
+        }
 
         // Find modules in app/Leap directory
         foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
             $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
             $module = new $module;
-            $modules[$module->slug] = $module;
+            $modules[] = $module;
         }
 
         // Sort the models by priority
