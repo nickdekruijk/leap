@@ -40,53 +40,49 @@ BODY {
     }
 }
 
-.modal {
-    background-color: rgba($main-bg-color, 0.7);
+.login {
+    background-color: $main-bg-color;
+
+    .login-popup {
+        background-color: $primary-color;
+        color: $light-text-color;
+
+        .form {
+            padding: 10px;
+
+            LABEL {
+                margin-bottom: 10px;
+            }
+
+            INPUT,
+            BUTTON {
+                padding: 5px 10px;
+                margin-top: 5px;
+                border: 1px solid $lighten-high;
+                border-radius: 4px;
+
+                &:focus {
+                    background-color: $lighten-high;
+                    outline: none;
+                }
+
+                &:hover {
+                    background-color: $secondary-color;
+                    cursor: pointer;
+                }
+
+                .svg {
+                    height: 1em;
+                    vertical-align: -0.1em;
+                }
+            }
+        }
+    }
 }
 
 .slot {
     background-color: $slot-bg-color;
     flex-basis: 100%;
-
-    .modal {
-        background-color: $main-bg-color;
-    }
-}
-
-.popup {
-    background-color: $primary-color;
-    color: $light-text-color;
-
-    .form {
-        padding: 10px;
-
-        LABEL {
-            margin-bottom: 10px;
-        }
-
-        INPUT,
-        BUTTON {
-            padding: 5px 10px;
-            margin-top: 5px;
-            border: 1px solid $lighten-high;
-            border-radius: 4px;
-
-            &:focus {
-                background-color: $lighten-high;
-                outline: none;
-            }
-
-            &:hover {
-                background-color: $secondary-color;
-                cursor: pointer;
-            }
-
-            .svg {
-                height: 1em;
-                vertical-align: -0.1em;
-            }
-        }
-    }
 }
 
 .form-errors {
@@ -112,7 +108,7 @@ BODY {
             font-weight: 600;
         }
 
-        LI.bottom-divider + LI::before {
+        LI.bottom-divider+LI::before {
             content: "";
             display: block;
             border-bottom: 1px solid $lighten-medium;

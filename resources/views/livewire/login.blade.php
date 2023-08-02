@@ -1,5 +1,5 @@
-<div class="modal">
-    <div class="popup login">
+<div class="login">
+    <div class="login-popup">
         @include('leap::logo')
         <form wire:submit="submit" class="form">
             @foreach(config('leap.credentials') as $column)
