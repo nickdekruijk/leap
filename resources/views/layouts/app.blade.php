@@ -11,24 +11,16 @@
             <nav class="nav">
                 @include('leap::logo')
                 <ul>
-                    <li class="{{ empty($currentModule) ? 'active' : '' }}">
-                        <a wire:navigate href="{{ route('leap.dashboard') }}">
-                            @svg('fas-gauge-high', 'nav-icon')@lang('dashboard')
-                        </a>
-                    </li>
                     @foreach(Leap::modules() as $module)
-                        <li class="{{ $currentModule ?? null == $module ? 'active' : '' }}">
-                            <a wire:navigate href="{{ route('leap.module', $module->getSlug()) }}">
-                                {{ $module->getNavigationIcon() }}@lang($module->getTitle())
+                        @if ($module->priority === 1001)
+                            <li class="bottom-divider"></li>
+                        @endif
+                        <li class="{{ $currentModule == $module ? 'active' : '' }}">
+                            <a wire:navigate href="{{ route('leap.module', $module->slug) }}">
+                                @svg($module->icon, 'nav-icon')@lang($module->title)
                             </a>
                         </li>
                     @endforeach
-                    <li class="bottom-divider"></li>
-                    <li>
-                        <a wire:navigate href="{{ route('leap.profile') }}">
-                            @svg('fas-user-circle', 'nav-icon'){{ auth(config('leap.guard'))->user()->name }}
-                        </a>
-                    </li>
                     <li class="logout">
                         <form method="post" action="{{ route('leap.logout') }}" onclick="this.submit()">
                             @csrf

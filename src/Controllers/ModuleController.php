@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -16,26 +17,27 @@ class ModuleController extends Controller
     /**
      * Return all modules the current user has access to
      *
-     * @return array
+     * @return Collection
      */
-    public static function getModules(): array
+    public static function getModules(): Collection
     {
-        $modules = [];
+        // Get default modules from config
+        $modules = config('leap.default_modules');
 
         // Find modules in app/Leap directory
         foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
             $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
             $module = new $module;
-            $modules[$module->getSlug()] = $module;
+            $modules[$module->slug] = $module;
         }
 
         // Sort the models by priority
-        uksort($modules, function ($a, $b) {
-            return $a->priority < $b->priority;
+        usort($modules, function ($a, $b) {
+            return $a->priority > $b->priority;
         });
 
         // Return the modules
-        return $modules;
+        return collect($modules);
     }
 
     /**
@@ -44,10 +46,10 @@ class ModuleController extends Controller
      * @param string $module
      * @return View
      */
-    public function show(string $module): View
+    public function show(?string $module = null): View
     {
-        $modules = $this->getModules();
-        abort_if(empty($modules[$module]), 404);
-        return view('leap::layouts.app', ['currentModule' => $modules[$module]]);
+        $currentModule = $this->getModules()->where('slug', $module)->first();
+        abort_if(!$currentModule, 404);
+        return view('leap::layouts.app', compact('currentModule'));
     }
 }

@@ -19,9 +19,5 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     }
 
     // All other routes require authentication and the Leap middleware
-    Route::middleware(Leap::class)->group(function () {
-        Route::get('', Dashboard::class)->name('leap.dashboard');
-        Route::get('profile', Profile::class)->name('leap.profile');
-        Route::get('{module}', [ModuleController::class, 'show'])->name('leap.module');
-    });
+    Route::get('{module?}', [ModuleController::class, 'show'])->name('leap.module')->middleware(Leap::class);
 });

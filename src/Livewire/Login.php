@@ -45,7 +45,7 @@ class Login extends Component
     private function redirectIntended()
     {
         request()->session()->regenerate();
-        return redirect()->intended(route('leap.dashboard'));
+        return redirect()->intended(route('leap.module'));
     }
 
     public function mount()

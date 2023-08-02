@@ -1,5 +1,8 @@
 <?php
 
+use NickDeKruijk\Leap\Livewire\Dashboard;
+use NickDeKruijk\Leap\Livewire\Profile;
+
 return [
 
     /*
@@ -30,6 +33,17 @@ return [
     | The credentials to use when logging in a user, e.g. ['email', 'password']
     */
     'credentials' => ['email', 'password'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | default_modules
+    |--------------------------------------------------------------------------
+
+    */
+    'default_modules' => [
+        new Dashboard,
+        new Profile,
+    ],
 
     /*
     |--------------------------------------------------------------------------
