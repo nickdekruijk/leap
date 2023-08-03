@@ -80,6 +80,24 @@ class Auth2FAController extends Controller
     }
 
     /**
+     * Update session with validation result
+     *
+     * @param boolean $isValid
+     * @return boolean
+     */
+    public static function validateSession(bool $isValid): bool
+    {
+        if ($isValid) {
+            request()->session()->regenerateToken();
+            session()->forget('leap.auth_2fa.code');
+            session()->forget('leap.auth_2fa.expires');
+        }
+        session()->put('leap.auth_2fa.validated', $isValid);
+
+        return $isValid;
+    }
+
+    /**
      * Attempt to validate the code
      *
      * @param string $code
@@ -87,15 +105,6 @@ class Auth2FAController extends Controller
      */
     public static function attempt(string $code): bool
     {
-        if ($code === Auth2FAController::getCode()) {
-            request()->session()->regenerateToken();
-            session()->forget('leap.auth_2fa.code');
-            session()->forget('leap.auth_2fa.expires');
-            session()->put('leap.auth_2fa.validated', true);
-            return true;
-        } else {
-            session()->put('leap.auth_2fa.validated', false);
-            return false;
-        }
+        return self::validateSession($code === Auth2FAController::getCode());
     }
 }

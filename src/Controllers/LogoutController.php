@@ -15,6 +15,7 @@ class LogoutController extends Controller
     public function __invoke()
     {
         Auth::logout();
+        Auth2FAController::validateSession(false);
         request()->session()->regenerateToken();
         return redirect()->route('leap.login');
     }
