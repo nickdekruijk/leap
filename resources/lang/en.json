@@ -1,6 +1,9 @@
 {
     "dashboard": "Dashboard",
     "email": "Email Address",
+    "good_afternoon": "Good afternoon",
+    "good_evening": "Good evening",
+    "good_morning": "Good morning",
     "login": "Login",
     "logout": "Logout",
     "password": "Password",

@@ -1,6 +1,9 @@
 {
     "dashboard": "Dashboard",
     "email": "E-mailadres",
+    "good_afternoon": "Goedemiddag",
+    "good_evening": "Goedenavond",
+    "good_morning": "Goedemorgen",
     "login": "Inloggen",
     "logout": "Uitloggen",
     "password": "Wachtwoord",
