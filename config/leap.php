@@ -7,6 +7,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | app_modules
+    |--------------------------------------------------------------------------
+    |
+    | Leap modules are loaded from a directory inside the app directory of the
+    | Laravel project. The default 'Leap' means app_path('Leap'), which 
+    | resolves to 'app/Leap', will be used to search for modules and the class
+    | namespace should be App\Leap. Each class in this directory should extend 
+    | the NickDeKruijk\Leap\Module class. 
+    |
+    */
+    'app_modules' => 'Leap',
+
+    /*
+    |--------------------------------------------------------------------------
     | auth_2fa
     |--------------------------------------------------------------------------
     |
@@ -29,20 +43,6 @@ return [
             ],
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | app_modules
-    |--------------------------------------------------------------------------
-    |
-    | Leap modules are loaded from a directory inside the app directory of the
-    | Laravel project. The default 'Leap' means app_path('Leap'), which 
-    | resolves to 'app/Leap', will be used to search for modules and the class
-    | namespace should be App\Leap. Each class in this directory should extend 
-    | the NickDeKruijk\Leap\Module class. 
-    |
-    */
-    'app_modules' => 'Leap',
 
     /*
     |--------------------------------------------------------------------------
@@ -94,6 +94,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | organizations
+    |--------------------------------------------------------------------------
+    |
+    | Enable organizations support. A table leap_organizations will be created
+    | along with a leap_organization_user pivot table. The User model should
+    | have a belongsToMany relationship with the Organization model.
+    |
+    */
+    'organizations' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | organization_model
+    |--------------------------------------------------------------------------
+    |
+    | The model to use for organizations, e.g. App\Models\Organization
+    |
+    */
+    'organization_model' => 'App\Models\Organization',
+
+    /*
+    |--------------------------------------------------------------------------
     | route_prefix
     |--------------------------------------------------------------------------
     |
@@ -106,6 +128,17 @@ return [
     |
     */
     'route_prefix' => 'admin',
+
+    /*
+    |--------------------------------------------------------------------------
+    | table_prefix
+    |--------------------------------------------------------------------------
+    |
+    | The package inclused migrations to create tables. The created tables name
+    | will use this prefix, e.g. 'leap_' for leap_permissions.
+    |
+    */
+    'table_prefix' => 'leap_',
 
     /*
     |--------------------------------------------------------------------------
