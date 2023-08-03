@@ -105,6 +105,10 @@ class Auth2FAController extends Controller
      */
     public static function attempt(string $code): bool
     {
-        return self::validateSession($code === Auth2FAController::getCode());
+        if (config('leap.auth_2fa.mail.code.case_sensitive')) {
+            return self::validateSession($code === Auth2FAController::getCode());
+        } else {
+            return self::validateSession(strtoupper($code) === strtoupper(Auth2FAController::getCode()));
+        }
     }
 }
