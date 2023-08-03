@@ -5,7 +5,6 @@ namespace NickDeKruijk\Leap\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use NickDeKruijk\Leap\Controllers\Auth2FAController;
-use NickDeKruijk\Leap\Controllers\LogoutController;
 use Symfony\Component\HttpFoundation\Response;
 
 class Auth2FA
