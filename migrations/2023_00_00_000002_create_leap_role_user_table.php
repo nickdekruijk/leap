@@ -23,7 +23,7 @@ return new class extends Migration
             $table->primary(['user_id', 'role_id']);
         });
 
-        $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'Admin', 'permissions' => ["*"]]);
+        $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'Admin', 'permissions' => ["*" => ['browse', 'read', 'edit', 'add', 'delete', 'export', 'import']]]);
         $first_role->users()->attach(1);
     }
 
