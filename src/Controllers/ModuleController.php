@@ -26,11 +26,22 @@ class ModuleController extends Controller
             $modules[] = is_string($module) ? new $module : $module;
         }
 
-        // Find modules in app/Leap directory
-        foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
-            $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
-            $module = new $module;
-            $modules[] = $module;
+        // Get modules from role permissions if available
+        if (request()->get('leap_role')->permissions) {
+            foreach (request()->get('leap_role')->permissions as $module => $permissions) {
+                if (class_exists($module)) {
+                    $module = new $module();
+                    $module->permissions = $permissions;
+                    $modules[] = $module;
+                }
+            }
+        } else {
+            // User role has no permissions, assume admin and just find all modules in app/Leap directory
+            foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
+                $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
+                $module = new $module();
+                $modules[] = $module;
+            }
         }
 
         // Sort the models by priority
