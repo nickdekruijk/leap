@@ -32,7 +32,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
         if (config('leap.migrations')) {
-            $this->loadMigrationsFrom(__DIR__ . '/migrations');
+            $this->loadMigrationsFrom(__DIR__ . '/../migrations');
         }
 
         if ($this->app->runningInConsole()) {

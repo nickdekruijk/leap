@@ -94,12 +94,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | migrations
+    |--------------------------------------------------------------------------
+    |
+    | Enable migrations. This will create the leap_roles table and the
+    | leap_role_user pivot table. The User model should have a belongsToMany
+    | relationship with the Role model.
+    |
+    | Also a default 'Admin' role will be created with all permissions and 
+    | assigned to the first user in the users table with id 1.
+    |
+    */
+    'migrations' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | organizations
     |--------------------------------------------------------------------------
     |
-    | Enable organizations support. A table leap_organizations will be created
-    | along with a leap_organization_user pivot table. The User model should
-    | have a belongsToMany relationship with the Organization model.
+    | Enable organizations support. Your application should have a valid
+    | organization model with a belongsToMany relationship with the User model.
+    | See organization_model configuration below.
     |
     */
     'organizations' => false,
@@ -110,6 +125,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The model to use for organizations, e.g. App\Models\Organization
+    | This model should have a belongsToMany relationship with the User model.
     |
     */
     'organization_model' => 'App\Models\Organization',
@@ -135,7 +151,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | The package inclused migrations to create tables. The created tables name
-    | will use this prefix, e.g. 'leap_' for leap_permissions.
+    | will use this prefix, e.g. 'leap_' for leap_roles and leap_role_user.
     |
     */
     'table_prefix' => 'leap_',

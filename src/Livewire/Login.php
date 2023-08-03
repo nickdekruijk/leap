@@ -4,6 +4,8 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use NickDeKruijk\Leap\Controllers\LogoutController;
+use NickDeKruijk\Leap\Models\Role;
 
 class Login extends Component
 {
@@ -35,8 +37,23 @@ class Login extends Component
         foreach (config('leap.credentials') as $column) {
             $credentials[$column] = $this->$column;
         }
+
+        // Check if user has a role
         if (Auth::attempt($credentials)) {
-            return $this->redirectIntended();
+            $roles = Auth::user()->belongsToMany(Role::class, config('leap.table_prefix') . 'role_user');
+            if (config('leap.organizations')) {
+                $role = $roles->whereNotNull('organization_id')->first();
+            } else {
+                $role = $roles->whereNull('organization_id')->first();
+            }
+
+            // If user has a role goto intended route, otherwise logout and try again
+            if ($role) {
+                return $this->redirectIntended();
+            } else {
+                $this->addError('email', 'User has no role.');
+                Auth::logout();
+            }
         } else {
             $this->addError('login', trans('auth.failed'));
         }
