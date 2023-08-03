@@ -7,6 +7,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | auth_2fa
+    |--------------------------------------------------------------------------
+    |
+    | Enable two factor authentication. This can be done by mail. 
+    | The mail method will send a code to the users email address.
+    | In a future release TOTP (Google Authenticator) will be added.
+    |
+    */
+    'auth_2fa' => [
+        'method' => 'mail', // mail, null
+        'mail' => [
+            'subject' => 'Your 2FA code', // Will be localized with trans()
+            'view' => 'leap::emails.2fa',
+            'from' => config('mail.from'),
+            'code' => [
+                'length' => 6,
+                'charlist' => '0-9', // Examples: '0-9a-zA-Z', 'A-Z' or '0-9'
+                'case_sensitive' => false,
+                'expires' => 15, // Minutes
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | app_modules
     |--------------------------------------------------------------------------
     |

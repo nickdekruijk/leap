@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="{{ route('leap.css') }}">
     </head>
     <body>
-        @auth(config('leap.guard'))
+        @auth(config('leap.guard')) @isset($currentModule)
             <nav class="nav">
                 @include('leap::logo')
                 <ul>
@@ -29,7 +29,7 @@
                     </li>
                 </ul>
             </nav>
-        @endif
+        @endif @endif
         <div class="slot">
             @isset($slot)
                 {{ $slot }}
