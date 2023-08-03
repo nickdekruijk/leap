@@ -2,9 +2,9 @@
 
 namespace NickDeKruijk\Leap\Middleware;
 
-use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
 
-class Leap extends Authenticate
+class Leap extends Middleware
 {
     /**
      * Get the path the user should be redirected to when they are not authenticated.
