@@ -12,7 +12,9 @@ class RequireRole
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param Request $request
+     * @param Closure $next
+     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -27,7 +29,7 @@ class RequireRole
         }
 
         // If no role was found, return 403
-        abort_if(!$role, 403);
+        abort_if(!$role, 403, 'No role found for this user');
 
         return $next($request);
     }
