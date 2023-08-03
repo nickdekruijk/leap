@@ -44,7 +44,11 @@ return [
     |--------------------------------------------------------------------------
     | default_modules
     |--------------------------------------------------------------------------
-
+    |
+    | The default modules to show in the navigation. You can add your own
+    | modules in the app/Leap directory. The default modules are the Dashboard
+    | and Profile modules.
+    |
     */
     'default_modules' => [
         new Dashboard(['priority' => 0]),
