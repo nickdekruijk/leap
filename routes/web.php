@@ -3,10 +3,8 @@
 use NickDeKruijk\Leap\Controllers\AssetController;
 use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Controllers\ModuleController;
-use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
 use NickDeKruijk\Leap\Livewire\Login;
-use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\Leap;
 
