@@ -19,6 +19,8 @@ $nav-color: rgba(white, 0.5);
 $nav-color-active: white;
 $green: #4d4;
 $red: #f55;
+$orange: #f80;
+$grey: #678;
 
 BODY {
     background-color: $bg-color-main;
@@ -154,4 +156,148 @@ BODY {
 .dashboard {
     padding: 10px;
 }
+
+.toasts {
+    position: fixed;
+    right: 20px;
+    top: 10px;
+
+    .toast {
+        animation: toast 6s both;
+        width: 200px;
+        background-color: darken($green, 20);
+        color: white;
+        overflow: hidden;
+        border-radius: 4px;
+        box-shadow: rgba(black, .2) 0 4px 6px;
+        display:flex;
+        align-items:center;
+        font-size:13px;font-weight:500;
+        .svg {width:40px;height:40px;margin-right:10px}
+    }
+
+    .toast-error {
+        background-color: darken($red, 20);
+    }
+
+    .toast-alert {
+        background-color: $orange;
+    }
+}
+
+@keyframes toast {
+    0% {
+        padding: 10px 15px;
+        margin-top: 10px;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 0;
+        margin-top: 10px;
+        padding: 10px 15px;
+        height: auto;
+    }
+
+    100% {
+        opacity: 0;
+        height: 0;
+        margin-top: 0;
+        padding: 0;
+    }
+}
+
+.editor {
+    background-color: $bg-color-light;
+    min-height: 100%;
+
+    .buttons {
+        height: 40px;
+        background-color: $primary-color;
+        padding: 5px;
+
+        .has-errors {
+            color: $red;
+            font-weight: 600;
+        }
+
+        BUTTON {
+            background: transparent;
+            font: inherit;
+            border: 1px solid $lighten-high;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-size: 13px;
+
+            .svg {
+                width: 13px;
+                height: 13px;
+                vertical-align: -2px;
+                margin-right: 5px;
+            }
+
+            &.button-primary {
+                background-color: rgba(white, .3);
+                border-color: transparent;
+            }
+
+            &:hover {
+                background-color: $lighten-higher;
+            }
+
+            &.button-primary:hover {
+                background-color: $green;
+            }
+
+            &.button-red:hover {
+                background-color: $red;
+            }
+        }
+    }
+
+    .form {
+        color: $medium-text-color;
+        padding: 10px;
+        font-size: 14px;
+
+        .error {
+            color: $red;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .error+INPUT {
+            border-color: $red;
+            background-color: lighten($red, 29);
+        }
+
+        INPUT {
+            width: 100%;
+            display: block;
+            padding: 4px 6px;
+            background-color: $lighten-higher;
+            font: inherit;
+            border-radius: 3px;
+            border: 1px solid $darken-high;
+            font-size: 15px;
+            margin: 3px 0 10px;
+            color: $dark-text-color;
+
+            &[disabled] {
+                background-color: $lighten-high;
+                color: $medium-text-color;
+            }
+        }
+
+        INPUT:focus {
+            background-color: white;
+            outline: none;
+            border-color: $darken-higher
+        }
+    }
 }

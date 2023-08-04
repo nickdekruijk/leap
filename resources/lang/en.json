@@ -4,10 +4,33 @@
     "good_afternoon": "Good afternoon",
     "good_evening": "Good evening",
     "good_morning": "Good morning",
+    "has-errors": "Contains invalid input",
     "login": "Login",
     "logout": "Logout",
+    "name": "Name",
     "password": "Password",
+    "password_current": "Current password",
+    "password_new": "New password",
+    "password_new_confirmation": "Confirm password",
     "profile": "Profile",
+    "save": "Save",
+    "save-copy": "Save as copy",
+    "delete": "Delete",
     "Users": "Users",
-    "verification_code": "Verification code"
+    "validation": {
+        "required": "is required",
+        "min": "must contain at least :min characters",
+        "current_password": "does not match",
+        "confirmed": "does not match :attribute",
+        "required_with": "is required with :values",
+        "same": "does not match :other",
+        "different" : "must be different as :other"
+    },
+    "verification_code": "Verification code",
+
+    "The :attribute field must contain at least one letter.": "must contain a letter",
+    "The :attribute field must contain at least one uppercase and one lowercase letter.": "must contain uppercase and lowercase letter",
+    "The :attribute field must contain at least one number." : "must contain a number",
+    "The :attribute field must contain at least one symbol.": "must contain a symbol",
+    "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "has appeared in a data leak, pick another password"
 }

@@ -8,6 +8,7 @@
     </head>
     <body>
         @livewire('leap.navigation', ['currentModule' => $currentModule ?? null])
+        @livewire('leap.toasts')
         <div class="slot">
             @isset($slot)
                 {{ $slot }}
