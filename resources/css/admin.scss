@@ -120,7 +120,10 @@ BODY {
         }
 
         A {
+            max-width:250px;
+            overflow:hidden;
             white-space: nowrap;
+            text-overflow: ellipsis;
             padding-right: 15px;
         }
 
