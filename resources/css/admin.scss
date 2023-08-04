@@ -1,22 +1,28 @@
 @import url("https://fonts.bunny.net/css?family=open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i");
 
-$main-bg-color: #2c3340;
+$bg-color-main: #2c3340;
+$bg-color-medium: #d3d3d3;
+$bg-color-light: #eee;
 $primary-color: #178;
 $secondary-color: #0cb;
 $dark-text-color: #000;
+$medium-text-color: rgba(#000, 0.5);
+$lighten-higher: rgba(white, 0.5);
 $lighten-high: rgba(white, 0.25);
 $lighten-medium: rgba(white, 0.12);
 $lighten-low: rgba(white, 0.06);
 $darken-medium: rgba(black, 0.15);
+$darken-high: rgba(black, 0.2);
+$darken-higher: rgba(black, 0.4);
 $light-text-color: #fff;
 $nav-color: rgba(white, 0.5);
 $nav-color-active: white;
-$slot-bg-color: #d3d3d3;
+$green: #4d4;
+$red: #f55;
 
 BODY {
-    background-color: $main-bg-color;
+    background-color: $bg-color-main;
     font-family: "Open Sans";
-    font-weight: 300;
     font-size: 15px;
 }
 
@@ -24,6 +30,7 @@ BODY {
     background-color: $secondary-color;
     line-height: 40px;
     padding: 0 10px;
+    font-weight: 300;
     white-space: nowrap;
 
     .svg {
@@ -41,7 +48,7 @@ BODY {
 }
 
 .login {
-    background-color: $main-bg-color;
+    background-color: $bg-color-main;
 
     .login-popup {
         background-color: $primary-color;
@@ -81,8 +88,7 @@ BODY {
 }
 
 .slot {
-    background-color: $slot-bg-color;
-    flex-basis: 100%;
+    background-color: $bg-color-medium;
 }
 
 .form-errors {
@@ -133,11 +139,16 @@ BODY {
 }
 
 .header {
-    background-color: $main-bg-color;
+    background-color: $bg-color-main;
     color: $light-text-color;
     padding: 10px;
     font-weight: 300;
     font-size: 23px;
     line-height: 30px;
     height: 50px;
+}
+
+.dashboard {
+    padding: 10px;
+}
 }

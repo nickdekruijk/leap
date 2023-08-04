@@ -24,6 +24,10 @@ BODY {
     justify-content: center;
 }
 
+.slot {
+    flex-basis: 100%;
+}
+
 .form {
     LABEL {
         display: block;
@@ -58,8 +62,4 @@ BODY {
             color: inherit;
         }
     }
-}
-
-.dashboard {
-    padding:10px;
 }
