@@ -7,23 +7,7 @@ use Livewire\Component;
 
 class Toasts extends Component
 {
-    public $toasts = [
-        [
-            'type' => 'default',
-            'icon' => 'far-check-circle',
-            'message' => 'This is a default message',
-        ],
-        [
-            'type' => 'alert',
-            'icon' => 'fas-exclamation-triangle',
-            'message' => 'This is an alert message',
-        ],
-        [
-            'type' => 'error',
-            'icon' => 'fas-exclamation-triangle',
-            'message' => 'This is an error message',
-        ],
-    ];
+    public $toasts = [];
 
     #[On('toast-error')]
     public function error($message)
