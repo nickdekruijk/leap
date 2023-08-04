@@ -45,8 +45,8 @@ class ModuleController extends Controller
         }
 
         // Sort the models by priority
-        usort($modules, function ($a, $b) {
-            return $a->priority > $b->priority;
+        usort($modules, function ($a, $b): int {
+            return ($a->priority > $b->priority) ? 1 : -1;
         });
 
         // Return the modules

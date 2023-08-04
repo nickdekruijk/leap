@@ -51,6 +51,14 @@ class Module
      */
     public ?string $component = 'leap.dashboard';
 
+    /**
+     * The ModuleController will set permissions for this module in this variable
+     * so we can use it in the Livewire component.
+     *
+     * @var array|null
+     */
+    public ?array $permissions;
+
     public function __construct($options = [])
     {
         // Use the proper authentication guard
