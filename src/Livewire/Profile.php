@@ -77,19 +77,19 @@ class Profile extends Component
         // Store changes
         if (Auth::user()->name != $this->data['name']) {
             Auth::user()->name = $this->data['name'];
-            $this->dispatch('toast', 'Name updated')->to(Toasts::class);
+            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
             // Update title and navigation to reflect name change
             $this->title = Auth::user()->name;
             $this->dispatch('update-navigation')->to(Navigation::class);
         }
         if (isset($this->data['password_new'])) {
             Auth::user()->password = bcrypt($this->data['password_new']);
-            $this->dispatch('toast', 'Password updated')->to(Toasts::class);
+            $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
         }
         if (Auth::user()->isDirty()) {
             Auth::user()->save();
         } else {
-            $this->dispatch('toast-alert', 'No changes')->to(Toasts::class);
+            $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
         }
     }
 
