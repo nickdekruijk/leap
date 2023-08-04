@@ -110,11 +110,6 @@ BODY {
         color: $nav-color;
         line-height: 40px;
 
-        LI.active {
-            color: $nav-color-active;
-            background-color: $darken-medium;
-        }
-
         LI.bottom-divider+LI::before {
             content: "";
             display: block;
@@ -130,10 +125,16 @@ BODY {
         }
 
         LI.logout:hover,
-        A:hover {
+        LI:hover {
             cursor: pointer;
             background-color: $lighten-low;
         }
+
+        LI.active {
+            color: $nav-color-active;
+            background-color: $darken-medium;
+        }
+
     }
 
     .nav-icon {
@@ -170,10 +171,16 @@ BODY {
         overflow: hidden;
         border-radius: 4px;
         box-shadow: rgba(black, .2) 0 4px 6px;
-        display:flex;
-        align-items:center;
-        font-size:13px;font-weight:500;
-        .svg {width:40px;height:40px;margin-right:10px}
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 500;
+
+        .svg {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px
+        }
     }
 
     .toast-error {
