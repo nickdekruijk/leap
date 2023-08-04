@@ -74,7 +74,7 @@ class Profile extends Component
     {
         $this->validate();
 
-        // Store changes
+        // Check if name is changed
         if (Auth::user()->name != $this->data['name']) {
             Auth::user()->name = $this->data['name'];
             $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
@@ -82,10 +82,14 @@ class Profile extends Component
             $this->title = Auth::user()->name;
             $this->dispatch('update-navigation')->to(Navigation::class);
         }
+
+        // Check if password is changed
         if (isset($this->data['password_new'])) {
             Auth::user()->password = bcrypt($this->data['password_new']);
             $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
         }
+
+        // Check if anything changed
         if (Auth::user()->isDirty()) {
             Auth::user()->save();
         } else {
