@@ -2,7 +2,7 @@
     <h1 class="header">@lang($title)</h1>
     <div class="dashboard">
         <h2><span x-init="$el.innerHTML=greeting()"></span> {{ auth(config('leap.guard'))->user()->name }}</h2>
-        <p>Your are logged in as a {{ request()->get('leap_role')->name }}.</p>
+        <p>Your are logged in as a {{ session('leap.role')->name }}.</p>
     </div>
     <script>
         function greeting() {

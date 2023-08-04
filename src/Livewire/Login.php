@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use NickDeKruijk\Leap\Models\Role;
 
 class Login extends Component
 {
@@ -52,6 +53,8 @@ class Login extends Component
     {
         if (Auth::check()) {
             return $this->redirectIntended();
+        } else {
+            session()->forget('leap.role');
         }
     }
 

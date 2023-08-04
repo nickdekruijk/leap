@@ -27,8 +27,8 @@ class ModuleController extends Controller
         }
 
         // Get modules from role permissions if available
-        if (request()->get('leap_role')->permissions) {
-            foreach (request()->get('leap_role')->permissions as $module => $permissions) {
+        if (session('leap.role')->permissions) {
+            foreach (session('leap.role')->permissions as $module => $permissions) {
                 if (class_exists($module)) {
                     $module = new $module();
                     $module->permissions = $permissions;

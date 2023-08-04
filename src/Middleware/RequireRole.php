@@ -31,8 +31,8 @@ class RequireRole
         // If no role was found, return 403
         abort_if(!$role, 403, 'No role found for this user');
 
-        // Store the role in the request attributes so we can use it in the controller
-        $request->attributes->add(['leap_role' => $role]);
+        // Store the role in the session so we can use it in the controller
+        session(['leap.role' => $role]);
 
         return $next($request);
     }
