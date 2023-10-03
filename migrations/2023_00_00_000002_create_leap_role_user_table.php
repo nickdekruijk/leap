@@ -23,8 +23,11 @@ return new class extends Migration
             $table->primary(['user_id', 'role_id']);
         });
 
+        // Create the first Admin role
         $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'Admin']);
-        $first_role->users()->attach(1);
+
+        // Attach the first user (if available) to the first role
+        $first_role->users()->attach(Helpers::userModel()::first()?->id);
     }
 
     /**
