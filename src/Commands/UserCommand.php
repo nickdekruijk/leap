@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Helpers;
 
+use function Laravel\Prompts\password;
+use function Laravel\Prompts\text;
+
 class UserCommand extends Command
 {
     /**
@@ -30,7 +33,7 @@ class UserCommand extends Command
      */
     public function __construct()
     {
-        $this->signature = 'leap:user {' . $this->getUsernameColumn() . ' : A valid ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '} {name? : The fullname of the user, if ommited the name part of the e-mail address is used}';
+        $this->signature = 'leap:user {' . $this->getUsernameColumn() . '? : A valid ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '} {name? : The fullname of the user, if ommited the name part of the e-mail address is used}';
 
         parent::__construct();
     }
@@ -47,26 +50,48 @@ class UserCommand extends Command
      */
     public function handle()
     {
-        $password = Str::random(40);
-        $user = Helpers::userModel()->where($this->getUsernameColumn(), $this->arguments()[$this->getUsernameColumn()])->first();
+        // Get username/emailaddress from arguments or ask for it
+        $username = $this->arguments()[$this->getUsernameColumn()] ?: text(label: 'What ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '?', required: true);
+
+        // Check if user already exists
+        $user = Helpers::userModel()->where($this->getUsernameColumn(), $username)->first();
+
+        // Get name from arguments or ask for it using the name part of the e-mail address as default
+        $name = $this->arguments()['name'] ?: text(label: 'What is the name of this user?', default: $user?->name ?: ucfirst(explode('@', $username)[0]));
+
+        // Update or create user
         if ($user) {
             // Existing user, update name and password
-            $password = $this->ask('New password (leave blank to leave unchanged');
+            $user->name = $name;
+
+            // Ask for password
+            $password = password('Update password for ' . $username . ' (' . $name . ') (blank to leave unchanged)');
             if ($password) {
                 $user->password = Hash::make($password);
             }
-            if ($this->argument('name')) {
-                $user->name = $this->argument('name');
-            }
+
+            // Save the updated user
             $user->save();
             $status = 'updated';
         } else {
             // Create new user
             $user = Helpers::userModel();
-            $user->name = $this->arguments()['name'] ?: ucfirst(explode('@', $this->arguments()[$this->getUsernameColumn()])[0]);
+
+            // Update name
+            $user->name = $name;
+
+            // Set username/emailaddress
             $column = $this->getUsernameColumn();
             $user->$column = $this->arguments()[$this->getUsernameColumn()];
-            $user->password = Hash::make($this->ask('Password (blank for ' . $password . ')') ?: Str::random(40));
+
+            // Generate random password
+            $random_password = Str::password(symbols: false);
+
+            // Ask for password
+            $password = password('Password for ' . $username . ' (' . $name . ') (blank for ' . $random_password . ')');
+            $user->password = Hash::make($password ?: $random_password);
+
+            // Save the new user
             $user->save();
             $status = 'created';
         }
