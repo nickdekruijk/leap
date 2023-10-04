@@ -1,5 +1,5 @@
 <div class="editor">
-    <h1 class="header">{{ $title }}</h1>
+    <h1 class="header">{{ $this->getTitle() }}</h1>
         <div class="buttons">
             <button class="button-primary" wire:click="submit">@svg('far-save', 'svg')@lang('save')</button>
             @if ($errors->any())

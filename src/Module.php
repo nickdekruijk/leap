@@ -2,73 +2,53 @@
 
 namespace NickDeKruijk\Leap;
 
-use BladeUI\Icons\Svg;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
-class Module
+
+class Module extends Component
 {
-    /**
-     * The model the module corresponds to.
-     *
-     * @var string
-     */
-
-    public string $model;
+    public $component;
+    public $icon;
+    public $priority;
+    public $slug;
+    public $title;
 
     /**
-     * Modules are sorted by priority, higher priority modules are shown first
+     * Return the navigation priority of the module (1 by default)
      *
-     * @var int
+     * @return integer
      */
-    public int $priority = 1;
+    public function getPriority(): int
+    {
+        return $this->priority ?? 1;
+    }
 
     /**
-     * The slug of the module, used in the url
+     * Return the slug of the module (lowercase class name by default)
      *
-     * @var string|null
+     * @return string
      */
-    public ?string $slug = null;
+    public function getSlug(): string
+    {
+        return $this->slug ?? strtolower($this->title ?? Str::plural(class_basename(static::class)));
+    }
 
     /**
-     * The blade icon name for the navigation
+     * Return the title of the module (pluralized class name by default)
      *
-     * @var string|null
+     * @return string
      */
-    public ?string $icon = null;
-
-    /**
-     * The title of the module, used in the navigation
-     *
-     * @var string|null
-     */
-    public ?string $title = null;
-
-    /**
-     * The livewire component to use for the module
-     *
-     * @var string|null
-     */
-    public ?string $component = 'leap.dashboard';
-
-    /**
-     * The ModuleController will set permissions for this module in this variable
-     * so we can use it in the Livewire component.
-     *
-     * @var array|null
-     */
-    public ?array $permissions;
+    public function getTitle(): string
+    {
+        return $this->title ?? __(Str::plural(class_basename(static::class)));
+    }
 
     public function __construct($options = [])
     {
         // Use the proper authentication guard
         Auth::shouldUse(config('leap.guard'));
-
-        // If no model is set use the plural class name
-        $this->title = $this->title ?: Str::plural(class_basename($this->model));
-
-        // If no slug is set use the title
-        $this->slug = $this->slug ?: Str::slug($this->title);
 
         // Overide default options
         foreach ($options as $option => $value) {

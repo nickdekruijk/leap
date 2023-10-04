@@ -8,8 +8,6 @@ use Livewire\Attributes\On;
 
 class Navigation extends Component
 {
-    public $currentModule;
-
     public function __construct()
     {
         // Use the proper authentication guard
@@ -19,11 +17,6 @@ class Navigation extends Component
     #[On('update-navigation')]
     public function updateNavigation()
     {
-    }
-
-    public function mount($currentModule)
-    {
-        $this->currentModule = $currentModule ? $currentModule->slug : null;
     }
 
     public function render()

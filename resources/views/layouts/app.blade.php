@@ -7,13 +7,11 @@
         <link rel="stylesheet" href="{{ route('leap.css') }}">
     </head>
     <body>
-        @livewire('leap.navigation', ['currentModule' => $currentModule ?? null])
+        @livewire('leap.navigation')
         @livewire('leap.toasts')
         <div class="slot">
             @isset($slot)
                 {{ $slot }}
-            @else
-                @livewire($currentModule->component)
             @endif
         </div>
     </body>

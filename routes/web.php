@@ -21,5 +21,17 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     }
 
     // All other routes require authentication and the Leap middleware
-    Route::get('{module?}', [ModuleController::class, 'show'])->name('leap.module')->middleware([Leap::class, RequireRole::class, Auth2FA::class]);
+    Route::middleware([Leap::class, RequireRole::class, Auth2FA::class])->group(function () {
+        // Get all available modules
+        $modules = ModuleController::getAllModules();
+
+        // Set the home route to the first module
+        Route::get('/', $modules->first()::class)->name('leap.home');
+
+        // Register all modules routes
+        foreach ($modules as $n => $module) {
+            // dd($module::class);
+            Route::get($module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+        }
+    });
 });

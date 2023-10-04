@@ -4,31 +4,16 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
-use Livewire\Component;
+use NickDeKruijk\Leap\Module;
 
-class Profile extends Component
+class Profile extends Module
 {
     public $component = 'leap.profile';
     public $icon = 'fas-user-circle';
-    public $priority = 1001;
     public $slug = 'profile';
-    public $title;
+    public $priority = 1001;
 
     public $data;
-
-    public function __construct($options = [])
-    {
-        // Use the proper authentication guard
-        Auth::shouldUse(config('leap.guard'));
-
-        // Overide default options
-        foreach ($options as $option => $value) {
-            $this->$option = $value;
-        }
-
-        // Set title to the current user name
-        $this->title = Auth::user()->name;
-    }
 
     public function mount()
     {
@@ -36,11 +21,17 @@ class Profile extends Component
         $this->data['email'] = Auth::user()->email;
     }
 
+    public function __construct($options = [])
+    {
+        parent::__construct($options);
+        $this->title = Auth::user()?->name;
+    }
+
     public function rules()
     {
         return [
             'data.name' => 'required|min:3',
-            'data.email' => 'required|email:rfc,strict,dns,spoof,filter',
+            'data.email' => 'required|email:rfc,spoof,strict,filter', // ,dns,spoof
             'data.password_current' => 'nullable|current_password:' . config('leap.guard') . '|required_with:data.password_new',
             'data.password_new' => ['nullable', 'different:data.password_current', Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'data.password_new_confirmation' => 'nullable|same:data.password_new|required_with:data.password_new',

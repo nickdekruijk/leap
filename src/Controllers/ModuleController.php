@@ -15,38 +15,27 @@ class ModuleController extends Controller
     }
 
     /**
-     * Return all modules the current user has access to
+     * Return all available leap modules
      *
      * @return Collection
      */
-    public static function getModules(): Collection
+    public static function getAllModules(): Collection
     {
         // Get default modules from config
         foreach (config('leap.default_modules') as $module) {
             $modules[] = is_string($module) ? new $module : $module;
         }
-
-        // Get modules from role permissions if available
-        if (session('leap.role')->permissions) {
-            foreach (session('leap.role')->permissions as $module => $permissions) {
-                if (class_exists($module)) {
-                    $module = new $module();
-                    $module->permissions = $permissions;
-                    $modules[] = $module;
-                }
-            }
-        } else {
-            // User role has no permissions, assume admin and just find all modules in app/Leap directory
-            foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
-                $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
-                $module = new $module();
-                $modules[] = $module;
-            }
+        // Find all modules in app/Leap directory
+        foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $counter => $file) {
+            $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
+            $module = new $module();
+            $module->priority = $module->priority ?: $counter + 1;
+            $modules[] = $module;
         }
 
         // Sort the models by priority
         usort($modules, function ($a, $b): int {
-            return ($a->priority > $b->priority) ? 1 : -1;
+            return ($a->getPriority() > $b->getPriority()) ? 1 : -1;
         });
 
         // Return the modules
@@ -54,15 +43,23 @@ class ModuleController extends Controller
     }
 
     /**
-     * Show the module
+     * Return all modules the current user has access to
      *
-     * @param string $module
-     * @return View
+     * @return Collection
      */
-    public function show(?string $module = null): View
+    public static function getModules(): Collection
     {
-        $currentModule = $this->getModules()->where('slug', $module)->first();
-        abort_if(!$currentModule, 404);
-        return view('leap::layouts.app', compact('currentModule'));
+        $modules = static::getAllModules();
+
+        // Filter out modules the user doesn't have access to (based on permissions)
+        if (session('leap.role')?->permissions) {
+            foreach ($modules as $n => $module) {
+                if (empty(session('leap.role')->permissions[$module::class])) {
+                    unset($modules[$n]);
+                }
+            }
+        }
+
+        return $modules;
     }
 }

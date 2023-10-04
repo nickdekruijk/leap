@@ -1,5 +1,5 @@
 <div>
-    <h1 class="header">@lang($title)</h1>
+    <h1 class="header">{{ $this->getTitle() }}</h1>
     <div class="dashboard">
         <h2 x-init="$el.innerHTML = greeting()">&nbsp;</h2>
         <p>Your are logged in as a {{ session('leap.role')->name }}.</p>
