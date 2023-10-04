@@ -30,7 +30,7 @@ return [
     |
     */
     'auth_2fa' => [
-        'method' => null, // mail, null
+        'method' => null, // 'mail', null
         'mail' => [
             'subject' => 'Your 2FA code', // Will be localized with trans()
             'view' => 'leap::emails.2fa',
