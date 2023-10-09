@@ -30,7 +30,6 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
 
         // Register all modules routes
         foreach ($modules as $n => $module) {
-            // dd($module::class);
             Route::get($module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
         }
     });
