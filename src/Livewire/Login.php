@@ -10,6 +10,7 @@ class Login extends Component
 {
     public $email;
     public $password;
+    public $remember;
 
     public function __construct()
     {
@@ -21,12 +22,17 @@ class Login extends Component
         $rules = [];
         foreach (config('leap.credentials') as $column) {
             if ($column == 'email') {
-                $rules[$column] = 'required|email';
+                $rules[$column] = 'required|email:rfc,spoof,strict,filter'; // ,dns
             } else {
                 $rules[$column] = 'required';
             }
         }
         return $rules;
+    }
+
+    public function updated($propertyName)
+    {
+        $this->validateOnly($propertyName);
     }
 
     public function submit()
@@ -36,10 +42,10 @@ class Login extends Component
         foreach (config('leap.credentials') as $column) {
             $credentials[$column] = $this->$column;
         }
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $this->remember)) {
             return $this->redirectIntended();
         } else {
-            $this->addError('login', trans('auth.failed'));
+            $this->addError('password', trans('auth.failed'));
         }
     }
 
