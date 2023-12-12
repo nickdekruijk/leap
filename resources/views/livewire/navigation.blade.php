@@ -1,11 +1,11 @@
-<div>
+<aside class="nav-aside">
     @auth(config('leap.guard')) 
-        <nav class="nav">
+        <nav>
             @include('leap::logo')
             <ul>
                 @foreach(Leap::modules() as $module)
                     @if ($module->getPriority() === 1001)
-                        <li class="bottom-divider"></li>
+                        </ul><ul>
                     @endif
                     <li class="{{ route('leap.module.' . $module->getSlug()) == url()->current() ? 'active' : '' }}">
                         <a wire:navigate href="{{ route('leap.module.' . $module->getSlug()) }}">
@@ -14,12 +14,14 @@
                     </li>
                 @endforeach
                 <li class="logout">
-                    <form method="post" action="{{ route('leap.logout') }}" onclick="this.submit()">
+                    <form method="post" action="{{ route('leap.logout') }}">
                         @csrf
-                        @svg('fas-sign-out-alt', 'nav-icon')@lang('logout')
+                        <button class="outline">
+                            @svg('fas-sign-out-alt', 'nav-icon')@lang('logout')
+                        </button>
                     </form>
                 </li>
             </ul>
         </nav>
     @endif
-</div>
+</aside>

@@ -161,9 +161,22 @@ return [
     | theme
     |--------------------------------------------------------------------------
     |
-    | The CSS theme file to use. For example 'admin' or 'saas'.
+    | SCSS theme file to use for all modules. It will be compiled with ScssPhp.
+    | For example 'default' or 'admin'. The default theme is PicoCss with some
+    | small tweaks while the admin theme adds a bit more styling.
+    | You can use any css/sass file if you provide the full path, for example:
+    | base_path('resources/css/leap.scss')
+    | 
+    */
+    'theme' => 'default',
+
+    /*
+    |--------------------------------------------------------------------------
+    | login_image
+    |--------------------------------------------------------------------------
+    | Image to show on the login screen. By default random from picsum.photos.
     |
     */
-    'theme' => 'admin',
+    'login_image' => 'https://picsum.photos/1130/1038',
 
 ];

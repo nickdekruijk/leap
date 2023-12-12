@@ -1,0 +1,50 @@
+aside.nav-aside {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    z-index:1;
+    // max-width: 220px;
+
+    nav {
+        padding: var(--block-spacing-horizontal);
+        box-shadow: var(--card-box-shadow);
+        height: 100%;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+
+        A {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        li.active a {
+            color: var(--primary-hover);
+        }
+
+        .nav-icon {
+            vertical-align: -0.1em;
+            width: 1em;
+            margin-right: .5em;
+        }
+
+        ul:first-of-type {
+            flex-basis: 100%;
+            margin-top: var(--block-spacing-horizontal);
+        }
+
+        ul:last-of-type {
+            margin-left: calc(var(--nav-element-spacing-horizontal) * -1);
+            margin-right: 0;
+            A {
+                white-space:normal;
+            }
+        }
+    }
+
+    .logout form {
+        color: var(--primary);
+        margin: 0;
+    }
+}

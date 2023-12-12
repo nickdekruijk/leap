@@ -1,0 +1,53 @@
+@import "pico";
+@import "leap-toasts";
+@import "leap-login";
+@import "leap-nav";
+
+header {
+    position: sticky;
+    white-space: nowrap;
+    top: 0;
+    background-color: var(--background-color);
+    padding: var(--nav-link-spacing-vertical) var(--block-spacing-horizontal);
+
+    > * {
+        margin-bottom: 0;
+    }
+
+    box-shadow: var(--card-box-shadow);
+}
+
+body {
+    display: flex;
+}
+
+body>div {
+    flex: 1 1 100%;
+}
+
+.nav-icon,
+.button-svg {
+    height: 1em;
+    vertical-align: -0.15em;
+}
+
+.logo {
+    font-size: 1.2em;
+    font-weight: 500;
+
+    .svg {
+        height: 1.6em;
+        vertical-align: -0.45em;
+        margin-right: 0.5em;
+    }
+
+    A {
+        color: inherit;
+        text-decoration: none;
+    }
+}
+
+:root {
+    --form-element-spacing-vertical: 0.25rem;
+    --form-element-spacing-horizontal: 0.5rem;
+}

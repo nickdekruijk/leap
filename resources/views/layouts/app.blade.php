@@ -9,10 +9,8 @@
     <body>
         @livewire('leap.navigation')
         @livewire('leap.toasts')
-        <div class="slot">
-            @isset($slot)
-                {{ $slot }}
-            @endif
-        </div>
+        @isset($slot)
+            {{ $slot }}
+        @endif
     </body>
 </html>

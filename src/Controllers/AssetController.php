@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use ScssPhp\ScssPhp\Compiler;
-use ScssPhp\ScssPhp\Formatter\Crunched;
+use ScssPhp\ScssPhp\OutputStyle;
 
 class AssetController extends Controller
 {
@@ -18,34 +18,31 @@ class AssetController extends Controller
     // Return all stylesheet files as one
     public function css()
     {
-        // The css/sass files to combine and compile
-        $files = [
-            __DIR__ . '/../../resources/css/_base.scss',
-            __DIR__ . '/../../resources/css/' . config('leap.theme') . '.scss',
-        ];
+        // The css/sass file to compile, use theme file if it exists otherwise use file from resources/css
+        $theme_file = file_exists(config('leap.theme')) ? config('leap.theme') : __DIR__ . '/../../resources/css/' . config('leap.theme') . '.scss';
 
-        // Calculate totol filemtime to determine if css should be recompiled
-        $filemtime = 0;
-        foreach ($files as $file) {
-            $filemtime += filemtime($file);
-        }
-        if ($filemtime != Cache::get('leap.css.filemtime') || Cache::get('leap.css')) {
-            // Files have changed so recompile and cache
-            Cache::put('leap.css.filemtime', $filemtime, self::CACHE_DURATION);
+        // Paths to look for @import files and to calculate total filemtime
+        $paths = [base_path('vendor/picocss/pico/scss'), __DIR__ . '/../../resources/css'];
 
-            // Combine all files into one input string
-            $input = '';
-            foreach ($files as $file) {
-                $input .= file_get_contents($file);
+        // Calculate totol filemtime of theme file and all scss files in the paths to determine if css should be recompiled
+        $filemtime = filemtime($theme_file);
+        foreach ($paths as $path) {
+            foreach (glob($path . '/*.scss') as $file) {
+                $filemtime += filemtime($file);
             }
+        }
 
+        // Check if we need to recompile the css
+        if ($filemtime != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
             // Compile the input string to css
             $scss = new Compiler();
-            $scss->setFormatter(new Crunched());
-            $css = $scss->compile($input);
+            $scss->setImportPaths($paths);
+            $scss->setOutputStyle(OutputStyle::COMPRESSED);
+            $css = $scss->compileString(file_get_contents($theme_file))->getCss();
 
             // Cache it
             Cache::put('leap.css', $css, self::CACHE_DURATION);
+            Cache::put('leap.css.filemtime', $filemtime, self::CACHE_DURATION);
         } else {
             // Get the cached css
             $css = Cache::get('leap.css');

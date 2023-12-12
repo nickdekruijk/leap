@@ -1,9 +1,9 @@
-<div>
-    <h1 class="header">{{ $this->getTitle() }}</h1>
-    <div class="dashboard">
-        <h2 x-init="$el.innerHTML = greeting()">&nbsp;</h2>
-        <p>Your are logged in as a {{ session('leap.role')->name }}.</p>
-    </div>
+<div class="dashboard">
+    <header><h2>{{ $this->getTitle() }}</h2></header>
+    <hgroup>
+        <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
+        <h4>Your are logged in as a {{ session('leap.role')->name }}.</h4>
+    </hgroup>
     <script>
         function greeting() {
             const hour = new Date().getHours();
