@@ -31,7 +31,7 @@ class Profile extends Module
     {
         return [
             'data.name' => 'required|min:3',
-            'data.email' => 'required|email:rfc,spoof,strict,filter', // ,dns,spoof
+            'data.email' => 'required|email:rfc,spoof,strict,filter', // ,dns
             'data.password_current' => 'nullable|current_password:' . config('leap.guard') . '|required_with:data.password_new',
             'data.password_new' => ['nullable', 'different:data.password_current', Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'data.password_new_confirmation' => 'nullable|same:data.password_new|required_with:data.password_new',
