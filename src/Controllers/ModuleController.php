@@ -3,9 +3,11 @@
 namespace NickDeKruijk\Leap\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use NickDeKruijk\Leap\Models\Role;
 
 class ModuleController extends Controller
 {
@@ -61,5 +63,27 @@ class ModuleController extends Controller
         }
 
         return $modules;
+    }
+
+    /**
+     * Redirect to the first module of the users default organization (if any)
+     *
+     * @return RedirectResponse
+     */
+    public function home(): RedirectResponse
+    {
+        $organization = null;
+        if (config('leap.organizations')) {
+            // Find all roles for this user
+            $user_id = auth(config('leap.guard'))->user()->id;
+
+            $first = Role::has('users', $user_id)->first();
+            if ($first->organization_id) {
+                $organization = $first->organization->slug;
+            } else {
+                $organization = (new (config('leap.organization_model')))->first()->slug;
+            }
+        }
+        return redirect()->route('leap.module.' . static::getModules()->first()->getSlug(), $organization);
     }
 }
