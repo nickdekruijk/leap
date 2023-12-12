@@ -7,8 +7,8 @@
                     @if ($module->getPriority() === 1001)
                         </ul><ul>
                     @endif
-                    <li class="{{ route('leap.module.' . $module->getSlug()) == url()->current() ? 'active' : '' }}">
-                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug()) }}">
+                    <li class="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) == url()->current() ? 'active' : '' }}">
+                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) }}">
                             @svg($module->icon, 'nav-icon'){{ $module->getTitle() }}
                         </a>
                     </li>
