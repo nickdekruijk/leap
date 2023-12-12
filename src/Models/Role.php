@@ -4,6 +4,8 @@ namespace NickDeKruijk\Leap\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use NickDeKruijk\Leap\Helpers;
 
 class Role extends Model
@@ -28,8 +30,13 @@ class Role extends Model
         'permissions',
     ];
 
-    public function users()
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(Helpers::userModel()::class, config('leap.table_prefix') . 'role_user');
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(config('leap.organization_model'));
     }
 }
