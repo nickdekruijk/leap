@@ -38,7 +38,7 @@ class Auth2FA extends Component
     private function redirectIntended()
     {
         request()->session()->regenerate();
-        return redirect()->intended(route('leap.module'));
+        return redirect()->intended(route('leap.home'));
     }
 
     public function logout()
