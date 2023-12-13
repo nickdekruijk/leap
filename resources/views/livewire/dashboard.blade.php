@@ -2,7 +2,9 @@
     <header><h2>{{ $this->getTitle() }}</h2></header>
     <hgroup>
         <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
-        <h4>Your are logged in as a {{ session('leap.role')->name }}.</h4>
+        <h4>
+            Your are logged in as {{ session('leap.role')->name }}{{ config('leap.organizations') ? ' for '.session('leap.role.organization.name') : '' }}.
+        </h4>
     </hgroup>
     <script>
         function greeting() {
