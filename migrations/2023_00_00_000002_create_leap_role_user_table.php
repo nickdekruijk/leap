@@ -24,7 +24,7 @@ return new class extends Migration
         });
 
         // Create the first Admin role
-        $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'Admin']);
+        $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'superuser']);
 
         // Attach the first user (if available) to the first role
         $first_role->users()->attach(Helpers::userModel()::first()?->id);
