@@ -70,10 +70,9 @@ class ModuleController extends Controller
      *
      * @return RedirectResponse
      */
-    public function home(): RedirectResponse
+    public function home($organization = null): RedirectResponse
     {
-        $organization = null;
-        if (config('leap.organizations')) {
+        if (!$organization && config('leap.organizations')) {
             // Find all roles for this user
             $user_id = auth(config('leap.guard'))->user()->id;
 
