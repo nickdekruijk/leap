@@ -1,4 +1,3 @@
-@import "pico";
 @import "leap-toasts";
 @import "leap-login";
 @import "leap-nav";
@@ -7,14 +6,14 @@ header {
     position: sticky;
     white-space: nowrap;
     top: 0;
-    background-color: var(--background-color);
-    padding: var(--nav-link-spacing-vertical) var(--block-spacing-horizontal);
+    background-color: var(--pico-background-color);
+    padding: var(--pico-nav-link-spacing-vertical) var(--pico-block-spacing-horizontal);
 
     > * {
         margin-bottom: 0;
     }
 
-    box-shadow: var(--card-box-shadow);
+    box-shadow: var(--pico-card-box-shadow);
 }
 
 body {
@@ -49,6 +48,6 @@ body>div {
 }
 
 :root {
-    --form-element-spacing-vertical: 0.25rem;
-    --form-element-spacing-horizontal: 0.5rem;
+    --pico-form-element-spacing-vertical: 0.25rem;
+    --pico-form-element-spacing-horizontal: 0.5rem;
 }

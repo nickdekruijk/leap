@@ -18,14 +18,17 @@ class AssetController extends Controller
     // Return all stylesheet files as one
     public function css()
     {
+        // The pico file to use
+        $pico_file = '../vendor/picocss/pico/css/pico.min.css';
+
         // The css/sass file to compile, use theme file if it exists otherwise use file from resources/css
         $theme_file = file_exists(config('leap.theme')) ? config('leap.theme') : __DIR__ . '/../../resources/css/' . config('leap.theme') . '.scss';
 
         // Paths to look for @import files and to calculate total filemtime
-        $paths = [base_path('vendor/picocss/pico/scss'), __DIR__ . '/../../resources/css'];
+        $paths = [__DIR__ . '/../../resources/css'];
 
-        // Calculate totol filemtime of theme file and all scss files in the paths to determine if css should be recompiled
-        $filemtime = filemtime($theme_file);
+        // Calculate totol filemtime of pico file, theme file and all scss files in the paths to determine if css should be recompiled
+        $filemtime = filemtime($pico_file) + filemtime($theme_file);
         foreach ($paths as $path) {
             foreach (glob($path . '/*.scss') as $file) {
                 $filemtime += filemtime($file);
@@ -38,7 +41,7 @@ class AssetController extends Controller
             $scss = new Compiler();
             $scss->setImportPaths($paths);
             $scss->setOutputStyle(OutputStyle::COMPRESSED);
-            $css = $scss->compileString(file_get_contents($theme_file))->getCss();
+            $css = '/* Compiled: ' . now() . '*/' . PHP_EOL . $scss->compileString(file_get_contents($pico_file) . PHP_EOL . file_get_contents($theme_file))->getCss();
 
             // Cache it
             Cache::put('leap.css', $css, self::CACHE_DURATION);

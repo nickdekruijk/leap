@@ -6,8 +6,8 @@ aside.nav-aside {
     // max-width: 220px;
 
     nav {
-        padding: var(--block-spacing-horizontal);
-        box-shadow: var(--card-box-shadow);
+        padding: var(--pico-block-spacing-horizontal);
+        box-shadow: var(--pico-card-box-shadow);
         height: 100%;
         overflow: auto;
         display: flex;
@@ -20,7 +20,7 @@ aside.nav-aside {
         }
 
         li.active a {
-            color: var(--primary-hover);
+            color: var(--pico-primary-hover);
         }
 
         .nav-icon {
@@ -31,11 +31,11 @@ aside.nav-aside {
 
         ul:first-of-type {
             flex-basis: 100%;
-            margin-top: var(--block-spacing-horizontal);
+            margin-top: var(--pico-block-spacing-horizontal);
         }
 
         ul:last-of-type {
-            margin-left: calc(var(--nav-element-spacing-horizontal) * -1);
+            margin-left: calc(var(--pico-nav-element-spacing-horizontal) * -1);
             margin-right: 0;
             A {
                 white-space:normal;
@@ -44,7 +44,7 @@ aside.nav-aside {
     }
 
     .logout form {
-        color: var(--primary);
+        color: var(--pico-primary);
         margin: 0;
     }
 }

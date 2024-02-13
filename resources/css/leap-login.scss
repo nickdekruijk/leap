@@ -10,11 +10,11 @@
     }
 
     form {
-        padding: 0 var(--block-spacing-horizontal) var(--block-spacing-horizontal);
+        padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-horizontal);
 
         .form-error {
             float: right;
-            color: var(--form-element-invalid-border-color);
+            color: var(--pico-form-element-invalid-border-color);
             font-size: .8em;
             margin-top: .2em;
         }
@@ -27,7 +27,7 @@
     }
 
     .logo {
-        padding: var(--block-spacing-horizontal);
+        padding: var(--pico-block-spacing-horizontal);
     }
 
     .login-image {
