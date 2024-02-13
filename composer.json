@@ -9,10 +9,11 @@
 	}],
 	"require": {
 		"php": ">=8.1",
-        "blade-ui-kit/blade-icons": "^1.5",
+		"blade-ui-kit/blade-icons": "^1.5",
 		"laravel/framework": "^10.0",
 		"livewire/livewire": "^3.0",
 		"owenvoke/blade-fontawesome": "^2.3",
+		"picocss/pico": "^1.5",
 		"scssphp/scssphp": "^1.11"
 	},
 	"autoload": {
