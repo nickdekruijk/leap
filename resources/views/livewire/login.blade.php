@@ -23,6 +23,7 @@
                         <input type="checkbox" role="switch" wire:model="remember" aria-label="@lang('remember_me')">@lang('remember_me')
                     </label>
                 </fieldset>
+                
                 <button type="submit">@svg('fas-sign-in-alt', 'button-svg') @lang('login')</button>
             </form>
         </div>
