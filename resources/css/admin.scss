@@ -2,4 +2,12 @@ $primary-600: #178;
 $primary-700: #0cb;
 
 @import url("https://fonts.bunny.net/css?family=open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i");
-@import "default";
+
+:root {
+    --pico-font-family-sans-serif: 'Open Sans', sans-serif;
+}
+
+[data-theme=light],
+:root:not([data-theme=dark]) {
+    --pico-primary-background: #178;
+}

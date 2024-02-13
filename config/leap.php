@@ -163,13 +163,13 @@ return [
     |
     | An array of css/sass files to include in the head of the app layout.
     | These will be compiled with ScssPhp into a single css file and cached.
-    | We start with PicoCss and default.csss add some small tweaks to it.
-    | And admin.css adds a bit more styling if you want to use it.
+    | Be aware that ScssPhp does not support all sass features like @use.
+    | We start with PicoCss and default.scss add some small tweaks to it.
+    | And admin.scss adds a bit more styling based on my old admin package.
     | 
     */
     'css' => [
         base_path('vendor/picocss/pico/css/pico.css'),
-        // base_path('vendor/picocss/pico/css/pico.blue.css'),
         base_path('vendor/nickdekruijk/leap/resources/css/default.scss'),
         // base_path('vendor/nickdekruijk/leap/resources/css/admin.scss'),
     ],
