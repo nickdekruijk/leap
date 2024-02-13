@@ -1,5 +1,5 @@
 <div>
-    <h1 class="header">{{ $this->getTitle() }}</h1>
+    <header><h2>{{ $this->getTitle() }}</h2></header>
     <div class="resource">
         <div class="listview">
             <table>
