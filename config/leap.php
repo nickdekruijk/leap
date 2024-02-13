@@ -158,17 +158,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | theme
+    | css
     |--------------------------------------------------------------------------
     |
-    | SCSS theme file to use for all modules. It will be compiled with ScssPhp.
-    | For example 'default' or 'admin'. The default theme is PicoCss with some
-    | small tweaks while the admin theme adds a bit more styling.
-    | You can use any css/sass file if you provide the full path, for example:
-    | base_path('resources/css/leap.scss')
+    | An array of css/sass files to include in the head of the app layout.
+    | These will be compiled with ScssPhp into a single css file and cached.
+    | We start with PicoCss and default.csss add some small tweaks to it.
+    | And admin.css adds a bit more styling if you want to use it.
     | 
     */
-    'theme' => 'default',
+    'css' => [
+        base_path('vendor/picocss/pico/css/pico.css'),
+        // base_path('vendor/picocss/pico/css/pico.blue.css'),
+        base_path('vendor/nickdekruijk/leap/resources/css/default.scss'),
+        // base_path('vendor/nickdekruijk/leap/resources/css/admin.scss'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
