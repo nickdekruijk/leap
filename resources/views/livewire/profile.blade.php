@@ -1,7 +1,7 @@
 <div>
     <h1 class="header">{{ $this->getTitle() }}</h1>
         <div class="buttons">
-            <button class="button-primary" wire:click="submit">@svg('far-save', 'svg')@lang('save')</button>
+            <button class="button-primary" wire:click="submit">@svg('far-save', 'button-svg')@lang('save')</button>
             @if ($errors->any())
                 <span class="has-errors">@lang('has-errors')</span>
             @endif

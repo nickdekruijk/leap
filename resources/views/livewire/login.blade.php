@@ -24,7 +24,7 @@
                     </label>
                 </fieldset>
                 
-                <button type="submit">@svg('fas-sign-in-alt', 'button-svg') @lang('login')</button>
+                <button type="submit">@svg('fas-sign-in-alt', 'button-svg')@lang('login')</button>
             </form>
         </div>
         @if (config('leap.login_image'))

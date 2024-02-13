@@ -21,8 +21,8 @@
                         type="text" name="code" wire:model.live="code" autofocus autocomplete="one-time-code">
                 </label>
 
-                <button type="submit">@svg('fas-sign-in-alt', 'button-svg') @lang('login')</button>
-                <button wire:click="logout">@svg('fas-sign-out-alt', 'button-svg') @lang('logout')</button>
+                <button type="submit">@svg('fas-sign-in-alt', 'button-svg')@lang('login')</button>
+                <button wire:click="logout">@svg('fas-sign-out-alt', 'button-svg')@lang('logout')</button>
             </form>
         </div>
     </article>
