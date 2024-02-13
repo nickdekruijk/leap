@@ -1,5 +1,6 @@
 <div>
-    <h1 class="header">{{ $this->getTitle() }}</h1>
+    <header><h2>{{ $this->getTitle() }}</h2></header>
+    <article>
         <div class="buttons">
             <button class="button-primary" wire:click="submit">@svg('far-save', 'button-svg')@lang('save')</button>
             @if ($errors->any())
@@ -44,4 +45,5 @@
                 <input type="password" wire:model.blur="data.password_new_confirmation" autocomplete="new-password">
             </label>
         </form>
+    </article>
 </div>
