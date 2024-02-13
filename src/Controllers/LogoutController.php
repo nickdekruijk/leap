@@ -18,6 +18,6 @@ class LogoutController extends Controller
         Auth2FAController::validateSession(false);
         request()->session()->invalidate();
         request()->session()->regenerateToken();
-        return redirect()->route('leap.login');
+        return redirect()->route('leap.home');
     }
 }
