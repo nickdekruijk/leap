@@ -16,7 +16,7 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     // Set login and logout routes if required
     if (config('leap.auth_routes')) {
         Route::get('login', Login::class)->name('leap.login');
-        Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([Leap::class, RequireRole::class]);
+        Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([Leap::class]);
         Route::post('logout', LogoutController::class)->name('leap.logout');
     }
 
