@@ -29,16 +29,10 @@ class Auth2FA extends Component
         $this->message = null;
         $this->validate();
         if (Auth2FAController::attempt($this->code)) {
-            $this->redirectIntended();
+            $this->redirectIntended(route('leap.home'));
         } else {
             $this->addError('code', trans('Invalid code'));
         }
-    }
-
-    private function redirectIntended()
-    {
-        request()->session()->regenerate();
-        return redirect()->intended(route('leap.home'));
     }
 
     public function logout()
@@ -52,7 +46,7 @@ class Auth2FA extends Component
         if (Auth2FAController::mustValidate()) {
             Auth2FAController::prepareValidation();
         } else {
-            $this->redirectIntended();
+            $this->redirectIntended(route('leap.home'));
         }
     }
 

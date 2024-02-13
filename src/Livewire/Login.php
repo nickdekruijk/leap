@@ -43,22 +43,16 @@ class Login extends Component
             $credentials[$column] = $this->$column;
         }
         if (Auth::attempt($credentials, $this->remember)) {
-            return $this->redirectIntended();
+            return $this->redirectIntended(route('leap.home'));
         } else {
             $this->addError('password', trans('auth.failed'));
         }
     }
 
-    private function redirectIntended()
-    {
-        request()->session()->regenerate();
-        return redirect()->intended(route('leap.home'));
-    }
-
     public function mount()
     {
         if (Auth::check()) {
-            return $this->redirectIntended();
+            return $this->redirectIntended(route('leap.home'));
         } else {
             session()->forget('leap.role');
         }
