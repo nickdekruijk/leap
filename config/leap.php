@@ -164,7 +164,7 @@ return [
     | An array of css/sass files to include in the head of the app layout.
     | These will be compiled with ScssPhp into a single css file and cached.
     | Be aware that ScssPhp does not support all sass features like @use.
-    | We start with PicoCss and default.scss add some small tweaks to it.
+    | We start with PicoCss and default.scss adds some small tweaks to it.
     | And admin.scss adds a bit more styling based on my old admin package.
     | 
     */
