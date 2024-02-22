@@ -5,6 +5,7 @@
     @enderror
     <input type="checkbox" role="switch" 
         @error($name) aria-errormessage="{{ $message }}" aria-invalid="true" @elseif (isset($$name) && $name != 'password') aria-invalid="false" @enderror
+        id="{{ $name }}"
         wire:model{{ isset($wire) ? '.' . $wire : '' }}="{{ $name }}"
         aria-label="{{ $label }}"
         {{ $attributes }}>{{ $label }}

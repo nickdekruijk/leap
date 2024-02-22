@@ -7,7 +7,7 @@
     .toast {
         animation: toast 6s both;
         width: 200px;
-        background-color: lighten(green, 10);
+        background-color: var(--pico-form-element-valid-active-border-color);
         color: white;
         overflow: hidden;
         border-radius: 4px;
@@ -17,6 +17,7 @@
         font-size: 13px;
         font-weight: 500;
         margin-bottom: 0;
+        position: relative;
 
         .svg {
             width: 40px;
@@ -26,11 +27,15 @@
     }
 
     .toast-error {
-        background-color: red;
+        background-color: var(--pico-form-element-invalid-active-border-color);
     }
 
     .toast-alert {
-        background-color: orange;
+        background-color: rgb(240, 166, 30);
+    }
+
+    .toast-close {
+        position:absolute;right:0;top:0;padding:3px 8px;cursor:pointer;font-size:16px;
     }
 }
 

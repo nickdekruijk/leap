@@ -10,33 +10,39 @@ class Toasts extends Component
     public $toasts = [];
 
     #[On('toast-error')]
-    public function error($message)
+    public function error($message, $focus)
     {
-        $this->add('error', $message, 'fas-exclamation-triangle');
+        $this->add(
+            message: $message,
+            type: 'error',
+            focus: $focus,
+        );
     }
 
     #[On('toast-alert')]
     public function alert($message)
     {
-        $this->add('alert', $message, 'fas-exclamation-triangle');
+        $this->add($message, 'alert');
     }
 
     #[On('toast')]
     public function default($message)
     {
-        $this->add('default', $message, 'far-check-circle');
+        $this->add($message);
     }
 
-    public function add($type, $message, $icon)
+    public function add($message, $type = 'default', $icon = 'fas-exclamation-triangle', $click = null, $focus = null)
     {
         $this->toasts[] = [
+            'message' => $message,
             'type' => $type,
             'icon' => $icon,
-            'message' => $message,
+            'click' => $click,
+            'focus' => $focus,
         ];
     }
 
-    public function click($id)
+    public function close($id)
     {
         unset($this->toasts[$id]);
     }

@@ -6,6 +6,7 @@
     @enderror
     <input size="30"
         @error($name) aria-errormessage="{{ $message }}" aria-invalid="true" @elseif (isset($$name) && $name != 'password') aria-invalid="false" @enderror
+        id="{{ $name }}"
         aria-label="{{ $label ?? $name }}"
         wire:model{{ isset($wire) ? '.' . $wire : '' }}="{{ $name }}"
         {{ $attributes }}>

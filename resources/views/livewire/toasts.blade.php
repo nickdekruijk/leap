@@ -1,6 +1,7 @@
 <ul class="toasts">
     @foreach($toasts as $id => $toast)
-        <li class="toast toast-{{ $toast['type'] }}" wire:click="click({{ $id }})">
+        <li class="toast toast-{{ $toast['type'] }}" @if ($toast['focus']) onclick="document.getElementById('{{ $toast['focus'] }}').focus()" @endif>
+            <div class="toast-close" wire:click="close({{ $id }})">&times;</div>
             <span class="icon">
                 @svg($toast['icon'], 'svg')
             </span>
