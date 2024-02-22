@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use NickDeKruijk\Leap\Module;
 
@@ -63,29 +64,40 @@ class Profile extends Module
 
     public function submit()
     {
-        $this->validate();
-
-        // Check if name is changed
-        if (Auth::user()->name != $this->data['name']) {
-            Auth::user()->name = $this->data['name'];
-            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
-            // Update title and navigation to reflect name change
-            $this->title = Auth::user()->name;
-            $this->dispatch('update-navigation')->to(Navigation::class);
-        }
-
-        // Check if password is changed
-        if (isset($this->data['password_new'])) {
-            Auth::user()->password = bcrypt($this->data['password_new']);
-            $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
-        }
-
-        // Check if anything changed
-        if (Auth::user()->isDirty()) {
-            Auth::user()->save();
+        $validator = Validator::make(['data' => $this->data], $this->rules(), $this->messages(), $this->validationAttributes());
+        if ($validator->fails()) {
+            // dd($validator->messages()->keys(), $validator->messages(':key')->unique(), $validator->messages()->all());
+            foreach ($validator->messages()->keys() as $fieldKey) {
+                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
+            }
         } else {
-            $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
+            // Check if name is changed
+            if (Auth::user()->name != $this->data['name']) {
+                Auth::user()->name = $this->data['name'];
+                $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
+                // Update title and navigation to reflect name change
+                $this->title = Auth::user()->name;
+                $this->dispatch('update-navigation')->to(Navigation::class);
+            }
+
+            // Check if password is changed
+            if (isset($this->data['password_new'])) {
+                Auth::user()->password = bcrypt($this->data['password_new']);
+                $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
+            }
+
+            // Check if anything changed
+            if (Auth::user()->isDirty()) {
+                Auth::user()->save();
+            } else {
+                $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
+            }
         }
+    }
+
+    public function cancel()
+    {
+        return $this->redirect(route('leap.home'));
     }
 
     public function render()
