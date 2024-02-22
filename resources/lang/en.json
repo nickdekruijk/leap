@@ -21,20 +21,5 @@
     "save": "Save",
     "updated": "updated",
     "Users": "Users",
-    "validation": {
-        "confirmed": "does not match :attribute",
-        "current_password": "does not match",
-        "different" : "must be different as :other",
-        "min": "must contain at least :min characters",
-        "required_with": "is required with :values",
-        "required": "is required",
-        "same": "does not match :other"
-    },
-    "verification_code": "Verification code",
-
-    "The :attribute field must contain at least one letter.": "must contain a letter",
-    "The :attribute field must contain at least one uppercase and one lowercase letter.": "must contain uppercase and lowercase letter",
-    "The :attribute field must contain at least one number." : "must contain a number",
-    "The :attribute field must contain at least one symbol.": "must contain a symbol",
-    "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "has appeared in a data leak, pick another password"
+    "verification_code": "Verification code"
 }

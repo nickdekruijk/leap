@@ -21,20 +21,5 @@
     "save": "Opslaan",
     "updated": "bijgewerkt",
     "Users": "Gebruikers",
-    "validation": {
-        "confirmed": "komt niet overeen met :attribute",
-        "current_password": "komt niet overeen",
-        "different" : "moet verschillend zijn van :other",
-        "min": "moet minimaal :min karakters bevatten",
-        "required_with": "is verplicht met :values",
-        "required": "is verplicht",
-        "same": "komt niet overeen met :other"
-    },
-    "verification_code": "Verificatiecode",
-
-    "The :attribute field must contain at least one letter.": "moet minimaal één letter bevatten",
-    "The :attribute field must contain at least one uppercase and one lowercase letter.": "moet zowel kleine als hoofdletters bevatten",
-    "The :attribute field must contain at least one number." : "moet minimaal één nummer bevatten",
-    "The :attribute field must contain at least one symbol.": "moet minimaal één symbool bevatten",
-    "The given :attribute has appeared in a data leak. Please choose a different :attribute.": "is gevonden in een datalek, kies een ander wachtwoord"
+    "verification_code": "Verificatiecode"
 }
