@@ -2,6 +2,15 @@
 @import "leap-login";
 @import "leap-nav";
 
+// Global style for all Leap components
+.leap {
+    display: flex;
+}
+
+.leap > DIV {
+    flex: 1 1 100%;
+}
+
 header {
     position: sticky;
     white-space: nowrap;
@@ -14,14 +23,6 @@ header {
     }
 
     box-shadow: var(--pico-card-box-shadow);
-}
-
-body {
-    display: flex;
-}
-
-body>div {
-    flex: 1 1 100%;
 }
 
 .nav-icon,
@@ -47,8 +48,14 @@ body>div {
     }
 }
 
+.form-error {
+    float: right;
+    color: var(--pico-form-element-invalid-border-color);
+    font-size: .8em;
+    margin-top: .2em;
+}
+
 :root {
-    --pico-block-spacing-horizontal: 1.5rem;
     --pico-form-element-spacing-vertical: 0.25rem;
     --pico-form-element-spacing-horizontal: 0.5rem;
 }

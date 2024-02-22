@@ -11,13 +11,6 @@
 
     form {
         padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-horizontal);
-
-        .form-error {
-            float: right;
-            color: var(--pico-form-element-invalid-border-color);
-            font-size: .8em;
-            margin-top: .2em;
-        }
     }
 
     article {

@@ -7,10 +7,10 @@
         <link rel="stylesheet" href="{{ route('leap.css') }}">
     </head>
     <body>
-        @livewire('leap.navigation')
-        @livewire('leap.toasts')
-        @isset($slot)
+        <div class="leap">
+            @livewire('leap.navigation')
+            @livewire('leap.toasts')
             {{ $slot }}
-        @endif
+        </div>
     </body>
 </html>
