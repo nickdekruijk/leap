@@ -55,6 +55,11 @@ header {
     margin-top: .2em;
 }
 
+// Override a picocss default
+label:has([type=checkbox], [type=radio]) {
+    width:auto;
+}
+
 :root {
     --pico-form-element-spacing-vertical: 0.25rem;
     --pico-form-element-spacing-horizontal: 0.5rem;
