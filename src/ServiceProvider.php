@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap;
 
+use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Commands\UserCommand;
 
@@ -30,6 +31,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         }
 
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+
+        // Register the view components
+        Blade::componentNamespace('NickDeKruijk\\Leap\\Components', 'leap');
 
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/../migrations');

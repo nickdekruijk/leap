@@ -1,0 +1,11 @@
+@props(['name', 'wire', 'label'])
+<label>
+    @error($name)
+        <span class="form-error">{{ $message }}</span>
+    @enderror
+    <input type="checkbox" role="switch" 
+        @error($name) aria-errormessage="{{ $message }}" aria-invalid="true" @elseif (isset($$name) && $name != 'password') aria-invalid="false" @enderror
+        wire:model{{ isset($wire) ? '.' . $wire : '' }}="{{ $name }}"
+        aria-label="{{ $label }}"
+        {{ $attributes }}>{{ $label }}
+</label>

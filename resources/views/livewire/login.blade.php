@@ -4,27 +4,21 @@
             @include('leap::logo')
 
             <form wire:submit="submit" class="form" novalidate>
-                @foreach (config('leap.credentials') as $column)
-                    <label>
-                        @lang($column)
-                        @error($column)
-                            <span class="form-error">{{ $message }}</span>
-                        @enderror
-                        <input size="30"
-                            @error($column) aria-errormessage="{{ $message }}" aria-invalid="true" @elseif ($column != 'password' && $$column) aria-invalid="false" @enderror
-                            aria-label="@lang($column)"
-                            type="{{ $column == 'password' ? 'password' : ($column == 'email' ? 'email' : 'text') }}"
-                            wire:model.live="{{ $column }}"{{ $loop->iteration == 1 ? ' autofocus autocomplete=username' : '' }}{{ $column == 'password' ? ' autocomplete=current-password' : '' }}>
-                    </label>
-                @endforeach
-
                 <fieldset>
-                    <label>
-                        <input type="checkbox" role="switch" wire:model="remember" aria-label="@lang('remember_me')">@lang('remember_me')
-                    </label>
+                    @foreach (config('leap.credentials') as $column)
+                        <x-leap::input 
+                            name="{{ $column }}"
+                            wire="blur"
+                            label="{{ __($column) }}"
+                            type="{{ $column == 'password' ? 'password' : ($column == 'email' ? 'email' : 'text') }}" 
+                            autofocus="{{ $loop->first ? 'true' : 'false' }}" 
+                            autocomplete="{{ $column=='password' ? 'current-password' : ($loop->first ? 'username' : '') }}"
+                        />
+                    @endforeach
+
+                    <x-leap::toggle name="remember" wire="lazy" label="{{ __('remember_me') }}" />
                 </fieldset>
-                
-                <button type="submit">@svg('fas-sign-in-alt', 'button-svg')@lang('login')</button>
+                <x-leap::button type="submit" svg-icon="fas-sign-in-alt" label="{{ __('login') }}" />
             </form>
         </div>
         @if (config('leap.login_image'))
