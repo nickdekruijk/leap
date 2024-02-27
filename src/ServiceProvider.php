@@ -32,9 +32,6 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
-        // Register the view components
-        Blade::componentNamespace('NickDeKruijk\\Leap\\Components', 'leap');
-
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/../migrations');
         }
