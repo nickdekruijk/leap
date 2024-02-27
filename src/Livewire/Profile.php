@@ -64,12 +64,15 @@ class Profile extends Module
 
     public function submit()
     {
+        // Run validation
         $validator = Validator::make(['data' => $this->data], $this->rules(), $this->messages(), $this->validationAttributes());
         if ($validator->fails()) {
-            // dd($validator->messages()->keys(), $validator->messages(':key')->unique(), $validator->messages()->all());
+            // Show validation errors as toasts
             foreach ($validator->messages()->keys() as $fieldKey) {
                 $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
             }
+            // Show validation errors
+            $validator->validate();
         } else {
             // Check if name is changed
             if (Auth::user()->name != $this->data['name']) {
