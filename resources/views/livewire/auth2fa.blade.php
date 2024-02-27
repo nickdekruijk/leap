@@ -1,29 +1,23 @@
-<main class="container login login-2fa">
-    <article class="grid">
+<main class="leap-login leap-login-2fa">
+    <dialog class="leap-login-dialog" open>
         <div>
             @include('leap::logo')
 
-            <form wire:submit="submit" class="form" novalidate>
+            <form wire:submit="submit" class="leap-form" novalidate>
                 @if ($message)
                     <div class="form-message">
                         {!! $message !!}
                     </div>
                 @endif
 
-                <label>
-                    @lang('verification_code')
-                    @error('code')
-                        <span class="form-error">{{ $message }}</span>
-                    @enderror
-                    <input size="{{ config('leap.auth_2fa.mail.code.length') }}" 
-                        @error('code') aria-errormessage="{{ $message }}" aria-invalid="true" @enderror
-                        aria-label="@lang('verification_code')"
-                        type="text" name="code" wire:model.live="code" autofocus autocomplete="one-time-code">
-                </label>
-
-                <button type="submit">@svg('fas-sign-in-alt', 'button-svg')@lang('login')</button>
-                <button wire:click="logout">@svg('fas-sign-out-alt', 'button-svg')@lang('logout')</button>
+                <fieldset class="leap-fieldset">
+                    <x-leap::input name="code" label="verification_code" autofocus autocomplete="one-time-code" size="{{ config('leap.auth_2fa.mail.code.length') }}"/>
+                </fieldset>
+                <fieldset class="leap-fieldset leap-fieldset-buttons">
+                    <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="login" />
+                    <x-leap::button wire:click="logout" svg-icon="fas-sign-out-alt" label="logout" />
+                </fieldset>
             </form>
         </div>
-    </article>
+    </dialog>
 </main>

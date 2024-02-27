@@ -13,7 +13,6 @@
 		"laravel/framework": "^10.0",
 		"livewire/livewire": "^3.0",
 		"owenvoke/blade-fontawesome": "^2.3",
-		"picocss/pico": "^2.0",
 		"scssphp/scssphp": "^1.11"
 	},
 	"autoload": {

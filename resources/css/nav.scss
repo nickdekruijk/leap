@@ -1,0 +1,71 @@
+.leap-nav-aside {
+    height: 100vh;
+    position: sticky;
+    // max-width: 220px;
+    top: 0;
+    z-index: 1;
+
+    .leap-logo {
+        position: sticky;
+        top: 0;
+    }
+
+    .leap-nav {
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+        background-color: $leap-nav-background;
+        color: $leap-nav-color;
+        height: 100%;
+
+        .leap-nav-group {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            line-height: var(--nav-item-height);
+        }
+
+        .leap-nav-item {
+            &.active {
+                background-color: rgba(black, 0.25);
+                color: $leap-nav-color-active;
+            }
+
+            A,
+            BUTTON {
+                padding: 0 var(--spacing);
+                white-space: nowrap;
+                overflow: hidden;
+                text-decoration: none;
+                text-overflow: ellipsis;
+                color: inherit;
+                display: block;
+            }
+
+            BUTTON {
+                font: inherit;
+                border: 0 none;
+                background: none;
+                width: 100%;
+                text-align: left;
+                cursor: pointer;
+            }
+
+            &:not(.active) A:hover,
+            BUTTON:hover {
+                background-color: rgba(white, 0.06);
+            }
+        }
+
+        .leap-nav-divider {
+            // flex-basis: 100%; // If you want profile/logout at the bottom
+            border-bottom: 1px solid rgba(white, 0.15);
+        }
+
+        .leap-svg-icon {
+            vertical-align: -0.1em;
+            width: 1em;
+            margin-right: 0.5em;
+        }
+    }
+}

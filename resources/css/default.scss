@@ -1,66 +1,70 @@
-@import "leap-toasts";
-@import "leap-login";
-@import "leap-nav";
+@import url("https://fonts.bunny.net/css?family=open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i");
+
+:root {
+    --spacing: 16px;
+    --header-height: 50px;
+    --nav-item-height: 44px;
+    --logo-height: 50px;
+    --font-size: 16px;
+}
+
+@media (max-width: 1440px) {
+    :root {
+        --font-size: 15px;
+        --nav-item-height: 40px;
+        --spacing: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 40px;
+        --logo-height: 40px;
+    }
+}
 
 // Global style for all Leap components
 .leap {
     display: flex;
+    font-family: "Open Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-font-smoothing: grayscale;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: var(--font-size);
 }
 
-.leap > DIV {
+.leap-main {
     flex: 1 1 100%;
+    background-color: $leap-main-background;
 }
 
-header {
+.leap-header {
     position: sticky;
     white-space: nowrap;
     top: 0;
-    background-color: var(--pico-background-color);
-    padding: var(--pico-nav-link-spacing-vertical) var(--pico-block-spacing-horizontal);
+    z-index: 10;
+    background-color: $leap-header-background;
+    color: $leap-header-color;
+
+    H2 {
+        font-weight: 300;
+        font-size: 23px;
+        padding: 0 var(--spacing);
+        line-height: var(--header-height);
+    }
 
     > * {
         margin-bottom: 0;
     }
 
-    box-shadow: var(--pico-card-box-shadow);
+    [role="group"] {
+        padding: 0 var(--spacing);
+        background-color: $leap-header-background-buttons;
+    }
 }
 
-.nav-icon,
-.button-svg {
+.leap-svg-icon {
     height: 1em;
     vertical-align: -0.15em;
     margin-right: 5px;
-}
-
-.logo {
-    font-size: 1.2em;
-    font-weight: 500;
-
-    .svg {
-        height: 1.6em;
-        vertical-align: -0.45em;
-        margin-right: 0.5em;
-    }
-
-    A {
-        color: inherit;
-        text-decoration: none;
-    }
-}
-
-.form-error {
-    float: right;
-    color: var(--pico-form-element-invalid-border-color);
-    font-size: .8em;
-    margin-top: .2em;
-}
-
-// Override a picocss default
-label:has([type=checkbox], [type=radio]) {
-    width:auto;
-}
-
-:root {
-    --pico-form-element-spacing-vertical: 0.25rem;
-    --pico-form-element-spacing-horizontal: 0.5rem;
 }

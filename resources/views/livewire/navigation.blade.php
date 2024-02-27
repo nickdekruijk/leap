@@ -1,24 +1,24 @@
 @use('NickDeKruijk\Leap\Controllers\Auth2FAController')
-<aside class="nav-aside">
+<aside class="leap-nav-aside">
     @if (auth(config('leap.guard'))->user() && !Auth2FAController::mustValidate())
-        <nav>
+        <nav class="leap-nav">
             @include('leap::logo')
-            <ul>
+            <ul class="leap-nav-group">
                 @foreach(Leap::modules() as $module)
                     @if ($module->getPriority() === 1001)
-                        </ul><ul>
+                        <li class="leap-nav-divider"></li>
                     @endif
-                    <li class="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) == url()->current() ? 'active' : '' }}">
+                    <li class="leap-nav-item {{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) == url()->current() ? 'active' : '' }}">
                         <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) }}">
-                            @svg($module->icon, 'nav-icon'){{ $module->getTitle() }}
+                            <x-leap::icon svg-icon="{{ $module->icon }}" />{{ $module->getTitle() }}
                         </a>
                     </li>
                 @endforeach
-                <li class="logout">
+                <li class="leap-nav-item">
                     <form method="post" action="{{ route('leap.logout') }}">
                         @csrf
-                        <button class="outline">
-                            @svg('fas-sign-out-alt', 'nav-icon')@lang('logout')
+                        <button>
+                            <x-leap::icon svg-icon="fas-sign-out-alt" />@lang('logout')
                         </button>
                     </form>
                 </li>

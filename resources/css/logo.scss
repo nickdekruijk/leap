@@ -1,0 +1,24 @@
+.leap-logo {
+    background-color: $leap-logo-background;
+    font-size: 23px;
+    font-weight: 300;
+    line-height: var(--logo-height);
+    white-space: nowrap;
+
+    .svg {
+        height: 30px;
+        margin-right: 10px;
+    }
+
+    A {
+        color: $leap-logo-color;
+        padding: 0 var(--spacing);
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+
+        &:hover {
+            background-color: rgba(white, 0.15);
+        }
+    }
+}

@@ -1,5 +1,7 @@
-<div>
-    <header><h2>{{ $this->getTitle() }}</h2></header>
+<main class="leap-main">
+    <header class="leap-header">
+        <h2>{{ $this->getTitle() }}</h2>
+    </header>
     <div class="resource">
         <div class="listview">
             <table>
@@ -18,4 +20,4 @@
             </table>
         </div>
     </div>
-</div>
+</main>

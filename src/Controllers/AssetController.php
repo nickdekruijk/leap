@@ -18,16 +18,34 @@ class AssetController extends Controller
     // Return all stylesheet files as one
     public function css()
     {
+        // Get the css array from the config
+        $css = config('leap.css');
+
         // Calculate total filemtime of all sass/css files to check if we need to recompile
         $filemtime = 0;
-
-        foreach (config('leap.css') as $file) {
+        foreach ($css as $id => $file) {
+            // Check if the file exists else try to get it from the package or base resources/css directory
+            if (!file_exists($file)) {
+                // Try to get the file from the app resources/css directory
+                $newfile = base_path('resources/css/' . $file);
+                if (!file_exists($newfile)) {
+                    // Try to get the file from the package resources/css directory
+                    $newfile = __DIR__ . '/../../resources/css/' . $file;
+                    if (!file_exists($newfile)) {
+                        // File not found it either location, raise error
+                        throw new \Exception('File not found: ' . $file);
+                    }
+                }
+                // File found, use it and update the css array
+                $file = $newfile;
+                $css[$id] = $file;
+            }
+            // Add filemtime of the file to the total filemtime
             $filemtime += filemtime($file);
         }
 
         // Paths to look for @import files and to calculate total filemtime
         $paths = [__DIR__ . '/../../resources/css'];
-
         foreach ($paths as $path) {
             foreach (glob($path . '/*.scss') as $file) {
                 $filemtime += filemtime($file);
@@ -35,7 +53,7 @@ class AssetController extends Controller
         }
 
         // Add names of the files to the filemtime so it changes when the css config array changes
-        $filemtime .= implode(',', config('leap.css'));
+        $filemtime .= implode(',', $css);
 
         // Check if we need to recompile the css
         if ($filemtime != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
@@ -45,7 +63,7 @@ class AssetController extends Controller
 
             // Combine all sass files into a single string
             $sass = '';
-            foreach (config('leap.css') as $file) {
+            foreach ($css as $file) {
                 $sass .= file_get_contents($file);
             }
 

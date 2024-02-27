@@ -8,5 +8,5 @@
         id="{{ $name }}"
         wire:model{{ isset($wire) ? '.' . $wire : '' }}="{{ $name }}"
         aria-label="@lang($label)"
-        {{ $attributes }}>@lang($label)
+        {{ $attributes }}><span class="leap-label">@lang($label)</span>
 </label>

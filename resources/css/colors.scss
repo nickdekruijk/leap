@@ -1,0 +1,36 @@
+$blue-dark: #2c3340;
+$blue-normal: #178;
+$blue-light: #0cb;
+
+$grey: #d3d3d3;
+$grey-light: #eee;
+
+// $red-alt: #c62828;
+$red: #c84f48;
+$red-bright: #e66;
+$orange: #f0a61e;
+$green: #289f42;
+
+$leap-login-background: $blue-dark;
+$leap-login-dialog-background: $blue-normal;
+$leap-login-dialog-color: white;
+$leap-login-color-error: rgba($red-bright, 0.9);
+$leap-login-color-border-error: $leap-login-color-error;
+
+$leap-logo-background: $blue-light;
+$leap-logo-color: white;
+
+$leap-color-error: $red;
+$leap-color-border-error: $leap-color-error;
+
+$leap-button-hover-background: $blue-light;
+
+$leap-nav-background: $blue-dark;
+$leap-nav-color: rgba(white, 0.6);
+$leap-nav-color-active: white;
+
+$leap-header-background: $blue-dark;
+$leap-header-color: white;
+$leap-header-background-buttons: $blue-normal;
+
+$leap-main-background: $grey;

@@ -1,0 +1,198 @@
+.leap {
+    .leap-editor {
+        background-color: $grey-light;
+    }
+
+    .leap-error {
+        float: right;
+        color: $leap-color-error;
+        margin-top: 0.1em;
+        font-size: 0.9em;
+        font-weight: 600;
+    }
+
+    .leap-fieldset {
+        border: 0 none;
+
+        H3 {
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+
+        LABEL.leap-label {
+            display: block;
+
+            &:not(:first-child) {
+                margin-top: calc(var(--spacing) / 1.5);
+            }
+
+            SPAN.leap-label {
+                color: rgba(black, 0.5);
+                display: inline-block;
+                margin-bottom: calc(var(--spacing) / 4);
+            }
+        }
+    }
+
+    .leap-fieldset:not(:first-child) {
+        margin-top: var(--spacing);
+    }
+
+    .leap-fieldset-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: calc(var(--spacing) / 2);
+        margin-top: calc(var(--spacing) / 2);
+    }
+
+    .leap-form {
+        padding: calc(var(--spacing) / 2) var(--spacing);
+    }
+
+    .leap-buttons {
+        background-color: $leap-header-background-buttons;
+        height: var(--nav-item-height);
+        display: flex;
+        position: sticky;
+        top: var(--header-height);
+        z-index: 9;
+        gap: calc(var(--spacing) / 2.5);
+        padding: calc(var(--spacing) / 2.5) 0 calc(var(--spacing) / 2.5)
+            var(--spacing);
+    }
+
+    .leap-button,
+    .leap-input:not(
+            [type="checkbox"],
+            [type="radio"],
+            [type="range"],
+            [type="file"]
+        ),
+    .leap-select,
+    .leap-textarea {
+        font: inherit;
+        display: block;
+        border: 1px solid rgba(black, 0.2);
+        color: black;
+        background: none;
+        border-radius: 3px;
+        padding: 4px 6px;
+        background-color: rgba(white, 0.5);
+        &[disabled] {
+            opacity: 0.33;
+        }
+    }
+
+    .leap-button {
+        border-color: rgba(white, 0.2);
+        background-color: transparent;
+        font-size: 14px;
+        color: white;
+        padding-left: calc(var(--spacing) / 2);
+        padding-right: calc(var(--spacing) / 2);
+
+        &.primary {
+            background-color: rgba(white, 0.33);
+            border-color: transparent;
+
+            &:hover {
+                background-color: $green;
+            }
+        }
+
+        &.secondary:hover {
+            background-color: $red;
+            border-color: transparent;
+        }
+
+        &:hover {
+            background-color: rgba(white, 0.2);
+            border-color: transparent;
+            cursor: pointer;
+        }
+    }
+
+    .leap-input:not(
+            [type="checkbox"],
+            [type="radio"],
+            [type="range"],
+            [type="file"]
+        ),
+    .leap-select,
+    .leap-textarea {
+        width: 100%;
+    }
+
+    .leap-input[type="checkbox"],
+    .leap-input[type="radio"] {
+        font-size:inherit;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .leap-input:focus {
+        background-color: white;
+        border-color: rgba(black, 0.4);
+        outline: 0 none;
+    }
+
+    .leap-label:has([type="checkbox"], [type="radio"]) {
+        cursor: pointer;
+    }
+
+    $leap-input-switch-size: 1.1em;
+
+    .leap-input[role="switch"] {
+        background: rgba(black, 0.2);
+        height: $leap-input-switch-size;
+        width: $leap-input-switch-size * 2;
+        border-radius: $leap-input-switch-size;
+        border: 0.2em solid transparent;
+        box-sizing: content-box;
+        display: inline-block;
+        position: relative;
+        vertical-align: -.45em;
+        margin-right: 5px;
+
+        &::before {
+            content: "";
+            display: block;
+            position: absolute;
+            width: $leap-input-switch-size;
+            height: $leap-input-switch-size;
+            background-color: rgba(white, 1);
+            border-radius: 100%;
+            margin: 0px;
+            left: 0;
+            transition: background-color 0.2s, left 0.2s;
+        }
+        &:checked {
+            background-color: $green;
+            &::hover {
+                background-color: $blue-light;
+            }
+            &::before {
+                background: white;
+                left: $leap-input-switch-size;
+            }
+        }
+        &[aria-invalid="true"] {
+            background-color: $leap-color-border-error;
+        }
+    }
+
+    .leap-input[aria-invalid="true"] {
+        border-color: $leap-color-border-error;
+        background-color: rgba($red, 0.05);
+    }
+
+    .leap-input:not([type="checkbox"], [type="radio"])[aria-invalid="true"] {
+        padding-right: 2em;
+        background-size: 1.5em;
+        background-position: right 0.5em center;
+        background-repeat: no-repeat;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(200,79,72,.8)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E"); // Credits to PicoCSS. Is there any way to use stroke color from sass variable?
+    }
+}

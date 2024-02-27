@@ -164,14 +164,21 @@ return [
     | An array of css/sass files to include in the head of the app layout.
     | These will be compiled with ScssPhp into a single css file and cached.
     | Be aware that ScssPhp does not support all sass features like @use.
-    | We start with PicoCss and default.scss adds some small tweaks to it.
-    | And admin.scss adds a bit more styling based on my old admin package.
+    | The package resource/css directory is added to @import paths.
+    | If path is ommited the file in the resources/css directory is used. 
     | 
     */
     'css' => [
-        base_path('vendor/picocss/pico/css/pico.css'),
-        base_path('vendor/nickdekruijk/leap/resources/css/default.scss'),
-        // base_path('vendor/nickdekruijk/leap/resources/css/admin.scss'),
+        'minireset.scss',
+        'colors.scss',
+        'default.scss',
+        'dashboard.scss',
+        'toasts.scss',
+        'forms.scss',
+        'logo.scss',
+        'nav.scss',
+        'login.scss',
+        // base_path('resources/css/custom.scss'),
     ],
 
     /*
@@ -179,8 +186,9 @@ return [
     | login_image
     |--------------------------------------------------------------------------
     | Image to show on the login screen. By default random from picsum.photos.
-    |
+    | Default image viewport is 380x332 pixels and zooms to 1.5 magnification 
+    | and times two for retina screens. So 1140x996 pixels is a good size.
     */
-    'login_image' => 'https://picsum.photos/1130/1038',
+    'login_image' => 'https://picsum.photos/1140/996',
 
 ];

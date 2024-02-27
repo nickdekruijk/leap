@@ -1,5 +1,5 @@
-<div class="dashboard">
-    <header>
+<main class="leap-main leap-dashboard">
+    <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
     </header>
     <article>
@@ -21,4 +21,4 @@
             }
         </script>
     </article>
-</div>
+</main>
