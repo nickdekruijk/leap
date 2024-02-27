@@ -15,11 +15,13 @@ class Profile extends Module
     public $priority = 1001;
 
     public $data;
+    public $user;
 
     public function mount()
     {
         $this->data['name'] = Auth::user()->name;
         $this->data['email'] = Auth::user()->email;
+        $this->user = Auth::user();
     }
 
     public function __construct($options = [])
@@ -75,23 +77,23 @@ class Profile extends Module
             $validator->validate();
         } else {
             // Check if name is changed
-            if (Auth::user()->name != $this->data['name']) {
-                Auth::user()->name = $this->data['name'];
+            if ($this->user->name != $this->data['name']) {
+                $this->user->name = $this->data['name'];
                 $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
                 // Update title and navigation to reflect name change
-                $this->title = Auth::user()->name;
+                $this->title = $this->user->name;
                 $this->dispatch('update-navigation')->to(Navigation::class);
             }
 
             // Check if password is changed
             if (isset($this->data['password_new'])) {
-                Auth::user()->password = bcrypt($this->data['password_new']);
+                $this->user->password = bcrypt($this->data['password_new']);
                 $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
             }
 
             // Check if anything changed
-            if (Auth::user()->isDirty()) {
-                Auth::user()->save();
+            if ($this->user->isDirty()) {
+                $this->user->save();
             } else {
                 $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
             }
