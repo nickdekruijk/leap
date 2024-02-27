@@ -6,7 +6,7 @@
             <form wire:submit="submit" class="form" novalidate>
                 <fieldset>
                     @foreach (config('leap.credentials') as $column)
-                        <x-leap::input name="{{ $column }}" wire="blur" label="{{ __($column) }}"
+                        <x-leap::input name="{{ $column }}" wire="blur" label="{{ $column }}"
                             type="{{ $column == 'password' ? 'password' : ($column == 'email' ? 'email' : 'text') }}"
                             autofocus="{{ $loop->first ? 'true' : 'false' }}"
                             autocomplete="{{ $column == 'password' ? 'current-password' : ($loop->first ? 'username' : '') }}" />
