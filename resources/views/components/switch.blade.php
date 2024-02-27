@@ -1,9 +1,9 @@
-@props(['name', 'wire', 'label'])
-<label>
+@props(['name', 'wire', 'label', 'class' => ''])
+<label class="leap-label">
     @error($name)
-        <span class="form-error">{{ $message }}</span>
+        <span class="leap-error">{{ $message }}</span>
     @enderror
-    <input type="checkbox" role="switch" 
+    <input class="leap-input {{ $class }}" type="checkbox" role="switch" 
         @error($name) aria-errormessage="{{ $message }}" aria-invalid="true" @elseif (isset($$name) && $name != 'password') aria-invalid="false" @enderror
         id="{{ $name }}"
         wire:model{{ isset($wire) ? '.' . $wire : '' }}="{{ $name }}"

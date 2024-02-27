@@ -12,7 +12,7 @@
                             autocomplete="{{ $column == 'password' ? 'current-password' : ($loop->first ? 'username' : '') }}" />
                     @endforeach
 
-                    <x-leap::toggle name="remember" wire="lazy" label="remember_me" />
+                    <x-leap::switch name="remember" wire="lazy" label="remember_me" />
                 </fieldset>
                 <x-leap::button type="submit" svg-icon="fas-sign-in-alt" label="login" />
             </form>
