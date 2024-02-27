@@ -1,4 +1,4 @@
-@props(['label', 'svgIcon'])
 <button {{ $attributes }}>
-    @isset($svgIcon)@svg($svgIcon, 'button-svg')@endif@lang($label)
+@props(['label', 'svgIcon' => null, 'class' => ''])
+    <x-leap::icon />@lang($label)
 </button>
