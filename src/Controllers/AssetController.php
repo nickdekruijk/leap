@@ -88,7 +88,7 @@ class AssetController extends Controller
     {
         $response->setSharedMaxAge(self::CACHE_DURATION);
         $response->setMaxAge(self::CACHE_DURATION);
-        $response->setExpires(new \DateTime('+1 hour'));
+        $response->setExpires(new \DateTime(self::CACHE_DURATION . ' seconds'));
 
         return $response;
     }
