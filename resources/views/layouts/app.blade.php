@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Leap</title>
-        {!! \NickDeKruijk\Leap\Controllers\AssetController::linkCss() !!}
+        {!! \NickDeKruijk\Leap\Controllers\AssetController::cssLink() !!}
     </head>
     <body>
         <div class="leap">

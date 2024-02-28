@@ -119,7 +119,7 @@ class AssetController extends Controller
      *
      * @return string
      */
-    public static function linkCss(): string
+    public static function cssLink(): string
     {
         return '<link rel="stylesheet" href="' . route('leap.css') . '?' . self::cssFilemtime() . '">';
     }
