@@ -3,7 +3,6 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
-use App;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -15,16 +14,18 @@ class AssetController extends Controller
     // Cache duration in seconds
     const CACHE_DURATION = 3600;
 
-    // Return all stylesheet files as one
-    public function css()
+    /**
+     * Return the css config array but check if the files exist and
+     * replace with resources/css or package resources/css if available
+     *
+     * @return array
+     */
+    public static function cssFiles(): array
     {
         // Get the css array from the config
         $css = config('leap.css');
 
-        // Calculate total filemtime of all sass/css files to check if we need to recompile
-        $filemtime = 0;
         foreach ($css as $id => $file) {
-            // Check if the file exists else try to get it from the package or base resources/css directory
             if (!file_exists($file)) {
                 // Try to get the file from the app resources/css directory
                 $newfile = base_path('resources/css/' . $file);
@@ -36,34 +37,49 @@ class AssetController extends Controller
                         throw new \Exception('File not found: ' . $file);
                     }
                 }
-                // File found, use it and update the css array
-                $file = $newfile;
-                $css[$id] = $file;
+                // File found, update the css array
+                $css[$id] = $newfile;
             }
-            // Add filemtime of the file to the total filemtime
+        }
+
+        return $css;
+    }
+
+    /**
+     * Return the filemtime of all css files combined, used check if we need to recompile
+     *
+     * @return integer
+     */
+    public static function cssFilemtime(): int
+    {
+        $filemtime = 0;
+
+        foreach (self::cssFiles() as $file) {
             $filemtime += filemtime($file);
         }
 
-        // Paths to look for @import files and to calculate total filemtime
-        $paths = [__DIR__ . '/../../resources/css'];
-        foreach ($paths as $path) {
-            foreach (glob($path . '/*.scss') as $file) {
-                $filemtime += filemtime($file);
-            }
-        }
+        return $filemtime;
+    }
 
-        // Add names of the files to the filemtime so it changes when the css config array changes
-        $filemtime .= implode(',', $css);
+    /**
+     * Return all compiled css files as single Response
+     *
+     * @return Response
+     */
+    public static function css(): Response
+    {
+        // Calculate total filemtime of all sass/css files to check if we need to recompile
+        $filemtime = self::cssFilemtime();
 
         // Check if we need to recompile the css
         if ($filemtime != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
             $scss = new Compiler();
-            $scss->setImportPaths($paths);
+            $scss->setImportPaths([__DIR__ . '/../../resources/css']);
             $scss->setOutputStyle(OutputStyle::COMPRESSED);
 
             // Combine all sass files into a single string
             $sass = '';
-            foreach ($css as $file) {
+            foreach (self::cssFiles() as $file) {
                 $sass .= file_get_contents($file);
             }
 
@@ -80,16 +96,31 @@ class AssetController extends Controller
 
         // Return the css as a response
         $response = new Response($css, 200, ['Content-Type' => 'text/css']);
-        return $this->cacheResponse($response);
+        return self::cacheResponse($response);
     }
 
-    // Cache the response 1 hour (3600 sec)
-    protected function cacheResponse(Response $response)
+    /**
+     * Add cache headers to the response
+     *
+     * @param Response $response
+     * @return Response
+     */
+    protected static function cacheResponse(Response $response): Response
     {
         $response->setSharedMaxAge(self::CACHE_DURATION);
         $response->setMaxAge(self::CACHE_DURATION);
         $response->setExpires(new \DateTime(self::CACHE_DURATION . ' seconds'));
 
         return $response;
+    }
+
+    /**
+     * Return a link html tag to the compiled css with filemtime as query string as cache buster
+     *
+     * @return string
+     */
+    public static function linkCss(): string
+    {
+        return '<link rel="stylesheet" href="' . route('leap.css') . '?' . self::cssFilemtime() . '">';
     }
 }

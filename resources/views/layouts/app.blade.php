@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Leap</title>
-        <link rel="stylesheet" href="{{ route('leap.css') }}">
+        {!! \NickDeKruijk\Leap\Controllers\AssetController::linkCss() !!}
     </head>
     <body>
         <div class="leap">
