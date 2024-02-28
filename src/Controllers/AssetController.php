@@ -46,7 +46,7 @@ class AssetController extends Controller
     }
 
     /**
-     * Return the filemtime of all css files combined, used check if we need to recompile
+     * Return the filemtime of all css files combined, used to check if we need to recompile
      *
      * @return integer
      */
