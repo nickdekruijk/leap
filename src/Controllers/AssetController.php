@@ -46,7 +46,7 @@ class AssetController extends Controller
     }
 
     /**
-     * Return the filemtime of all css files combined, used to check if we need to recompile
+     * Return the filemtime of all sass/css files combined, used to check if we need to recompile
      *
      * @return integer
      */
@@ -68,11 +68,8 @@ class AssetController extends Controller
      */
     public static function css(): Response
     {
-        // Calculate total filemtime of all sass/css files to check if we need to recompile
-        $filemtime = self::cssFilemtime();
-
         // Check if we need to recompile the css
-        if ($filemtime != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
+        if ($filemtime = self::cssFilemtime() != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
             $scss = new Compiler();
             $scss->setImportPaths([__DIR__ . '/../../resources/css']);
             $scss->setOutputStyle(OutputStyle::COMPRESSED);
