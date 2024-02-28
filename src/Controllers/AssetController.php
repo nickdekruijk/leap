@@ -80,7 +80,7 @@ class AssetController extends Controller
 
         // Return the css as a response
         $response = new Response($css, 200, ['Content-Type' => 'text/css']);
-        return App::isLocal() ? $response : $this->cacheResponse($response);
+        return $this->cacheResponse($response);
     }
 
     // Cache the response 1 hour (3600 sec)
