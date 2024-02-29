@@ -68,8 +68,11 @@ class AssetController extends Controller
      */
     public static function css(): Response
     {
+        // Get the filemtime of all sass/css files combined
+        $filemtime = self::cssFilemtime();
+
         // Check if we need to recompile the css
-        if ($filemtime = self::cssFilemtime() != Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
+        if ($filemtime !== Cache::get('leap.css.filemtime') || !Cache::get('leap.css')) {
             $scss = new Compiler();
             $scss->setImportPaths([__DIR__ . '/../../resources/css']);
             $scss->setOutputStyle(OutputStyle::COMPRESSED);
