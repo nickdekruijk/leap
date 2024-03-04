@@ -4,6 +4,7 @@ use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Navigation\Divider;
 use NickDeKruijk\Leap\Navigation\Logout;
+use NickDeKruijk\Leap\Navigation\Organizations;
 
 return [
 
@@ -81,6 +82,7 @@ return [
     'default_modules' => [
         new Dashboard(['priority' => 0]),
         Divider::class,
+        Organizations::class,
         Profile::class,
         Logout::class,
     ],

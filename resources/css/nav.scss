@@ -67,5 +67,25 @@
             width: 1em;
             margin-right: 0.5em;
         }
+
+        .leap-nav-organizations {
+            UL {
+                display: none;
+                background-color: rgba(white, 0.06);
+            }
+            &:hover UL {
+                display: block;
+            }
+        }
+        .leap-nav-organizations {
+            UL A {
+                line-height: 2.5;
+                font-size: 0.9em;
+                padding-left: calc(var(--spacing) + 1.75em);
+                &:hover {
+                    color: white;
+                }
+            }
+        }
     }
 }

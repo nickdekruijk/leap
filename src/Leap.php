@@ -2,7 +2,9 @@
 
 namespace NickDeKruijk\Leap;
 
+use Illuminate\Support\Collection;
 use NickDeKruijk\Leap\Controllers\ModuleController;
+use NickDeKruijk\Leap\Models\Role;
 
 class Leap
 {
@@ -14,5 +16,19 @@ class Leap
     public static function modules()
     {
         return ModuleController::getModules();
+    }
+
+    public static function userOrganizations(): Collection
+    {
+        $user = auth(config('leap.guard'))->user();
+        $roles = Role::has('users', $user->id)->get();
+        foreach ($roles as $role) {
+            if ($role->organization_id) {
+                $organizations[$role->organization_id] = $role->organization;
+            } else {
+                return (new (config('leap.organization_model')))->all();
+            }
+        }
+        return collect($organizations);
     }
 }
