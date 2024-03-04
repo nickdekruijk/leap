@@ -27,11 +27,12 @@ class ModuleController extends Controller
         foreach (config('leap.default_modules') as $module) {
             $modules[] = is_string($module) ? new $module : $module;
         }
+
         // Find all modules in app/Leap directory
         foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $counter => $file) {
             $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
             $module = new $module();
-            $module->priority = $module->priority ?: $counter + 1;
+            $module->priority = $module->priority ?? $counter + 1;
             $modules[] = $module;
         }
 
