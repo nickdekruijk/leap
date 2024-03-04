@@ -65,4 +65,14 @@ trait NavigationItem
     {
         return $this->getSlug() ? route('leap.module.' . $this->getSlug(), session('leap.role.organization.slug')) == url()->current() : false;
     }
+
+    /**
+     * Return the active class if the current route is the module route
+     *
+     * @return string
+     */
+    public function navigationClass()
+    {
+        return $this->isActive() ? 'active' : '';
+    }
 }
