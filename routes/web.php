@@ -31,7 +31,9 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
 
         // Register all modules routes
         foreach (ModuleController::getAllModules() as $n => $module) {
-            Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+            if ($module->getSlug()) {
+                Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+            }
         }
     });
 });
