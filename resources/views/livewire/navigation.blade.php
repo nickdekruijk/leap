@@ -1,6 +1,5 @@
-@use('NickDeKruijk\Leap\Controllers\Auth2FAController')
 <aside class="leap-nav-aside">
-    @if (auth(config('leap.guard'))->user() && !Auth2FAController::mustValidate())
+    @if (auth(config('leap.guard'))->user() && !NickDeKruijk\Leap\Controllers\Auth2FAController::mustValidate())
         <nav class="leap-nav">
             @include('leap::logo')
             <ul class="leap-nav-group">
