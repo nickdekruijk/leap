@@ -19,6 +19,6 @@ class Logout
 
     public function getOutput(): string
     {
-        return '<form method="post" action="' . route('leap.logout') . '"><input type="hidden" name="_token" value="' . csrf_token() . '" /><button>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . __('logout') . '</button></form>';
+        return '<li class="leap-nav-item"><form method="post" action="' . route('leap.logout') . '"><input type="hidden" name="_token" value="' . csrf_token() . '" /><button>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . __('logout') . '</button></form></li>';
     }
 }

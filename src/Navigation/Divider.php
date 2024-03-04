@@ -13,6 +13,6 @@ class Divider
 
     public function getOutput(): ?string
     {
-        return '<hr>';
+        return '<li class="leap-nav-item"><hr></li>';
     }
 }
