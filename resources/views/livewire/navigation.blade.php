@@ -8,7 +8,7 @@
                     <li class="leap-nav-item {{ $module->isActive() ? 'active' : '' }}">
                         @if ($module->getOutput())
                             {!! $module->getOutput() !!}
-                        @else
+                        @elseif ($module->getSlug())
                             <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) }}">
                                 <x-leap::icon svg-icon="{{ $module->icon }}" />{{ $module->getTitle() }}
                             </a>
