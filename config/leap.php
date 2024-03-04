@@ -2,6 +2,8 @@
 
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\Profile;
+use NickDeKruijk\Leap\Navigation\Divider;
+use NickDeKruijk\Leap\Navigation\Logout;
 
 return [
 
@@ -71,13 +73,16 @@ return [
     |--------------------------------------------------------------------------
     |
     | The default modules to show in the navigation. You can add your own
-    | modules in the app/Leap directory. The default modules are the Dashboard
-    | and Profile modules.
+    | modules in the app/Leap directory (see app_modules configuration above).
+    | A module must extend the Leap/Module or Leap/Resource class or use the 
+    | NavigationItem trait.   
     |
     */
     'default_modules' => [
         new Dashboard(['priority' => 0]),
+        Divider::class,
         Profile::class,
+        Logout::class,
     ],
 
     /*

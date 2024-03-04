@@ -24,10 +24,9 @@ class Profile extends Module
         $this->user = Auth::user();
     }
 
-    public function __construct($options = [])
+    public function getTitle(): string
     {
-        parent::__construct($options);
-        $this->title = Auth::user()?->name;
+        return Auth::user()?->name;
     }
 
     public function rules()
