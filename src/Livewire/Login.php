@@ -2,12 +2,16 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use NickDeKruijk\Leap\Models\Role;
 
 class Login extends Component
 {
+    use WithRateLimiting;
+
     public $email;
     public $password;
     public $remember;
@@ -42,10 +46,15 @@ class Login extends Component
         foreach (config('leap.credentials') as $column) {
             $credentials[$column] = $this->$column;
         }
-        if (Auth::attempt($credentials, $this->remember)) {
-            return $this->redirectIntended(route('leap.home'));
-        } else {
-            $this->addError('password', trans('auth.failed'));
+        try {
+            $this->rateLimit(5);
+            if (Auth::attempt($credentials, $this->remember)) {
+                return $this->redirectIntended(route('leap.home'));
+            } else {
+                $this->addError('password', trans('auth.failed'));
+            }
+        } catch (TooManyRequestsException $exception) {
+            $this->addError('password', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
         }
     }
 
