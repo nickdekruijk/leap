@@ -23,6 +23,8 @@ class Organizations
         $output = '';
         if (config('leap.organizations')) {
             $output .= '<li class="leap-nav-item leap-nav-organizations">';
+            $output .= '<label>';
+            $output .= '<input type="checkbox" class="leap-nav-toggle">';
             $output .= '<a>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . session('leap.role.organization.name') . '</a>';
 
             $output .= '<ul>';
@@ -30,6 +32,7 @@ class Organizations
                 $output .= '<li><a href="' . route('leap.home', $organization->slug) . '">' . $organization->name . '</a></li>';
             }
             $output .= '</ul>';
+            $output .= '</label>';
             $output .= '</li>';
         }
         return $output;
