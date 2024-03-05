@@ -3,7 +3,7 @@
     position: sticky;
     // max-width: 220px;
     top: 0;
-    z-index: 1;
+    z-index: 100;
 
     .leap-logo {
         position: sticky;
@@ -33,7 +33,7 @@
 
             A,
             BUTTON {
-                padding: 0 var(--spacing);
+                padding: 0 var(--spacing) 0 0;
                 white-space: nowrap;
                 overflow: hidden;
                 text-decoration: none;
@@ -64,8 +64,8 @@
 
         .leap-svg-icon {
             vertical-align: -0.1em;
-            width: 1em;
-            margin-right: 0.5em;
+            width: 50px;
+            margin-right: 0;
         }
 
         .leap-nav-collapse {

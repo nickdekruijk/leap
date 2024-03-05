@@ -1,3 +1,3 @@
 <div class="leap-logo">
-    <a href="/" target="_blank">@svg('fab-laravel', 'svg'){{ config('app.name') }}</a>
+    <a href="/" target="_blank">@svg('fab-laravel', 'svg')<span>{{ config('app.name') }}</span></a>
 </div>
