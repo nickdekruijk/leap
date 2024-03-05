@@ -29,7 +29,7 @@ class Organizations
 
             $output .= '<ul>';
             foreach (Leap::userOrganizations() as $organization) {
-                $output .= '<li><a href="' . route('leap.home', $organization->slug) . '">' . $organization->name . '</a></li>';
+                $output .= '<li><a wire:navigate href="' . route('leap.home', $organization->slug) . '">' . $organization->name . '</a></li>';
             }
             $output .= '</ul>';
             $output .= '</label>';
