@@ -6,7 +6,6 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use NickDeKruijk\Leap\Models\Role;
 
 class Login extends Component
 {
