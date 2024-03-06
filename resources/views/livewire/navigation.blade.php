@@ -1,6 +1,6 @@
 <aside class="leap-nav-aside">
     <input type="checkbox" id="leap-nav-toggle">
-    <label for="leap-nav-toggle"><span></span><span></span><span></span></label>
+    <label for="leap-nav-toggle" x-on:click="document.querySelectorAll('INPUT.leap-nav-collapse').forEach(function(e) {console.log(e.checked=false)})"><span></span><span></span><span></span></label>
     <nav class="leap-nav">
         @include('leap::logo')
         <ul class="leap-nav-group">

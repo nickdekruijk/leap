@@ -9,12 +9,15 @@
         display: none;
     }
     @media (max-width: 768px) {
-        LABEL[for="leap-nav-toggle"] {
+        flex: 0 0 50px;
+        order: 2;
+        > LABEL[for="leap-nav-toggle"] {
             display: block;
             position: fixed;
             top: 0;
             right: 0;
             width: 50px;
+            background-color: $leap-logo-background;
             > SPAN {
                 display: block;
                 height: 3px;
@@ -37,7 +40,7 @@
         }
         .leap-nav {
             position: fixed;
-            transform: translateX(100%);
+            transform: translateX(calc(100% - 50px));
             right: 0;
             width: 100%;
             transition: transform 0.4s;
@@ -140,7 +143,7 @@
                 A {
                     line-height: 2.5;
                     font-size: 0.9em;
-                    padding-left: calc(var(--spacing) + 1.75em);
+                    padding-left: 50px;
                     &:hover {
                         color: white;
                     }

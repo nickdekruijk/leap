@@ -25,7 +25,7 @@ class Organizations
             $output .= '<li class="leap-nav-item leap-nav-organizations">';
             $output .= '<label>';
             $output .= '<input type="checkbox" class="leap-nav-collapse">';
-            $output .= '<a>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . session('leap.role.organization.name') . '</a>';
+            $output .= '<a x-on:click="document.getElementById(\'leap-nav-toggle\').checked=true">' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . session('leap.role.organization.name') . '</a>';
 
             $output .= '<ul>';
             foreach (Leap::userOrganizations() as $organization) {
