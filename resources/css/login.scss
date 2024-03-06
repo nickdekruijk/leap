@@ -4,6 +4,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height:100vh;
 
     .leap-login-dialog {
         width: 380px;
