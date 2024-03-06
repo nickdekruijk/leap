@@ -35,9 +35,10 @@
             cursor: pointer;
             z-index: 100;
         }
-        position: fixed;
-        width: 100%;
         .leap-nav {
+            position: fixed;
+            right:0;
+            width:100%;
             transform: translateX(100%);
             transition: transform 0.4s;
         }
