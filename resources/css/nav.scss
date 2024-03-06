@@ -5,6 +5,60 @@
     top: 0;
     z-index: 100;
 
+    #leap-nav-toggle {
+        display: none;
+    }
+    @media (max-width: 768px) {
+        LABEL[for="leap-nav-toggle"] {
+            display: block;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 50px;
+            > SPAN {
+                display: block;
+                height: 3px;
+                background-color: white;
+                width: 28px;
+                position: absolute;
+                top: calc(50% - 1.5px);
+                left: 11px;
+                transition: transform 0.4s;
+                &:nth-child(1) {
+                    transform: translateY(-8px);
+                }
+                &:nth-child(3) {
+                    transform: translateY(8px);
+                }
+            }
+            height: var(--nav-item-height);
+            cursor: pointer;
+            z-index: 100;
+        }
+        position: fixed;
+        width: 100%;
+        .leap-nav {
+            transform: translateX(100%);
+            transition: transform 0.4s;
+        }
+        #leap-nav-toggle:checked {
+            ~ LABEL[for="leap-nav-toggle"] > SPAN {
+                &:nth-child(1) {
+                    transform: rotate(-45deg);
+                }
+                &:nth-child(2) {
+                    transform: scale(0);
+                }
+                &:nth-child(3) {
+                    transform: rotate(45deg);
+                }
+            }
+            ~ .leap-nav {
+                transform: translateX(0);
+            }
+        }
+    }
+
     .leap-logo {
         position: sticky;
         top: 0;

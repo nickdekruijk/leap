@@ -36,6 +36,7 @@
 .leap-main {
     flex: 1 1 100%;
     background-color: $leap-main-background;
+    min-height:100vh;
 }
 
 .leap-header {

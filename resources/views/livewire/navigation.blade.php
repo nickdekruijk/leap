@@ -1,4 +1,6 @@
 <aside class="leap-nav-aside">
+    <input type="checkbox" id="leap-nav-toggle">
+    <label for="leap-nav-toggle"><span></span><span></span><span></span></label>
     @if (auth(config('leap.guard'))->user() && !NickDeKruijk\Leap\Controllers\Auth2FAController::mustValidate())
         <nav class="leap-nav">
             @include('leap::logo')
