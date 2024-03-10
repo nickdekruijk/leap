@@ -30,7 +30,7 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
         $organizations_prefix = config('leap.organizations') ? '{organization}/' : '';
 
         // Register all modules routes
-        foreach (ModuleController::getAllModules() as $n => $module) {
+        foreach (ModuleController::getAllModules() as $module) {
             if ($module->getSlug()) {
                 Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
             }
