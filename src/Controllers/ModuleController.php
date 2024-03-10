@@ -6,16 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use NickDeKruijk\Leap\Models\Role;
 
 class ModuleController extends Controller
 {
-    public function __construct()
-    {
-        Auth::shouldUse(config('leap.guard'));
-    }
-
     /**
      * Return all available leap modules
      *
@@ -74,10 +68,10 @@ class ModuleController extends Controller
     public function home($organization = null): RedirectResponse
     {
         if (!$organization && config('leap.organizations')) {
-            // Find all roles for this user
-            $user_id = auth(config('leap.guard'))->user()->id;
+            // Find first role for this user
+            $first = Auth::getUser()->belongsToMany(Role::class, config('leap.table_prefix') . 'role_user')->first();
 
-            $first = Role::has('users', $user_id)->first();
+            // Check if the first role has an organization
             if ($first->organization_id) {
                 $organization = $first->organization->slug;
             } else {

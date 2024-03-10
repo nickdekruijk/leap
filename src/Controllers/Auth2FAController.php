@@ -10,11 +10,6 @@ use Illuminate\Mail\SentMessage;
 
 class Auth2FAController extends Controller
 {
-    public function __construct()
-    {
-        Auth::shouldUse(config('leap.guard'));
-    }
-
     /**
      * Generate a random string based on leap 2fa configuration.
      *

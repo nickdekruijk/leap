@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use NickDeKruijk\Leap\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -18,7 +19,7 @@ class RequireRole
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user_id = auth(config('leap.guard'))->user()->id;
+        $user_id = Auth::user()->id;
 
         // Find all roles for this user
         $roles = Role::has('users', $user_id)->get();

@@ -17,7 +17,7 @@
                 if (hour < 12) greeting = '@lang('good_morning')'
                 else if (hour < 18) greeting = '@lang('good_afternoon')'
                 else greeting = '@lang('good_evening')';
-                return greeting + ' {{ auth(config('leap.guard'))->user()->name }}';
+                return greeting + ' {{ Auth::user()->name }}';
             }
         </script>
     </article>

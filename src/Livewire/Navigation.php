@@ -8,12 +8,6 @@ use Livewire\Attributes\On;
 
 class Navigation extends Component
 {
-    public function __construct()
-    {
-        // Use the proper authentication guard
-        Auth::shouldUse(config('leap.guard'));
-    }
-
     #[On('update-navigation')]
     public function updateNavigation()
     {

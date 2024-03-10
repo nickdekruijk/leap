@@ -14,9 +14,6 @@ class Module extends Component
 
     public function __construct($options = [])
     {
-        // Use the proper authentication guard
-        Auth::shouldUse(config('leap.guard'));
-
         // Overide default options
         foreach ($options as $option => $value) {
             $this->$option = $value;

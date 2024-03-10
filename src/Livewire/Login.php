@@ -15,11 +15,6 @@ class Login extends Component
     public $password;
     public $remember;
 
-    public function __construct()
-    {
-        Auth::shouldUse(config('leap.guard'));
-    }
-
     protected function rules()
     {
         $rules = [];
@@ -47,7 +42,7 @@ class Login extends Component
         }
         try {
             $this->rateLimit(5);
-            if (Auth::attempt($credentials, $this->remember)) {
+            if (Auth::guard(config('leap.guard'))->attempt($credentials, $this->remember)) {
                 return $this->redirectIntended(route('leap.home'));
             } else {
                 $this->addError('password', trans('auth.failed'));
@@ -59,7 +54,7 @@ class Login extends Component
 
     public function mount()
     {
-        if (Auth::check()) {
+        if (Auth::guard(config('leap.guard'))->check()) {
             return $this->redirectIntended(route('leap.home'));
         } else {
             session()->forget('leap.role');

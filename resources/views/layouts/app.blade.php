@@ -8,8 +8,10 @@
     </head>
     <body>
         <div class="leap">
-            @if (auth(config('leap.guard'))->user() && !NickDeKruijk\Leap\Controllers\Auth2FAController::mustValidate())
-                @livewire('leap.navigation')
+            @auth(config('leap.guard'))
+                @if (!NickDeKruijk\Leap\Controllers\Auth2FAController::mustValidate())
+                    @livewire('leap.navigation')
+                @endif
             @endif
             @livewire('leap.toasts')
             {{ $slot }}

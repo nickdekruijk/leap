@@ -12,11 +12,6 @@ class Auth2FA extends Component
     public $code;
     public $message;
 
-    public function __construct()
-    {
-        Auth::shouldUse(config('leap.guard'));
-    }
-
     protected function rules()
     {
         $rules = [];

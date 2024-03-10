@@ -13,7 +13,6 @@ class Helpers
      */
     public static function userModel()
     {
-        Auth::shouldUse(config('leap.guard'));
         $model = Auth::getProvider()->getModel();
         return new $model;
     }
