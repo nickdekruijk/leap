@@ -2,12 +2,10 @@
 
 namespace NickDeKruijk\Leap\Navigation;
 
-use NickDeKruijk\Leap\Traits\NavigationItem;
+use NickDeKruijk\Leap\Module;
 
-class Divider
+class Divider extends Module
 {
-    use NavigationItem;
-
     public $priority = 999;
     public $slug = false;
 

@@ -17,13 +17,20 @@ trait NavigationItem
     }
 
     /**
+     * The navigation priority of the module
+     *
+     * @var integer|null
+     */
+    public $priority = null;
+
+    /**
      * Return the navigation priority of the module
      *
      * @return integer
      */
     public function getPriority(): int
     {
-        return $this->priority ?? 1;
+        return $this->priority ?: 1;
     }
 
     /**

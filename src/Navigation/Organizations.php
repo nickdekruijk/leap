@@ -3,12 +3,10 @@
 namespace NickDeKruijk\Leap\Navigation;
 
 use NickDeKruijk\Leap\Leap;
-use NickDeKruijk\Leap\Traits\NavigationItem;
+use NickDeKruijk\Leap\Module;
 
-class Organizations
+class Organizations extends Module
 {
-    use NavigationItem;
-
     public $icon = 'fas-building';
     public $priority = 1000;
     public $slug = false;

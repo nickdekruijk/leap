@@ -2,12 +2,10 @@
 
 namespace NickDeKruijk\Leap\Navigation;
 
-use NickDeKruijk\Leap\Traits\NavigationItem;
+use NickDeKruijk\Leap\Module;
 
-class Logout
+class Logout extends Module
 {
-    use NavigationItem;
-
     public $icon = 'fas-sign-out-alt';
     public $priority = 1999;
     public $slug = false;

@@ -32,7 +32,7 @@ class ModuleController extends Controller
         foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $counter => $file) {
             $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
             $module = new $module();
-            $module->priority = $module->priority ?? $counter + 1;
+            $module->priority = $module->priority ?: $counter + 1;
             $modules[] = $module;
         }
 
