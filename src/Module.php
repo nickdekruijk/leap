@@ -8,8 +8,6 @@ use NickDeKruijk\Leap\Traits\NavigationItem;
 
 class Module extends Component
 {
-    public $component;
-
     use NavigationItem;
 
     public function __construct($options = [])
