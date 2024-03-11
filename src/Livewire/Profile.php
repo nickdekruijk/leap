@@ -19,14 +19,15 @@ class Profile extends Module
 
     public function mount()
     {
-        $this->data['name'] = Auth::user()->name;
-        $this->data['email'] = Auth::user()->email;
         $this->user = Auth::user();
+        $this->title = $this->user->name;
+        $this->data['name'] = $this->user->name;
+        $this->data['email'] = $this->user->email;
     }
 
     public function getTitle(): string
     {
-        return Auth::user()?->name;
+        return Auth::user()->name;
     }
 
     public function rules()
