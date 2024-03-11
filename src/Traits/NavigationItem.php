@@ -21,7 +21,7 @@ trait NavigationItem
      *
      * @var integer|null
      */
-    public $priority = null;
+    public $priority;
 
     /**
      * Return the navigation priority of the module
@@ -44,13 +44,20 @@ trait NavigationItem
     }
 
     /**
+     * The title of the module
+     *
+     * @var string|null
+     */
+    public $title;
+
+    /**
      * Return the title of the module (pluralized class name by default)
      *
      * @return string
      */
-    public function getTitle(): ?string
+    public function getTitle(): string
     {
-        return $this->title ?? __(Str::plural(class_basename(static::class)));
+        return $this->title ?: __(Str::plural(class_basename(static::class)));
     }
 
     /**
