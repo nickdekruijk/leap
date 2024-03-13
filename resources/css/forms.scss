@@ -79,6 +79,7 @@
         padding: 4px 6px;
         background-color: rgba(white, 0.5);
         &[disabled] {
+            cursor: progress;
             opacity: 0.33;
         }
     }
@@ -95,17 +96,17 @@
             background-color: rgba(white, 0.33);
             border-color: transparent;
 
-            &:hover {
+            &:hover:not([disabled]) {
                 background-color: $green;
             }
         }
 
-        &.secondary:hover {
+        &.secondary:hover:not([disabled]) {
             background-color: $red;
             border-color: transparent;
         }
 
-        &:hover {
+        &:hover:not([disabled]) {
             background-color: rgba(white, 0.2);
             border-color: transparent;
             cursor: pointer;
