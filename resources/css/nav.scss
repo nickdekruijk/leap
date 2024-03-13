@@ -128,8 +128,8 @@
 
         .leap-nav-collapse {
             display: none;
-            &:checked ~ UL {
-                display: block;
+            &:checked ~ UL > LI {
+                max-height: var(--nav-item-height);
             }
         }
 
@@ -138,8 +138,11 @@
                 cursor: pointer;
             }
             UL {
-                display: none;
-                background-color: rgba(white, 0.06);
+                > LI {
+                    max-height: 0;
+                    overflow: hidden;
+                    transition: max-height 0.2s;
+                }
                 A {
                     line-height: 2.5;
                     font-size: 0.9em;
