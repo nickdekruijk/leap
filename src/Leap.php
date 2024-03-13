@@ -2,15 +2,14 @@
 
 namespace NickDeKruijk\Leap;
 
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use NickDeKruijk\Leap\Controllers\ModuleController;
-use NickDeKruijk\Leap\Models\Role;
 
 class Leap
 {
     /**
-     * Name of the binding in the IoC container
+     * Return all modules the current user has access to
      *
      * @return string
      */
@@ -19,17 +18,14 @@ class Leap
         return ModuleController::getModules();
     }
 
-    public static function userOrganizations(): Collection
+    /**
+     * Get the user model instance from leap config
+     *
+     * @return Authenticatable;
+     */
+    public static function userModel(): Authenticatable
     {
-        $user = Auth::user();
-        $roles = Role::has('users', $user->id)->get();
-        foreach ($roles as $role) {
-            if ($role->organization_id) {
-                $organizations[$role->organization_id] = $role->organization;
-            } else {
-                return (new (config('leap.organization_model')))->all();
-            }
-        }
-        return collect($organizations);
+        $model = Auth::getProvider()->getModel();
+        return new $model;
     }
 }

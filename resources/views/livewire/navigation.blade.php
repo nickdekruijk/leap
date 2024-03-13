@@ -9,7 +9,7 @@
                     {!! $module->getOutput() !!}
                 @elseif ($module->getSlug())
                     <li class="leap-nav-item {{ $module->navigationClass() }}">
-                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.role.organization.slug')) }}">
+                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.user.role.organization.slug')) }}">
                             <x-leap::icon svg-icon="{{ $module->icon }}" />{{ $module->getTitle() }}
                         </a>
                     </li>

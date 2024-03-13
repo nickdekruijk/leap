@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use NickDeKruijk\Leap\Models\Role;
 
 class ModuleController extends Controller
 {
@@ -48,10 +47,15 @@ class ModuleController extends Controller
     {
         $modules = static::getAllModules();
 
-        // Filter out modules the user doesn't have access to (based on permissions)
-        if (session('leap.role')?->permissions) {
+        // Get default modules from config
+        foreach (config('leap.default_modules') as $module) {
+            $default[] = is_string($module) ? $module : $module::class;
+        }
+
+        // Filter out modules the user doesn't have access to based on permissions while keeping default modules
+        if (session('leap.user.role.permissions')) {
             foreach ($modules as $n => $module) {
-                if (empty(session('leap.role')->permissions[$module::class])) {
+                if (empty(session('leap.user.role.permissions')[$module::class]) && !in_array($module::class, $default)) {
                     unset($modules[$n]);
                 }
             }
@@ -65,19 +69,8 @@ class ModuleController extends Controller
      *
      * @return RedirectResponse
      */
-    public function home($organization = null): RedirectResponse
+    public static function home($organization = null): RedirectResponse
     {
-        if (!$organization && config('leap.organizations')) {
-            // Find first role for this user
-            $first = Auth::getUser()->belongsToMany(Role::class, config('leap.table_prefix') . 'role_user')->first();
-
-            // Check if the first role has an organization
-            if ($first->organization_id) {
-                $organization = $first->organization->slug;
-            } else {
-                $organization = (new (config('leap.organization_model')))->first()->slug;
-            }
-        }
         return redirect()->route('leap.module.' . static::getModules()->first()->getSlug(), $organization);
     }
 }

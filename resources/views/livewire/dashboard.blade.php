@@ -7,7 +7,7 @@
             <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
             <h4>
                 Your are logged in as
-                {{ session('leap.role')->name }}{{ config('leap.organizations') ? ' for ' . session('leap.role.organization.name') : '' }}.
+                {{ session('leap.user.role.name') }}{{ config('leap.organizations') ? ' for ' . session('leap.user.role.organization.name') : '' }}.
             </h4>
         </hgroup>
         <script>

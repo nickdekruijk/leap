@@ -20,11 +20,10 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
         Route::post('logout', LogoutController::class)->name('leap.logout');
     }
 
-    // Home route to redirect to the after login
-    Route::get(config('leap.organizations') ? '{organization?}/' : '/', [ModuleController::class, 'home'])->middleware([Leap::class, Auth2FA::class])->name('leap.home');
-
     // All other routes require authentication and the Leap middleware
     Route::middleware([Leap::class, RequireRole::class, Auth2FA::class])->group(function () {
+        // Home route to redirect to after login
+        Route::get(config('leap.organizations') ? '{organization?}/' : '/', [ModuleController::class, 'home'])->name('leap.home');
 
         // If organizations are enabled, add the {organization?} prefix to some routes
         $organizations_prefix = config('leap.organizations') ? '{organization}/' : '';

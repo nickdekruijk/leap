@@ -21,7 +21,7 @@
 			"NickDeKruijk\\Leap\\": "src/"
 		}
 	},
-	"minimum-stability": "beta",
+	"minimum-stability": "stable",
 	"extra": {
 		"laravel": {
 			"providers": [

@@ -5,7 +5,7 @@ namespace NickDeKruijk\Leap\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use NickDeKruijk\Leap\Helpers;
+use NickDeKruijk\Leap\Leap;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
@@ -54,7 +54,7 @@ class UserCommand extends Command
         $username = $this->arguments()[$this->getUsernameColumn()] ?: text(label: 'What ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '?', required: true);
 
         // Check if user already exists
-        $user = Helpers::userModel()->where($this->getUsernameColumn(), $username)->first();
+        $user = Leap::userModel()->where($this->getUsernameColumn(), $username)->first();
 
         // Get name from arguments or ask for it using the name part of the e-mail address as default
         $name = $this->arguments()['name'] ?: text(label: 'What is the name of this user?', default: $user?->name ?: ucfirst(explode('@', $username)[0]));
@@ -75,7 +75,7 @@ class UserCommand extends Command
             $status = 'updated';
         } else {
             // Create new user
-            $user = Helpers::userModel();
+            $user = Leap::userModel();
 
             // Update name
             $user->name = $name;

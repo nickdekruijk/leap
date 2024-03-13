@@ -77,7 +77,7 @@ trait NavigationItem
      */
     public function isActive(): bool
     {
-        return $this->getSlug() ? route('leap.module.' . $this->getSlug(), session('leap.role.organization.slug')) == url()->current() : false;
+        return $this->getSlug() ? route('leap.module.' . $this->getSlug(), session('leap.user.role.organization.slug')) == url()->current() : false;
     }
 
     /**
