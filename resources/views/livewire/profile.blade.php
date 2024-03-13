@@ -3,7 +3,7 @@
         <h2>{{ $this->getTitle() }}</h2>
     </header>
     <div class="leap-buttons" role="group">
-        <x-leap::button svg-icon="far-save"  wire:click="submit" label="save" class="primary" type="submit" />
+        <x-leap::button svg-icon="far-save"  wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
         <x-leap::button svg-icon="fas-xmark" wire:click="cancel" label="cancel" />
     </div>
     <form class="leap-form" wire:submit="submit">
