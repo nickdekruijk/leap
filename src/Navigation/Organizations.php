@@ -2,7 +2,7 @@
 
 namespace NickDeKruijk\Leap\Navigation;
 
-use NickDeKruijk\Leap\Leap;
+use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Module;
 
 class Organizations extends Module
@@ -19,14 +19,14 @@ class Organizations extends Module
     public function getOutput(): ?string
     {
         $output = '';
-        if (config('leap.organizations') && count(session('leap.user.organizations')) > 1) {
+        if (config('leap.organizations') && count(Context::get('leap.user.organizations')) > 1) {
             $output .= '<li class="leap-nav-item leap-nav-organizations">';
             $output .= '<label>';
             $output .= '<input type="checkbox" class="leap-nav-collapse">';
-            $output .= '<a x-on:click="document.getElementById(\'leap-nav-toggle\').checked=true">' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . session('leap.user.role.organization.name') . '</a>';
+            $output .= '<a x-on:click="document.getElementById(\'leap-nav-toggle\').checked=true">' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . Context::get('leap.organization')->name . '</a>';
 
             $output .= '<ul>';
-            foreach (session('leap.user.organizations') as $organization) {
+            foreach (Context::get('leap.user.organizations') as $organization) {
                 $output .= '<li><a wire:navigate href="' . route('leap.home', $organization['slug']) . '">' . $organization['name'] . '</a></li>';
             }
             $output .= '</ul>';

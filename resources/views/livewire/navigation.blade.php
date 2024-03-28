@@ -4,12 +4,12 @@
     <nav class="leap-nav">
         @include('leap::logo')
         <ul class="leap-nav-group">
-            @foreach(Leap::modules() as $module)
+            @foreach (Leap::modules() as $module)
                 @if ($module->getOutput())
                     {!! $module->getOutput() !!}
                 @elseif ($module->getSlug())
                     <li class="leap-nav-item {{ $module->navigationClass() }}">
-                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), session('leap.user.role.organization.slug')) }}">
+                        <a wire:navigate href="{{ route('leap.module.' . $module->getSlug(), Context::get('leap.organization')?->slug) }}">
                             <x-leap::icon svg-icon="{{ $module->icon }}" />{{ $module->getTitle() }}
                         </a>
                     </li>

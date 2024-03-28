@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,13 +32,13 @@ class RequireRole
 
         // If organizations are enabled check role for organization
         if (config('leap.organizations')) {
-            // Get all organizations
-            $organizations = (new (config('leap.organization_model')))->all();
+            // Create organization model instance
+            $organizations = new (config('leap.organization_model'));
 
-            // If user doesn't have a global role only keep organizations the user has a role for
-            if (!$role) {
-                $organizations = $organizations->whereIn('id', $roles->pluck('organization_id'));
-            }
+            // If user has a global role get all organizations otherwise only get organizations the user has a role for
+            $organizations = $role
+                ? $organizations->all()
+                : $organizations->whereIn('id', $roles->pluck('organization_id'));
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
@@ -58,18 +59,16 @@ class RequireRole
             // If no role was found, return 404 because we want to hide the fact that the organization exists
             abort_if(!$role, 404);
 
-            // Add the organization to the role so we can use it later
-            $role->organization = $organization->toArray();
-
-            // Store the available organizations in the session so we can use it for the rest of the request
-            session(['leap.user.organizations' => $organizations->toArray()]);
+            // Set the available organizations as context so we can use it during the request
+            Context::add('leap.user.organizations', $organizations);
+            Context::add('leap.organization', $organization);
         } else {
             // If no role was found, return 403
             abort_if(!$role, 403, 'No role found for this user');
         }
 
-        // Store the roles in the session so we can use it for the rest of the request
-        session(['leap.user.role' => $role->toArray()]);
+        // Set the role as context so we can use it during the request
+        Context::add('leap.user.role', $role);
 
         return $next($request);
     }

@@ -56,8 +56,6 @@ class Login extends Component
     {
         if (Auth::guard(config('leap.guard'))->check()) {
             return $this->redirectIntended(route('leap.home'));
-        } else {
-            session()->forget('leap.role');
         }
     }
 
