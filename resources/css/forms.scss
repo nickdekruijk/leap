@@ -128,7 +128,7 @@
 
     .leap-input[type="checkbox"],
     .leap-input[type="radio"] {
-        font-size:inherit;
+        font-size: inherit;
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
@@ -156,7 +156,7 @@
         box-sizing: content-box;
         display: inline-block;
         position: relative;
-        vertical-align: -.45em;
+        vertical-align: -0.45em;
         margin-right: 5px;
 
         &::before {
