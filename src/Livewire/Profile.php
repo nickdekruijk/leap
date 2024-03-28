@@ -100,11 +100,6 @@ class Profile extends Module
         }
     }
 
-    public function cancel()
-    {
-        return $this->redirect(route('leap.home'));
-    }
-
     public function render()
     {
         return view('leap::livewire.profile')->layout('leap::layouts.app');
