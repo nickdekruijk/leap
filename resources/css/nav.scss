@@ -1,7 +1,7 @@
 .leap-nav-aside {
     height: 100vh;
     position: sticky;
-    // max-width: 220px;
+    max-width: var(--nav-max-width);
     top: 0;
     z-index: 100;
 

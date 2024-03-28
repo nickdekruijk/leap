@@ -4,6 +4,7 @@
     --spacing: 16px;
     --header-height: 50px;
     --nav-item-height: 44px;
+    --nav-max-width: 250px;
     --logo-height: 50px;
     --font-size: 16px;
 }
@@ -13,6 +14,15 @@
         --font-size: 15px;
         --nav-item-height: 40px;
         --spacing: 10px;
+        --nav-max-width: 220px;
+    }
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --nav-max-width: 200px;
+        --font-size: 14px;
+        --nav-item-height: 36px;
     }
 }
 
