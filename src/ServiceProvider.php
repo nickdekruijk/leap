@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
-use NickDeKruijk\Leap\Middleware\Leap as LeapMiddleware;
+use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
@@ -36,7 +36,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         // Leap middleware should be persistent for all livewire requests
         Livewire::addPersistentMiddleware([
             Auth2FA::class,
-            LeapMiddleware::class,
+            LeapAuth::class,
             RequireRole::class,
         ]);
 

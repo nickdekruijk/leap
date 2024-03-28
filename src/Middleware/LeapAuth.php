@@ -5,7 +5,7 @@ namespace NickDeKruijk\Leap\Middleware;
 use Closure;
 use Illuminate\Auth\Middleware\Authenticate;
 
-class Leap extends Authenticate
+class LeapAuth extends Authenticate
 {
     /**
      * Handle an incoming request.

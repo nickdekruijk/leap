@@ -6,7 +6,7 @@ use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
-use NickDeKruijk\Leap\Middleware\Leap;
+use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 
 Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function () {
@@ -16,12 +16,12 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     // Set login and logout routes if required
     if (config('leap.auth_routes')) {
         Route::get('login', Login::class)->name('leap.login');
-        Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([Leap::class]);
+        Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([LeapAuth::class]);
         Route::post('logout', LogoutController::class)->name('leap.logout');
     }
 
     // All other routes require authentication and the Leap middleware
-    Route::middleware([Leap::class, RequireRole::class, Auth2FA::class])->group(function () {
+    Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class])->group(function () {
         // Home route to redirect to after login
         Route::get(config('leap.organizations') ? '{organization?}/' : '/', [ModuleController::class, 'home'])->name('leap.home');
 
