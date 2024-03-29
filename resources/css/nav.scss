@@ -129,6 +129,7 @@
         .leap-nav-collapse {
             display: none;
             &:checked ~ UL > LI {
+                opacity: 1;
                 max-height: var(--nav-item-height);
             }
         }
@@ -141,7 +142,8 @@
                 > LI {
                     max-height: 0;
                     overflow: hidden;
-                    transition: max-height 0.2s;
+                    opacity: 0;
+                    transition: max-height 0.3s, opacity 0.3s;
                 }
                 A {
                     line-height: 2.5;
