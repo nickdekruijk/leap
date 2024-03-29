@@ -84,6 +84,7 @@
         }
 
         .leap-nav-item {
+            position: relative;
             &.active {
                 background-color: rgba(black, 0.25);
                 color: $leap-nav-color-active;
@@ -98,6 +99,7 @@
                 text-overflow: ellipsis;
                 color: inherit;
                 display: block;
+                cursor: pointer;
             }
 
             BUTTON {
@@ -126,25 +128,38 @@
             margin-right: 0;
         }
 
-        .leap-nav-collapse {
-            display: none;
-            &:checked ~ UL > LI {
-                opacity: 1;
-                max-height: var(--nav-item-height);
-            }
-        }
-
-        .leap-nav-organizations {
-            LABEL {
-                cursor: pointer;
-            }
-            UL {
-                > LI {
-                    max-height: 0;
-                    overflow: hidden;
-                    opacity: 0;
-                    transition: max-height 0.3s, opacity 0.3s;
+        .leap-nav-collapsable {
+            > A {
+                padding-right: calc(var(--spacing) + 12px);
+                &::after {
+                    content: "";
+                    display: inline-block;
+                    position: absolute;
+                    right: var(--spacing);
+                    top: 50%;
+                    width: 0.5em;
+                    height: 0.5em;
+                    border-top: 2px solid currentColor;
+                    border-right: 2px solid currentColor;
+                    transform: translateY(-35%) rotate(45deg);
+                    transition: transform 0.3s;
+                    @media (max-width: 768px) {
+                        margin-left: 12px;
+                        position: relative;
+                        vertical-align: -2px;
+                    }
                 }
+            }
+            &.leap-nav-collapsable-open {
+                > A::after {
+                    transform: translate(2px, -4px) rotate(135deg);
+                }
+            }
+            > UL {
+                position: absolute;
+                background-color: $leap-nav-background;
+                z-index: 1;
+                width: 100%;
                 A {
                     line-height: 2.5;
                     font-size: 0.9em;

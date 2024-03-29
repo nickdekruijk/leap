@@ -38,7 +38,7 @@ class RequireRole
             // If user has a global role get all organizations otherwise only get organizations the user has a role for
             $organizations = $role
                 ? $organizations->all()
-                : $organizations->whereIn('id', $roles->pluck('organization_id'));
+                : $organizations->whereIn('id', $roles->pluck('organization_id'))->get();
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
