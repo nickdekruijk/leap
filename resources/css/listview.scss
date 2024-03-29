@@ -1,0 +1,50 @@
+.leap-listview {
+    .leap-listview-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        .leap-listview-header {
+            background-color: $leap-listview-header;
+            color: $leap-listview-header-color;
+            TH {
+                text-align: left;
+                font-weight: 400;
+                line-height: var(--nav-item-height);
+            }
+        }
+        .leap-listview-row {
+            background-color: $leap-listview-row;
+            color: $leap-listview-row-color;
+            TD {
+                box-shadow: inset rgba(white, 0.35) 0 1px 0,
+                    inset rgba(black, 0.05) 0 -1px 0;
+                padding-top: 6px;
+                padding-bottom: 6px;
+            }
+            TD:not(:first-child) {
+                font-size: 0.8em;
+            }
+            TD:first-child {
+                font-size: 0.95em;
+                color: $leap-listview-row-first-color;
+            }
+            &:hover {
+                background-color: $leap-listview-row-hover;
+                cursor: pointer;
+            }
+        }
+        TH,
+        TD {
+            white-space: nowrap;
+            padding-left: calc(var(--spacing) / 2);
+            padding-right: calc(var(--spacing) / 2);
+            &:first-child {
+                padding-left: var(--spacing);
+            }
+            &:last-child {
+                padding-right: var(--spacing);
+                width: 100%;
+            }
+        }
+    }
+}

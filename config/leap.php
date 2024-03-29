@@ -179,13 +179,14 @@ return [
     'css' => [
         'minireset.scss',
         'colors.scss',
-        'default.scss',
         'dashboard.scss',
-        'toasts.scss',
+        'default.scss',
         'forms.scss',
+        'listview.scss',
+        'login.scss',
         'logo.scss',
         'nav.scss',
-        'login.scss',
+        'toasts.scss',
         // base_path('resources/css/custom.scss'),
     ],
 
