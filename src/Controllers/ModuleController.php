@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 
 class ModuleController extends Controller
 {
@@ -53,9 +54,9 @@ class ModuleController extends Controller
         }
 
         // Filter out modules the user doesn't have access to based on permissions while keeping default modules
-        if (session('leap.user.role.permissions')) {
+        if (Context::get('leap.user.role')?->permissions) {
             foreach ($modules as $n => $module) {
-                if (empty(session('leap.user.role.permissions')[$module::class]) && !in_array($module::class, $default)) {
+                if (empty(Context::get('leap.user.role')->permissions[$module::class]) && !in_array($module::class, $default)) {
                     unset($modules[$n]);
                 }
             }
