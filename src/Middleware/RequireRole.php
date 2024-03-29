@@ -42,7 +42,7 @@ class RequireRole
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
-                return ModuleController::home($organizations->first()->slug);
+                return redirect()->route('leap.home', $organizations->first()->slug);
             }
 
             // Find the current organization
