@@ -80,7 +80,7 @@ return [
     |
     */
     'default_modules' => [
-        new Dashboard(['priority' => 0]),
+        Dashboard::class,
         Divider::class,
         Organizations::class,
         Profile::class,
