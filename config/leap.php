@@ -101,6 +101,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | permission_priority
+    |--------------------------------------------------------------------------
+    |
+    | The priority of permissions when organizations are enabled. When a user
+    | has module permissions from both a global and organization role this
+    | setting determines which role permission to use. Possible values are
+    | 'global' and 'organization'.
+    |
+    */
+    'permission_priority' => 'organization',
+
+    /*
+    |--------------------------------------------------------------------------
     | migrations
     |--------------------------------------------------------------------------
     |

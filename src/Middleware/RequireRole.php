@@ -65,13 +65,19 @@ class RequireRole
             abort_if(!$global_role, 403, 'No role found for this user');
         }
 
-        // Parse permissions and create an array containing all modules and their permissions
+        // Determine permissions for each module
         foreach (ModuleController::getAllModules() as $module) {
-            $permissions[$module::class] =
-                array_unique(array_merge(
-                    $global_role->permissions[$module::class] ?? $global_role->permissions['*'] ?? $module->getDefaultPermissions(),
-                    $organization_role?->permissions[$module::class] ?? $organization_role?->permissions['*'] ?? $module->getDefaultPermissions()
-                ));
+            if (config('leap.permission_priority') === 'global') {
+                $permissions[$module::class]
+                    = $global_role->permissions[$module::class] ?? $global_role->permissions['*']
+                    ?? $organization_role?->permissions[$module::class] ?? $organization_role?->permissions['*']
+                    ?? $module->getDefaultPermissions();
+            } elseif (config('leap.permission_priority') === 'organization') {
+                $permissions[$module::class]
+                    = $organization_role->permissions[$module::class] ?? $organization_role->permissions['*']
+                    ?? $global_role?->permissions[$module::class] ?? $global_role?->permissions['*']
+                    ?? $module->getDefaultPermissions();
+            }
         }
 
         // Set the permissions as context so we can use it during the request

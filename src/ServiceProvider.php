@@ -53,8 +53,17 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             ]);
         }
 
-        Gate::define('leap::module-read', function ($user, $module) {
-            return in_array('read', Context::get('leap.permissions')[$module::class]);
+        Gate::define('leap::create', function ($user) {
+            return in_array('create', Context::get('leap.permissions')[Context::get('leap.module')]);
+        });
+        Gate::define('leap::read', function ($user) {
+            return in_array('read', Context::get('leap.permissions')[Context::get('leap.module')]);
+        });
+        Gate::define('leap::update', function ($user) {
+            return in_array('update', Context::get('leap.permissions')[Context::get('leap.module')]);
+        });
+        Gate::define('leap::delete', function ($user) {
+            return in_array('delete', Context::get('leap.permissions')[Context::get('leap.module')]);
         });
     }
 

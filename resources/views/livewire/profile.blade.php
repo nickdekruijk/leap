@@ -3,7 +3,9 @@
         <h2>{{ $title }}</h2>
     </header>
     <div class="leap-buttons" role="group">
-        <x-leap::button svg-icon="far-save" wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
+        @can('leap::update')
+            <x-leap::button svg-icon="far-save" wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
+        @endcan
         <x-leap::button svg-icon="fas-xmark" href="{{ route('leap.home') }}" label="cancel" />
     </div>
     <form class="leap-form" wire:submit="submit">
