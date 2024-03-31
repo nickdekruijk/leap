@@ -20,11 +20,15 @@ class Role extends Model
     }
 
     protected $casts = [
+        'accepted' => 'boolean',
         'settings' => 'array',
         'permissions' => 'array',
+        'invited_on' => 'datetime',
+        'accepted_on' => 'datetime',
     ];
 
     protected $fillable = [
+        'accepted',
         'name',
         'settings',
         'permissions',

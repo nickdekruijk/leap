@@ -24,7 +24,7 @@ class RequireRole
     {
         // Find all roles for this user
         $roles = Role::whereHas('users', function (Builder $query) {
-            $query->where('user_id', Auth::getUser()->id);
+            $query->where('user_id', Auth::getUser()->id)->where('accepted', true);
         })->get();
 
         // Find global role

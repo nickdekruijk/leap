@@ -16,11 +16,16 @@ return new class extends Migration
     public function up()
     {
         Schema::create(config('leap.table_prefix') . 'role_user', function (Blueprint $table) {
+            $table->boolean('accepted');
             $table->foreignIdFor(Role::class, 'role_id')->constrained(config('leap.table_prefix') . 'roles')->cascadeOnDelete();
             $table->foreignIdFor(Leap::userModel()::class, 'user_id')->constrained()->cascadeOnDelete();
+            $table->string('accept_token')->nullable();
+            $table->datetime('invited_on')->nullable();
+            $table->datetime('accepted_on')->nullable();
             $table->timestamps();
 
             $table->primary(['user_id', 'role_id']);
+            $table->index(['accepted', 'user_id']);
         });
 
         // Create the first Admin role
