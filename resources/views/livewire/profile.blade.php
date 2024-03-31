@@ -1,6 +1,6 @@
 <main class="leap-main leap-profile leap-editor">
     <header class="leap-header">
-        <h2>{{ $this->getTitle() }}</h2>
+        <h2>{{ $title }}</h2>
     </header>
     <div class="leap-buttons" role="group">
         <x-leap::button svg-icon="far-save" wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
