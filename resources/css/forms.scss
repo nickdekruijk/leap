@@ -79,7 +79,6 @@
         padding: 4px 6px;
         background-color: rgba(white, 0.5);
         &[disabled] {
-            cursor: progress;
             opacity: 0.33;
         }
     }
