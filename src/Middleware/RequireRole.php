@@ -28,7 +28,7 @@ class RequireRole
         })->get();
 
         // Find global role
-        $role = $roles->whereNull('organization_id')->first();
+        $global_role = $roles->whereNull('organization_id')->first();
 
         // If organizations are enabled check role for organization
         if (config('leap.organizations')) {
@@ -36,7 +36,7 @@ class RequireRole
             $organizations = new (config('leap.organization_model'));
 
             // If user has a global role get all organizations otherwise only get organizations the user has a role for
-            $organizations = $role
+            $organizations = $global_role
                 ? $organizations->all()
                 : $organizations->whereIn('id', $roles->pluck('organization_id'))->get();
 
@@ -50,25 +50,37 @@ class RequireRole
 
             // If the organization was not found, return 404
             abort_if(!$organization, 404);
-
-            // If user doesn't have a global role find the role for this organization
-            if (!$role) {
-                $role = $roles->where('organization_id', $organization->id)->first();
-            }
+            // Find the role for this organization
+            $organization_role = $roles->where('organization_id', $organization->id)->first();
 
             // If no role was found, return 404 because we want to hide the fact that the organization exists
-            abort_if(!$role, 404);
+            abort_if(!$global_role && !$organization_role, 404);
 
             // Set the available organizations as context so we can use it during the request
             Context::add('leap.user.organizations', $organizations);
             Context::add('leap.organization', $organization);
+            Context::add('leap.user.organization_role', $organization_role);
         } else {
             // If no role was found, return 403
-            abort_if(!$role, 403, 'No role found for this user');
+            abort_if(!$global_role, 403, 'No role found for this user');
         }
 
+        // Parse permissions and create an array containing all modules and their permissions
+        foreach (ModuleController::getAllModules() as $module) {
+            $permissions[$module::class] =
+                array_unique(array_merge(
+                    $global_role->permissions[$module::class] ?? $global_role->permissions['*'] ?? $module->getDefaultPermissions(),
+                    $organization_role?->permissions[$module::class] ?? $organization_role?->permissions['*'] ?? $module->getDefaultPermissions()
+                ));
+        }
+
+        // Set the permissions as context so we can use it during the request
+        Context::add('leap.permissions', $permissions);
+
+        // dump($permissions);
+
         // Set the role as context so we can use it during the request
-        Context::add('leap.user.role', $role);
+        Context::add('leap.user.global_role', $global_role);
 
         return $next($request);
     }

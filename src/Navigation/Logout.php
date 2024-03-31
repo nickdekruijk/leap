@@ -9,6 +9,7 @@ class Logout extends Module
     public $icon = 'fas-sign-out-alt';
     public $priority = 1999;
     public $slug = false;
+    public $default_permissions = ['read', 'update'];
 
     public function getTitle(): string
     {

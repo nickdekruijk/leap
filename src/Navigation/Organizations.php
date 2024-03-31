@@ -10,4 +10,6 @@ class Organizations extends Module
     public $icon = 'fas-building';
     public $priority = 1000;
     public $slug = false;
+
+    public $default_permissions = ['read'];
 }

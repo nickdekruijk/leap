@@ -2,7 +2,8 @@
 
 namespace NickDeKruijk\Leap;
 
-use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
@@ -51,6 +52,10 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 UserCommand::class,
             ]);
         }
+
+        Gate::define('leap::module-read', function ($user, $module) {
+            return in_array('read', Context::get('leap.permissions')[$module::class]);
+        });
     }
 
     /**

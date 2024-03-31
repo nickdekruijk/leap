@@ -48,17 +48,9 @@ class ModuleController extends Controller
     {
         $modules = static::getAllModules();
 
-        // Get default modules from config
-        foreach (config('leap.default_modules') as $module) {
-            $default[] = is_string($module) ? $module : $module::class;
-        }
-
-        // Filter out modules the user doesn't have access to based on permissions while keeping default modules
-        if (Context::get('leap.user.role')?->permissions) {
-            foreach ($modules as $n => $module) {
-                if (empty(Context::get('leap.user.role')->permissions[$module::class]) && !in_array($module::class, $default)) {
-                    unset($modules[$n]);
-                }
+        foreach ($modules as $n => $module) {
+            if (empty(Context::get('leap.permissions')[$module::class])) {
+                unset($modules[$n]);
             }
         }
 

@@ -17,6 +17,8 @@ class Profile extends Module
     public $data;
     public $user;
 
+    public $default_permissions = ['read', 'update'];
+
     public function mount()
     {
         $this->user = Auth::user();

@@ -24,7 +24,15 @@ return new class extends Migration
         });
 
         // Create the first Admin role
-        $first_role = Role::firstOrCreate(['id' => 1], ['name' => 'superuser']);
+        $first_role = Role::firstOrCreate(
+            ['id' => 1],
+            [
+                'name' => 'superuser',
+                'permissions' => [
+                    '*' => ['create', 'read', 'update', 'delete'],
+                ]
+            ],
+        );
 
         // Attach the first user (if available) to the first role
         $first_role->users()->attach(Leap::userModel()::first()?->id);

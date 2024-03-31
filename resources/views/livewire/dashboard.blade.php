@@ -7,7 +7,7 @@
             <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
             <h4>
                 Your are logged in as
-                {{ Context::get('leap.user.role')->name }}{{ config('leap.organizations') ? ' for ' . Context::get('leap.organization')->name : '' }}.
+                {{ Context::get('leap.user.global_role')?->name }}{{ config('leap.organizations') ? '/' . Context::get('leap.user.organization_role')?->name . ' for ' . Context::get('leap.organization')->name : '' }}.
             </h4>
         </hgroup>
         <script>

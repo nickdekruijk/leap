@@ -8,6 +8,7 @@ class Divider extends Module
 {
     public $priority = 999;
     public $slug = false;
+    public $default_permissions = ['read'];
 
     public function getOutput(): ?string
     {
