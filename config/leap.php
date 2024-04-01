@@ -107,7 +107,8 @@ return [
     | The priority of permissions when organizations are enabled. When a user
     | has module permissions from both a global and organization role this
     | setting determines which role permission to use. Possible values are
-    | 'global' and 'organization'.
+    | 'global' and 'organization'. So you can either overrule the global role
+    | permissions with organization role permissions or the other way around.
     |
     */
     'permission_priority' => 'organization',
