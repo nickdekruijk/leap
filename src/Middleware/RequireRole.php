@@ -37,8 +37,8 @@ class RequireRole
 
             // If user has a global role get all organizations otherwise only get organizations the user has a role for
             $organizations = $global_role
-                ? $organizations->all()
-                : $organizations->whereIn('id', $roles->pluck('organization_id'))->get();
+                ? $organizations->leapNavigation()->get()
+                : $organizations->leapNavigation()->whereIn('id', $roles->pluck('organization_id'))->get();
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
@@ -57,10 +57,16 @@ class RequireRole
             abort_if(!$global_role && !$organization_role, 404);
 
             // Set the available organizations as context so we can use it during the request
+            Context::add('leap.organization.slug', $organization->slug);
+            Context::add('leap.organization.title', $organization->leapNavigationTitle);
             Context::add('leap.user.organizations', $organizations);
-            Context::add('leap.organization', $organization);
-            Context::add('leap.user.organization_role', $organization_role);
+
+            // Set the role as context so we can use it during the request
+            Context::add('leap.role.name', $global_role?->name . '/' . $organization_role?->name);
         } else {
+            // Set the role as context so we can use it during the request
+            Context::add('leap.role.name', $global_role?->name);
+
             // If no role was found, return 403
             abort_if(!$global_role, 403, 'No role found for this user');
         }
@@ -82,11 +88,6 @@ class RequireRole
 
         // Set the permissions as context so we can use it during the request
         Context::add('leap.permissions', $permissions);
-
-        // dump($permissions);
-
-        // Set the role as context so we can use it during the request
-        Context::add('leap.user.global_role', $global_role);
 
         return $next($request);
     }
