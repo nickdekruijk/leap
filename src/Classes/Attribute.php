@@ -38,7 +38,7 @@ class Attribute
     /**
      * Make the Attribute an email
      * 
-     * The type will be set to email and a validation rules 'email will be added.
+     * The type will be set to email and a validation rules 'email' will be added.
      *
      * @return Attribute
      */
@@ -101,6 +101,20 @@ class Attribute
         if ($nullable) {
             $this->validate[] = 'nullable';
         }
+        return $this;
+    }
+
+    /**
+     * Make the Attribute an password
+     * 
+     * The type will be set to password and a validation rules 'password' will be added.
+     *
+     * @return Attribute
+     */
+    public function password(): Attribute
+    {
+        $this->type = 'password';
+        $this->validate('password');
         return $this;
     }
 
