@@ -34,6 +34,11 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             Livewire::component('leap.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
         }
 
+        // Register all components in app/Leap directory
+        foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
+            Livewire::component('leap.app.' . strtolower(basename($file, '.php')), 'App\Leap\\' . basename($file, '.php'));
+        }
+
         // Leap middleware should be persistent for all livewire requests
         Livewire::addPersistentMiddleware([
             Auth2FA::class,
