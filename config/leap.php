@@ -149,12 +149,12 @@ return [
     | By default an organization will be refered to by a slug and the name will
     | be shown in the navigation. You can overrule this by adding a $leap_slug,
     | $leap_navigation_label and $leap_navigation_order attribute to the model.
-    | For example:
+    | For example (with the default values):
     | class Organization extends Model
     | {
-    |     public $leap_slug = 'name_id';
-    |     public $leap_navigation_label = 'title';
-    |     public $leap_navigation_order = 'sort';
+    |     public $leap_slug = 'slug';
+    |     public $leap_navigation_label = 'name';
+    |     public $leap_navigation_order = 'name';
     |
     */
     'organization_model' => 'App\Models\Organization',
