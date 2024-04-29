@@ -8,7 +8,7 @@
             <h4>
                 Your are logged in as {{ Context::get('leap.role.name') }}
                 @if (config('leap.organizations'))
-                    for {{ Context::get('leap.organization.title') }}
+                    for {{ Context::get('leap.organization.label') }}
                 @endif
             </h4>
         </hgroup>

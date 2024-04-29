@@ -35,10 +35,15 @@ class RequireRole
             // Create organization model instance
             $organizations = new (config('leap.organization_model'));
 
+            // Get navigation label, order and slug attributes
+            $label = $organizations->leap_navigation_label ?? 'name';
+            $order = $organizations->leap_navigation_order ?? $organizations->leap_navigation_label ?? 'name';
+            $slug = $organizations->leap_slug ?? 'slug';
+
             // If user has a global role get all organizations otherwise only get organizations the user has a role for
             $organizations = $global_role
-                ? $organizations->leapNavigation()->get()
-                : $organizations->leapNavigation()->whereIn('id', $roles->pluck('organization_id'))->get();
+                ? $organizations->orderBy($order)->get([$slug, $label])
+                : $organizations->orderBy($order)->whereIn('id', $roles->pluck('organization_id'))->get();
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
@@ -46,7 +51,7 @@ class RequireRole
             }
 
             // Find the current organization
-            $organization = $organizations->where('slug', $request->route()->organization)->first();
+            $organization = $organizations->where($slug, $request->route()->organization)->first();
 
             // If the organization was not found, return 404
             abort_if(!$organization, 404);
@@ -57,9 +62,14 @@ class RequireRole
             abort_if(!$global_role && !$organization_role, 404);
 
             // Set the available organizations as context so we can use it during the request
-            Context::add('leap.organization.slug', $organization->slug);
-            Context::add('leap.organization.title', $organization->leapNavigationTitle);
-            Context::add('leap.user.organizations', $organizations);
+            Context::add('leap.organization.slug', $organization->$slug);
+            Context::add('leap.organization.label', $organization->$label);
+            Context::add('leap.user.organizations', array_map(function ($org) use ($slug, $label) {
+                return [
+                    'slug' => $org[$slug],
+                    'label' => $org[$label],
+                ];
+            }, $organizations->toArray()));
 
             // Set the role as context so we can use it during the request
             Context::add('leap.role.name', $global_role?->name . '/' . $organization_role?->name);
