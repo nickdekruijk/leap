@@ -105,7 +105,21 @@ class Attribute
     }
 
     /**
-     * Make the Attribute an password
+     * Make the Attribute a number
+     * 
+     * The type will be set to number.
+     *
+     * @return Attribute
+     */
+    public function number(): Attribute
+    {
+        $this->type = 'number';
+        return $this;
+    }
+
+
+    /**
+     * Make the Attribute a password
      * 
      * The type will be set to password and a validation rules 'password' will be added.
      *
