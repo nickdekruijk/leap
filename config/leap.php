@@ -204,7 +204,7 @@ return [
         'dashboard.scss',
         'default.scss',
         'forms.scss',
-        'listview.scss',
+        'index.scss',
         'login.scss',
         'logo.scss',
         'nav.scss',

@@ -3,17 +3,17 @@
         <h2>{{ $this->getTitle() }}</h2>
     </header>
     <div class="leap-resource">
-        <div class="leap-listview">
-            <table class="leap-listview-table">
-                <tr class="leap-listview-header">
                     @foreach ($this->listColumns() as $column)
                         <th>{{ $column }}</th>
+        <div class="leap-index">
+            <table class="leap-index-table">
+                <tr class="leap-index-header">
                     @endforeach
                 </tr>
                 @foreach ($listview as $row)
-                    <tr class="leap-listview-row">
                         @foreach ($row as $column)
                             <td>{{ $column }}</td>
+                    <tr class="leap-index-row">
                         @endforeach
                     </tr>
                 @endforeach
