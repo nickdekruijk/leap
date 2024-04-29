@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 class Resource extends Module
@@ -13,13 +14,6 @@ class Resource extends Module
      * @var string
      */
     public $model;
-
-    /**
-     * The model instance for internal use
-     *
-     * @var Model
-     */
-    protected Model $_model;
 
     /**
      * The livewire component to use for the module
@@ -37,13 +31,11 @@ class Resource extends Module
     public ?array $permissions;
 
     /**
-     * The columns to show in the list view
+     * Sort the index by this attribute
      *
-     * @var array|null
+     * @var string|null
      */
-    public ?array $listColumns;
-
-    public $listview;
+    public ?string $sort;
 
     /**
      * Return a model instance
@@ -52,61 +44,23 @@ class Resource extends Module
      */
     public function getModel(): Model
     {
-        if (empty($this->_model)) {
-            $model = $this->model ?: 'App\\' . (is_dir(app_path('Models')) ? 'Models\\' : '') . class_basename(static::class);
-            $this->_model = new $model;
-        }
-        return $this->_model;
+        $model = $this->model ?: 'App\\' . (is_dir(app_path('Models')) ? 'Models\\' : '') . class_basename(static::class);
+        return new $model;
     }
 
     /**
-     * Return the columns of the model that can be edited
+     * Return the model attributes to show in the index
      *
      * @return array
      */
-    public function columns(): array
+    public function index(): Collection
     {
-        // First try to get the fillable columns from the model
-        $columns = $this->getModel()->getFillable();
-
-        // If no fillable then get all columns from the database table and remove the guarded ones
-        if (empty($columns)) {
-            $guarded = $this->getModel()->getGuarded();
-            if ($guarded != ['*']) {
-                // Get all columns
-                $columns = Schema::getColumnListing($this->getModel()->getTable());
-                // Remove the ones we don't want
-                $columns = array_diff($columns, ['id', 'created_at', 'updated_at', 'deleted_at']);
-                // Remove the guarded ones
-                $columns = array_diff($columns, $guarded);
-            }
-        }
-
-        // Return the columns
-        return $columns;
+        return collect($this->attributes())->where('index')->sortBy('index');
     }
 
-    /**
-     * Return the columns of the model that should be shown in the listview
-     *
-     * @return array
-     */
-    public function listColumns(): array
+    public function getIndexData()
     {
-        // Take the first 3 columns
-        return array_slice($this->columns(), 0, 3);
-    }
-
-
-    public function getListData()
-    {
-        return $this->getModel()->all($this->listColumns())->toArray();
-    }
-
-    public function mount()
-    {
-        $this->listview = $this->getListData();
-        // dd($this->listview);
+        return $this->getModel()->all($this->index()->pluck('name')->toArray())->toArray();
     }
 
     public function render()
