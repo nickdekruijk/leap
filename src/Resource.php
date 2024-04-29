@@ -15,26 +15,25 @@ class Resource extends Module
     public $model;
 
     /**
-     * The livewire component to use for the module
-     *
-     * @var string|null
-     */
-    public $component = 'leap.resource';
-
-    /**
-     * The ModuleController will set permissions for this module in this variable
-     * so we can use it in the Livewire component.
-     *
-     * @var array|null
-     */
-    public ?array $permissions;
-
-    /**
      * Sort the index by this attribute
      *
      * @var string|null
      */
-    public ?string $sort;
+    public $orderBy;
+
+    /**
+     * Enable descending index order
+     *
+     * @var boolean
+     */
+    public bool $orderDesc = false;
+
+    /**
+     * All the rows in the index
+     *
+     * @var Collection
+     */
+    public Collection $indexRows;
 
     /**
      * Return a model instance
@@ -50,16 +49,48 @@ class Resource extends Module
     /**
      * Return the model attributes to show in the index
      *
-     * @return array
+     * @return Collection
      */
-    public function index(): Collection
+    public function indexAttributes($attribute = null): Collection
     {
         return collect($this->attributes())->where('index')->sortBy('index');
     }
 
-    public function getIndexData()
+    public function getAttribute($attribute)
     {
-        return $this->getModel()->all($this->index()->pluck('name')->toArray())->toArray();
+        return $this->indexAttributes()->where('name', $attribute)->first();
+    }
+
+    /**
+     * Sort the index by this attribute
+     *
+     * @param string $attribute
+     * @return void
+     */
+    public function order(string $attribute, bool $desc = null)
+    {
+        // If currently sorted by this attribute, reverse the order
+        $this->orderDesc = ($desc === true || $desc === false) ? $desc : $this->orderBy == $attribute && !$this->orderDesc;
+
+        // Set new orderBy attribute
+        $this->orderBy = $attribute;
+
+        // If attribute is a number use natural sort order else use string sorting
+        $options = $this->getAttribute($this->orderBy)->type == 'number' ? SORT_NATURAL | SORT_FLAG_CASE : SORT_STRING | SORT_FLAG_CASE;
+
+        // Sort the rows according top the above options
+        $this->indexRows = $this->indexRows->sortBy($attribute, $options, $this->orderDesc);
+    }
+
+    public function mount()
+    {
+        // Collect all the rows for the index
+        $this->indexRows = collect($this->getModel()->all($this->indexAttributes()->pluck('name')->toArray())->toArray());
+
+        // Order them if needed
+        if ($this->orderBy) {
+            $this->order($this->orderBy, false);
+        }
     }
 
     public function render()
