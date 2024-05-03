@@ -36,6 +36,13 @@ class Resource extends Module
     public Collection $indexRows;
 
     /**
+     * The id of the row currently being edited, also toggles editor
+     *
+     * @var integer
+     */
+    public ?int $editing;
+
+    /**
      * Return a model instance
      *
      * @return Model
@@ -82,10 +89,20 @@ class Resource extends Module
         $this->indexRows = $this->indexRows->sortBy($attribute, $options, $this->orderDesc);
     }
 
+    public function open($id)
+    {
+        $this->editing = $id;
+    }
+
+    public function close()
+    {
+        $this->editing = null;
+    }
+
     public function mount()
     {
         // Collect all the rows for the index
-        $this->indexRows = collect($this->getModel()->all($this->indexAttributes()->pluck('name')->toArray())->toArray());
+        $this->indexRows = collect($this->getModel()->all(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray());
 
         // Order them if needed
         if ($this->orderBy) {

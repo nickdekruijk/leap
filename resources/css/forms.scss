@@ -84,7 +84,7 @@
     }
 
     .leap-button {
-        line-height: 1.6;
+        line-height: 1.3;
         border-color: rgba(white, 0.2);
         background-color: transparent;
         font-size: 14px;
@@ -111,6 +111,12 @@
             background-color: rgba(white, 0.2);
             border-color: transparent;
             cursor: pointer;
+        }
+
+        .leap-svg-icon {
+            margin-right: 0.25em;
+            height: 1em;
+            vertical-align: -0.15em;
         }
     }
 
