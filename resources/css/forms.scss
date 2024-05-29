@@ -1,6 +1,21 @@
 .leap {
     .leap-editor {
+        width: 100%;
+        min-height: 100%;
         background-color: $grey-light;
+        box-shadow: inset rgba(black, 0.05) 1px 0 0px;
+        position: absolute;
+        z-index: 10;
+
+        // overflow: auto;
+        &.leap-editor-closed {
+            width: 75vw;
+            right: -75vw;
+        }
+        &.leap-editor-open {
+            width: 75vw;
+            right: 0;
+        }
     }
 
     .leap-error {
@@ -57,17 +72,11 @@
         top: var(--header-height);
         z-index: 9;
         gap: calc(var(--spacing) / 2.5);
-        padding: calc(var(--spacing) / 2.5) 0 calc(var(--spacing) / 2.5)
-            var(--spacing);
+        padding: calc(var(--spacing) / 2.5) 0 calc(var(--spacing) / 2.5) var(--spacing);
     }
 
     .leap-button,
-    .leap-input:not(
-            [type="checkbox"],
-            [type="radio"],
-            [type="range"],
-            [type="file"]
-        ),
+    .leap-input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
     .leap-select,
     .leap-textarea {
         font: inherit;
@@ -120,12 +129,7 @@
         }
     }
 
-    .leap-input:not(
-            [type="checkbox"],
-            [type="radio"],
-            [type="range"],
-            [type="file"]
-        ),
+    .leap-input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
     .leap-select,
     .leap-textarea {
         width: 100%;

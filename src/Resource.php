@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Classes\Attribute;
 
 class Resource extends Module
 {
@@ -29,20 +30,6 @@ class Resource extends Module
     public bool $orderDesc = false;
 
     /**
-     * All the rows in the index
-     *
-     * @var Collection
-     */
-    public Collection $indexRows;
-
-    /**
-     * The id of the row currently being edited, also toggles editor
-     *
-     * @var integer
-     */
-    public ?int $editing;
-
-    /**
      * Return a model instance
      *
      * @return Model
@@ -58,20 +45,27 @@ class Resource extends Module
      *
      * @return Collection
      */
-    public function indexAttributes($attribute = null): Collection
+    public function indexAttributes(): Collection
     {
         return collect($this->attributes())->where('index')->sortBy('index');
     }
 
-    public function getAttribute($attribute)
+    /**
+     * Return the attribute details as defined by the Leap module
+     *
+     * @param string $attribute The attribute name
+     * @return Attribute
+     */
+    public function getAttribute(string $attribute): Attribute
     {
-        return $this->indexAttributes()->where('name', $attribute)->first();
+        return collect($this->attributes())->where('name', $attribute)->first();
     }
 
     /**
      * Sort the index by this attribute
      *
-     * @param string $attribute
+     * @param string $attribute The attribute name
+     * @param boolean|null $desc Sort in descending order
      * @return void
      */
     public function order(string $attribute, bool $desc = null)
@@ -81,33 +75,17 @@ class Resource extends Module
 
         // Set new orderBy attribute
         $this->orderBy = $attribute;
-
-        // If attribute is a number use natural sort order else use string sorting
-        $options = $this->getAttribute($this->orderBy)->type == 'number' ? SORT_NATURAL | SORT_FLAG_CASE : SORT_STRING | SORT_FLAG_CASE;
-
-        // Sort the rows according top the above options
-        $this->indexRows = $this->indexRows->sortBy($attribute, $options, $this->orderDesc);
     }
 
-    public function open($id)
+    public function indexRows()
     {
-        $this->editing = $id;
-    }
+        $data = $this->getModel();
 
-    public function close()
-    {
-        $this->editing = null;
-    }
-
-    public function mount()
-    {
-        // Collect all the rows for the index
-        $this->indexRows = collect($this->getModel()->all(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray());
-
-        // Order them if needed
         if ($this->orderBy) {
-            $this->order($this->orderBy, false);
+            $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
         }
+
+        return $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
     }
 
     public function render()

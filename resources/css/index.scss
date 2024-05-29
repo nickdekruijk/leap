@@ -1,14 +1,35 @@
+.leap-index-with-editor {
+    position: absolute;
+    width: 100%;
+    top: var(--header-height);
+    bottom: 0;
+    > * {
+        transition: all 0.4s;
+    }
+    .leap-index {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+}
 .leap-index {
+    overflow: auto;
+    flex: 1 1 auto;
+    max-height: calc(100vh - var(--header-height));
     .leap-index-table {
         width: 100%;
         border-collapse: collapse;
         border-spacing: 0;
         .leap-index-header {
-            background-color: $leap-index-header;
             color: $leap-index-header-color;
             position: sticky;
-            top: var(--header-height);
+            z-index: 2;
+            top: 0;
+            background-color: $leap-index-header;
             TH {
+                background-color: $leap-index-header;
                 text-align: left;
                 font-weight: 400;
                 line-height: var(--nav-item-height);
@@ -32,15 +53,23 @@
                     border-bottom-color: white;
                     transform: translateY(-25%);
                 }
+                &:first-child {
+                    position: sticky;
+                    left: 0;
+                }
             }
         }
         .leap-index-row {
-            background-color: $leap-index-row;
-            color: $leap-index-row-color;
             TD {
+                color: $leap-index-row-color;
+                background-color: $leap-index-row;
                 box-shadow: inset rgba(white, 0.35) 0 1px 0, inset rgba(black, 0.05) 0 -1px 0;
                 padding-top: 6px;
                 padding-bottom: 6px;
+                max-width: 30vw;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
             }
             TD:not(:first-child) {
                 font-size: 0.8em;
@@ -48,20 +77,29 @@
             TD:first-child {
                 font-size: 0.95em;
                 color: $leap-index-row-first-color;
+                position: sticky;
+                left: 0;
+                max-width: 40vw;
             }
+            &.leap-index-row-selected,
             &:hover {
-                background-color: $leap-index-row-hover;
                 TD {
+                    background-color: $leap-index-row-hover;
                     box-shadow: inset rgba(black, 0.05) 0 -1px 0;
                 }
                 cursor: pointer;
             }
+            &.leap-index-row-selected TD {
+                color: white;
+            }
             &.leap-index-group {
                 position: sticky;
-                background-color: $grey;
-                top: calc(var(--header-height) + var(--nav-item-height));
+                top: var(--nav-item-height);
                 font-weight: 700;
+                z-index: 1;
+                cursor: default;
                 TD {
+                    background-color: $grey;
                     font-size: 1em;
                     color: $leap-index-row-first-color;
                     box-shadow: inset rgba(black, 0.05) 0 1px 0, inset rgba(black, 0.05) 0 -1px 0;
