@@ -181,7 +181,7 @@ class Attribute
         return $this;
     }
 
-    public function toArray(): Attribute
+    public function toArray(): array
     {
         return get_object_vars($this);
     }
