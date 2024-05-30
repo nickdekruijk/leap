@@ -56,7 +56,7 @@ class Editor extends Component
         $this->editing = null;
     }
 
-    public function booted()
+    public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request
         Context::add('leap.module', $this->parentModule);
