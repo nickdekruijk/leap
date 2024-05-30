@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
@@ -19,6 +20,13 @@ class Editor extends Component
      */
     #[Locked]
     public ?int $editing;
+
+    /**
+     * The model data which can be updated by the editor
+     *
+     * @var array
+     */
+    public array $data;
 
     /**
      * The name of the parent Livewire component
@@ -55,6 +63,17 @@ class Editor extends Component
         return collect($parentAttributes)->where('indexOnly', false)->toArray();
     }
 
+    /**
+     * Return a model instance 
+     *
+     * @param [type] $id
+     * @return Model
+     */
+    private function getModel($id = null): Model
+    {
+        $model = $this->parentModule()->getModel();
+        return $id ? $model->find($id) : $model;
+    }
 
     /**
      * Show the editor for the given id
@@ -70,6 +89,9 @@ class Editor extends Component
 
         // Set the editing id and open the editor
         $this->editing = $id;
+
+        // Get the model data
+        $this->data = $this->getModel($id)->toArray();
     }
 
     /**
