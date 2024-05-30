@@ -7,7 +7,7 @@
             <table class="leap-index-table">
                 <tr class="leap-index-header">
                     @foreach ($this->indexAttributes() as $attribute)
-                        <th wire:click="order('{{ $attribute->name }}')" class="{{ $this->orderBy === $attribute->name ? ($this->orderDesc ? 'order-desc' : 'order-asc') : '' }}">{{ $attribute->label_index }}</th>
+                        <th wire:click="order('{{ $attribute->name }}')" class="{{ $this->orderBy === $attribute->name ? ($this->orderDesc ? 'order-desc' : 'order-asc') : '' }}">{{ $attribute->labelIndex }}</th>
                     @endforeach
                 </tr>
                 @foreach ($this->indexRows() as $row)

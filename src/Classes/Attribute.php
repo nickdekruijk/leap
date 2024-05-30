@@ -10,9 +10,9 @@ class Attribute
 
     public string $name;
     public ?int $index;
-    public bool $index_only = false;
+    public bool $indexOnly = false;
     public string $label;
-    public string $label_index;
+    public string $labelIndex;
     public bool $searchable = false;
     public ?string $slugify;
     public string $type = 'text';
@@ -30,7 +30,7 @@ class Attribute
         self::$_instance = new self;
         self::$_instance->name = $name;
 
-        self::$_instance->label = self::$_instance->label_index = Str::headline($name);
+        self::$_instance->label = self::$_instance->labelIndex = Str::headline($name);
 
         return self::$_instance;
     }
@@ -72,7 +72,7 @@ class Attribute
     public function indexOnly(int $priority = 999): Attribute
     {
         $this->index = $priority;
-        $this->index_only = true;
+        $this->indexOnly = true;
         return $this;
     }
 
@@ -86,13 +86,13 @@ class Attribute
      * For example: Attribute::make('email')->label('Email address', 'Email')
      * 
      * @param string $label
-     * @param string|null $label_index
+     * @param string|null $labelIndex
      * @return Attribute
      */
-    public function label(string $label, ?string $label_index = null): Attribute
+    public function label(string $label, ?string $labelIndex = null): Attribute
     {
         $this->label = $label;
-        $this->label_index = $label_index ?: $label;
+        $this->labelIndex = $labelIndex ?: $label;
         return $this;
     }
 
