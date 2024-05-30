@@ -71,8 +71,14 @@ class Editor extends Component
      */
     private function getModel($id = null): Model
     {
+        // Get the model instance
         $model = $this->parentModule()->getModel();
-        return $id ? $model->find($id) : $model;
+
+        // We only want the attributes that are shown in the editor
+        $attributes = collect($this->attributes())->pluck('name')->toArray();
+
+        // Find the model if an id is passed
+        return $id ? $model->find($id, $attributes) : $model;
     }
 
     /**
