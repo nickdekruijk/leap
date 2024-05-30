@@ -41,6 +41,20 @@ class Editor extends Component
         return new $decrypted;
     }
 
+    /**
+     * Return the model attributes to show in the editor
+     *
+     * @return array
+     */
+    public function attributes(): array
+    {
+        // Get the attributes from the parent module
+        $parentAttributes = $this->parentModule()->attributes();
+
+        // Filter out the indexOnly attributes
+        return collect($parentAttributes)->where('indexOnly', false)->toArray();
+    }
+
 
     /**
      * Show the editor for the given id
