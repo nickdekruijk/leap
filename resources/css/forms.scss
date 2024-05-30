@@ -50,7 +50,7 @@
         height: var(--nav-item-height);
         display: flex;
         position: sticky;
-        top: var(--header-height);
+        top: 0;
         z-index: 9;
         gap: calc(var(--spacing) / 2.5);
         padding: calc(var(--spacing) / 2.5) 0 calc(var(--spacing) / 2.5) var(--spacing);

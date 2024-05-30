@@ -42,13 +42,13 @@
     -moz-osx-font-smoothing: grayscale;
     font-size: var(--font-size);
     position: relative;
+    overflow-x: hidden;
 }
 
 .leap-main {
     flex: 1;
     background-color: $leap-main-background;
     min-height: 100vh;
-    width: 100%;
     position: relative;
 }
 

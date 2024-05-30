@@ -1,8 +1,8 @@
 <main class="leap-main leap-profile">
+    <header class="leap-header">
+        <h2>{{ $title }}</h2>
+    </header>
     <div class="leap-editor">
-        <header class="leap-header">
-            <h2>{{ $title }}</h2>
-        </header>
         <div class="leap-buttons" role="group">
             @can('leap::update')
                 <x-leap::button svg-icon="far-save" wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
