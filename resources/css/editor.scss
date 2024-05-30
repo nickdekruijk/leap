@@ -13,16 +13,26 @@
     }
 
     .leap-index + .leap-editor {
-        max-width: 1280px;
-        width: 75vw;
-        @media (max-width: 1440px) {
+        width: 60vw;
+        transform: translateX(100%);
+        @media (max-width: 1024px) {
             width: calc(100vw - 300px);
         }
         @media (max-width: 768px) {
             width: calc(100vw - 50px);
         }
-        &.leap-editor-closed {
-            transform: translateX(100%);
+    }
+
+    .leap-editor-open {
+        .leap-index {
+            transition: right 0.4s;
+            right: 60vw;
+            @media (max-width: 1024px) {
+                right: calc(100vw - 300px);
+            }
+        }
+        .leap-editor {
+            transform: translateX(0);
         }
     }
 }

@@ -1,4 +1,4 @@
-<div class="leap-editor {{ $editing ? 'leap-editor-open' : 'leap-editor-closed' }}">
+<div class="leap-editor">
     @if ($editing)
         <div class="leap-buttons" role="group">
             @can('leap::update')
@@ -10,7 +10,7 @@
             @can('leap::delete')
                 <x-leap::button svg-icon="far-trash-alt" wire:click="delete" label="delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
             @endcan
-            <x-leap::button svg-icon="fas-xmark" x-on:click="active=false" wire:click="close" label="cancel" />
+            <x-leap::button svg-icon="fas-xmark" x-on:click="leapRowSelected=false" wire:click="close" label="cancel" />
         </div>
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
