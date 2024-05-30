@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap\Livewire;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
@@ -15,6 +16,7 @@ class Editor extends Component
      *
      * @var integer
      */
+    #[Locked]
     public ?int $editing;
 
     /**
@@ -24,6 +26,7 @@ class Editor extends Component
      *
      * @var string
      */
+    #[Locked]
     public string $parentModule;
 
     #[On('openEditor')]
