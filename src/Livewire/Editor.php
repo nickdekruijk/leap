@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -22,12 +23,23 @@ class Editor extends Component
     /**
      * The name of the parent Livewire component
      * 
-     * The editor uses this to determine the model and attributes
+     * The editor uses this to determine the model and attributes. This will be encrypted to prevent leaking sensitive class name
      *
      * @var string
      */
     #[Locked]
-    public string $parentModule;
+    public string $parentModuleEncrypted;
+
+    /**
+     * Returns the parent Livewire component
+     *
+     * @return Component
+     */
+    private function parentModule(): Component
+    {
+        $decrypted = Crypt::decryptString($this->parentModuleEncrypted);
+        return new $decrypted;
+    }
 
 
     /**
@@ -59,12 +71,13 @@ class Editor extends Component
     public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request
-        Context::add('leap.module', $this->parentModule);
+        Context::add('leap.module', Crypt::decryptString($this->parentModuleEncrypted));
     }
 
     public function mount()
     {
-        $this->parentModule = Context::get('leap.module');
+        // Encrypt the parent module class name
+        $this->parentModuleEncrypted = Crypt::encryptString(Context::get('leap.module'));
     }
 
     public function render()
