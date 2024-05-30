@@ -1,23 +1,4 @@
 .leap {
-    .leap-editor {
-        width: 100%;
-        min-height: 100%;
-        background-color: $grey-light;
-        box-shadow: inset rgba(black, 0.05) 1px 0 0px;
-        position: absolute;
-        z-index: 10;
-
-        // overflow: auto;
-        &.leap-editor-closed {
-            width: 75vw;
-            right: -75vw;
-        }
-        &.leap-editor-open {
-            width: 75vw;
-            right: 0;
-        }
-    }
-
     .leap-error {
         float: right;
         color: $leap-color-error;

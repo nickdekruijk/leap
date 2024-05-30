@@ -203,6 +203,7 @@ return [
         'colors.scss',
         'dashboard.scss',
         'default.scss',
+        'editor.scss',
         'forms.scss',
         'index.scss',
         'login.scss',
