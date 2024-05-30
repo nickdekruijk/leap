@@ -26,6 +26,6 @@
                 @endforeach
             </table>
         </div>
-        @livewire('leap.editor', ['parentModule' => self::class])
+        @livewire('leap.editor')
     </div>
 </main>

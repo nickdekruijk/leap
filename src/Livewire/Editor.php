@@ -7,9 +7,8 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\Attributes\On;
-use NickDeKruijk\Leap\Module;
 
-class Editor extends Module
+class Editor extends Component
 {
     /**
      * The id of the row currently being edited, also toggles editor
@@ -17,7 +16,15 @@ class Editor extends Module
      * @var integer
      */
     public ?int $editing;
-    public $parentModule;
+
+    /**
+     * The name of the parent Livewire component
+     * 
+     * The editor uses this to determine the model and attributes
+     *
+     * @var string
+     */
+    public string $parentModule;
 
     #[On('openEditor')]
     public function openEditor($id)
@@ -28,6 +35,17 @@ class Editor extends Module
     public function close()
     {
         $this->editing = null;
+    }
+
+    public function booted()
+    {
+        // Add the parentModule to the context so we can use it during each request
+        Context::add('leap.module', $this->parentModule);
+    }
+
+    public function mount()
+    {
+        $this->parentModule = Context::get('leap.module');
     }
 
     public function render()
