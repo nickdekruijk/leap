@@ -29,12 +29,28 @@ class Editor extends Component
     #[Locked]
     public string $parentModule;
 
+
+    /**
+     * Show the editor for the given id
+     *
+     * @param int $id the id of the Model to update
+     * @return void
+     */
     #[On('openEditor')]
-    public function openEditor($id)
+    public function openEditor(int $id)
     {
+        // Check if the user has read permission to this module
+        Gate::authorize('leap::read', $id);
+
+        // Set the editing id and open the editor
         $this->editing = $id;
     }
 
+    /**
+     * Hide the editor
+     *
+     * @return void
+     */
     public function close()
     {
         $this->editing = null;
