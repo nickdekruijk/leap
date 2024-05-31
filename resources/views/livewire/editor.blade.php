@@ -2,7 +2,7 @@
     @if ($editing)
         <div class="leap-buttons" role="group">
             @can('leap::update')
-                <x-leap::button svg-icon="far-save" wire:click="submit" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
+                <x-leap::button svg-icon="far-save" wire:click="save" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan
             @can('leap::create')
                 <x-leap::button svg-icon="far-copy" wire:click="clone" label="save-copy" wire:loading.delay.shorter.attr="disabled" />

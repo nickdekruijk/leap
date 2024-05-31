@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\On;
 use NickDeKruijk\Leap\Classes\Attribute;
 
 class Resource extends Module
@@ -86,6 +87,12 @@ class Resource extends Module
         }
 
         return $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+    }
+
+    #[On('updateIndex')]
+    public function updateIndex()
+    {
+        $this->render();
     }
 
     public function render()
