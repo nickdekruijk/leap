@@ -105,6 +105,7 @@ class Editor extends Component
      *
      * @return void
      */
+    #[On('closeEditor')]
     public function close()
     {
         $this->editing = null;
