@@ -8,7 +8,7 @@
                 <x-leap::button svg-icon="far-copy" wire:click="clone" label="save-copy" wire:loading.delay.shorter.attr="disabled" />
             @endcan
             @can('leap::delete')
-                <x-leap::button svg-icon="far-trash-alt" wire:click="delete" label="delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
+                <x-leap::button svg-icon="far-trash-alt" wire:click="delete" wire:confirm="{{ __('delete_confirm') }}" label="delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
             @endcan
             <x-leap::button svg-icon="fas-xmark" x-on:click="leapRowSelected=false" wire:click="close" label="cancel" />
         </div>

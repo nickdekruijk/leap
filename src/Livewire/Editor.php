@@ -218,6 +218,44 @@ class Editor extends Component
         }
     }
 
+    /**
+     * Clone the edited model as a new model
+     *
+     * @return void
+     */
+    public function clone()
+    {
+        Gate::authorize('leap::create');
+
+        if ($this->isValid()) {
+            // Create new model
+            $model = $this->getModel();
+
+            // Update each attribute
+            foreach ($this->attributes() as $attribute) {
+                $model->{$attribute->name} = $this->data[$attribute->name];
+            }
+            $model->save();
+            $this->editing = $model->id;
+            $this->dispatch('toast', __('saved'))->to(Toasts::class);
+            $this->dispatch('updateIndex');
+        }
+    }
+
+    /**
+     * Delete the model being edited
+     *
+     * @return void
+     */
+    public function delete()
+    {
+        Gate::authorize('leap::delete', $this->editing);
+        $this->dispatch('toast', __('deleted'))->to(Toasts::class);
+        $this->getModel($this->editing)->delete();
+        $this->editing = null;
+        $this->dispatch('updateIndex');
+    }
+
     public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request

@@ -2,6 +2,8 @@
     "cancel": "Annuleren",
     "dashboard": "Dashboard",
     "delete": "Verwijderen",
+    "deleted": "Verwijderd",
+    "delete_confirm": "Weet je zeker dat je dit wilt verwijderen?",
     "email": "E-mailadres",
     "good_afternoon": "Goedemiddag",
     "good_evening": "Goedenavond",
