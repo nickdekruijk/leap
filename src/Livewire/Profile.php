@@ -44,15 +44,6 @@ class Profile extends Module
         ];
     }
 
-    public function messages()
-    {
-        $messages = [];
-        foreach (__('validation') as $rule => $message) {
-            $messages[$rule] = $message;
-        }
-        return $messages;
-    }
-
     public function validationAttributes()
     {
         $attributes = [];
@@ -72,7 +63,7 @@ class Profile extends Module
         Gate::authorize('leap::update');
 
         // Run validation
-        $validator = Validator::make(['data' => $this->data], $this->rules(), $this->messages(), $this->validationAttributes());
+        $validator = Validator::make(['data' => $this->data], $this->rules(), [], $this->validationAttributes());
         if ($validator->fails()) {
             // Show validation errors as toasts
             foreach ($validator->messages()->keys() as $fieldKey) {
