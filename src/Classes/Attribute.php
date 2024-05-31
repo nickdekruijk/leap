@@ -159,9 +159,13 @@ class Attribute
         return $this;
     }
 
-    public function unique(string $table = null, string $column = null, bool $ignoreSelf = true): Attribute
+    public function unique(string $table = null, string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = true): Attribute
     {
-        $this->validate[] = 'unique:' . ($table ?: '{table}') . ',' . ($column ?: $this->name) . ($ignoreSelf ? ',{id}' : '');
+        $this->validate[] = 'unique:' .
+            ($table ?: '{table}') . ',' .
+            ($column ?: $this->name) . ',' .
+            ($ignoreSelf ? '{id}' : 'NULL') . ',id' .
+            ($ignoreSoftDeletes ? ',deleted_at,NULL' : '');
         return $this;
     }
 
