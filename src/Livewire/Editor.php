@@ -74,11 +74,8 @@ class Editor extends Component
         // Get the model instance
         $model = $this->parentModule()->getModel();
 
-        // We only want the attributes that are shown in the editor
-        $attributes = collect($this->attributes())->pluck('name')->toArray();
-
         // Find the model if an id is passed
-        return $id ? $model->find($id, $attributes) : $model;
+        return $id ? $model->find($id) : $model;
     }
 
     /**
@@ -96,8 +93,11 @@ class Editor extends Component
         // Set the editing id and open the editor
         $this->editing = $id;
 
+        // We only want the attributes that are shown in the editor
+        $attributes = collect($this->attributes())->pluck('name')->toArray();
+
         // Get the model data
-        $this->data = $this->getModel($id)->toArray();
+        $this->data = $this->getModel($id)->only($attributes);
     }
 
     /**
