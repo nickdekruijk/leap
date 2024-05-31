@@ -159,11 +159,9 @@ class Attribute
         return $this;
     }
 
-    public function unique(bool $unique = true): Attribute
+    public function unique(string $table = null, string $column = null, bool $ignoreSelf = true): Attribute
     {
-        if ($unique) {
-            $this->validate[] = 'unique'; // :users,email,#id#
-        }
+        $this->validate[] = 'unique:' . ($table ?: '{table}') . ',' . ($column ?: $this->name) . ($ignoreSelf ? ',{id}' : '');
         return $this;
     }
 
