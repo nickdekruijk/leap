@@ -78,7 +78,12 @@ class Resource extends Module
         $this->orderBy = $attribute;
     }
 
-    public function indexRows()
+    /**
+     * Return an array of all rows with the id and the index attributes
+     *
+     * @return array
+     */
+    public function indexRows(): array
     {
         $data = $this->getModel();
 
@@ -89,6 +94,13 @@ class Resource extends Module
         return $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
     }
 
+    /**
+     * Rerender the component when updateIndex event is triggered
+     * 
+     * This is mostly used after updating a model.
+     *
+     * @return void
+     */
     #[On('updateIndex')]
     public function updateIndex()
     {
