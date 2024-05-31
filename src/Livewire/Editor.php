@@ -193,9 +193,11 @@ class Editor extends Component
 
             // Check if anything changed
             if ($model->isDirty()) {
-                $model->update();
+                foreach ($model->getDirty() as $attribute => $value) {
+                    $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                }
+                $model->save();
                 $this->dispatch('updateIndex');
-                $this->dispatch('toast', (__('saved')))->to(Toasts::class);
             } else {
                 $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
             }
