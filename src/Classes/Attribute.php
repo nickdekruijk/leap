@@ -40,12 +40,13 @@ class Attribute
      * 
      * The type will be set to email and a validation rules 'email' will be added.
      *
+     * @param string $validator The validator to use for example 'strict,dns,spoof' or any combination of rfc, strict, dns, spoof, filter, filter_unicode. The dns and spoof validators require the PHP intl extension.
      * @return Attribute
      */
-    public function email(): Attribute
+    public function email(string $validator = 'strict'): Attribute
     {
         $this->type = 'email';
-        $this->validate('email');
+        $this->validate('email:' . $validator);
         return $this;
     }
 
