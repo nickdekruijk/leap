@@ -118,13 +118,14 @@ class Editor extends Component
     /**
      * Return the validation rules from the attributes
      *
+     * @param integer|null $id the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
      * @return array
      */
-    public function rules(): array
+    public function rules(int $id = null): array
     {
         // The Attribute class sets some placeholders in the validation rules that needs to be replaced with actual values, this array defines those replacements
         $replace = [
-            '{id}' => $this->editing,
+            '{id}' => $id,
             '{table}' => $this->getModel()->getTable(),
         ];
 
@@ -165,6 +166,28 @@ class Editor extends Component
     }
 
     /**
+     * Check if the data is valid, if not show validation error and toasts
+     *
+     * @param integer|null $id the id of the model to update or null if creating, passed to the rules method to replace {id} in rules (usualy the unique rule)
+     * @return boolean
+     */
+    public function isValid(int $id = null): bool
+    {
+        $validator = Validator::make(['data' => $this->data], $this->rules($id), [], $this->validationAttributes());
+        if ($validator->fails()) {
+            // Show validation errors as toasts
+            foreach ($validator->messages()->keys() as $fieldKey) {
+                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
+            }
+            // Show validation errors
+            $validator->validate();
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Save the edited model
      *
      * @return void
@@ -173,16 +196,7 @@ class Editor extends Component
     {
         Gate::authorize('leap::update', $this->editing);
 
-        // First validate the data
-        $validator = Validator::make(['data' => $this->data], $this->rules(), [], $this->validationAttributes());
-        if ($validator->fails()) {
-            // Show validation errors as toasts
-            foreach ($validator->messages()->keys() as $fieldKey) {
-                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
-            }
-            // Show validation errors
-            $validator->validate();
-        } else {
+        if ($this->isValid($this->editing)) {
             // Get current model with data
             $model = $this->getModel($this->editing);
 
