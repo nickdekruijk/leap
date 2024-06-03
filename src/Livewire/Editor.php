@@ -195,7 +195,7 @@ class Editor extends Component
     }
 
     /**
-     * Save the edited model
+     * Save or create the edited model
      *
      * @return void
      */
@@ -254,7 +254,7 @@ class Editor extends Component
             $model->save();
             $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             $this->editing = $model->id;
-            $this->dispatch('toast', __('saved'))->to(Toasts::class);
+            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('created'))->to(Toasts::class);
             $this->dispatch('updateIndex', $model->id);
         }
     }
