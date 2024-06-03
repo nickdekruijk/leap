@@ -27,7 +27,7 @@ trait CanLog
             $module = Context::get('leap.module');
         }
 
-        // Check if logging is enabled globaly or per action or module
+        // Check if logging is enabled globaly or should be skipped for current action or module
         if (
             config('leap.logging.enabled')
             && !in_array($action, config('leap.logging.skip_actions'))
