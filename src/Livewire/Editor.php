@@ -16,6 +16,9 @@ use NickDeKruijk\Leap\Traits\CanLog;
 class Editor extends Component
 {
     use CanLog;
+
+    const int CREATE_NEW = -1;
+
     /**
      * The id of the row currently being edited, also toggles editor
      *
@@ -78,7 +81,7 @@ class Editor extends Component
         $model = $this->parentModule()->getModel();
 
         // Find the model if an id is passed
-        return $id ? $model->find($id) : $model;
+        return $id > 0 ? $model->find($id) : $model;
     }
 
     /**
@@ -198,7 +201,7 @@ class Editor extends Component
      */
     public function save()
     {
-        Gate::authorize('leap::update', $this->editing);
+        Gate::authorize($this->editing == self::CREATE_NEW ? 'leap::create' : 'leap::update', $this->editing);
 
         if ($this->isValid($this->editing)) {
             // Get current model with data
@@ -211,12 +214,20 @@ class Editor extends Component
 
             // Check if anything changed
             if ($model->isDirty()) {
-                foreach ($model->getDirty() as $attribute => $value) {
-                    $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                if ($this->editing == self::CREATE_NEW) {
+                    $model->save();
+                    $this->log('create', ['id' => $model->id]);
+                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('created'))->to(Toasts::class);
+                    $this->dispatch('updateIndex', $model->id);
+                    $this->editing = $model->id;
+                } else {
+                    foreach ($model->getDirty() as $attribute => $value) {
+                        $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                    }
+                    $this->log('update', ['id' => $this->editing]);
+                    $model->save();
+                    $this->dispatch('updateIndex', $model->id);
                 }
-                $this->log('update', ['id' => $this->editing]);
-                $model->save();
-                $this->dispatch('updateIndex', $model->id);
             } else {
                 $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
             }
