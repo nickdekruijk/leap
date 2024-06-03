@@ -6,9 +6,11 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use NickDeKruijk\Leap\Traits\CanLog;
 
 class Login extends Component
 {
+    use CanLog;
     use WithRateLimiting;
 
     public $email;
@@ -43,11 +45,14 @@ class Login extends Component
         try {
             $this->rateLimit(5);
             if (Auth::guard(config('leap.guard'))->attempt($credentials, $this->remember)) {
+                $this->log('login');
                 return $this->redirectIntended(route('leap.home'));
             } else {
+                $this->log('login-failed', [array_key_first($credentials) => $credentials[array_key_first($credentials)]]);
                 $this->addError('password', trans('auth.failed'));
             }
         } catch (TooManyRequestsException $exception) {
+            $this->log('login-throttle', ['seconds' => $exception->secondsUntilAvailable, array_key_first($credentials) => $credentials[array_key_first($credentials)]]);
             $this->addError('password', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
         }
     }

@@ -1,6 +1,8 @@
 <?php
 
+use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Livewire\Dashboard;
+use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Navigation\Divider;
 use NickDeKruijk\Leap\Navigation\Logout;
@@ -222,5 +224,34 @@ return [
     | and times two for retina screens. So 1140x996 pixels is a good size.
     */
     'login_image' => 'https://picsum.photos/1140/996',
+
+    /*
+    |--------------------------------------------------------------------------
+    | logging
+    |--------------------------------------------------------------------------
+    | Options for logging user actions. By default all actions are logged from
+    | all leap modules. The 'skip_actions' option can be used to exclude certain
+    | actions from being logged.
+    */
+    'logging' => [
+        'skip_actions' => [
+            // 'login',
+            // 'login-failed',
+            // 'login-throttle',
+            // 'logout',
+            // 'create',
+            // 'read',
+            // 'update',
+            // 'delete',
+        ],
+        'skip_modules' => [
+            // Login::class,
+            // LogoutController::class,
+            // Dashboard::class,
+        ],
+        'ip_address' => true,
+        'ip_address_anonymized' => false, // Anonymize IP address by replacing last part with xxx (or xxxx:xxxx)
+        'user_agent' => true,
+    ],
 
 ];
