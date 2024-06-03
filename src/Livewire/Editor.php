@@ -250,8 +250,9 @@ class Editor extends Component
     public function delete()
     {
         Gate::authorize('leap::delete', $this->editing);
-        $this->dispatch('toast', __('deleted'))->to(Toasts::class);
-        $this->getModel($this->editing)->delete();
+        $model = $this->getModel($this->editing);
+        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('deleted'))->to(Toasts::class);
+        $model->delete();
         $this->editing = null;
         $this->dispatch('updateIndex');
     }
