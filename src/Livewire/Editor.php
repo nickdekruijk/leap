@@ -202,7 +202,15 @@ class Editor extends Component
      */
     public function isValid(int $id = null): bool
     {
-        $validator = Validator::make(['data' => $this->data], $this->rules($id), [], $this->validationAttributes());
+        // Replace empty values with placeholders if present in temporary variable
+        $data = $this->data;
+        foreach ($this->placeholder as $name => $placeholder) {
+            if (!$data[$name]) {
+                $data[$name] = $placeholder;
+            }
+        }
+
+        $validator = Validator::make(['data' => $data], $this->rules($id), [], $this->validationAttributes());
         if ($validator->fails()) {
             // Show validation errors as toasts
             foreach ($validator->messages()->keys() as $fieldKey) {
@@ -212,6 +220,8 @@ class Editor extends Component
             $validator->validate();
             return false;
         } else {
+            // Validation passed so use data from temporary variable
+            $this->data = $data;
             return true;
         }
     }
@@ -224,13 +234,6 @@ class Editor extends Component
     public function save()
     {
         Gate::authorize($this->editing == self::CREATE_NEW ? 'leap::create' : 'leap::update', $this->editing);
-
-        // Replace empty values with placeholders if present
-        foreach ($this->placeholder as $name => $placeholder) {
-            if (!$this->data[$name]) {
-                $this->data[$name] = $placeholder;
-            }
-        }
 
         if ($this->isValid($this->editing)) {
             // Get current model with data
