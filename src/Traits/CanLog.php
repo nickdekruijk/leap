@@ -16,7 +16,7 @@ trait CanLog
      * @param array|string $context Context of the action, e.g. email address when trying to login
      * @return Log|null
      */
-    public function log(string $action, array|string $context = []): ?Log
+    public function log(string $action, array|string $context = null): ?Log
     {
         $module = get_called_class();
 
@@ -35,7 +35,7 @@ trait CanLog
                 'user_agent' => config('leap.logging.user_agent') ? request()->userAgent() : null,
                 'module' => $module,
                 'action' => $action,
-                'context' => $context ?: null,
+                'context' => $context,
                 'user_id' => auth()->id(),
             ]);
         } else {
