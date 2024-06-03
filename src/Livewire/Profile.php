@@ -22,6 +22,7 @@ class Profile extends Module
 
     public function mount()
     {
+        $this->log('read');
         $this->user = Auth::user();
         $this->title = $this->user->name;
         $this->data['name'] = $this->user->name;
@@ -75,6 +76,7 @@ class Profile extends Module
             // Check if name is changed
             if ($this->user->name != $this->data['name']) {
                 $this->user->name = $this->data['name'];
+                $this->log('update', ['name' => $this->user->name]);
                 $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
                 // Update title and navigation to reflect name change
                 $this->title = $this->user->name;
@@ -83,6 +85,7 @@ class Profile extends Module
 
             // Check if password is changed
             if (isset($this->data['password_new'])) {
+                $this->log('update', 'new password');
                 $this->user->password = bcrypt($this->data['password_new']);
                 $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
             }

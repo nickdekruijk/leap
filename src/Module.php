@@ -6,10 +6,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
+use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\NavigationItem;
 
 class Module extends Component
 {
+    use CanLog;
     use NavigationItem;
 
     /**

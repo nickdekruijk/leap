@@ -14,6 +14,7 @@ class Dashboard extends Module
 
     public function render()
     {
+        $this->log('read');
         return view('leap::livewire.dashboard')->layout('leap::layouts.app');
     }
 }
