@@ -112,7 +112,6 @@ class Resource extends Module
     public function updateIndex(int $id = 0)
     {
         $this->selectedRow = $id;
-        $this->render();
     }
 
     public function render()

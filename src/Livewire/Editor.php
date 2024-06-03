@@ -211,7 +211,7 @@ class Editor extends Component
                     $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
                 }
                 $model->save();
-                $this->dispatch('updateIndex');
+                $this->dispatch('updateIndex', $model->id);
             } else {
                 $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
             }
