@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Traits;
 
+use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Log;
 
@@ -23,6 +24,11 @@ trait CanLog
         // If context is a string convert it to an array
         if (is_string($context)) {
             $context = [$context];
+        }
+
+        if (Context::get('leap.module') !== $module) {
+            $context['module'] = $module;
+            $module = Context::get('leap.module');
         }
 
         if (!in_array($action, config('leap.logging.skip_actions')) && !in_array($module, config('leap.logging.skip_modules'))) {
