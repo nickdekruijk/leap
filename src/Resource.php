@@ -31,6 +31,13 @@ class Resource extends Module
     public bool $orderDesc = false;
 
     /**
+     * The currently selected index row
+     *
+     * @var integer
+     */
+    public int $selectedRow = 0;
+
+    /**
      * Return a model instance
      *
      * @return Model
@@ -102,8 +109,9 @@ class Resource extends Module
      * @return void
      */
     #[On('updateIndex')]
-    public function updateIndex()
+    public function updateIndex(int $id = 0)
     {
+        $this->selectedRow = $id;
         $this->render();
     }
 

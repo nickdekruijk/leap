@@ -10,7 +10,7 @@
             @can('leap::delete')
                 <x-leap::button svg-icon="far-trash-alt" wire:click="delete" wire:confirm="{{ __('delete_confirm') }}" label="delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
             @endcan
-            <x-leap::button svg-icon="fas-xmark" x-on:click="leapRowSelected=false" wire:click="close" label="cancel" />
+            <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=false" wire:click="close" label="cancel" />
         </div>
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">

@@ -238,7 +238,7 @@ class Editor extends Component
             $model->save();
             $this->editing = $model->id;
             $this->dispatch('toast', __('saved'))->to(Toasts::class);
-            $this->dispatch('updateIndex');
+            $this->dispatch('updateIndex', $model->id);
         }
     }
 
