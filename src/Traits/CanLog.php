@@ -21,11 +21,6 @@ trait CanLog
     {
         $module = get_called_class();
 
-        // If context is a string convert it to an array
-        if (is_string($context)) {
-            $context = [$context];
-        }
-
         if (Context::get('leap.module') !== $module) {
             $context['module'] = $module;
             $module = Context::get('leap.module');
@@ -39,6 +34,11 @@ trait CanLog
         ) {
             // Anonymize IP address if needed
             $ip = config('leap.logging.ip_address_anonymized') ? preg_replace(['/\.\d*$/', '/[\da-f]*:[\da-f]*$/'], ['.xxx', 'xxxx:xxxx'], request()->ip()) : request()->ip();
+
+            // If context is a string convert it to an array
+            if (is_string($context)) {
+                $context = ['context' => $context];
+            }
 
             // Create log entry and return model instance
             return Log::create([
