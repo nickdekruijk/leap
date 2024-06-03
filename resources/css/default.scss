@@ -55,6 +55,8 @@
 .leap-header {
     position: sticky;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
     top: 0;
     z-index: 10;
     background-color: $leap-header-background;
