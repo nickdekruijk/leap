@@ -13,11 +13,13 @@ class Attribute
     public bool $indexOnly = false;
     public string $label;
     public string $labelIndex;
+    public string $placeholder = '';
     public bool $searchable = false;
-    public ?string $slugify;
+    public ?string $slugify = null;
     public string $type = 'text';
     public array $validate = [];
     public array $values = [];
+    public string $wire = 'blur';
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -118,6 +120,17 @@ class Attribute
         return $this;
     }
 
+    /**
+     * Set the placeholder value
+     *
+     * @param string $placeholder
+     * @return Attribute
+     */
+    public function placeholder(string $placeholder): Attribute
+    {
+        $this->placeholder = $placeholder;
+        return $this;
+    }
 
     /**
      * Make the Attribute a password
@@ -147,9 +160,20 @@ class Attribute
         return $this;
     }
 
-    public function slugify(string $slugify): Attribute
+    /**
+     * If the target attribute is empty populate it with a slug of the current value
+     * 
+     * The slugified value will be shown as placeholder for the target input unless a value was already saved in the model.
+     * An incrementing number will be appended to the slug to make it unique if the slug already exists.
+     * Note that also setting a placeholder for the target input will have no effect.
+     *
+     * @param string $attribute attribute to use for slugging
+     * @return Attribute
+     */
+    public function slugify(string $target): Attribute
     {
-        $this->slugify = $slugify;
+        $this->wire = 'live';
+        $this->slugify = $target;
         return $this;
     }
 

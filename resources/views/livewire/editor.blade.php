@@ -17,7 +17,7 @@
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
-                    <x-leap::input wire="blur" name="data.{{ $attribute->name }}" label="{{ $attribute->label }}" type="{{ $attribute->type }}" />
+                    <x-leap::input wire="{{ $attribute->wire ?? 'blur' }}" name="data.{{ $attribute->name }}" placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}" label="{{ $attribute->label }}" type="{{ $attribute->type }}" />
                 @endforeach
             </fieldset>
         </form>

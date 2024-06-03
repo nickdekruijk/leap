@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Attributes\On;
@@ -34,6 +35,13 @@ class Editor extends Component
      * @var array
      */
     public array $data;
+
+    /**
+     * The attribute placeholders will be overruled by these and will be the default value when the input is empty
+     *
+     * @var array
+     */
+    public array $placeholder = [];
 
     /**
      * The name of the parent Livewire component
@@ -108,6 +116,11 @@ class Editor extends Component
         // Get the model data
         $this->data = $this->getModel($id)->only($attributes);
 
+        // Set the placeholders for slugify attributes
+        foreach ($this->attributes()->where('slugify') as $attribute) {
+            $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
+        }
+
         // Clear existing validation errors
         $this->resetValidation();
     }
@@ -170,6 +183,14 @@ class Editor extends Component
 
     public function updated($field, $value)
     {
+        // Get the full attribute
+        $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
+
+        // Update slug placeholder if needed
+        if ($attribute->slugify) {
+            $this->placeholder[$attribute->slugify] = Str::slug($value);
+        }
+
         $this->validateOnly($field);
     }
 
@@ -207,6 +228,13 @@ class Editor extends Component
         if ($this->isValid($this->editing)) {
             // Get current model with data
             $model = $this->getModel($this->editing);
+
+            // Replace empty values with placeholders if present
+            foreach ($this->placeholder as $name => $placeholder) {
+                if (!$this->data[$name]) {
+                    $this->data[$name] = $placeholder;
+                }
+            }
 
             // Update each attribute
             foreach ($this->attributes() as $attribute) {
