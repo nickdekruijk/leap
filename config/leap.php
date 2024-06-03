@@ -240,7 +240,7 @@ return [
             // 'login-throttle',
             // 'logout',
             // 'create',
-            // 'read',
+            'read',
             // 'update',
             // 'delete',
         ],
