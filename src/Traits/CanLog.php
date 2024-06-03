@@ -21,7 +21,8 @@ trait CanLog
     {
         $module = get_called_class();
 
-        if (Context::get('leap.module') !== $module) {
+        // If module is already set in context and is different from the get_called_class then use that as main module and keep get_called_class as module in context
+        if (Context::get('leap.module') && Context::get('leap.module') !== $module) {
             $context['module'] = $module;
             $module = Context::get('leap.module');
         }
