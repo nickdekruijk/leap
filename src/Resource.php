@@ -116,6 +116,7 @@ class Resource extends Module
 
     public function render()
     {
+        $this->log('read');
         return view('leap::livewire.resource')->layout('leap::layouts.app');
     }
 }

@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use NickDeKruijk\Leap\Traits\CanLog;
 
 class Editor extends Component
 {
+    use CanLog;
     /**
      * The id of the row currently being edited, also toggles editor
      *
@@ -90,6 +92,8 @@ class Editor extends Component
     {
         // Check if the user has read permission to this module
         Gate::authorize('leap::read', $id);
+
+        $this->log('read', ['id' => $id]);
 
         // Set the editing id and open the editor
         $this->editing = $id;
@@ -210,6 +214,7 @@ class Editor extends Component
                 foreach ($model->getDirty() as $attribute => $value) {
                     $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
                 }
+                $this->log('update', ['id' => $this->editing]);
                 $model->save();
                 $this->dispatch('updateIndex', $model->id);
             } else {
@@ -236,6 +241,7 @@ class Editor extends Component
                 $model->{$attribute->name} = $this->data[$attribute->name];
             }
             $model->save();
+            $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             $this->editing = $model->id;
             $this->dispatch('toast', __('saved'))->to(Toasts::class);
             $this->dispatch('updateIndex', $model->id);
@@ -252,6 +258,7 @@ class Editor extends Component
         Gate::authorize('leap::delete', $this->editing);
         $model = $this->getModel($this->editing);
         $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('deleted'))->to(Toasts::class);
+        $this->log('delete', ['id' => $this->editing]);
         $model->delete();
         $this->editing = null;
         $this->dispatch('updateIndex');
