@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
@@ -58,15 +59,15 @@ class Editor extends Component
     /**
      * Return the model attributes to show in the editor
      *
-     * @return array
+     * @return Collection
      */
-    public function attributes(): array
+    public function attributes(): Collection
     {
         // Get the attributes from the parent module
         $parentAttributes = $this->parentModule()->attributes();
 
         // Filter out the indexOnly attributes
-        return collect($parentAttributes)->where('indexOnly', false)->toArray();
+        return collect($parentAttributes)->where('indexOnly', false);
     }
 
     /**
@@ -102,7 +103,7 @@ class Editor extends Component
         $this->editing = $id;
 
         // We only want the attributes that are shown in the editor
-        $attributes = collect($this->attributes())->pluck('name')->toArray();
+        $attributes = $this->attributes()->pluck('name')->toArray();
 
         // Get the model data
         $this->data = $this->getModel($id)->only($attributes);
