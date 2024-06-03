@@ -225,16 +225,16 @@ class Editor extends Component
     {
         Gate::authorize($this->editing == self::CREATE_NEW ? 'leap::create' : 'leap::update', $this->editing);
 
+        // Replace empty values with placeholders if present
+        foreach ($this->placeholder as $name => $placeholder) {
+            if (!$this->data[$name]) {
+                $this->data[$name] = $placeholder;
+            }
+        }
+
         if ($this->isValid($this->editing)) {
             // Get current model with data
             $model = $this->getModel($this->editing);
-
-            // Replace empty values with placeholders if present
-            foreach ($this->placeholder as $name => $placeholder) {
-                if (!$this->data[$name]) {
-                    $this->data[$name] = $placeholder;
-                }
-            }
 
             // Update each attribute
             foreach ($this->attributes() as $attribute) {
