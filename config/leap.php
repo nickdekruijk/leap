@@ -222,6 +222,7 @@ return [
     | Image to show on the login screen. By default random from picsum.photos.
     | Default image viewport is 380x332 pixels and zooms to 1.5 magnification 
     | and times two for retina screens. So 1140x996 pixels is a good size.
+    |
     */
     'login_image' => 'https://picsum.photos/1140/996',
 
@@ -230,8 +231,9 @@ return [
     | logging
     |--------------------------------------------------------------------------
     | Options for logging user actions. By default all actions are logged from
-    | all leap modules. The 'skip_actions' option can be used to exclude certain
-    | actions from being logged.
+    | all leap modules. The 'skip_actions' and 'skip_modules' option can be 
+    | used to exclude certain actions and modules from being logged.
+    |
     */
     'logging' => [
         'skip_actions' => [
@@ -249,9 +251,9 @@ return [
             // LogoutController::class,
             // Dashboard::class,
         ],
-        'ip_address' => true,
-        'ip_address_anonymized' => false, // Anonymize IP address by replacing last part with xxx (or xxxx:xxxx)
-        'user_agent' => true,
+        'ip_address' => true, // Log IP address with each log entry
+        'ip_address_anonymized' => false, // Anonymize IP address by replacing last part with .xxx (or :xxxx:xxxx for IPv6)
+        'user_agent' => true, // Store user agent with each log entry
     ],
 
 ];
