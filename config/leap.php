@@ -236,6 +236,7 @@ return [
     |
     */
     'logging' => [
+        'enabled' => true, // Enable or disable all logging
         'skip_actions' => [
             // 'login',
             // 'login-failed',

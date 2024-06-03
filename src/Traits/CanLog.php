@@ -31,7 +31,12 @@ trait CanLog
             $module = Context::get('leap.module');
         }
 
-        if (!in_array($action, config('leap.logging.skip_actions')) && !in_array($module, config('leap.logging.skip_modules'))) {
+        // Check if logging is enabled globaly or per action or module
+        if (
+            config('leap.logging.enabled')
+            && !in_array($action, config('leap.logging.skip_actions'))
+            && !in_array($module, config('leap.logging.skip_modules'))
+        ) {
             // Anonymize IP address if needed
             $ip = config('leap.logging.ip_address_anonymized') ? preg_replace(['/\.\d*$/', '/[\da-f]*:[\da-f]*$/'], ['.xxx', 'xxxx:xxxx'], request()->ip()) : request()->ip();
 
