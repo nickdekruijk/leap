@@ -118,7 +118,7 @@ class Editor extends Component
 
         // Reformat datetime attributes
         foreach ($this->attributes()->where('type', 'datetime-local') as $attribute) {
-            $this->data[$attribute->name] = $this->data[$attribute->name]->isoFormat('YYYY-MM-DD HH:mm:ss');
+            $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
         }
 
         // Set the placeholders for slugify attributes
