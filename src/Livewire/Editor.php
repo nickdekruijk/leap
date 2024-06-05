@@ -246,7 +246,7 @@ class Editor extends Component
 
             // Update each attribute
             foreach ($this->attributes() as $attribute) {
-                $model->{$attribute->name} = $this->data[$attribute->name];
+                $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
             }
 
             // Check if anything changed
