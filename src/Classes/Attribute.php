@@ -17,6 +17,7 @@ class Attribute
     public string $placeholder = '';
     public bool $searchable = false;
     public ?string $slugify = null;
+    public ?int $step = null;
     public string $type = 'text';
     public array $validate = [];
     public array $values = [];
@@ -37,6 +38,34 @@ class Attribute
         self::$_instance->label = self::$_instance->labelIndex = Str::headline($name);
 
         return self::$_instance;
+    }
+
+    /**
+     * Make the Attribute a date
+     *
+     * @return Attribute
+     */
+    public function date(): Attribute
+    {
+        $this->type = 'date';
+        $this->validate('date');
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a datetime
+     *
+     * @param boolean $includeSeconds Include seconds input when editing
+     * @return Attribute
+     */
+    public function datetime(bool $includeSeconds = false): Attribute
+    {
+        $this->type = 'datetime-local';
+        $this->validate('date');
+        if ($includeSeconds) {
+            $this->step = 1;
+        }
+        return $this;
     }
 
     /**

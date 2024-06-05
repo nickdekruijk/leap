@@ -7,6 +7,8 @@
             placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}"
             @if (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update')) disabled @endif
             aria-label="@lang($attribute->label)"
+            type="{{ $attribute->type }}"
+            step="{{ $attribute->step }}"
             wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
         @endisset
         {{ $attributes }}>

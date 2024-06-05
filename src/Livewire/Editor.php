@@ -116,6 +116,11 @@ class Editor extends Component
         // Get the model data
         $this->data = $this->getModel($id)->only($attributes);
 
+        // Reformat datetime attributes
+        foreach ($this->attributes()->where('type', 'datetime-local') as $attribute) {
+            $this->data[$attribute->name] = $this->data[$attribute->name]->isoFormat('YYYY-MM-DD HH:mm:ss');
+        }
+
         // Set the placeholders for slugify attributes
         foreach ($this->attributes()->where('slugify') as $attribute) {
             $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
