@@ -8,6 +8,7 @@ class Attribute
 {
     public static $_instance = null;
 
+    public string $dataName;
     public string $name;
     public ?int $index;
     public bool $indexOnly = false;
@@ -30,6 +31,7 @@ class Attribute
     public static function make(string $name): Attribute
     {
         self::$_instance = new self;
+        self::$_instance->dataName = 'data.' . $name;
         self::$_instance->name = $name;
 
         self::$_instance->label = self::$_instance->labelIndex = Str::headline($name);
