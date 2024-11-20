@@ -116,6 +116,10 @@
         width: 100%;
     }
 
+    .leap-textarea {
+        resize: vertical;
+    }
+
     .leap-input[type="checkbox"],
     .leap-input[type="radio"] {
         font-size: inherit;
