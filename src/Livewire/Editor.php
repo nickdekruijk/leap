@@ -189,6 +189,7 @@ class Editor extends Component
     public function updated($field, $value)
     {
         // Get the full attribute
+        /** @var object */
         $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
 
         // Update slug placeholder if needed
