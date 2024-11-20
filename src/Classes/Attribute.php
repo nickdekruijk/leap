@@ -215,7 +215,7 @@ class Attribute
      * 
      * @return Attribute
      */
-    public function textarea($rows = 5): Attribute
+    public function textarea($rows = 3): Attribute
     {
         $this->input = 'textarea';
         $this->rows = $rows;
