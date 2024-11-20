@@ -20,6 +20,7 @@ class Editor extends Component
     use CanLog;
 
     const int CREATE_NEW = -1;
+    const PASSWORD_OBFUSCATED = '********';
 
     /**
      * The id of the row currently being edited, also toggles editor
@@ -124,6 +125,16 @@ class Editor extends Component
         // Set the placeholders for slugify attributes
         foreach ($this->attributes()->where('slugify') as $attribute) {
             $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
+        }
+
+        // Obfuscate passwords
+        foreach ($this->attributes()->where('type', 'password') as $attribute) {
+            if ($this->data[$attribute->name]) {
+                $this->data[$attribute->name] = self::PASSWORD_OBFUSCATED;
+                if ($attribute->confirmed) {
+                    $this->data[$attribute->confirmed] = self::PASSWORD_OBFUSCATED;
+                }
+            }
         }
 
         // Clear existing validation errors
@@ -241,7 +252,11 @@ class Editor extends Component
     {
         // Update each attribute
         foreach ($this->attributes() as $attribute) {
-            $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
+            if ($attribute->type == 'password' && $this->data[$attribute->name] == self::PASSWORD_OBFUSCATED) {
+                // Ignore obfuscated passwords
+            } else {
+                $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
+            }
         }
     }
 
