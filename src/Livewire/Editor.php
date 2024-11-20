@@ -188,7 +188,7 @@ class Editor extends Component
 
     public function updated($field, $value)
     {
-        // Get the full attribute
+        // Get the full attribute, the @var docblock is only here as a workaround for an intelephense bug, may not be needed later
         /** @var object */
         $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
 
