@@ -13,6 +13,7 @@ class Attribute
     public ?int $index;
     public bool $indexOnly = false;
     public ?string $input = 'input';
+    public ?int $rows = null;
     public string $label;
     public string $labelIndex;
     public string $placeholder = '';
@@ -206,6 +207,18 @@ class Attribute
     {
         $this->wire = 'live';
         $this->slugify = $target;
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a textarea
+     * 
+     * @return Attribute
+     */
+    public function textarea($rows = 5): Attribute
+    {
+        $this->input = 'textarea';
+        $this->rows = $rows;
         return $this;
     }
 
