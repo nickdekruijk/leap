@@ -233,6 +233,14 @@ class Editor extends Component
         }
     }
 
+    private function updateAttributes(Model &$model)
+    {
+        // Update each attribute
+        foreach ($this->attributes() as $attribute) {
+            $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
+        }
+    }
+
     /**
      * Save or create the edited model
      *
@@ -246,11 +254,7 @@ class Editor extends Component
             // Get current model with data
             $model = $this->getModel($this->editing);
 
-            // Update each attribute
-            foreach ($this->attributes() as $attribute) {
-                $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
-            }
-
+            $this->updateAttributes($model);
 
             // Check if anything changed
             if ($model->isDirty()) {
@@ -287,10 +291,8 @@ class Editor extends Component
             // Create new model
             $model = $this->getModel();
 
-            // Update each attribute
-            foreach ($this->attributes() as $attribute) {
-                $model->{$attribute->name} = $this->data[$attribute->name];
-            }
+            $this->updateAttributes($model);
+
             $model->save();
             $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             $this->editing = $model->id;
