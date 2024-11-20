@@ -233,6 +233,18 @@ class Attribute
         return $this;
     }
 
+    public function inputAttributes(): string
+    {
+        $attributes = '';
+        $attributes .= ' aria-label=' . $this->label . '';
+        foreach (['type', 'step', 'rows'] as $attribute) {
+            if ($this->$attribute) {
+                $attributes .= ' ' . $attribute . '=' . $this->$attribute . '';
+            }
+        }
+        return $attributes;
+    }
+
     public function values(array $values): Attribute
     {
         $this->values = $values;
