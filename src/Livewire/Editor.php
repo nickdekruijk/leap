@@ -162,7 +162,11 @@ class Editor extends Component
             if ($attribute->validate) {
                 // Replace placeholders
                 foreach ($replace as $old => $new) {
-                    $attribute->validate = str_replace($old, $new, $attribute->validate);
+                    foreach ($attribute->validate as $key => $value) {
+                        if (!is_object($value)) {
+                            $attribute->validate[$key] = str_replace($old, $new, $value);
+                        }
+                    }
                 }
                 // Add the validation rule
                 $rules['data.' . $attribute->name] = $attribute->validate;

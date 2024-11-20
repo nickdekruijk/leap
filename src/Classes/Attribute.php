@@ -238,10 +238,12 @@ class Attribute
         return $this;
     }
 
-    public function validate(array|string $validate): Attribute
+    public function validate(array|string|object $validate): Attribute
     {
         if (is_string($validate)) {
             $validate = explode('|', $validate);
+        } elseif (is_object($validate)) {
+            $validate = [$validate];
         }
         $this->validate = array_merge($this->validate, $validate);
         return $this;
