@@ -211,7 +211,7 @@ class Editor extends Component
         // Replace empty values with placeholders if present in temporary variable
         $data = $this->data;
         foreach ($this->placeholder as $name => $placeholder) {
-            if (!$data[$name]) {
+            if (empty($data[$name])) {
                 $data[$name] = $placeholder;
             }
         }
