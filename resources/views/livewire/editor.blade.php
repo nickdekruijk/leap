@@ -17,7 +17,7 @@
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
-                    <x-leap::input :attribute="$attribute" :placeholder="$placeholder" />
+                    <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" />
                 @endforeach
             </fieldset>
         </form>

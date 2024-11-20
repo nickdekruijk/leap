@@ -12,6 +12,7 @@ class Attribute
     public string $name;
     public ?int $index;
     public bool $indexOnly = false;
+    public ?string $input = 'input';
     public string $label;
     public string $labelIndex;
     public string $placeholder = '';
