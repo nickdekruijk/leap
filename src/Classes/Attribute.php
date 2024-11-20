@@ -21,6 +21,7 @@ class Attribute
     public ?string $slugify = null;
     public ?int $step = null;
     public string $type = 'text';
+    public ?string $confirmed = null;
     public array $validate = [];
     public array $values = [];
     public string $wire = 'blur';
@@ -178,6 +179,39 @@ class Attribute
         $this->type = 'password';
         $this->placeholder = '••••••••';
         return $this;
+    }
+
+    /**
+     * Require the attribute to be confirmed
+     * 
+     * When set an extra input element will be shown in the editor to confirm the value.
+     * Also a validation rule 'confirmed' will be added.
+     * 
+     * @param string $field The data name of the extra confirmation input
+     * @return Attribute
+     */
+    public function confirmed(string $field = '{field}_confirmation'): Attribute
+    {
+        $this->confirmed = str_replace('{field}', $this->name, $field);
+        $this->validate[] = 'confirmed:data.' . $this->confirmed;
+        return $this;
+    }
+
+    /**
+     * Create a copy of the attribute with the confirmed attribute as name
+     * 
+     * This will be used for the extra confirmation input in the editor
+     *
+     * @return Attribute
+     */
+    public function confirmedAttribute(): Attribute
+    {
+        $attribute = clone $this;
+        $attribute->label = __('repeat') . ' ' . lcfirst($this->label);
+        $attribute->name = $attribute->confirmed;
+        $attribute->dataName = 'data.' . $attribute->name;
+        $attribute->confirmed = null;
+        return $attribute;
     }
 
     public function required(bool $required = true): Attribute

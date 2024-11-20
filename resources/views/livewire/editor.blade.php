@@ -18,6 +18,9 @@
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" />
+                    @if ($attribute->confirmed)
+                        <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute->confirmedAttribute()" :placeholder="$placeholder" />
+                    @endif
                 @endforeach
             </fieldset>
         </form>
