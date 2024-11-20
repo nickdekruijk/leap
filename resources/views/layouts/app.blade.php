@@ -6,6 +6,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Leap</title>
         {!! \NickDeKruijk\Leap\Controllers\AssetController::cssLink() !!}
+        <script src="https://cdn.jsdelivr.net/npm/@marcreichel/alpine-autosize@latest/dist/alpine-autosize.min.js" defer></script>
+
     </head>
 
     <body>
