@@ -169,6 +169,7 @@ class Attribute
      * Make the Attribute a password
      * 
      * The type will be set to password and a validation rules 'password' will be added.
+     * Your models $casts array should contain 'password' => 'hashed'.
      *
      * @return Attribute
      */
