@@ -228,6 +228,7 @@ class Editor extends Component
         } else {
             // Validation passed so use data from temporary variable
             $this->data = $data;
+            $this->resetValidation();
             return true;
         }
     }
@@ -250,7 +251,6 @@ class Editor extends Component
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
             }
 
-            $this->resetValidation();
 
             // Check if anything changed
             if ($model->isDirty()) {
