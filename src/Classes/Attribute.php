@@ -176,6 +176,7 @@ class Attribute
     public function password(): Attribute
     {
         $this->type = 'password';
+        $this->placeholder = '••••••••';
         return $this;
     }
 
