@@ -250,6 +250,8 @@ class Editor extends Component
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
             }
 
+            $this->resetValidation();
+
             // Check if anything changed
             if ($model->isDirty()) {
                 if ($this->editing == self::CREATE_NEW) {
