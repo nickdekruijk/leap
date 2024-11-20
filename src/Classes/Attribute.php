@@ -176,7 +176,6 @@ class Attribute
     public function password(): Attribute
     {
         $this->type = 'password';
-        $this->validate('password');
         return $this;
     }
 
