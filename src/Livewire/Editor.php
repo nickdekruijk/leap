@@ -208,7 +208,7 @@ class Editor extends Component
         $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
 
         // Update slug placeholder if needed
-        if ($attribute->slugify) {
+        if ($attribute?->slugify) {
             $this->placeholder[$attribute->slugify] = Str::slug($value);
         }
 
