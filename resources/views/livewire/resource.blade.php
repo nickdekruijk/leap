@@ -1,7 +1,7 @@
 <main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow ? 'leap-editor-open' : ''">
     <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
-        <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:selectedRow=-1})" label="create_new" class="primary" />
+        <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="create_new" class="primary" />
     </header>
     <div class="leap-index">
         <table class="leap-index-table">
@@ -18,7 +18,7 @@
                         @endforeach
                     </tr>
                 @endif
-                <tr x-on:click="$dispatch('openEditor',{id:selectedRow={{ $row['id'] }}})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row">
+                <tr x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row">
                     @foreach ($this->indexAttributes() as $attribute)
                         <td>{{ $row[$attribute->name] }}</td>
                     @endforeach
