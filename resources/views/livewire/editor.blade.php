@@ -1,6 +1,6 @@
 <div class="leap-editor">
     @if ($editing)
-        <div class="leap-buttons" role="group">
+        <div class="leap-buttons" role="group" x-on:keydown.escape.window="selectedRow=null">
             @can('leap::update')
                 <x-leap::button svg-icon="far-check-circle" wire:click="save" label="save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan
