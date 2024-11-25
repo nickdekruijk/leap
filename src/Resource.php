@@ -37,7 +37,7 @@ class Resource extends Module
      * @var integer
      */
     #[Url(as: 'id', history: false)]
-    public int $selectedRow = 0;
+    public ?int $selectedRow = null;
 
     /**
      * Return a model instance
@@ -111,7 +111,7 @@ class Resource extends Module
      * @return void
      */
     #[On('updateIndex')]
-    public function updateIndex(int $id = 0)
+    public function updateIndex(int $id = null)
     {
         $this->selectedRow = $id;
     }
