@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use NickDeKruijk\Leap\Classes\Attribute;
 
 class Resource extends Module
@@ -35,6 +36,7 @@ class Resource extends Module
      *
      * @var integer
      */
+    #[Url(as: 'id', history: false)]
     public int $selectedRow = 0;
 
     /**
