@@ -10,6 +10,7 @@ class Attribute
 
     public string $dataName;
     public string $name;
+    public ?array $richtext = null;
     public ?int $index;
     public bool $indexOnly = false;
     public ?string $input = 'input';
@@ -83,6 +84,20 @@ class Attribute
     {
         $this->type = 'email';
         $this->validate('email:' . $validator);
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a rich text editor input
+     * 
+     * This will enable the TinyMCE html editor for this attribute
+     *
+     * @return Attribute
+     */
+    public function richtext($editor = 'tinymce'): Attribute
+    {
+        $this->richtext = ['editor' => $editor];
+        $this->input = $editor;
         return $this;
     }
 

@@ -257,4 +257,16 @@ return [
         'user_agent' => true, // Store user agent with each log entry
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | tinymce
+    |--------------------------------------------------------------------------
+    | TinyMCE options like CDN and version to use.
+    | cdn: By default the latest 7.x version.
+    |
+    */
+    'tinymce' => [
+        'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
+    ],
+
 ];
