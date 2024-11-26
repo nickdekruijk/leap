@@ -274,7 +274,7 @@ return [
             'branding' => false,
             // 'content_css' => '/css/tinymce.css',
             'contextmenu' => false,
-            'height' => 200,
+            // 'height' => 200, // Not used with autoresize
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/nl.js',
             'language' => app()->getLocale(),
             'license_key' => 'gpl',
