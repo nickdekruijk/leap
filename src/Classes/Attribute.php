@@ -10,7 +10,7 @@ class Attribute
 
     public string $dataName;
     public string $name;
-    public ?array $richtext = null;
+    public array $options = [];
     public ?int $index;
     public bool $indexOnly = false;
     public ?string $input = 'input';
@@ -92,12 +92,24 @@ class Attribute
      * 
      * This will enable the TinyMCE html editor for this attribute
      *
+     * @param mixed ...$options Options to pass to TinyMCE config, will be merged with leap.tinymce.options config, can be arrays of options or variable-length argument, for example:
+     *                          ->richtext(['skin' => 'oxide-dark', 'toolbar' => 'bold'])
+     *                          ->richtext(skin: 'oxide', toolbar: 'bold')
      * @return Attribute
      */
-    public function richtext($editor = 'tinymce'): Attribute
+    public function richtext(mixed ...$options): Attribute
     {
-        $this->richtext = ['editor' => $editor];
-        $this->input = $editor;
+        // Merge options with leap.tinymce.options defaults
+        $this->options = config('leap.tinymce.options');
+        foreach ($options as $key => $option) {
+            if (is_array($option)) {
+                $this->options = array_merge($this->options, $option);
+            } else {
+                $this->options[$key] = $option;
+            }
+        }
+
+        $this->input = 'tinymce';
         return $this;
     }
 

@@ -8,7 +8,7 @@
     <div
         wire:ignore
         x-data="{ value: $wire.entangle('{{ $attribute->dataName }}') }"
-        x-init="tinymce.init(Object.assign({{ json_encode(config('leap.tinymce.options')) }}, {
+        x-init="tinymce.init(Object.assign({{ json_encode($attribute->options) }}, {
             target: $refs.textarea,
             setup: function(editor) {
                 editor.on('blur', function(e) {
