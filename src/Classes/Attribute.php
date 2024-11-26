@@ -102,10 +102,12 @@ class Attribute
         // Merge options with leap.tinymce.options defaults
         $this->options = config('leap.tinymce.options');
         foreach ($options as $key => $option) {
-            if (is_array($option)) {
+            if (is_string($key)) {
+                $this->options[$key] = $option;
+            } elseif (is_array($option)) {
                 $this->options = array_merge($this->options, $option);
             } else {
-                $this->options[$key] = $option;
+                dd($options);
             }
         }
 
