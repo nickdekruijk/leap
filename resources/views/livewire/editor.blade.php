@@ -1,4 +1,10 @@
-<div class="leap-editor">
+<div class="leap-editor"
+    x-on:scroll=" $el.querySelectorAll('.tox-tinymce--toolbar-sticky-on .tox-editor-header').forEach(function(el) {
+        window.requestAnimationFrame(function() { 
+            el.style.left = 'auto';
+            el.style.top = ($el.scrollTop + $el.querySelector('.leap-buttons').offsetHeight) + 'px';
+        })
+    })">
     @if ($editing)
         <div class="leap-buttons" role="group" x-on:keydown.escape.window="selectedRow=null">
             @can('leap::update')

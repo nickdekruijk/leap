@@ -56,6 +56,39 @@
         padding: calc(var(--spacing) / 2.5) 0 calc(var(--spacing) / 2.5) var(--spacing);
     }
 
+    .tox-tinymce {
+        border: 1px solid rgba(black, 0.2);
+        border-radius: 3px;
+        overflow: hidden;
+        background: rgba(white, 0.5);
+        .tox-editor-container {
+            .tox-editor-header {
+                border-radius: 3px 3px 0 0;
+                overflow: hidden;
+                background-color: transparent;
+                .tox-toolbar__primary {
+                    background: $grey-light;
+                }
+            }
+        }
+        .tox-toolbar-overlord {
+            background-color: $grey-light;
+        }
+        .tox-edit-area::before {
+            outline: 1px solid rgba(black, 0.4);
+            border-style: none;
+            border-radius: 0;
+        }
+    }
+    .tox:not(.tox-tinymce-inline) .tox-editor-header {
+        padding: 0 !important;
+        border-bottom: 1px solid rgba(black, 0.2);
+        box-shadow: none;
+    }
+    .tox .tox-toolbar__group {
+        padding: 0 5px;
+    }
+
     .leap-button,
     .leap-input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
     .leap-select,

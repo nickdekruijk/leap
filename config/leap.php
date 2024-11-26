@@ -263,10 +263,38 @@ return [
     |--------------------------------------------------------------------------
     | TinyMCE options like CDN and version to use.
     | cdn: By default the latest 7.x version.
+    | options: This will be converted to json and added to tinymce.init().
+    |          See https://www.tiny.cloud/docs/tinymce/7/ for options.
     |
     */
     'tinymce' => [
         'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
+        'options' => [
+            'autoresize_bottom_margin' => 50,
+            'branding' => false,
+            // 'content_css' => '/css/tinymce.css',
+            'contextmenu' => false,
+            'height' => 200,
+            'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/nl.js',
+            'language' => app()->getLocale(),
+            'license_key' => 'gpl',
+            'link_default_target' => '_blank',
+            'menubar' => false,
+            'plugins' => 'accordion anchor autolink autoresize charmap code emoticons image link lists media searchreplace table visualblocks wordcount', // autosave codesample directionality fullscreen help preview visualchars importcss
+            'promotion' => false,
+            // 'skin' => 'oxide-dark',
+            'style_formats' => [
+                ['title' => 'H2', 'block' => 'h2'],
+                ['title' => 'H3', 'block' => 'h3'],
+                ['title' => 'H4', 'block' => 'h4'],
+                ['title' => 'Quote', 'block' => 'blockquote'],
+            ],
+            'toolbar_mode' => 'sliding',
+            'toolbar_sticky_offset' => 0, // Doesn't seem to do anything due to our custom sticky toolbar implementation with alpine.js
+            'toolbar_sticky' => true,
+            'toolbar' => 'code visualblocks | undo redo | styles | bold italic | bullist numlist outdent indent | accordion | alignleft aligncenter alignright alignjustify | link anchor | image media table | charmap emoticons searchreplace', // codesample fullscreen help removeformat preview ltr rtl visualchars blocks wordcount
+            'ui_mode' => 'split',
+        ],
     ],
 
 ];

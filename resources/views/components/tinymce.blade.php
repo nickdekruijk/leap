@@ -8,20 +8,8 @@
     <div
         wire:ignore
         x-data="{ value: $wire.entangle('{{ $attribute->dataName }}') }"
-        x-init="tinymce.init({
+        x-init="tinymce.init(Object.assign({{ json_encode(config('leap.tinymce.options')) }}, {
             target: $refs.textarea,
-            theme: 'silver',
-            height: 200,
-            license_key: 'gpl',
-            menubar: false,
-            promotion: false,
-            branding: false,
-            plugins: 'autoresize code fullscreen',
-            autoresize_bottom_margin: 50,
-            max_height: window.innerHeight / 1.5,
-            toolbar: 'code fullscreen undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-            {{-- toolbar_sticky: true, --}}
-            {{-- toolbar_sticky_offset: -200, --}}
             setup: function(editor) {
                 editor.on('blur', function(e) {
                     value = editor.getContent()
@@ -31,19 +19,16 @@
                         editor.setContent(value)
                     }
                 });
-        
-                function putCursorToEnd() {
-                    editor.selection.select(editor.getBody(), true);
-                    editor.selection.collapse(false);
-                };
                 $watch('value', function(newValue) {
                     if (newValue !== editor.getContent()) {
                         editor.resetContent(newValue || '');
-                        putCursorToEnd();
+                        // Put cursor at the end
+                        editor.selection.select(editor.getBody(), true);
+                        editor.selection.collapse(false);
                     }
                 });
             }
-        })">
+        }))">
         <textarea
             x-ref="textarea"
             class="leap-textarea"
