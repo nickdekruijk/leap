@@ -1,14 +1,14 @@
 .leap-logo {
     background-color: $leap-logo-background;
-    font-size: 23px;
+    font-size: var(--font-size-header);
     font-weight: 300;
     line-height: var(--logo-height);
     white-space: nowrap;
 
     .svg {
-        height: 30px;
+        height: var(--logo-svg-height);
         width: 50px;
-        margin-top: calc((var(--logo-height) - 30px) / 2);
+        margin-top: calc((var(--logo-height) - var(--logo-svg-height)) / 2);
         float: left;
     }
 

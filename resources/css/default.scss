@@ -6,7 +6,9 @@
     --nav-item-height: 44px;
     --nav-max-width: 250px;
     --logo-height: 50px;
+    --logo-svg-height: 30px;
     --font-size: 16px;
+    --font-size-header: 23px;
 }
 
 @media (max-width: 1440px) {
@@ -23,13 +25,10 @@
         --nav-max-width: 200px;
         --font-size: 14px;
         --nav-item-height: 36px;
-    }
-}
-
-@media (max-width: 768px) {
-    :root {
         --header-height: 40px;
         --logo-height: 40px;
+        --font-size-header: 21px;
+        --logo-svg-height: 26px;
     }
 }
 
@@ -64,7 +63,7 @@
 
     H2 {
         font-weight: 300;
-        font-size: 23px;
+        font-size: var(--font-size-header);
         padding: 0 var(--spacing);
         line-height: var(--header-height);
     }
