@@ -14,7 +14,7 @@
                             :autofocus="$loop->first ? 'true' : 'false'" />
                     @endforeach
 
-                    <x-leap::switch name="remember" wire="lazy" label="remember_me" />
+                    <x-leap::input type="checkbox" role="switch" name="remember" wire:model.blur="remember" label="remember_me" />
                 </fieldset>
                 <fieldset class="leap-fieldset">
                     <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="login" />

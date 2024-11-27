@@ -18,6 +18,7 @@ class Attribute
     public string $label;
     public string $labelIndex;
     public string $placeholder = '';
+    public ?string $role = null;
     public bool $searchable = false;
     public ?string $slugify = null;
     public ?int $step = null;
@@ -84,6 +85,35 @@ class Attribute
     {
         $this->type = 'email';
         $this->validate('email:' . $validator);
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a checkbox
+     * 
+     * @return Attribute
+     */
+    public function checkbox(): Attribute
+    {
+        $this->type = 'checkbox';
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a checkbox with an extra role="switch" attribute
+     * 
+     * @return Attribute
+     */
+    public function switch(): Attribute
+    {
+        $this->type = 'checkbox';
+        $this->role = 'switch';
+        return $this;
+    }
+
+    public function radio(): Attribute
+    {
+        $this->type = 'radio';
         return $this;
     }
 
@@ -317,7 +347,7 @@ class Attribute
     {
         $attributes = '';
         $attributes .= ' aria-label=' . $this->label . '';
-        foreach (['type', 'step', 'rows'] as $attribute) {
+        foreach (['type', 'step', 'rows', 'role'] as $attribute) {
             if ($this->$attribute) {
                 $attributes .= ' ' . $attribute . '=' . $this->$attribute . '';
             }

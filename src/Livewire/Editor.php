@@ -121,6 +121,13 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
         }
 
+        // Make checkbox values boolean when model $casts attribute is not set to boolean
+        foreach ($this->attributes()->where('type', 'checkbox') as $attribute) {
+            if (($this->getModel()->getCasts()[$attribute->name] ?? null) !== 'boolean') {
+                $this->data[$attribute->name] = $this->data[$attribute->name] ? true : false;
+            }
+        }
+
         // Set the placeholders for slugify attributes
         foreach ($this->attributes()->where('slugify') as $attribute) {
             $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
