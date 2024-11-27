@@ -46,6 +46,16 @@
         outline: 2px solid rgba($blue-light, 1);
         outline-offset: 1px;
     }
+
+    .button-link {
+        font: inherit;
+        border: 0 none;
+        background: none;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+        cursor: inherit;
+    }
 }
 
 .leap-main {
