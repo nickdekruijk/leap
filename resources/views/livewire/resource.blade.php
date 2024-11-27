@@ -20,7 +20,13 @@
                 @endif
                 <tr x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row">
                     @foreach ($this->indexAttributes() as $attribute)
-                        <td>{!! $attribute->type == 'checkbox' ? ($row[$attribute->name] ? '<center>✓<center>' : '') : $row[$attribute->name] !!}</td>
+                        <td>
+                            @if ($attribute->type == 'checkbox')
+                                <span class="leap-row-checkbox leap-row-checkbox-{{ $row[$attribute->name] ? 'checked' : 'unchecked' }}"></span>
+                            @else
+                                {{ $row[$attribute->name] }}
+                            @endif
+                        </td>
                     @endforeach
                 </tr>
             @endforeach
