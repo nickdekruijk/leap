@@ -17,9 +17,10 @@
             TH {
                 background-color: $leap-index-header;
                 text-align: left;
-                font-weight: 400;
+                font-weight: 600;
+                font-size: 0.9em;
                 line-height: var(--nav-item-height);
-                &:hover {
+                BUTTON:hover {
                     opacity: 0.5;
                     cursor: pointer;
                 }
