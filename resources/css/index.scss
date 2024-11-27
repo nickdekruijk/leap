@@ -24,6 +24,14 @@
                     opacity: 0.5;
                     cursor: pointer;
                 }
+                BUTTON:focus {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    margin-left: -6px;
+                    margin-right: -6px;
+                    border-radius: 6px;
+                    outline-offset: -3px;
+                }
                 &.order-desc::after,
                 &.order-asc::after {
                     content: "";
