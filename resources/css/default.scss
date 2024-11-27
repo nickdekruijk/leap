@@ -42,6 +42,8 @@
     font-size: var(--font-size);
     position: relative;
     overflow-x: hidden;
+
+    .tox-edit-focus,
     :focus {
         outline: 2px solid rgba($blue-light, 1);
         outline-offset: 1px;
