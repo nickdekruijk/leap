@@ -99,6 +99,10 @@
                 color: inherit;
                 display: block;
                 cursor: pointer;
+                &:focus {
+                    border-radius: 6px;
+                    outline-offset: -3px !important;
+                }
             }
 
             BUTTON {
