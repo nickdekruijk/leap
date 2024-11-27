@@ -204,7 +204,7 @@
     .leap-input[role="switch"] {
         background: rgba(black, 0.2);
         height: $leap-input-switch-size;
-        width: $leap-input-switch-size * 2;
+        width: $leap-input-switch-size * 1.85;
         border-radius: $leap-input-switch-size;
         border: 0.2em solid transparent;
         box-sizing: content-box;
@@ -231,7 +231,7 @@
             }
             &::before {
                 background: white;
-                left: $leap-input-switch-size;
+                left: $leap-input-switch-size * 0.85;
             }
         }
     }
