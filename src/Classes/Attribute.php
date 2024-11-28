@@ -117,6 +117,8 @@ class Attribute
 
     /**
      * Make the Attribute a list of radio buttons
+     * 
+     * Values must be set with the values() method, e.g. ->values([1 => 'Option 1', 2 => 'Option 2']) or ->values(['Option 1', 'Option 2'])
      *
      * @param boolean $group When true the radio buttons will be grouped on a single line
      * @return Attribute
@@ -386,9 +388,22 @@ class Attribute
         return $attributes;
     }
 
+    /**
+     * Set the values for the attribute
+     * 
+     * These are used for radio and select attributes.
+     * If a list array is passed like ['Option 1', 'Option 2'] it will be converted to an associative array ['Option 1' => 'Option 1', 'Option 2' => 'Option 2']
+     *
+     * @param array $values
+     * @return Attribute
+     */
     public function values(array $values): Attribute
     {
-        $this->values = $values;
+        if (array_is_list($values)) {
+            $this->values = array_combine($values, $values);
+        } else {
+            $this->values = $values;
+        }
         return $this;
     }
 
