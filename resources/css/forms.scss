@@ -31,9 +31,17 @@
                 display: flex;
                 align-items: center;
                 margin-bottom: calc(var(--spacing) / 4);
+                INPUT {
+                    flex-shrink: 0;
+                }
                 SPAN.leap-label {
                     order: 2;
                     margin-bottom: 0;
+                }
+                .leap-error {
+                    flex-basis: 100%;
+                    text-align: right;
+                    order: 3;
                 }
             }
         }
@@ -170,19 +178,6 @@
         cursor: pointer;
     }
 
-    .leap-input[type="checkbox"],
-    .leap-input[type="radio"] {
-        font-size: inherit;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        transition: background-color 0.2s;
-        cursor: pointer;
-        &[aria-invalid="true"] {
-            background-color: $leap-color-border-error;
-        }
-    }
-
     .leap-input[type="checkbox"]:not([role="switch"]) {
         background: rgba(white, 0.5);
         height: $leap-input-checkbox-size;
@@ -205,14 +200,13 @@
     .leap-input[role="switch"] {
         background: rgba(black, 0.2);
         height: $leap-input-switch-size;
-        width: $leap-input-switch-size * 1.85;
+        width: $leap-input-switch-size * 1.75;
         border-radius: $leap-input-switch-size;
-        border: 0.2em solid transparent;
+        border: 2px solid transparent;
         box-sizing: content-box;
         display: inline-block;
         position: relative;
         margin-right: 5px;
-
         &::before {
             content: "";
             display: block;
@@ -223,17 +217,27 @@
             border-radius: 100%;
             margin: 0px;
             left: 0;
-            transition: background-color 0.2s, left 0.2s;
+            transition: left 0.2s;
         }
         &:checked {
             background-color: $green;
-            &::hover {
-                background-color: $blue-light;
-            }
             &::before {
                 background: white;
-                left: $leap-input-switch-size * 0.85;
+                left: $leap-input-switch-size * 0.75;
             }
+        }
+    }
+
+    .leap-input[type="checkbox"],
+    .leap-input[type="radio"] {
+        font-size: inherit;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        transition: background-color 0.2s;
+        cursor: pointer;
+        &[aria-invalid="true"] {
+            background-color: $leap-color-border-error;
         }
     }
 
