@@ -19,6 +19,7 @@
                 @endcan
             @endif
             <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=null" wire:click="close" label="cancel" />
+            <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
