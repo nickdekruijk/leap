@@ -116,6 +116,10 @@ class Editor extends Component
         // Get the model data
         $this->data = $this->getModel($id)->only($attributes);
 
+        // Reformat date attributes
+        foreach ($this->attributes()->where('type', 'date') as $attribute) {
+            $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD');
+        }
         // Reformat datetime attributes
         foreach ($this->attributes()->where('type', 'datetime-local') as $attribute) {
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
