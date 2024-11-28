@@ -285,6 +285,20 @@ class Attribute
         return $this;
     }
 
+    /**
+     * Require the attribute to be accepted, value must be "yes", "on", 1, "1", true, or "true"
+     *
+     * @param boolean $accepted
+     * @return Attribute
+     */
+    public function accepted(bool $accepted = true): Attribute
+    {
+        if ($accepted) {
+            $this->validate[] = 'accepted';
+        }
+        return $this;
+    }
+
     public function searchable(bool $searchable = true): Attribute
     {
         $this->searchable = $searchable;
