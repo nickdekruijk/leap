@@ -27,6 +27,7 @@
                 display: inline-block;
                 margin-bottom: calc(var(--spacing) / 4);
             }
+            &:has([type="radio"]),
             &:has([type="checkbox"]) {
                 display: flex;
                 align-items: center;
@@ -43,6 +44,19 @@
                     text-align: right;
                     order: 3;
                 }
+            }
+        }
+
+        .leap-fieldset:not(:first-child) {
+            margin-top: 0;
+        }
+
+        .leap-fieldset[role="group"] {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0 var(--spacing);
+            > .leap-label {
+                margin-top: 0;
             }
         }
     }
@@ -181,6 +195,35 @@
 
     .leap-label:has([type="checkbox"], [type="radio"]) {
         cursor: pointer;
+    }
+
+    .leap-input[type="radio"] {
+        background: rgba(white, 0.5);
+        height: $leap-input-switch-size;
+        width: $leap-input-switch-size;
+        border-radius: $leap-input-switch-size;
+        border: 1px solid rgba(black, 0.2);
+        box-sizing: content-box;
+        position: relative;
+        margin-right: 5px;
+        &::before {
+            content: "";
+            display: block;
+            position: absolute;
+            width: $leap-input-switch-size;
+            height: $leap-input-switch-size;
+            background-color: white;
+            border-radius: 100%;
+            transition: transform 0.2s;
+            transform: scale(0);
+        }
+        &:checked {
+            background-color: $blue-normal;
+            border-color: transparent;
+            &::before {
+                transform: scale(0.5);
+            }
+        }
     }
 
     .leap-input[type="checkbox"]:not([role="switch"]) {

@@ -115,9 +115,16 @@ class Attribute
         return $this;
     }
 
-    public function radio(): Attribute
+    /**
+     * Make the Attribute a list of radio buttons
+     *
+     * @param boolean $group When true the radio buttons will be grouped on a single line
+     * @return Attribute
+     */
+    public function radio(bool $group = false): Attribute
     {
-        $this->type = 'radio';
+        $this->options['group'] = $group;
+        $this->input = 'radio';
         return $this;
     }
 
