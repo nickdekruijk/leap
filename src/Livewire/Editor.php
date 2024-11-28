@@ -283,8 +283,12 @@ class Editor extends Component
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
-                    foreach ($model->getDirty() as $attribute => $value) {
-                        $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                    if (count($model->getDirty()) > 3) {
+                        $this->dispatch('toast', count($model->getDirty()) . ' ' . __('columns') . ' ' . __('updated'))->to(Toasts::class);
+                    } else {
+                        foreach ($model->getDirty() as $attribute => $value) {
+                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                        }
                     }
                     $this->log('update', ['id' => $this->editing]);
                     $model->save();
