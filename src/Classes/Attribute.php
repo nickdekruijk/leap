@@ -91,6 +91,8 @@ class Attribute
     /**
      * Make the Attribute a checkbox
      * 
+     * The attribute must be set to boolean in the model $casts definition to work properly.
+     * 
      * @return Attribute
      */
     public function checkbox(): Attribute
@@ -101,6 +103,8 @@ class Attribute
 
     /**
      * Make the Attribute a checkbox with an extra role="switch" attribute
+     * 
+     * The attribute must be set to boolean in the model $casts definition to work properly.
      * 
      * @return Attribute
      */
