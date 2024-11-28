@@ -180,6 +180,23 @@
         width: 100%;
     }
 
+    .leap-select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        // width: auto;
+        // max-width: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(136, 145, 164)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        padding-left: 20px;
+        background-repeat: no-repeat;
+        background-position: 2px 55%;
+        background-size: 18px;
+        OPTION {
+            opacity: 0.1;
+            color: red;
+        }
+    }
+
     .leap-input::-webkit-datetime-edit {
         line-height: 1;
         padding: 0;
@@ -289,6 +306,8 @@
         }
     }
 
+    .leap-textarea[aria-invalid="true"],
+    .leap-select[aria-invalid="true"],
     .leap-input[aria-invalid="true"] {
         border-color: $leap-color-border-error;
         background-color: rgba($red, 0.05);

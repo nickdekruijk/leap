@@ -131,6 +131,19 @@ class Attribute
     }
 
     /**
+     * Make the Attribute a select element
+     * 
+     * Values must be set with the values() method, e.g. ->values([1 => 'Option 1', 2 => 'Option 2']) or ->values(['Option 1', 'Option 2'])
+     *
+     * @return Attribute
+     */
+    public function select(): Attribute
+    {
+        $this->input = 'select';
+        return $this;
+    }
+
+    /**
      * Make the Attribute a rich text editor input
      * 
      * This will enable the TinyMCE html editor for this attribute
