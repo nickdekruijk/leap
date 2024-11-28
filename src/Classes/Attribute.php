@@ -277,6 +277,12 @@ class Attribute
         return $attribute;
     }
 
+    /**
+     * Require the attribute to not be null
+     *
+     * @param boolean $required
+     * @return Attribute
+     */
     public function required(bool $required = true): Attribute
     {
         if ($required) {
