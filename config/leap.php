@@ -273,6 +273,10 @@ return [
             'autoresize_bottom_margin' => 50,
             'branding' => false,
             // 'content_css' => '/css/tinymce.css',
+            // 'content_langs' => [
+            //     ['title' => 'English', 'code' => 'en'],
+            //     ['title' => 'Dutch', 'code' => 'nl'],
+            // ],
             'contextmenu' => false,
             // 'height' => 200, // Not used with autoresize
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/' . app()->getLocale() . '.js',
@@ -292,7 +296,7 @@ return [
             'toolbar_mode' => 'sliding',
             'toolbar_sticky_offset' => 0, // Doesn't seem to do anything due to our custom sticky toolbar implementation with alpine.js
             'toolbar_sticky' => true,
-            'toolbar' => 'code visualblocks | undo redo | styles | bold italic | bullist numlist outdent indent | accordion | alignleft aligncenter alignright alignjustify | link anchor | image media table | charmap emoticons searchreplace', // codesample fullscreen help removeformat preview ltr rtl visualchars blocks wordcount
+            'toolbar' => 'code visualblocks | undo redo | styles | bold italic | bullist numlist outdent indent | accordion | alignleft aligncenter alignright alignjustify | link anchor | image media table | charmap emoticons searchreplace', // codesample fullscreen help removeformat preview ltr rtl visualchars blocks wordcount language
             'ui_mode' => 'split',
         ],
     ],
