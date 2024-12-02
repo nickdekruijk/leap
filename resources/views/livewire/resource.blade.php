@@ -22,7 +22,7 @@
                     @foreach ($this->indexAttributes() as $attribute)
                         <td>
                             @if ($loop->first)
-                                <button class="button-link" x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})">
+                                <button class="button-link">
                             @endif
                             @if ($attribute->type == 'checkbox')
                                 <span class="leap-row-checkbox leap-row-checkbox-{{ $row[$attribute->name] ? 'checked' : 'unchecked' }}"></span>
