@@ -39,7 +39,15 @@ class Toasts extends Component
             'icon' => $icon,
             'click' => $click,
             'focus' => $focus,
+            'expiresAt' => now()->addSeconds(9),
         ];
+    }
+
+    public function clearExpired()
+    {
+        $this->toasts = array_filter($this->toasts, function ($toast) {
+            return $toast['expiresAt'] > now();
+        });
     }
 
     public function close($id)
