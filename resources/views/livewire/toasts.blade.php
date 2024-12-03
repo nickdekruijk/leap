@@ -1,4 +1,4 @@
-<ul class="toasts" wire:poll.10s="clearExpired">
+<ul class="toasts" wire:poll.60s="clearExpired">
     @php(debug(now()->toDateTimeString()))
     @foreach ($toasts as $id => $toast)
         <li class="toast toast-{{ $toast['type'] }}" @if ($toast['focus']) onclick="document.getElementById('{{ $toast['focus'] }}').focus()" @endif>
