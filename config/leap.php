@@ -2,6 +2,7 @@
 
 use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Livewire\Dashboard;
+use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Navigation\Divider;
@@ -85,6 +86,7 @@ return [
         Dashboard::class,
         Divider::class,
         Organizations::class,
+        FileManager::class,
         Profile::class,
         Logout::class,
     ],
@@ -206,6 +208,7 @@ return [
         'dashboard.scss',
         'default.scss',
         'editor.scss',
+        'filemanager.scss',
         'forms.scss',
         'index.scss',
         'login.scss',
@@ -255,6 +258,19 @@ return [
         'ip_address' => true, // Log IP address with each log entry
         'ip_address_anonymized' => false, // Anonymize IP address by replacing last part with .xxx (or :xxxx:xxxx for IPv6)
         'user_agent' => true, // Store user agent with each log entry
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | filemanager
+    |--------------------------------------------------------------------------
+    | Configuration for the built in file manager
+    |
+    */
+    'filemanager' => [
+        'disk' => 'public', // Must refer to a disk defined in config/filesystems.php
+        'upload_limit' => 1024 * 1024 * 5, // Maximum size of an uploaded file in megabytes, still limited by php.ini upload_max_filesize and post_max_size
+        'allowed_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'svg', 'zip', 'pdf', 'doc', 'docx', 'csv', 'xls', 'xlsx', 'pages', 'numbers', 'psd', 'ai', 'eps', 'mp4', 'mp3', 'mpg', 'm4a', 'ogg', 'sketch', 'json', 'rtf', 'md'],
     ],
 
     /*
