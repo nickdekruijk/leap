@@ -104,6 +104,7 @@
                 cursor: pointer;
             }
             &.leap-index-row-selected TD {
+                background-color: $leap-index-row-selected;
                 color: white;
             }
             &.leap-index-group {
