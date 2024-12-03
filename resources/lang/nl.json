@@ -16,6 +16,7 @@
     "logout": "Uitloggen",
     "name": "Naam",
     "no-changes": "Geen wijzigingen om op te slaan",
+    "Page expired":"Pagina is verlopen vanwege inactiviteit, wilt u de pagina opnieuw laden?",
     "password_current": "Huidig wachtwoord",
     "password_new_confirmation": "Herhaal wachtwoord",
     "password_new": "Nieuw wachtwoord",

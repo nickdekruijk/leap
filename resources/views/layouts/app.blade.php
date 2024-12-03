@@ -22,4 +22,22 @@
         </div>
     </body>
 
+    <script>
+        Livewire.hook('request', ({
+            fail
+        }) => {
+            fail(({
+                status,
+                preventDefault
+            }) => {
+                if (status === 419) {
+                    preventDefault();
+                    if (confirm('@lang('Page expired')')) {
+                        window.location.reload();
+                    }
+                }
+            })
+        })
+    </script>
+
 </html>
