@@ -89,7 +89,13 @@ class FileManager extends Module
     public function fileIcon($file)
     {
         // 'thumbnail' => $this->isImage($file) ? $this->getStorage()->url($file) : false,
-        return $this->isImage(rawurldecode($file->encoded)) ? 'far-file-image' : 'far-file';
+        if ($this->isPdf(rawurldecode($file->encoded))) {
+            return 'far-file-pdf';
+        }
+        if ($this->isImage(rawurldecode($file->encoded))) {
+            return 'far-file-image';
+        }
+        return 'far-file';
     }
 
     public function openDirectory(string $directory, int $depth)
