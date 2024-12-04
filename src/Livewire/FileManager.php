@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Laravel\Facades\Image;
 use NickDeKruijk\Leap\Module;
 
 class FileManager extends Module
@@ -172,11 +173,17 @@ class FileManager extends Module
         $size = 0;
         $timeMin = null;
         $timeMax = null;
+        $dimensions = null;
 
         // Calculate total size of all selected files and get the first and last modified date
         foreach ($this->selectedFiles as $file) {
             $size += $this->getStorage()->size(rawurldecode($file));
             $time = $this->getStorage()->lastModified(rawurldecode($file));
+            if (count($this->selectedFiles) == 1 && $this->isBitmap(rawurldecode($file))) {
+                // When only one file is selected and it's a bitmap image get the dimensions in pixels
+                $image = Image::read($this->getStorage()->get(rawurldecode($file)));
+                $dimensions = $image->width() . ' x ' . $image->height();
+            }
             if ($timeMin === null || $time < $timeMin) {
                 $timeMin = $time;
             }
@@ -201,6 +208,7 @@ class FileManager extends Module
         return (object)[
             'Size' => $this->humanFileSize($size),
             'date_modified' => $dates,
+            'Dimensions' => $dimensions,
         ];
     }
 
