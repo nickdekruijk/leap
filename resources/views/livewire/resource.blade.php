@@ -1,7 +1,9 @@
 <main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow ? 'leap-editor-open' : ''">
     <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
-        <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="create_new" class="primary" />
+        @can('leap::create')
+            <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="create_new" class="primary" />
+        @endcan
     </header>
     <div class="leap-index">
         <table class="leap-index-table">
