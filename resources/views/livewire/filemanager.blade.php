@@ -58,9 +58,12 @@
                     </h3>
                     <table>
                         @foreach ($this->selectedFilesStats() as $key => $value)
-                            <tr>
-                                <td>{{ __($key) }}</td>
-                                <td align="right">{{ $value }}</td>
+                            @if ($value)
+                                <tr>
+                                    <td>{{ __($key) }}</td>
+                                    <td align="right">{{ $value }}</td>
+                                </tr>
+                            @endif
                         @endforeach
                     </table>
                 </div>
