@@ -43,7 +43,12 @@
                     <div class="leap-filemanager-preview-items" style="grid-template-columns: repeat({{ ceil(sqrt(count($selectedFiles))) }}, 1fr)">
                         @foreach (collect($selectedFiles)->sort(SORT_NATURAL | SORT_FLAG_CASE) as $file)
                             <div class="leap-filemanager-preview-item">
-                                {!! $this->getPreview($file) !!}
+                                @if ($this->isImage($file))
+                                    <img src="{{ $this->getStorage()->url($file) }}" alt="">
+                                @endif
+                                <a href="{{ $this->getStorage()->url($file) }}" target="_blank" rel="noopener">
+                                    <span>@svg('fas-external-link-alt', 'svg-icon') {{ basename(rawurldecode($file)) }}</span>
+                                </a>
                             </div>
                         @endforeach
                     </div>

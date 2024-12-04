@@ -236,23 +236,6 @@ class FileManager extends Module
         return $this->hasExtension($file, 'pdf');
     }
 
-    public function getPreview($encodedFile)
-    {
-        $file = rawurldecode($encodedFile);
-        $preview = '';
-
-        if ($this->getStorage()->exists($file)) {
-            // Check if the file is an image
-            if ($this->isImage($file)) {
-                $preview .= '<img src="' . $this->getStorage()->url(rawurlencode($file)) . '" alt="' . basename($file) . '">';
-            }
-            $preview .= '<a href="' . $this->getStorage()->url(rawurlencode($file)) . '" target="_blank" rel="noopener">';
-            $preview .= '<span>' . svg('fas-external-link-alt', 'svg-icon')->toHtml() . basename($file) . '</span>';
-            $preview .= '</a>';
-            return $preview;
-        }
-    }
-
     public function mount()
     {
         // Check if the user has read permission to this module
