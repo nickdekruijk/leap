@@ -204,13 +204,28 @@ class FileManager extends Module
         ];
     }
 
-    public function isImage($file)
+    public function hasExtension(string $file, array|string $extensions): bool
     {
-        return
-            $this->getStorage()->mimeType($file) == 'image/jpeg'
-            || $this->getStorage()->mimeType($file) == 'image/png'
-            || $this->getStorage()->mimeType($file) == 'image/gif'
-            || $this->getStorage()->mimeType($file) == 'image/svg+xml';
+        $extension = strtolower(pathinfo($file)['extension']);
+        if (!is_array($extensions)) {
+            $extensions = explode(',', $extensions);
+        }
+        return in_array($extension, $extensions);
+    }
+
+    public function isImage(string $file): bool
+    {
+        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'svg']);
+    }
+
+    public function isBitmap(string $file): bool
+    {
+        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif']);
+    }
+
+    public function isPdf(string $file): bool
+    {
+        return $this->hasExtension($file, 'pdf');
     }
 
     public function getPreview($encodedFile)
