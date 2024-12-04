@@ -72,11 +72,10 @@
     </div>
     @script
         <script>
-            Livewire.hook('morphed', (el) => {
+            Livewire.hook('morphed', () => {
                 let e = document.querySelector('.leap-index');
-                console.log(e.scrollWidth);
                 e.scrollTo({
-                    left: 9999,
+                    left: e.scrollWidth,
                     behavior: 'smooth'
                 });
             });
