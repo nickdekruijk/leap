@@ -41,7 +41,7 @@
                 </div>
                 <div class="leap-filemanager-preview">
                     <div class="leap-filemanager-preview-items" style="grid-template-columns: repeat({{ ceil(sqrt(count($selectedFiles))) }}, 1fr)">
-                        @foreach (collect($selectedFiles)->sort(SORT_NATURAL | SORT_FLAG_CASE) as $file)
+                        @foreach ($selectedFiles as $file)
                             <div class="leap-filemanager-preview-item">
                                 @if ($this->isImage($file))
                                     <img src="{{ $this->getStorage()->url($file) }}" alt="">

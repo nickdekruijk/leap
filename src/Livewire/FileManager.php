@@ -166,6 +166,9 @@ class FileManager extends Module
             // Default behavior, select only the clicked file if any
             $this->selectedFiles = $encodedFile ? [$encodedFile] : [];
         }
+        usort($this->selectedFiles, function ($a, $b) {
+            return strnatcasecmp(rawurldecode($a), rawurldecode($b));
+        });
     }
 
     public function selectedFilesStats()
