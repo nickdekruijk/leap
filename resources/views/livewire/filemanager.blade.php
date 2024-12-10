@@ -13,23 +13,23 @@
                     </tr>
                 @endif
                 @foreach ($directory['folders'] as $folder)
-                    <tr wire:click="openDirectory('{{ $folder->encoded }}',{{ $depth + 1 }})" class="leap-index-row @if (in_array($folder->encoded, $openFolders)) leap-index-row-selected @endif">
-                        <td><button class="button-link">@svg('fas-folder' . (in_array($folder->encoded, $openFolders) ? '-open' : ''), 'svg-icon') {{ $folder->name }}</button></td>
-                        <td align="right">{{ $folder->size }}</td>
+                    <tr wire:click="openDirectory('{{ $folder['encoded'] }}',{{ $depth + 1 }})" class="leap-index-row @if (in_array($folder['encoded'], $openFolders)) leap-index-row-selected @endif">
+                        <td><button class="button-link">@svg('fas-folder' . (in_array($folder['encoded'], $openFolders) ? '-open' : ''), 'svg-icon') {{ $folder['name'] }}</button></td>
+                        <td align="right">{{ $folder['size'] }}</td>
                     </tr>
                 @endforeach
                 @foreach ($directory['files'] as $file)
-                    <tr x-on:click="$wire.selectFile('{{ $file->encoded }}',window.event.altKey||window.event.metaKey,window.event.shiftKey)" class="leap-index-row @if (in_array($file->encoded, $selectedFiles)) leap-index-row-selected @endif">
+                    <tr x-on:click="$wire.selectFile('{{ $file['encoded'] }}',window.event.altKey||window.event.metaKey,window.event.shiftKey)" class="leap-index-row @if (in_array($file['encoded'], $selectedFiles)) leap-index-row-selected @endif">
                         <td>
                             <button class="button-link">
-                                @isset($file->thumbnail)
-                                    <img loading="lazy" draggable="false" class="thumbnail" src="{{ $file->thumbnail }}" alt="">
+                                @isset($file['thumbnail'])
+                                    <img loading="lazy" draggable="false" class="thumbnail" src="{{ $file['thumbnail'] }}" alt="">
                                 @endisset
                                 @svg($this->fileIcon($file), 'svg-icon')
-                                {{ $file->name }}
+                                {{ $file['name'] }}
                             </button>
                         </td>
-                        <td align="right">{{ $file->size }}</td>
+                        <td align="right">{{ $file['size'] }}</td>
                     </tr>
                 @endforeach
             </table>

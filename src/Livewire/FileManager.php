@@ -65,7 +65,7 @@ class FileManager extends Module
                 $size += $this->getStorage()->size($file);
             }
             if (!str_starts_with(basename($folder), '.')) {
-                $folders[basename($folder)] = (object)[
+                $folders[basename($folder)] = [
                     'encoded' => rawurlencode($folder),
                     'name' => basename($folder),
                     'size' => $this->humanFileSize($size),
@@ -77,7 +77,7 @@ class FileManager extends Module
         sort($entries, SORT_NATURAL | SORT_FLAG_CASE);
         foreach ($entries as $file) {
             if (!str_starts_with(basename($file), '.')) {
-                $files[] = (object)[
+                $files[] = [
                     'encoded' => rawurlencode($file),
                     'name' => basename($file),
                     'size' => $this->humanFileSize($this->getStorage()->size($file)),
@@ -90,10 +90,10 @@ class FileManager extends Module
     public function fileIcon($file)
     {
         // 'thumbnail' => $this->isImage($file) ? $this->getStorage()->url($file) : false,
-        if ($this->isPdf(rawurldecode($file->encoded))) {
+        if ($this->isPdf(rawurldecode($file['encoded']))) {
             return 'far-file-pdf';
         }
-        if ($this->isImage(rawurldecode($file->encoded))) {
+        if ($this->isImage(rawurldecode($file['encoded']))) {
             return 'far-file-image';
         }
         return 'far-file';
@@ -142,13 +142,13 @@ class FileManager extends Module
             }
             // Loop through all the files and select the files between the first currently selected file and the clicked file
             foreach ($this->directories[$depth]['files'] as $file) {
-                if ($selecting && !in_array($file->encoded, $this->selectedFiles)) {
-                    $this->selectedFiles[] = $file->encoded;
+                if ($selecting && !in_array($file['encoded'], $this->selectedFiles)) {
+                    $this->selectedFiles[] = $file['encoded'];
                 }
-                if ($encodedFile == $file->encoded) {
+                if ($encodedFile == $file['encoded']) {
                     $selecting = !$selecting;
                 }
-                if ($file->encoded == reset($this->selectedFiles)) {
+                if ($file['encoded'] == reset($this->selectedFiles)) {
                     $selecting = !$selecting;
                 }
             }
@@ -208,7 +208,7 @@ class FileManager extends Module
             }
         }
 
-        return (object)[
+        return [
             'Size' => $this->humanFileSize($size),
             'date_modified' => $dates,
             'Dimensions' => $dimensions,
