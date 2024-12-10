@@ -20,6 +20,10 @@
                 font-weight: 600;
                 font-size: 0.9em;
                 line-height: var(--nav-item-height);
+                .leap-buttons {
+                    padding-left: 0;
+                    padding-right: 0;
+                }
                 BUTTON:hover {
                     opacity: 0.5;
                     cursor: pointer;

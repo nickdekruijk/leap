@@ -17,7 +17,6 @@
                 width: 100%;
             }
             &:not(:last-child) {
-                TH:not(:first-child),
                 TD:not(:first-child) {
                     display: none;
                 }
@@ -26,11 +25,7 @@
                 }
             }
             .leap-filemanager-parent {
-                display: none;
                 line-height: var(--nav-item-height);
-                top: 0;
-                width: 100%;
-                background-color: $blue-normal;
                 .svg-icon {
                     color: white;
                 }
@@ -38,6 +33,13 @@
             .leap-index-row {
                 TD {
                     background-color: transparent;
+                }
+            }
+            &:not(:last-of-type) {
+                .leap-button {
+                    SPAN {
+                        display: none;
+                    }
                 }
             }
         }
