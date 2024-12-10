@@ -7,6 +7,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
 class FileManager extends Module
@@ -57,7 +58,7 @@ class FileManager extends Module
     {
         $folders = [];
         $entries = $this->getStorage()->directories($directory);
-        sort($entries, SORT_NATURAL | SORT_FLAG_CASE);
+        Leap::sort($entries);
         foreach ($entries as $folder) {
             $size = 0;
             $files = $this->getStorage()->allFiles($folder);
@@ -74,7 +75,7 @@ class FileManager extends Module
         };
         $files = [];
         $entries = $this->getStorage()->files($directory);
-        sort($entries, SORT_NATURAL | SORT_FLAG_CASE);
+        Leap::sort($entries);
         foreach ($entries as $file) {
             if (!str_starts_with(basename($file), '.')) {
                 $files[] = [
@@ -167,7 +168,7 @@ class FileManager extends Module
             $this->selectedFiles = $encodedFile ? [$encodedFile] : [];
         }
         usort($this->selectedFiles, function ($a, $b) {
-            return strnatcasecmp(rawurldecode($a), rawurldecode($b));
+            return collator_compare(collator_create(app()->getLocale()), rawurldecode($a), rawurldecode($b));
         });
     }
 
