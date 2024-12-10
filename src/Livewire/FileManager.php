@@ -119,6 +119,7 @@ class FileManager extends Module
             if ($d > $depth) {
                 unset($this->directories[$d]);
                 unset($this->openFolders[$d]);
+                $this->selectedFiles = [];
             }
         }
     }
