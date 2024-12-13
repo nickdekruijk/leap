@@ -24,11 +24,11 @@
                     padding-left: 0;
                     padding-right: 0;
                 }
-                BUTTON:hover {
+                .button-link:hover {
                     opacity: 0.5;
                     cursor: pointer;
                 }
-                BUTTON:focus {
+                .button-link:focus {
                     padding-left: 6px;
                     padding-right: 6px;
                     margin-left: -6px;
@@ -130,6 +130,9 @@
             &:last-child {
                 padding-right: var(--spacing);
                 width: 100%;
+                @media (max-width: 512px) {
+                    width: auto;
+                }
             }
         }
     }
