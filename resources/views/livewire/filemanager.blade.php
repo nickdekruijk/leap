@@ -11,6 +11,16 @@
                             @can('leap::create')
                                 <button x-on:click="$wire.createDirectory({{ $depth }},prompt('@lang('New folder')'))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('New folder')</span></button>
                             @endcan
+                            @if ($depth > 0)
+                                @can('leap::delete')
+                                    <button
+                                        x-on:click="if (confirm('@lang('delete_folder'). @lang('are_you_sure')')) $wire.deleteDirectory({{ $depth }})"
+                                        class="leap-button secondary"
+                                        @if (count($directory['folders']) > 0 || count($directory['files']) > 0) disabled @endif>
+                                        @svg('fas-trash', 'svg-icon')<span> @lang('delete_folder')</span>
+                                    </button>
+                                @endcan
+                            @endif
                         </div>
                     </th>
                 </tr>

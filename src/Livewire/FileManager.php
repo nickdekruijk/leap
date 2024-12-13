@@ -151,6 +151,36 @@ class FileManager extends Module
         }
     }
 
+    public function deleteDirectory(int $depth): bool
+    {
+        Gate::authorize('leap::delete');
+        $full = rawurldecode($this->openFolders[$depth]);
+
+        // Check if the directory exists and is in the directories array, toast error if it doesn't
+        if (!$this->getStorage()->exists($full) || empty($this->directories[$depth - 1]['folders'][$this->currentDirectory($depth - 1)])) {
+            $this->dispatch('toast-error', $full . ' ' . __('does not exist'))->to(Toasts::class);
+            return false;
+        }
+
+        // Check if the directory is empty, toast error if it doesn't
+        if ($this->getStorage()->allFiles($full) || $this->getStorage()->allDirectories($full)) {
+            $this->dispatch('toast-error', $full . ' ' . __('is not empty'))->to(Toasts::class);
+            return false;
+        }
+
+        // Delete the directory and toast on success or error
+        $delete = $this->getStorage()->deleteDirectory($full);
+        if ($delete) {
+            $this->dispatch('toast', __('Folder') . ' ' . $this->currentDirectory($depth - 1) . ' ' . __('deleted'))->to(Toasts::class);
+            $this->log('delete', 'Folder ' . $full);
+            unset($this->directories[$depth - 1]['folders'][$this->currentDirectory($depth - 1)]);
+            $this->closeDirectory($depth - 1);
+        } else {
+            $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentDirectory($depth - 1))->to(Toasts::class);
+        }
+        return $delete;
+    }
+
     public function selectFile($encodedFile = null, $multiple = false, $shiftKey = false)
     {
         $depth = count(explode('/', rawurldecode($encodedFile))) - 1;
