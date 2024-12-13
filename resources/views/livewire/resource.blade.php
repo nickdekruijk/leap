@@ -13,7 +13,7 @@
                 @endforeach
             </tr>
             @foreach ($this->indexRows() as $row)
-                @if ($this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && strlen($char = ucfirst(substr($row[$this->orderBy], 0, 1))) && (empty($last) || $last !== $char))
+                @if ($this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && strlen($char = ucfirst(mb_substr($row[$this->orderBy], 0, 1))) && (empty($last) || $last !== $char))
                     <tr class="leap-index-row leap-index-group">
                         @foreach ($this->indexAttributes() as $attribute)
                             <td>{{ $attribute->name == $this->orderBy ? ($last = $char) : '' }}</td>
