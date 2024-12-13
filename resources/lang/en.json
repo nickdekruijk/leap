@@ -1,4 +1,5 @@
 {
+    "are_you_sure": "Are you sure?",
     "Back": "Back",
     "files": "files",
     "cancel": "Cancel",
@@ -12,6 +13,7 @@
     "datetime_format_long":"dddd D MMMM Y HH:mm",
     "dashboard": "Dashboard",
     "delete": "Delete",
+    "delete_folder": "Delete folder",
     "deleted": "deleted",
     "delete_confirm": "Are you sure you want to delete this?",
     "Dimensions": "Dimensions",
@@ -26,6 +28,7 @@
     "login": "Login",
     "logout": "Logout",
     "name": "Name",
+    "New folder": "Nieuwe map",
     "no-changes": "No changes to save",
     "Page expired":"Page has expired due to inactivity, do you want to reload the page?",
     "password_current": "Current password",
@@ -42,6 +45,7 @@
     "Size": "Size",
     "update_password": "Update password",
     "updated": "updated",
+    "Upload": "Upload",
     "Users": "Users",
     "verification_code": "Verification code"
 }

@@ -1,4 +1,5 @@
 {
+    "are_you_sure": "Weet je het zeker?",
     "Back": "Terug",
     "files": "bestanden",
     "cancel": "Annuleren",
@@ -12,6 +13,7 @@
     "datetime_format_long":"ddd D MMMM Y HH:mm",
     "dashboard": "Dashboard",
     "delete": "Verwijderen",
+    "delete_folder": "Verwijder map",
     "deleted": "verwijderd",
     "delete_confirm": "Weet je zeker dat je dit wilt verwijderen?",
     "Dimensions": "Afmetingen",
@@ -26,6 +28,7 @@
     "login": "Inloggen",
     "logout": "Uitloggen",
     "name": "Naam",
+    "New folder": "Nieuwe map",
     "no-changes": "Geen wijzigingen om op te slaan",
     "Page expired":"Pagina is verlopen vanwege inactiviteit, wilt u de pagina opnieuw laden?",
     "password_current": "Huidig wachtwoord",
@@ -42,6 +45,7 @@
     "Size": "Grootte",
     "update_password": "Wachtwoord wijzigen",
     "updated": "bijgewerkt",
+    "Upload": "Upload",
     "Users": "Gebruikers",
     "verification_code": "Verificatiecode"
 }
