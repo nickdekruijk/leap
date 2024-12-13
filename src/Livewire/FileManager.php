@@ -102,6 +102,7 @@ class FileManager extends Module
 
     public function openDirectory(string $directory, int $depth)
     {
+        Gate::authorize('leap::read');
         $this->selectedFiles = [];
         if (isset($this->openFolders[$depth]) && $this->openFolders[$depth] == $directory) {
             $this->closeDirectory($depth - 1);
@@ -135,6 +136,7 @@ class FileManager extends Module
 
     public function createDirectory($depth, ?string $folder)
     {
+        Gate::authorize('leap::create');
         if ($folder) {
             $full = rawurldecode($this->openFolders[$depth] ?? '') . '/' . $folder;
             $this->directories[$depth]['folders'][$folder] = [
