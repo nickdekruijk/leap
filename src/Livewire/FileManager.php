@@ -139,6 +139,16 @@ class FileManager extends Module
         Gate::authorize('leap::create');
         if ($folder) {
             $full = rawurldecode($this->openFolders[$depth] ?? '') . '/' . $folder;
+            // Check if folder contains invalid characters
+            if (str_starts_with($folder, '.') || preg_match('/[\/\\\]/', $folder)) {
+                $this->dispatch('toast-error', $folder . ' ' . __('contains invalid characters'))->to(Toasts::class);
+                return false;
+            }
+            // Check if the directory already exists, toast error if it doesn't
+            if ($this->getStorage()->exists($full)) {
+                $this->dispatch('toast-error', $full . ' ' . __('already exist'))->to(Toasts::class);
+                return false;
+            }
             $this->directories[$depth]['folders'][$folder] = [
                 'encoded' => rawurlencode($full),
                 'name' => $folder,
