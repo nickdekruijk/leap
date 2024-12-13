@@ -14,7 +14,8 @@
                             @if ($depth > 0)
                                 @can('leap::delete')
                                     <button
-                                        x-on:click="if (confirm('@lang('delete_folder'). @lang('are_you_sure')')) $wire.deleteDirectory({{ $depth }})"
+                                        wire:click="deleteDirectory({{ $depth }})"
+                                        wire:confirm="@lang('delete_folder'). @lang('are_you_sure')"
                                         class="leap-button secondary"
                                         @if (count($directory['folders']) > 0 || count($directory['files']) > 0) disabled @endif>
                                         @svg('fas-trash-alt', 'svg-icon')<span> @lang('delete_folder')</span>
