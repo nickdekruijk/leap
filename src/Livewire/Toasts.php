@@ -10,7 +10,7 @@ class Toasts extends Component
     public $toasts = [];
 
     #[On('toast-error')]
-    public function error($message, $focus)
+    public function error($message, $focus = null)
     {
         $this->add(
             message: $message,

@@ -146,6 +146,8 @@ class FileManager extends Module
             ];
             $this->getStorage()->makeDirectory($full);
             Leap::ksort($this->directories[$depth]['folders']);
+            $this->dispatch('toast', __('Folder') . ' ' . $folder . ' ' . __('created'))->to(Toasts::class);
+            $this->log('create', 'Folder ' . $full);
         }
     }
 
