@@ -151,6 +151,12 @@ class FileManager extends Module
         }
     }
 
+    /**
+     * Delete the directory at the given depth
+     *
+     * @param integer $depth
+     * @return boolean true if the directory was deleted, false if not
+     */
     public function deleteDirectory(int $depth): bool
     {
         Gate::authorize('leap::delete');
