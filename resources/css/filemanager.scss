@@ -24,11 +24,15 @@
                     padding-right: var(--spacing);
                 }
             }
-            .leap-filemanager-parent {
+            .leap-index-header {
+                width: 100%;
                 line-height: var(--nav-item-height);
                 .svg-icon {
                     color: white;
                 }
+            }
+            .leap-filemanager-parent {
+                display: none;
             }
             .leap-index-row {
                 TD {
@@ -50,7 +54,7 @@
                     flex-basis: 100%;
                 }
                 .leap-filemanager-parent {
-                    display: flex;
+                    display: table-row;
                 }
                 &:not(:last-child) {
                     display: none;

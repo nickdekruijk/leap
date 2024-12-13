@@ -1,15 +1,23 @@
 <main class="leap-main leap-filemanager">
     <header class="leap-header">
-        <h2>{{ $this->getTitle() }}</h2>
+        <h2>{{ $this->currentDirectory() }}</h2>
     </header>
     <div class="leap-index">
         @foreach ($directories as $depth => $directory)
             <table class="leap-index-table">
+                <tr class="leap-index-header">
+                    <th colspan="2">
+                        <div class="leap-buttons">
+                            @can('leap::create')
+                                <button x-on:click="$wire.createDirectory({{ $depth }},prompt('@lang('New folder')'))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('New folder')</span></button>
+                            @endcan
+                        </div>
+                    </th>
+                </tr>
                 @if ($depth > 0)
-                    <tr wire:click="closeDirectory({{ $depth - 1 }})" class="leap-index-header leap-filemanager-parent">
-                        <th colspan="2">
-                            <button class="button-link">@svg('fas-arrow-left', 'svg-icon') {{ urldecode(end($openFolders)) }}</button>
-                        </th>
+                    <tr wire:click="closeDirectory({{ $depth - 1 }})" class="leap-index-row leap-filemanager-parent">
+                        <td><button class="button-link">@svg('fas-arrow-left', 'svg-icon') <em>{{ $this->currentDirectory($depth - 2) }}</em></button></td>
+                        <td></td>
                     </tr>
                 @endif
                 @foreach ($directory['folders'] as $folder)

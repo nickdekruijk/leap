@@ -124,6 +124,29 @@ class FileManager extends Module
         }
     }
 
+    public function currentDirectory(int $depth = null): string
+    {
+        $folders = explode('/', rawurldecode(end($this->openFolders)));
+        if ($depth === null) {
+            $depth = count($folders) - 1;
+        }
+        return $folders[$depth] ?? null ?: $this->getTitle();
+    }
+
+    public function createDirectory($depth, ?string $folder)
+    {
+        if ($folder) {
+            $full = rawurldecode($this->openFolders[$depth] ?? '') . '/' . $folder;
+            $this->directories[$depth]['folders'][$folder] = [
+                'encoded' => rawurlencode($full),
+                'name' => $folder,
+                'size' => $this->humanFileSize(0),
+            ];
+            $this->getStorage()->makeDirectory($full);
+            Leap::ksort($this->directories[$depth]['folders']);
+        }
+    }
+
     public function selectFile($encodedFile = null, $multiple = false, $shiftKey = false)
     {
         $depth = count(explode('/', rawurldecode($encodedFile))) - 1;
