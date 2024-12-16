@@ -28,6 +28,13 @@ class FileManager extends Module
         $this->title = __('File_manager');
     }
 
+    /**
+     * Convert a number into human readable format
+     *
+     * @param int $bytes
+     * @param integer decimals
+     * @return string
+     */
     function humanFileSize(int $bytes, int $decimals = 1): string
     {
         $size = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
