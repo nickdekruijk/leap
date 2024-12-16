@@ -59,17 +59,28 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         }
 
         Gate::define('leap::create', function ($user, $id = null) {
-            return in_array('create', Context::get('leap.permissions')[Context::get('leap.module')]);
+            return $this->can('create');
         });
         Gate::define('leap::read', function ($user, $id = null) {
-            return in_array('read', Context::get('leap.permissions')[Context::get('leap.module')]);
+            return $this->can('read');
         });
         Gate::define('leap::update', function ($user, $id = null) {
-            return in_array('update', Context::get('leap.permissions')[Context::get('leap.module')]);
+            return $this->can('update');
         });
         Gate::define('leap::delete', function ($user, $id = null) {
-            return in_array('delete', Context::get('leap.permissions')[Context::get('leap.module')]);
+            return $this->can('detele');
         });
+    }
+
+    /**
+     * Check if user has permission for the module ability
+     *
+     * @param string $ability
+     * @return boolean
+     */
+    public function can(string $ability)
+    {
+        return in_array($ability, Context::get('leap.permissions')[Context::get('leap.module')]);
     }
 
     /**

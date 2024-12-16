@@ -61,7 +61,7 @@ class Profile extends Module
 
     public function submit()
     {
-        Gate::authorize('leap::update');
+        $this->validatePermission('update');
 
         // Run validation
         $validator = Validator::make(['data' => $this->data], $this->rules(), [], $this->validationAttributes());

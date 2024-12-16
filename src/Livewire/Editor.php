@@ -4,10 +4,8 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
@@ -103,7 +101,7 @@ class Editor extends Component
     public function openEditor(int $id)
     {
         // Check if the user has read permission to this module
-        Gate::authorize('leap::read', $id);
+        $this->validatePermission('read');
 
         $this->log('read', ['id' => $id]);
 
@@ -270,7 +268,7 @@ class Editor extends Component
      */
     public function save()
     {
-        Gate::authorize($this->editing == self::CREATE_NEW ? 'leap::create' : 'leap::update', $this->editing);
+        $this->validatePermission($this->editing == self::CREATE_NEW ? 'create' : 'update');
 
         if ($this->isValid($this->editing)) {
             // Get current model with data
@@ -313,7 +311,7 @@ class Editor extends Component
      */
     public function clone()
     {
-        Gate::authorize('leap::create');
+        $this->validatePermission('create');
 
         if ($this->isValid()) {
             // Create new model
@@ -337,7 +335,7 @@ class Editor extends Component
      */
     public function delete()
     {
-        Gate::authorize('leap::delete', $this->editing);
+        $this->validatePermission('delete');
         $model = $this->getModel($this->editing);
         $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('deleted'))->to(Toasts::class);
         $this->log('delete', ['id' => $this->editing]);

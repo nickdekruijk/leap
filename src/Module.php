@@ -33,6 +33,21 @@ class Module extends Component
         return $this->default_permissions;
     }
 
+    /**
+     * Check if the user has permission for the ability, if not raise HtmlException and Log
+     *
+     * @param string $ability The permission to check
+     * @param integer $code Http response code to throw on gate failure (default 403: Unauthorized)
+     * @return void
+     */
+    public function validatePermission(string $ability, int $code = 403)
+    {
+        if (Gate::denies('leap::' . $ability)) {
+            $this->log('unauthorized', ['ability' => $ability, 'code' => $code, 'requestUri' => request()->getRequestUri()]);
+            abort($code);
+        }
+    }
+
     public function __construct($options = [])
     {
         Auth::shouldUse(config('leap.guard'));
@@ -48,6 +63,6 @@ class Module extends Component
         Context::add('leap.module', $this::class);
 
         // If the user has no read permission to this module raise a 404 error because we want to hide the fact that this module exists
-        abort_if(Gate::denies('leap::read'), 404);
+        $this->validatePermission('read', 404);
     }
 }
