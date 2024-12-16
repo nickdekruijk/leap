@@ -55,6 +55,14 @@
             <div class="leap-filemanager-selected">
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
                     <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="Close" />
+                    @can('leap::delete')
+                        <button
+                            wire:click="deleteFiles"
+                            wire:confirm="@lang('delete_file' . (count($selectedFiles) > 1 ? 's' : '')). @lang('are_you_sure')"
+                            class="leap-button secondary">
+                            @svg('fas-trash-alt', 'leap-svg-icon')<span> @lang('delete_file' . (count($selectedFiles) > 1 ? 's' : ''))</span>
+                        </button>
+                    @endcan
                 </div>
                 <div class="leap-filemanager-preview">
                     <div class="leap-filemanager-preview-items" style="grid-template-columns: repeat({{ ceil(sqrt(count($selectedFiles))) }}, 1fr)">

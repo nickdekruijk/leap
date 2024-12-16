@@ -14,6 +14,8 @@
     "dashboard": "Dashboard",
     "delete": "Delete",
     "delete_folder": "Delete folder",
+    "delete_file": "Delete file",
+    "delete_files": "Delete files",
     "deleted": "deleted",
     "delete_confirm": "Are you sure you want to delete this?",
     "Dimensions": "Dimensions",

@@ -169,6 +169,28 @@ class FileManager extends Module
     }
 
     /**
+     * Delete all selected files
+     *
+     * @return void
+     */
+    public function deleteFiles()
+    {
+        $this->validatePermission('delete');
+        foreach ($this->selectedFiles as $id => $file) {
+            $full = $this->full($file);
+            $delete = $this->getStorage()->delete($full);
+            if ($delete) {
+                $this->dispatch('toast', __('File') . ' ' . $file . ' ' . __('deleted'))->to(Toasts::class);
+                $this->log('delete', 'File ' . $full);
+                unset($this->selectedFiles[$id]);
+            } else {
+                $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentFile($this->selectedFiles))->to(Toasts::class);
+            }
+        }
+        unset($this->columns);
+    }
+
+    /**
      * Delete the directory at the given depth
      *
      * @param integer $depth
