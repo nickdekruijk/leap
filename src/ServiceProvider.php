@@ -68,7 +68,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             return $this->can('update');
         });
         Gate::define('leap::delete', function ($user, $id = null) {
-            return $this->can('detele');
+            return $this->can('delete');
         });
     }
 
