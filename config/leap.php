@@ -269,7 +269,7 @@ return [
     */
     'filemanager' => [
         'disk' => 'local', // Must refer to a disk defined in config/filesystems.php
-        'upload_limit' => 1024 * 1024 * 5, // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
+        'upload_max_filesize' => '32M', // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
         'allowed_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'svg', 'zip', 'pdf', 'doc', 'docx', 'csv', 'xls', 'xlsx', 'pages', 'numbers', 'psd', 'ai', 'eps', 'mp4', 'mp3', 'mpg', 'm4a', 'ogg', 'sketch', 'json', 'rtf', 'md'],
     ],
 
