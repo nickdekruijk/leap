@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap;
 
+use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
 use NickDeKruijk\Leap\Controllers\ModuleController;
@@ -28,6 +29,21 @@ class Leap
     {
         $coll = collator_create(app()->getLocale());
         return collator_sort($coll, $array);
+    }
+
+    /**
+     * Sort an array by basename with locale-sensitive collator
+     *
+     * @param array $array The array to sort
+     * @return boolean true on success or false on failure
+     */
+    public static function basenamesort(array &$array): bool
+    {
+        $coll = collator_create(app()->getLocale());
+        $coll->setAttribute(Collator::NUMERIC_COLLATION, Collator::ON);
+        return usort($array, function ($a, $b) use ($coll) {
+            return collator_compare($coll, basename($a), basename($b));
+        });
     }
 
     /**

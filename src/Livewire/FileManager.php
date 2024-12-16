@@ -7,8 +7,10 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
+use Livewire\Attributes\Computed;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManager extends Module
 {
@@ -18,7 +20,6 @@ class FileManager extends Module
     public $default_permissions = ['read'];
     public $slug = 'filemanager';
 
-    public array $directories = [];
     public array $openFolders = [];
     public array $selectedFiles = [];
 
@@ -37,7 +38,6 @@ class FileManager extends Module
         return sprintf("%.{$dec}f %s", $bytes / (1024 ** $factor), $size[$factor]);
     }
 
-
     /**
      * Get the disk storage from Laravel filesystems configuration
      *
@@ -46,6 +46,24 @@ class FileManager extends Module
     private function getStorage(): Filesystem
     {
         return Storage::disk(config('leap.filemanager.disk'));
+    }
+
+    /**
+     * Return all filemanager columns with folders and files
+     *
+     * @return array
+     */
+    #[Computed(persist: true)]
+    public function columns(): array
+    {
+        $columns = [$this->getFiles()];
+        $path = '';
+        foreach ($this->openFolders as $folder) {
+            $path .= $folder;
+            $columns[] = $this->getFiles($path);
+            $path .= '/';
+        }
+        return $columns;
     }
 
     /**
@@ -58,7 +76,7 @@ class FileManager extends Module
     {
         $folders = [];
         $entries = $this->getStorage()->directories($directory);
-        Leap::sort($entries);
+        Leap::basenamesort($entries);
         foreach ($entries as $folder) {
             $size = 0;
             $files = $this->getStorage()->allFiles($folder);
@@ -66,79 +84,71 @@ class FileManager extends Module
                 $size += $this->getStorage()->size($file);
             }
             if (!str_starts_with(basename($folder), '.')) {
-                $folders[basename($folder)] = [
-                    'encoded' => rawurlencode($folder),
-                    'name' => basename($folder),
-                    'size' => $this->humanFileSize($size),
-                ];
+                $folders[basename($folder)] = $this->humanFileSize($size);
             }
         };
         $files = [];
         $entries = $this->getStorage()->files($directory);
-        Leap::sort($entries);
+        Leap::basenamesort($entries);
         foreach ($entries as $file) {
             if (!str_starts_with(basename($file), '.')) {
-                $files[] = [
-                    'encoded' => rawurlencode($file),
-                    'name' => basename($file),
-                    'size' => $this->humanFileSize($this->getStorage()->size($file)),
-                ];
+                $files[basename($file)] = $this->humanFileSize($this->getStorage()->size($file));
             }
         };
         return ['files' => $files, 'folders' => $folders];
     }
 
-    public function fileIcon($file)
+    public function fileIcon($name)
     {
-        // 'thumbnail' => $this->isImage($file) ? $this->getStorage()->url($file) : false,
-        if ($this->isPdf(rawurldecode($file['encoded']))) {
+        if ($this->isPdf($name)) {
             return 'far-file-pdf';
         }
-        if ($this->isImage(rawurldecode($file['encoded']))) {
+        if ($this->isImage($name)) {
             return 'far-file-image';
         }
         return 'far-file';
     }
 
-    public function openDirectory(string $directory, int $depth)
+    public function openDirectory(string $encodedName, int $depth)
     {
-        Gate::authorize('leap::read');
+        $name = urldecode($encodedName);
         $this->selectedFiles = [];
-        if (isset($this->openFolders[$depth]) && $this->openFolders[$depth] == $directory) {
+
+        if (isset($this->openFolders[$depth]) && $this->openFolders[$depth] == $name) {
             $this->closeDirectory($depth - 1);
         } else {
-            $this->directories[$depth] = $this->getFiles(rawurldecode($directory));
-            $this->openFolders[$depth] = $directory;
+            $this->openFolders[$depth] = $name;
             $this->closeDirectory($depth);
         }
-        $this->dispatch('update');
     }
 
     public function closeDirectory($depth)
     {
-        foreach ($this->directories as $d => $folder) {
+        foreach ($this->openFolders as $d => $folder) {
             if ($d > $depth) {
-                unset($this->directories[$d]);
                 unset($this->openFolders[$d]);
                 $this->selectedFiles = [];
             }
         }
+
+        // Bust the columns cache
+        unset($this->columns);
     }
 
     public function currentDirectory(int $depth = null): string
     {
-        $folders = explode('/', rawurldecode(end($this->openFolders)));
         if ($depth === null) {
-            $depth = count($folders) - 1;
+            $depth = count($this->openFolders);
         }
-        return $folders[$depth] ?? null ?: $this->getTitle();
+        return ($this->openFolders[$depth] ?? null) ?: $this->getTitle();
     }
 
     public function createDirectory($depth, ?string $folder)
     {
-        Gate::authorize('leap::create');
+        $this->validatePermission('create');
         if ($folder) {
-            $full = rawurldecode($this->openFolders[$depth] ?? '') . '/' . $folder;
+            $this->closeDirectory($depth);
+            $full = $this->full($folder);
             // Check if folder contains invalid characters
             if (str_starts_with($folder, '.') || preg_match('/[\/\\\]/', $folder)) {
                 $this->dispatch('toast-error', $folder . ' ' . __('contains invalid characters'))->to(Toasts::class);
@@ -149,15 +159,12 @@ class FileManager extends Module
                 $this->dispatch('toast-error', $full . ' ' . __('already exist'))->to(Toasts::class);
                 return false;
             }
-            $this->directories[$depth]['folders'][$folder] = [
-                'encoded' => rawurlencode($full),
-                'name' => $folder,
-                'size' => $this->humanFileSize(0),
-            ];
-            $this->getStorage()->makeDirectory($full);
-            Leap::ksort($this->directories[$depth]['folders']);
-            $this->dispatch('toast', __('Folder') . ' ' . $folder . ' ' . __('created'))->to(Toasts::class);
-            $this->log('create', 'Folder ' . $full);
+            if ($this->getStorage()->makeDirectory($full)) {
+                $this->dispatch('toast', __('Folder') . ' ' . $folder . ' ' . __('created'))->to(Toasts::class);
+                $this->log('create', 'Folder ' . $full);
+            } else {
+                $this->dispatch('toast-error', __('Folder') . ' ' . $folder . ' ' . __('create_failed'))->to(Toasts::class);
+            }
         }
     }
 
@@ -169,11 +176,13 @@ class FileManager extends Module
      */
     public function deleteDirectory(int $depth): bool
     {
-        Gate::authorize('leap::delete');
-        $full = rawurldecode($this->openFolders[$depth]);
+        $this->validatePermission('delete');
 
-        // Check if the directory exists and is in the directories array, toast error if it doesn't
-        if (!$this->getStorage()->exists($full) || empty($this->directories[$depth - 1]['folders'][$this->currentDirectory($depth - 1)])) {
+        $this->closeDirectory($depth);
+        $full = implode('/', $this->openFolders);
+
+        // Check if the directory exists and is in the columns array, toast error if it doesn't
+        if (!$this->getStorage()->exists($full)) {
             $this->dispatch('toast-error', $full . ' ' . __('does not exist'))->to(Toasts::class);
             return false;
         }
@@ -187,63 +196,125 @@ class FileManager extends Module
         // Delete the directory and toast on success or error
         $delete = $this->getStorage()->deleteDirectory($full);
         if ($delete) {
-            $this->dispatch('toast', __('Folder') . ' ' . $this->currentDirectory($depth - 1) . ' ' . __('deleted'))->to(Toasts::class);
+            $this->dispatch('toast', __('Folder') . ' ' . $this->currentDirectory() . ' ' . __('deleted'))->to(Toasts::class);
             $this->log('delete', 'Folder ' . $full);
-            unset($this->directories[$depth - 1]['folders'][$this->currentDirectory($depth - 1)]);
             $this->closeDirectory($depth - 1);
         } else {
-            $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentDirectory($depth - 1))->to(Toasts::class);
+            $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentDirectory())->to(Toasts::class);
         }
         return $delete;
     }
 
-    public function selectFile($encodedFile = null, $multiple = false, $shiftKey = false)
+    public function selectFile($encodedFileName = null, $depth = null, $multiple = false, $shiftKey = false)
     {
-        $depth = count(explode('/', rawurldecode($encodedFile))) - 1;
-        $previousDepth = count(explode('/', rawurldecode(reset($this->selectedFiles)))) - 1;
-        if ($encodedFile && ($depth !== $previousDepth || !$this->selectedFiles)) {
-            // Close folders below selected file when a file is selected
+        // Url decode the name as it's encoded by the blade template
+        $fileName = urldecode($encodedFileName);
+
+        // Close folders if new selected file is in different folder
+        if ($fileName && ($depth !== count($this->openFolders) || !$this->selectedFiles)) {
+            // dd($depth, $this->openFolders);
             $this->closeDirectory($depth);
             $this->selectedFiles = [];
         }
+
         if ($shiftKey && $this->selectedFiles) {
             // If shift key is pressed, select files between the first currently selected file and the clicked file
             $selecting = false;
             // Start with the first currently selected file
             $this->selectedFiles = [reset($this->selectedFiles)];
             // Add the clicked file if it's different from first
-            if (!in_array($encodedFile, $this->selectedFiles)) {
-                $this->selectedFiles[] = $encodedFile;
+            if (!in_array($fileName, $this->selectedFiles)) {
+                $this->selectedFiles[] = $fileName;
             }
             // Loop through all the files and select the files between the first currently selected file and the clicked file
-            foreach ($this->directories[$depth]['files'] as $file) {
-                if ($selecting && !in_array($file['encoded'], $this->selectedFiles)) {
-                    $this->selectedFiles[] = $file['encoded'];
+            foreach ($this->columns[$depth]['files'] as $name => $size) {
+                if ($selecting && !in_array($name, $this->selectedFiles)) {
+                    $this->selectedFiles[] = $name;
                 }
-                if ($encodedFile == $file['encoded']) {
+                if ($fileName == $name) {
                     $selecting = !$selecting;
                 }
-                if ($file['encoded'] == reset($this->selectedFiles)) {
+                if ($name    == reset($this->selectedFiles)) {
                     $selecting = !$selecting;
                 }
             }
         } elseif ($multiple) {
-            // When alt and/or fn/cmd is pressed, add or remove the file from the selection
-            if (count(explode('/', rawurldecode(reset($this->selectedFiles)))) - 1 > $depth) {
-                $this->selectedFiles = [];
-            }
-            if (in_array($encodedFile, $this->selectedFiles)) {
-                $this->selectedFiles = array_diff($this->selectedFiles, [$encodedFile]);
+            // When alt and/or fn/cmd is pressed, unselect or select the clicked file
+            if (in_array($fileName, $this->selectedFiles)) {
+                $this->selectedFiles = array_diff($this->selectedFiles, [$fileName]);
             } else {
-                $this->selectedFiles[] = $encodedFile;
+                $this->selectedFiles[] = $fileName;
             }
         } else {
             // Default behavior, select only the clicked file if any
-            $this->selectedFiles = $encodedFile ? [$encodedFile] : [];
+            $this->selectedFiles = $fileName ? [$fileName] : [];
         }
-        usort($this->selectedFiles, function ($a, $b) {
-            return collator_compare(collator_create(app()->getLocale()), rawurldecode($a), rawurldecode($b));
-        });
+        Leap::sort($this->selectedFiles);
+    }
+
+    /**
+     * Add the full path in front of a file or folder name
+     *
+     * @param string $name the file or foldername
+     * @param boolean $urlencode specify if the full path should be urlencoded
+     * @return string
+     */
+    public function full(string $name, bool $urlencode = false): string
+    {
+        // Add open folders to the full path if any
+        if ($this->openFolders) {
+            $full = implode('/', $this->openFolders) . '/' . $name;
+        } else {
+            $full = $name;
+        }
+
+        // rawurlencode the full path but not forward slashes
+        if ($urlencode) {
+            $full = rawurlencode($full);
+            $full = str_replace('%2F', '/', $full);
+        }
+
+        return $full;
+    }
+
+    /**
+     * Add the full path in front of a file or folder name and urlencode it
+     *
+     * @param string $name the file or foldername
+     * @return string
+     */
+    public function encode(string $name): string
+    {
+        return $this->full($name, true);
+    }
+
+    /**
+     * Generate an url to download a file
+     *
+     * @param string $file the file including full path
+     * @return string the full url
+     */
+    public function downloadUrl(string $file): string
+    {
+        return route('leap.module.' . $this->getSlug() . '.download', $this->encode($file));
+    }
+
+    /**
+     * Return the file from storage as a response
+     *
+     * @param string $file the file including full path
+     * @return StreamedResponse
+     */
+    public function download(string $file): StreamedResponse
+    {
+        // Since this is used as a direct route the Module boot method should be called, to set module context and check read permissions
+        parent::boot();
+
+        // Check if the file exists
+        abort_if(!$this->getStorage()->exists($file), 404);
+
+        // Return the file as a response to not force downloads in browser
+        return $this->getStorage()->response($file);
     }
 
     public function selectedFilesStats()
@@ -255,11 +326,12 @@ class FileManager extends Module
 
         // Calculate total size of all selected files and get the first and last modified date
         foreach ($this->selectedFiles as $file) {
-            $size += $this->getStorage()->size(rawurldecode($file));
-            $time = $this->getStorage()->lastModified(rawurldecode($file));
-            if (count($this->selectedFiles) == 1 && $this->isBitmap(rawurldecode($file))) {
+            $full = $this->full($file);
+            $size += $this->getStorage()->size($full);
+            $time = $this->getStorage()->lastModified($full);
+            if (count($this->selectedFiles) == 1 && $this->isBitmap($full)) {
                 // When only one file is selected and it's a bitmap image get the dimensions in pixels
-                $image = Image::read($this->getStorage()->get(rawurldecode($file)));
+                $image = Image::read($this->getStorage()->get($full));
                 $dimensions = $image->width() . ' x ' . $image->height();
             }
             if ($timeMin === null || $time < $timeMin) {
@@ -312,15 +384,6 @@ class FileManager extends Module
     public function isPdf(string $file): bool
     {
         return $this->hasExtension($file, 'pdf');
-    }
-
-    public function mount()
-    {
-        // Check if the user has read permission to this module
-        Gate::authorize('leap::read');
-
-        // Get all directories from disk
-        $this->directories[] = $this->getFiles();
     }
 
     public function render()

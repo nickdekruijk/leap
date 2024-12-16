@@ -4,6 +4,7 @@ use NickDeKruijk\Leap\Controllers\AssetController;
 use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
+use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
@@ -32,6 +33,10 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
         foreach (ModuleController::getAllModules() as $module) {
             if ($module->getSlug()) {
                 Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+                if ($module::class === FileManager::class) {
+                    // Filemanager download/preview route
+                    Route::get($organizations_prefix . $module->getSlug() . '/download/{name}', [FileManager::class, 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
+                }
             }
         }
     });

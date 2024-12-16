@@ -3,7 +3,7 @@
         <h2>{{ $this->currentDirectory() }}</h2>
     </header>
     <div class="leap-index">
-        @foreach ($directories as $depth => $directory)
+        @foreach ($this->columns as $depth => $directory)
             <table class="leap-index-table">
                 <tr class="leap-index-header">
                     <th colspan="2">
@@ -13,14 +13,15 @@
                             @endcan
                             @if ($depth > 0)
                                 @can('leap::delete')
-                                    <button
-                                        wire:click="deleteDirectory({{ $depth }})"
-                                        wire:confirm="@lang('delete_folder'). @lang('are_you_sure')"
-                                        class="leap-button secondary"
-                                        @if (count($directory['folders']) > 0 || count($directory['files']) > 0) disabled @endif>
-                                        @svg('fas-trash-alt', 'svg-icon')<span> @lang('delete_folder')</span>
-                                    </button>
-                                @endcan
+                                    @if (count($directory['folders']) == 0 && count($directory['files']) == 0)
+                                        <button
+                                            wire:click="deleteDirectory({{ $depth }})"
+                                            wire:confirm="@lang('delete_folder'). @lang('are_you_sure')"
+                                            class="leap-button secondary">
+                                            @svg('fas-trash-alt', 'svg-icon')<span> @lang('delete_folder')</span>
+                                        </button>
+                                    @endcan
+                                @endif
                             @endif
                         </div>
                     </th>
@@ -31,24 +32,21 @@
                         <td></td>
                     </tr>
                 @endif
-                @foreach ($directory['folders'] as $folder)
-                    <tr wire:click="openDirectory('{{ $folder['encoded'] }}',{{ $depth + 1 }})" class="leap-index-row @if (in_array($folder['encoded'], $openFolders)) leap-index-row-selected @endif">
-                        <td><button class="button-link">@svg('fas-folder' . (in_array($folder['encoded'], $openFolders) ? '-open' : ''), 'svg-icon') {{ $folder['name'] }}</button></td>
-                        <td align="right">{{ $folder['size'] }}</td>
+                @foreach ($directory['folders'] as $name => $size)
+                    <tr wire:click="openDirectory('{{ urlencode($name) }}',{{ $depth + 1 }})" class="leap-index-row @if (@$openFolders[$depth + 1] == $name) leap-index-row-selected @endif">
+                        <td><button class="button-link">@svg('fas-folder' . ($openFolders[$depth] ?? false == $name ? '-open' : ''), 'svg-icon') {{ $name }}</button></td>
+                        <td align="right">{{ $size }}</td>
                     </tr>
                 @endforeach
-                @foreach ($directory['files'] as $file)
-                    <tr x-on:click="$wire.selectFile('{{ $file['encoded'] }}',window.event.altKey||window.event.metaKey,window.event.shiftKey)" class="leap-index-row @if (in_array($file['encoded'], $selectedFiles)) leap-index-row-selected @endif">
+                @foreach ($directory['files'] as $name => $size)
+                    <tr x-on:click="$wire.selectFile('{{ urlencode($name) }}',{{ $depth }},window.event.altKey||window.event.metaKey,window.event.shiftKey)" class="leap-index-row @if ($depth == count($openFolders) && in_array($name, $selectedFiles)) leap-index-row-selected @endif">
                         <td>
                             <button class="button-link">
-                                @isset($file['thumbnail'])
-                                    <img loading="lazy" draggable="false" class="thumbnail" src="{{ $file['thumbnail'] }}" alt="">
-                                @endisset
-                                @svg($this->fileIcon($file), 'svg-icon')
-                                {{ $file['name'] }}
+                                @svg($this->fileIcon($name), 'svg-icon')
+                                {{ $name }}
                             </button>
                         </td>
-                        <td align="right">{{ $file['size'] }}</td>
+                        <td align="right">{{ $size }}</td>
                     </tr>
                 @endforeach
             </table>
@@ -63,10 +61,10 @@
                         @foreach ($selectedFiles as $file)
                             <div class="leap-filemanager-preview-item">
                                 @if ($this->isImage($file))
-                                    <img src="{{ $this->getStorage()->url($file) }}" alt="">
+                                    <img src="{{ $this->downloadUrl($file) }}" alt="">
                                 @endif
-                                <a href="{{ $this->getStorage()->url($file) }}" target="_blank" rel="noopener">
-                                    <span>@svg('fas-external-link-alt', 'svg-icon') {{ basename(rawurldecode($file)) }}</span>
+                                <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener">
+                                    <span>@svg('fas-external-link-alt', 'svg-icon') {{ $file }}</span>
                                 </a>
                             </div>
                         @endforeach
@@ -77,7 +75,7 @@
                         @if (count($selectedFiles) > 1)
                             {{ count($selectedFiles) }} @lang('files')
                         @else
-                            {{ basename(rawurldecode(reset($selectedFiles))) }}
+                            {{ reset($selectedFiles) }}
                         @endif
                     </h3>
                     <table>
