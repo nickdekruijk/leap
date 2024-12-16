@@ -28,14 +28,14 @@ class FileManager extends Module
         $this->title = __('File_manager');
     }
 
-    function humanFileSize($bytes, $dec = 1): string
+    function humanFileSize(int $bytes, int $decimals = 1): string
     {
         $size = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         $factor = floor((strlen($bytes) - 1) / 3);
         if ($factor == 0) {
-            $dec = 0;
+            $decimals = 0;
         }
-        return sprintf("%.{$dec}f %s", $bytes / (1024 ** $factor), $size[$factor]);
+        return sprintf("%.{$decimals}f %s", $bytes / (1024 ** $factor), $size[$factor]);
     }
 
     /**
