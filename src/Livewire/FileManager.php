@@ -39,7 +39,6 @@ class FileManager extends Module
         if ($value instanceof TemporaryUploadedFile) {
             $path = $value->storeAs(implode('/', $this->openFolders), $value->getClientOriginalName(), config('leap.filemanager.disk'));
             unset($this->columns);
-            debug($value, $path);
         }
     }
 
