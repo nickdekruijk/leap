@@ -2,7 +2,7 @@
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
     </header>
-    <div class="leap-index">
+    <div class="leap-index" x-data="{ uploading: 0 }">
         @foreach ($this->columns as $depth => $directory)
             <table class="leap-index-table">
                 <tr class="leap-index-header">
@@ -10,6 +10,31 @@
                         <div class="leap-buttons">
                             @can('leap::create')
                                 <button x-on:click="$wire.createDirectory({{ $depth }},prompt('@lang('New folder')'))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('New folder')</span></button>
+                                <button x-on:click="$el.nextElementSibling.click()" :disabled="uploading > 0" class="leap-button">
+                                    @svg('fas-upload', 'svg-icon')
+                                    <span>@lang('Upload') <small>Max {{ $this->maxUploadSize() }}</small></span>
+                                </button>
+                                <input type="file" multiple
+                                    x-on:change="
+                                    const fileList = [...$el.files];
+                                    fileList.forEach((file, index) => {
+                                        uploading++;
+                                        $wire.set('uploads.{{ $depth }}.' + index + '.name', file.name);
+                                        $wire.set('uploads.{{ $depth }}.' + index + '.size', file.size);
+                                        $wire.set('uploads.{{ $depth }}.' + index + '.progress', 0 );
+                                        $wire.upload('uploads.{{ $depth }}.' + index + '.file', file, (uploadedFilename) => {
+                                            $wire.uploadDone(file.name);
+                                            uploading--;
+                                        }, () => {
+                                            $wire.uploadFailed(file.name);
+                                            uploading--;
+                                        }, (event) => {
+                                            $wire.set('uploads.{{ $depth }}.' + index + '.progress', event.detail.progress );
+                                        }, () => {
+                                            // Cancelled callback...
+                                        });
+                                    });
+                                ">
                             @endcan
                             @if ($depth > 0)
                                 @can('leap::delete')
@@ -26,6 +51,17 @@
                         </div>
                     </th>
                 </tr>
+                @foreach ($uploads[$depth] ?? [] as $i => $upload)
+                    <tr class="leap-index-row leap-filemanager-uploading @if ($upload['progress'] >= 100) leap-filemanager-uploading-done @endif">
+                        <td>
+                            @svg('fas-upload', 'svg-icon') {{ $upload['name'] }}
+                        </td>
+                        <td align="right">
+                            {{ $this->humanFileSize($upload['size']) }}
+                            <progress value="{{ $upload['progress'] }}" max="100">Test</progress>
+                        </td>
+                    </tr>
+                @endforeach
                 @if ($depth > 0)
                     <tr wire:click="closeDirectory({{ $depth - 1 }})" class="leap-index-row leap-filemanager-parent">
                         <td><button class="button-link">@svg('fas-arrow-left', 'svg-icon') <em>{{ $this->currentDirectory($depth - 2) }}</em></button></td>
@@ -102,6 +138,10 @@
     </div>
     @script
         <script>
+            window.uploadCount = 0;
+            window.uploadCount = function() {
+                return uploadCount++;
+            };
             Livewire.hook('morphed', () => {
                 let e = document.querySelector('.leap-index');
                 e.scrollTo({

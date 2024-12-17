@@ -8,12 +8,18 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManager extends Module
 {
+    use WithFileUploads;
+
+    public array $uploads = [];
+
     public $component = 'leap.filemanager';
     public $icon = 'fas-folder-tree'; // fas-file-alt far-copy fas-folder-tree
     public $priority = 3;
@@ -26,6 +32,57 @@ class FileManager extends Module
     public function __construct()
     {
         $this->title = __('File_manager');
+    }
+
+    public function updatedUploads($value, $key)
+    {
+        if ($value instanceof TemporaryUploadedFile) {
+            $path = $value->storeAs(implode('/', $this->openFolders), $value->getClientOriginalName(), config('leap.filemanager.disk'));
+            unset($this->columns);
+            debug($value, $path);
+        }
+    }
+
+    public function uploadDone($file)
+    {
+        $this->dispatch('toast', $file . ' ' . __('uploaded'))->to(Toasts::class);
+    }
+
+    public function uploadFailed($file)
+    {
+        $this->dispatch('toast-error', $file . ' ' . __('upload failed'))->to(Toasts::class);
+    }
+
+    /**
+     * Convert a size string to bytes
+     *
+     * @param string $value a size string e.g. '1K', '2M', '3G'
+     * @return int e.g. 1024, 2097152, 3221225472
+     */
+    function bytes(string $value): int
+    {
+        $value = trim($value);
+        $num = (int) $value;
+        $last = substr($value, -1);
+
+        $factor = [
+            'K' => 1,
+            'M' => 2,
+            'G' => 3,
+        ];
+
+        return $num * 1024 ** ($factor[$last] ?? 0);
+    }
+
+    /**
+     * Return human readable maximum upload filesize
+     *
+     * @return string
+     */
+    public function maxUploadSize(): string
+    {
+        $max = min($this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
+        return $this->humanFileSize($max, 0);
     }
 
     /**

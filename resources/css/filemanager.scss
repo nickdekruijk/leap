@@ -46,6 +46,9 @@
                     }
                 }
             }
+            INPUT[type="file"] {
+                display: none;
+            }
         }
         @media (max-width: 512px) {
             .leap-index-table {
@@ -79,6 +82,39 @@
             margin-left: -0.15em;
             color: $blue-normal;
             vertical-align: -1px;
+        }
+    }
+    .leap-filemanager-uploading {
+        position: relative;
+        progress {
+            display: block;
+        }
+    }
+    .leap-filemanager-uploading-error {
+        TD {
+            background-color: rgba($red, 0.5) !important;
+        }
+    }
+    .leap-filemanager-uploading-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        background-color: rgba($green, 0.4);
+    }
+    .leap-filemanager-uploading-done {
+        animation: uploadingdone 0.5s both 1s;
+        TD {
+            background-color: rgba($green, 0.5) !important;
+        }
+        @keyframes uploadingdone {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                display: none;
+            }
         }
     }
     .leap-filemanager-selected {
