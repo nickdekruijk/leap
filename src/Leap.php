@@ -5,10 +5,14 @@ namespace NickDeKruijk\Leap;
 use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use NickDeKruijk\Leap\Controllers\ModuleController;
+use NickDeKruijk\Leap\Traits\CanLog;
 
 class Leap
 {
+    use CanLog;
+
     /**
      * Return all modules the current user has access to
      *
@@ -58,6 +62,21 @@ class Leap
         return uksort($array, function ($a, $b) use ($coll) {
             return collator_compare($coll, $a, $b);
         });
+    }
+
+    /**
+     * Check if the user has permission for the ability, if not raise HtmlException and Log
+     *
+     * @param string $ability The permission to check
+     * @param integer $code Http response code to throw on gate failure (default 403: Unauthorized)
+     * @return void
+     */
+    public static function validatePermission(string $ability, int $code = 403)
+    {
+        if (Gate::denies('leap::' . $ability)) {
+            self::log('unauthorized', ['ability' => $ability, 'code' => $code, 'requestUri' => request()->getRequestUri()]);
+            abort($code);
+        }
     }
 
     /**

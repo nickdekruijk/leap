@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Traits\CanLog;
 
 class Editor extends Component
@@ -101,7 +102,7 @@ class Editor extends Component
     public function openEditor(int $id)
     {
         // Check if the user has read permission to this module
-        $this->validatePermission('read');
+        Leap::validatePermission('read');
 
         $this->log('read', ['id' => $id]);
 
@@ -268,7 +269,7 @@ class Editor extends Component
      */
     public function save()
     {
-        $this->validatePermission($this->editing == self::CREATE_NEW ? 'create' : 'update');
+        Leap::validatePermission($this->editing == self::CREATE_NEW ? 'create' : 'update');
 
         if ($this->isValid($this->editing)) {
             // Get current model with data
@@ -311,7 +312,7 @@ class Editor extends Component
      */
     public function clone()
     {
-        $this->validatePermission('create');
+        Leap::validatePermission('create');
 
         if ($this->isValid()) {
             // Create new model
@@ -335,7 +336,7 @@ class Editor extends Component
      */
     public function delete()
     {
-        $this->validatePermission('delete');
+        Leap::validatePermission('delete');
         $model = $this->getModel($this->editing);
         $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('deleted'))->to(Toasts::class);
         $this->log('delete', ['id' => $this->editing]);

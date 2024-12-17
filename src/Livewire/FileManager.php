@@ -4,7 +4,6 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
@@ -208,7 +207,7 @@ class FileManager extends Module
 
     public function createDirectory($depth, ?string $folder)
     {
-        $this->validatePermission('create');
+        Leap::validatePermission('create');
         if ($folder) {
             $this->closeDirectory($depth);
             $full = $this->full($folder);
@@ -238,7 +237,7 @@ class FileManager extends Module
      */
     public function deleteFiles()
     {
-        $this->validatePermission('delete');
+        Leap::validatePermission('delete');
         foreach ($this->selectedFiles as $id => $file) {
             $full = $this->full($file);
             $delete = $this->getStorage()->delete($full);
@@ -261,7 +260,7 @@ class FileManager extends Module
      */
     public function deleteDirectory(int $depth): bool
     {
-        $this->validatePermission('delete');
+        Leap::validatePermission('delete');
 
         $this->closeDirectory($depth);
         $full = implode('/', $this->openFolders);

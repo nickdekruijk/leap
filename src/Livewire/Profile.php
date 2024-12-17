@@ -3,9 +3,9 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
 class Profile extends Module
@@ -61,7 +61,7 @@ class Profile extends Module
 
     public function submit()
     {
-        $this->validatePermission('update');
+        Leap::validatePermission('update');
 
         // Run validation
         $validator = Validator::make(['data' => $this->data], $this->rules(), [], $this->validationAttributes());
