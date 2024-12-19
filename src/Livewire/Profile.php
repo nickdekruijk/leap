@@ -49,7 +49,7 @@ class Profile extends Module
     {
         $attributes = [];
         foreach ($this->rules() as $field => $rule) {
-            $attributes[$field] = strtolower(__(explode('.', $field, 2)[1]));
+            $attributes[$field] = strtolower(__('leap::auth.' . explode('.', $field, 2)[1]));
         }
         return $attributes;
     }
@@ -77,7 +77,7 @@ class Profile extends Module
             if ($this->user->name != $this->data['name']) {
                 $this->user->name = $this->data['name'];
                 $this->log('update', ['name' => $this->user->name]);
-                $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('updated'))->to(Toasts::class);
+                $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                 // Update title and navigation to reflect name change
                 $this->title = $this->user->name;
                 $this->dispatch('update-navigation')->to(Navigation::class);
@@ -87,14 +87,14 @@ class Profile extends Module
             if (isset($this->data['password_new'])) {
                 $this->log('update', 'new password');
                 $this->user->password = bcrypt($this->data['password_new']);
-                $this->dispatch('toast', __('password') . ' ' . __('updated'))->to(Toasts::class);
+                $this->dispatch('toast', __('leap::auth.password') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
             }
 
             // Check if anything changed
             if ($this->user->isDirty()) {
                 $this->user->save();
             } else {
-                $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
+                $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
         }
     }

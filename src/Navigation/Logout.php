@@ -13,11 +13,11 @@ class Logout extends Module
 
     public function getTitle(): string
     {
-        return __('logout');
+        return __('leap::auth.logout');
     }
 
     public function getOutput(): string
     {
-        return '<li class="leap-nav-item"><form method="post" action="' . route('leap.logout') . '"><input type="hidden" name="_token" value="' . csrf_token() . '" /><button>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . __('logout') . '</button></form></li>';
+        return '<li class="leap-nav-item"><form method="post" action="' . route('leap.logout') . '"><input type="hidden" name="_token" value="' . csrf_token() . '" /><button>' . svg($this->getIcon(), 'leap-svg-icon')->toHtml() . __('leap::auth.logout') . '</button></form></li>';
     }
 }

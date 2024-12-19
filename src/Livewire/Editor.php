@@ -282,15 +282,15 @@ class Editor extends Component
                 if ($this->editing == self::CREATE_NEW) {
                     $model->save();
                     $this->log('create', ['id' => $model->id]);
-                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('created'))->to(Toasts::class);
+                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
                     if (count($model->getDirty()) > 3) {
-                        $this->dispatch('toast', count($model->getDirty()) . ' ' . __('columns') . ' ' . __('updated'))->to(Toasts::class);
+                        $this->dispatch('toast', count($model->getDirty()) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                     } else {
                         foreach ($model->getDirty() as $attribute => $value) {
-                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('updated'))->to(Toasts::class);
+                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
                     $this->log('update', ['id' => $this->editing]);
@@ -300,7 +300,7 @@ class Editor extends Component
                 // Force reload of editor data
                 $this->openEditor($model->id);
             } else {
-                $this->dispatch('toast-alert', __('no-changes'))->to(Toasts::class);
+                $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
         }
     }
@@ -324,7 +324,7 @@ class Editor extends Component
             $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             // Force reload of editor data
             $this->openEditor($model->id);
-            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('created'))->to(Toasts::class);
+            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
             $this->dispatch('updateIndex', $model->id);
         }
     }
@@ -338,7 +338,7 @@ class Editor extends Component
     {
         Leap::validatePermission('delete');
         $model = $this->getModel($this->editing);
-        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('deleted'))->to(Toasts::class);
+        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.deleted'))->to(Toasts::class);
         $this->log('delete', ['id' => $this->editing]);
         $model->delete();
         $this->editing = null;

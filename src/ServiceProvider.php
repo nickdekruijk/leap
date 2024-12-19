@@ -21,7 +21,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         // Load the translations JSON files.
-        $this->loadJSONTranslationsFrom(__DIR__ . '/../resources/lang');
+        $this->loadTranslationsFrom(__DIR__ . '/../lang', 'leap');
 
         $this->publishes([
             __DIR__ . '/../config/leap.php' => config_path('leap.php'),

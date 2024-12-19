@@ -2,7 +2,7 @@
     <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
         @can('leap::create')
-            <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="create_new" class="primary" />
+            <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
         @endcan
     </header>
     <div class="leap-index">

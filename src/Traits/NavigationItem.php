@@ -58,7 +58,11 @@ trait NavigationItem
      */
     public function getTitle(): string
     {
-        return $this->title ?: __(Str::plural(class_basename(static::class)));
+        $plural = __(Str::plural(class_basename(static::class)));
+        if (is_array($this->title)) {
+            $this->title = $this->title[app()->getLocale()] ?? $plural;
+        }
+        return $this->title ?: $plural;
     }
 
     /**

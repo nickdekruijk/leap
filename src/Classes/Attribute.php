@@ -292,7 +292,7 @@ class Attribute
     public function confirmedAttribute(): Attribute
     {
         $attribute = clone $this;
-        $attribute->label = __('repeat') . ' ' . lcfirst($this->label);
+        $attribute->label = __('leap::resource.repeat') . ' ' . lcfirst($this->label);
         $attribute->name = $attribute->confirmed;
         $attribute->dataName = 'data.' . $attribute->name;
         $attribute->confirmed = null;

@@ -32,7 +32,7 @@
             }) => {
                 if (status === 419) {
                     preventDefault();
-                    if (confirm('@lang('Page expired')')) {
+                    if (confirm('@lang('leap::auth.page_expired')')) {
                         window.location.reload();
                     }
                 }

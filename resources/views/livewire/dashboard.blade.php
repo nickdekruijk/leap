@@ -6,19 +6,16 @@
         <hgroup>
             <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
             <h4>
-                Your are logged in as {{ Context::get('leap.role.name') }}
-                @if (config('leap.organizations'))
-                    for {{ Context::get('leap.organization.label') }}
-                @endif
+                @lang(config('leap.organizations') ? 'leap::dashboard.logged_in_as_organization' : 'leap::dashboard.logged_in_as', ['role' => Context::get('leap.role.name'), 'organization' => Context::get('leap.organization.label')])
             </h4>
         </hgroup>
         <script>
             function greeting() {
                 const hour = new Date().getHours();
                 let greeting = '';
-                if (hour < 12) greeting = '@lang('good_morning')'
-                else if (hour < 18) greeting = '@lang('good_afternoon')'
-                else greeting = '@lang('good_evening')';
+                if (hour < 12) greeting = '@lang('leap::dashboard.good_morning')'
+                else if (hour < 18) greeting = '@lang('leap::dashboard.good_afternoon')'
+                else greeting = '@lang('leap::dashboard.good_evening')';
                 return greeting + ' {{ Auth::user()->name }}';
             }
         </script>
