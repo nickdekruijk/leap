@@ -17,7 +17,10 @@ class FileManager extends Module
 {
     use WithFileUploads;
 
+    #[Validate(['uploads.*.*' => 'image|max:1024'])]
+    #[Validate(['uploads.*' => 'image|max:1024'])]
     public array $uploads = [];
+    public $chunkSize = 1024 * 1024;
 
     public $component = 'leap.filemanager';
     public $icon = 'fas-folder-tree'; // fas-file-alt far-copy fas-folder-tree
@@ -30,25 +33,60 @@ class FileManager extends Module
 
     public function __construct()
     {
-        $this->title = __('File_manager');
+        $this->title = __('leap::filemanager.title');
     }
 
-    public function updatedUploads($value, $key)
+    #[Computed]
+    public function uploading()
     {
-        if ($value instanceof TemporaryUploadedFile) {
-            $path = $value->storeAs(implode('/', $this->openFolders), $value->getClientOriginalName(), config('leap.filemanager.disk'));
+        foreach ($this->uploads as $upload) {
+            if ($upload['progress'] < 100) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // public function updatedUploads($value, $key)
+    // {
+    //     if ($value instanceof TemporaryUploadedFile) {
+    //         if ($value->storeAs(implode('/', $this->openFolders), $value->getClientOriginalName(), config('leap.filemanager.disk'))) {
+    //             $this->dispatch('toast', $value->getClientOriginalName() . ' ' . __('uploaded'))->to(Toasts::class);
+    //             unset($this->columns);
+    //         } else {
+    //             $this->dispatch('toast-error', $value->getClientOriginalName() . ' ' . __('upload failed'))->to(Toasts::class);
+    //         }
+    //     }
+    //     debug($key, $value);
+    // }
+
+    public function uploadStart($id, $name, $size)
+    {
+        $this->uploads[$id] = [
+            'name' => $name,
+            'size' => $size,
+            'progress' => 0,
+            'depth' => count($this->openFolders),
+            'currentDirectory' => $this->currentDirectory(),
+            'path' => implode('/', $this->openFolders),
+        ];
+    }
+
+    public function uploadDone($id)
+    {
+        $file = $this->uploads[$id];
+
+        if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
+            $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
             unset($this->columns);
+        } else {
+            $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $file['name']]))->to(Toasts::class);
         }
     }
 
-    public function uploadDone($file)
+    public function uploadFailed($id)
     {
-        $this->dispatch('toast', $file . ' ' . __('uploaded'))->to(Toasts::class);
-    }
-
-    public function uploadFailed($file)
-    {
-        $this->dispatch('toast-error', $file . ' ' . __('upload failed'))->to(Toasts::class);
+        $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $this->uploads[$id]['name']]))->to(Toasts::class);
     }
 
     /**
@@ -213,19 +251,19 @@ class FileManager extends Module
             $full = $this->full($folder);
             // Check if folder contains invalid characters
             if (str_starts_with($folder, '.') || preg_match('/[\/\\\]/', $folder)) {
-                $this->dispatch('toast-error', $folder . ' ' . __('contains invalid characters'))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.invalid_characters', ['attribute' => $folder]))->to(Toasts::class);
                 return false;
             }
             // Check if the directory already exists, toast error if it doesn't
             if ($this->getStorage()->exists($full)) {
-                $this->dispatch('toast-error', $full . ' ' . __('already exist'))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $full]))->to(Toasts::class);
                 return false;
             }
             if ($this->getStorage()->makeDirectory($full)) {
-                $this->dispatch('toast', __('Folder') . ' ' . $folder . ' ' . __('created'))->to(Toasts::class);
+                $this->dispatch('toast', __('leap::filemanager.created_folder', ['attribute' => $folder]))->to(Toasts::class);
                 $this->log('create', 'Folder ' . $full);
             } else {
-                $this->dispatch('toast-error', __('Folder') . ' ' . $folder . ' ' . __('create_failed'))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.create_folder_failed', ['attribute' => $folder]))->to(Toasts::class);
             }
         }
     }
@@ -242,11 +280,11 @@ class FileManager extends Module
             $full = $this->full($file);
             $delete = $this->getStorage()->delete($full);
             if ($delete) {
-                $this->dispatch('toast', __('File') . ' ' . $file . ' ' . __('deleted'))->to(Toasts::class);
+                $this->dispatch('toast', __('leap::filemanager.deleted_file', ['attribute' => $file]))->to(Toasts::class);
                 $this->log('delete', 'File ' . $full);
                 unset($this->selectedFiles[$id]);
             } else {
-                $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentFile($this->selectedFiles))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.deleted_file_error', ['attribute' => $file]))->to(Toasts::class);
             }
         }
         unset($this->columns);
@@ -267,24 +305,24 @@ class FileManager extends Module
 
         // Check if the directory exists and is in the columns array, toast error if it doesn't
         if (!$this->getStorage()->exists($full)) {
-            $this->dispatch('toast-error', $full . ' ' . __('does not exist'))->to(Toasts::class);
+            $this->dispatch('toast-error', __('leap::filemanager.does_not_exist', ['attribute' => $full]))->to(Toasts::class);
             return false;
         }
 
         // Check if the directory is empty, toast error if it doesn't
         if ($this->getStorage()->allFiles($full) || $this->getStorage()->allDirectories($full)) {
-            $this->dispatch('toast-error', $full . ' ' . __('is not empty'))->to(Toasts::class);
+            $this->dispatch('toast-error', __('leap::filemanager.is_not_empty', ['attribute' => $full]))->to(Toasts::class);
             return false;
         }
 
         // Delete the directory and toast on success or error
         $delete = $this->getStorage()->deleteDirectory($full);
         if ($delete) {
-            $this->dispatch('toast', __('Folder') . ' ' . $this->currentDirectory() . ' ' . __('deleted'))->to(Toasts::class);
+            $this->dispatch('toast', __('leap::filemanager.deleted_folder', ['attribute' => $this->currentDirectory()]))->to(Toasts::class);
             $this->log('delete', 'Folder ' . $full);
             $this->closeDirectory($depth - 1);
         } else {
-            $this->dispatch('toast-error', __('Error deleting') . ' ' . $this->currentDirectory())->to(Toasts::class);
+            $this->dispatch('toast-error', __('leap::filemanager.deleted_folder_error', ['attribute' => $this->currentDirectory()]))->to(Toasts::class);
         }
         return $delete;
     }
@@ -428,10 +466,10 @@ class FileManager extends Module
 
         // Format the dates for display
         if (count($this->selectedFiles) == 1) {
-            $dates = Carbon::createFromTimestamp($timeMin)->isoFormat(__('datetime_format_long'));
+            $dates = Carbon::createFromTimestamp($timeMin)->isoFormat(__('leap::filemanager.datetime_format_long'));
         } else {
-            $timeMin = Carbon::createFromTimestamp($timeMin)->isoFormat(__('date_format_short'));
-            $timeMax = Carbon::createFromTimestamp($timeMax)->isoFormat(__('date_format_short'));
+            $timeMin = Carbon::createFromTimestamp($timeMin)->isoFormat(__('leap::filemanager.date_format_short'));
+            $timeMax = Carbon::createFromTimestamp($timeMax)->isoFormat(__('leap::filemanager.date_format_short'));
             if ($timeMin == $timeMax) {
                 $dates = $timeMin;
             } else {
@@ -440,9 +478,9 @@ class FileManager extends Module
         }
 
         return [
-            'Size' => $this->humanFileSize($size),
+            'size' => $this->humanFileSize($size),
             'date_modified' => $dates,
-            'Dimensions' => $dimensions,
+            'dimensions' => $dimensions,
         ];
     }
 
