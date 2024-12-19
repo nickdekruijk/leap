@@ -493,6 +493,10 @@ class FileManager extends Module
         return in_array($extension, $extensions);
     }
 
+    public function isAudio(string $file): bool
+    {
+        return $this->hasExtension($file, ['flac', 'mp3', 'wav', 'aac']);
+    }
     public function isVideo(string $file): bool
     {
         return $this->hasExtension($file, ['mp4']);
