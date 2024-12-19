@@ -2,26 +2,26 @@
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
     </header>
-    <input type="file" multiple id="leap-filemanager-upload"
-        x-on:change="
-        const fileList = [...$el.files];
-        const uploadStart = new Date().getTime();
-        console.log(uploadStart);
-        fileList.forEach((file, index) => {
-            console.log(uploadStart + index);
-            $wire.uploadStart(uploadStart + index, file.name, file.size);
-            $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
-                $wire.uploadDone(uploadStart + index);
-            }, () => {
-                $wire.uploadFailed(uploadStart + index);
-            }, (event) => {
-                console.log(uploadStart + index, event.detail.progress)
-                $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
-            }, () => {
-                // Cancelled callback...
-            });
-        });
-    ">
+    @can('leap::create')
+        <input type="file" multiple id="leap-filemanager-upload"
+            x-on:change="
+                const uploadStart = new Date().getTime();
+                [...$el.files].forEach((file, index) => {
+                    $wire.uploadStart(uploadStart + index, file.name, file.size);
+                    if (file.size <= @js($this->maxUploadSize())) {
+                        $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
+                            $wire.uploadDone(uploadStart + index);
+                        }, () => {
+                            $wire.uploadFailed(uploadStart + index);
+                        }, (event) => {
+                            $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
+                        }, () => {
+                            // Cancelled callback...
+                        });
+                    }
+                });
+            ">
+    @endcan
     <div class="leap-index">
         @foreach ($this->columns as $depth => $directory)
             <table class="leap-index-table">
@@ -35,7 +35,7 @@
                                     <button x-on:click="$wire.createDirectory({{ $depth }},prompt('@lang('leap::filemanager.new_folder')'))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('leap::filemanager.new_folder')</span></button>
                                     <button x-on:click="document.getElementById('leap-filemanager-upload').click()" @if ($this->uploading) disabled @endif class="leap-button">
                                         @svg('fas-upload', 'svg-icon')
-                                        <span>@lang('Upload') <small>(max {{ $this->maxUploadSize() }})</small></span>
+                                        <span>@lang('Upload') <small>(max {{ $this->humanFileSize($this->maxUploadSize(), 0) }})</small></span>
                                     </button>
                                 @endcan
                             @endif
@@ -54,9 +54,9 @@
                         </div>
                     </th>
                 </tr>
-                @foreach ($uploads as $upload)
+                @foreach ($uploads as $id => $upload)
                     @if ($upload['depth'] == $depth && $upload['currentDirectory'] == $this->currentDirectory($depth))
-                        <tr class="leap-index-row leap-filemanager-uploading @if ($upload['progress'] >= 100) leap-filemanager-uploading-done @endif">
+                        <tr wire:click="uploadClear({{ $id }})" class="leap-index-row leap-filemanager-uploading @if ($upload['progress'] >= 100) leap-filemanager-uploading-done @endif @if ($upload['error']) leap-filemanager-uploading-error @endif">
                             <td>
                                 @svg('fas-upload', 'svg-icon') {{ $upload['name'] }}
                                 <progress value="{{ $upload['progress'] }}" max="100">Test</progress>

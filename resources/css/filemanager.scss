@@ -86,14 +86,19 @@
     }
     .leap-filemanager-uploading {
         position: relative;
-        progress {
+        cursor: default !important;
+        PROGRESS {
             display: block;
             width: 100%;
         }
     }
     .leap-filemanager-uploading-error {
+        cursor: pointer !important;
         TD {
             background-color: rgba($red, 0.5) !important;
+        }
+        PROGRESS {
+            display: none;
         }
     }
     .leap-filemanager-uploading-progress {
@@ -103,7 +108,7 @@
         bottom: 0;
         background-color: rgba($green, 0.4);
     }
-    .leap-filemanager-uploading-done {
+    .leap-filemanager-uploading-done:not(.leap-filemanager-uploading-error) {
         animation: uploadingdone 0.5s both 1s;
         TD {
             background-color: rgba($green, 0.5) !important;

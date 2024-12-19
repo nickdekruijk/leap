@@ -7,6 +7,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Leap;
@@ -17,8 +18,6 @@ class FileManager extends Module
 {
     use WithFileUploads;
 
-    #[Validate(['uploads.*.*' => 'image|max:1024'])]
-    #[Validate(['uploads.*' => 'image|max:1024'])]
     public array $uploads = [];
     public $chunkSize = 1024 * 1024;
 
@@ -40,7 +39,7 @@ class FileManager extends Module
     public function uploading()
     {
         foreach ($this->uploads as $upload) {
-            if ($upload['progress'] < 100) {
+            if ($upload['progress'] < 100 && !$upload['error']) {
                 return true;
             }
         }
@@ -69,7 +68,12 @@ class FileManager extends Module
             'depth' => count($this->openFolders),
             'currentDirectory' => $this->currentDirectory(),
             'path' => implode('/', $this->openFolders),
+            'error' => false,
         ];
+        if ($size > $this->maxUploadSize()) {
+            $this->uploads[$id]['error'] = true;
+            $this->dispatch('toast-error', __('leap::filemanager.upload_too_large', ['attribute' => $name]))->to(Toasts::class);
+        }
     }
 
     public function uploadDone($id)
@@ -87,6 +91,13 @@ class FileManager extends Module
     public function uploadFailed($id)
     {
         $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $this->uploads[$id]['name']]))->to(Toasts::class);
+    }
+
+    public function uploadClear($id)
+    {
+        if ($this->uploads[$id]['error']) {
+            unset($this->uploads[$id]);
+        }
     }
 
     /**
@@ -117,8 +128,13 @@ class FileManager extends Module
      */
     public function maxUploadSize(): string
     {
-        $max = min($this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
-        return $this->humanFileSize($max, 0);
+        foreach (FileUploadConfiguration::rules() as $rule) {
+            $rule = explode(':', $rule);
+            if ($rule[0] == 'max') {
+                $livewireMax = $rule[1] * 1024;
+            }
+        }
+        return min($livewireMax ?? $this->bytes('12M'), $this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
     }
 
     /**

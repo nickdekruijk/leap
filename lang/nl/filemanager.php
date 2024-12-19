@@ -30,4 +30,5 @@ return [
     'title' => 'Bestandsbeheer',
     'upload_done' => ':attribute geupload',
     'upload_failed' => ':attribute upload mislukt',
+    'upload_too_large' => ':attribute is te groot',
 ];
