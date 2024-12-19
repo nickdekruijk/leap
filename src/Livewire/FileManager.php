@@ -48,6 +48,8 @@ class FileManager extends Module
 
     public function uploadStart($id, $name, $size)
     {
+        Leap::validatePermission('create');
+
         $this->uploads[$id] = [
             'name' => $name,
             'size' => $size,
@@ -57,6 +59,10 @@ class FileManager extends Module
             'path' => implode('/', $this->openFolders),
             'error' => false,
         ];
+        if (!$this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
+            $this->uploads[$id]['error'] = true;
+            $this->dispatch('toast-error', __('leap::filemanager.upload_not_allowed', ['attribute' => $name]))->to(Toasts::class);
+        }
         if ($size > $this->maxUploadSize()) {
             $this->uploads[$id]['error'] = true;
             $this->dispatch('toast-error', __('leap::filemanager.upload_too_large', ['attribute' => $name]))->to(Toasts::class);
@@ -65,10 +71,17 @@ class FileManager extends Module
 
     public function uploadDone($id)
     {
+        Leap::validatePermission('create');
+
+        if ($this->uploads[$id]['error']) {
+            return;
+        }
+
         $file = $this->uploads[$id];
 
         if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
+            $this->log('upload', $file['path'] . '/' . $file['name']);
             unset($this->columns);
         } else {
             $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $file['name']]))->to(Toasts::class);
