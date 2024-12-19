@@ -499,17 +499,17 @@ class FileManager extends Module
     }
     public function isVideo(string $file): bool
     {
-        return $this->hasExtension($file, ['mp4']);
+        return $this->hasExtension($file, ['mp4', 'm4v', 'mov', 'avi', 'wmv']);
     }
 
     public function isImage(string $file): bool
     {
-        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'svg']);
+        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']);
     }
 
     public function isBitmap(string $file): bool
     {
-        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif']);
+        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
     }
 
     public function isPdf(string $file): bool
