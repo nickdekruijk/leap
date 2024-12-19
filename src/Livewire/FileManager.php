@@ -46,19 +46,6 @@ class FileManager extends Module
         return false;
     }
 
-    // public function updatedUploads($value, $key)
-    // {
-    //     if ($value instanceof TemporaryUploadedFile) {
-    //         if ($value->storeAs(implode('/', $this->openFolders), $value->getClientOriginalName(), config('leap.filemanager.disk'))) {
-    //             $this->dispatch('toast', $value->getClientOriginalName() . ' ' . __('uploaded'))->to(Toasts::class);
-    //             unset($this->columns);
-    //         } else {
-    //             $this->dispatch('toast-error', $value->getClientOriginalName() . ' ' . __('upload failed'))->to(Toasts::class);
-    //         }
-    //     }
-    //     debug($key, $value);
-    // }
-
     public function uploadStart($id, $name, $size)
     {
         $this->uploads[$id] = [
