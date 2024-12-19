@@ -112,6 +112,9 @@
                                 @if ($this->isImage($file))
                                     <img src="{{ $this->downloadUrl($file) }}" alt="">
                                 @endif
+                                @if ($this->isVideo($file))
+                                    <video controls src="{{ $this->downloadUrl($file) }}"></video>
+                                @endif
                                 <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener">
                                     <span>@svg('fas-external-link-alt', 'svg-icon') {{ $file }}</span>
                                 </a>

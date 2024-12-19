@@ -493,6 +493,11 @@ class FileManager extends Module
         return in_array($extension, $extensions);
     }
 
+    public function isVideo(string $file): bool
+    {
+        return $this->hasExtension($file, ['mp4']);
+    }
+
     public function isImage(string $file): bool
     {
         return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'svg']);

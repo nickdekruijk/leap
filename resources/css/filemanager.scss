@@ -149,6 +149,7 @@
                     align-items: center;
                     justify-content: center;
                     overflow: hidden;
+                    VIDEO,
                     IMG {
                         max-width: 100%;
                         max-height: 100%;
@@ -172,7 +173,7 @@
                             text-align: center;
                             word-wrap: break-word;
                             left: 50%;
-                            top: 50%;
+                            top: 60%;
                             transform: translate(-50%, -50%);
                             .svg-icon {
                                 height: 1.5em;
@@ -190,6 +191,7 @@
                             }
                         }
                     }
+                    &:not(:hover) VIDEO + A,
                     &:not(:hover) IMG + A {
                         opacity: 0;
                     }
