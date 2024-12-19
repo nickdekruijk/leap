@@ -109,7 +109,7 @@
         background-color: rgba($green, 0.4);
     }
     .leap-filemanager-uploading-done:not(.leap-filemanager-uploading-error) {
-        animation: uploadingdone 0.5s both 1s;
+        animation: uploadingdone 0.5s forwards 1s;
         TD {
             background-color: rgba($green, 0.5) !important;
         }
