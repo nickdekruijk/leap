@@ -2,6 +2,7 @@
 
 return [
     'already_exist' => ':attribute bestaat al',
+    'close' => 'Sluiten',
     'create_folder_failed' => 'Map :attribute aanmaken mislukt',
     'created_folder' => 'Map :attribute aangemaakt',
     'created' => ':attribute aangemaakt',
@@ -26,6 +27,8 @@ return [
     'invalid_characters' => ':attribute bevat ongeldige tekens',
     'is_not_empty' => ':attribute is niet leeg',
     'new_folder' => 'Nieuwe map',
+    'select_file' => 'Selecteer bestand',
+    'select_files' => 'Selecteer :count bestanden',
     'size' => 'Grootte',
     'title' => 'Bestandsbeheer',
     'upload_done' => ':attribute geupload',

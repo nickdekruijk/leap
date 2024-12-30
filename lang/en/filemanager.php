@@ -2,6 +2,7 @@
 
 return [
     'already_exist' => ':attribute already exists',
+    'close' => 'Close',
     'create_folder_failed' => 'Failed to create directory :attribute',
     'created_folder' => 'Folder :attribute created',
     'created' => ':attribute created',
@@ -26,6 +27,8 @@ return [
     'invalid_characters' => ':attribute contains invalid characters',
     'is_not_empty' => ':attribute is not empty',
     'new_folder' => 'New folder',
+    'select_file' => 'Select file',
+    'select_files' => 'Select :count files',
     'size' => 'Size',
     'title' => 'File Manager',
     'upload_done' => ':attribute uploaded',

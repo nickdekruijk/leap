@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'add_file' => 'Add file',
+    'add_files' => 'Add files',
     'cancel' => 'Cancel',
     'created' => 'created',
     'create_new' => 'Add new',

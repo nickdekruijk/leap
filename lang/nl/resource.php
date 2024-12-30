@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'add_file' => 'Bestand toevoegen',
+    'add_files' => 'Bestanden toevoegen',
     'cancel' => 'Annuleren',
     'created' => 'aangemaakt',
     'create_new' => 'Toevoegen',
