@@ -144,6 +144,34 @@ class Attribute
     }
 
     /**
+     * Make the Attribute a file element
+     * 
+     * Allows you to select a singl files from the FileManager
+     *
+     * @return Attribute
+     */
+    public function file(): Attribute
+    {
+        $this->input = 'files';
+        $this->options['multiple'] = false;
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a files element
+     * 
+     * Allows you to select multiple files from the FileManager
+     *
+     * @return Attribute
+     */
+    public function files(): Attribute
+    {
+        $this->input = 'files';
+        $this->options['multiple'] = true;
+        return $this;
+    }
+
+    /**
      * Make the Attribute a rich text editor input
      * 
      * This will enable the TinyMCE html editor for this attribute

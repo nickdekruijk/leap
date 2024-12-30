@@ -7,6 +7,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -29,6 +30,9 @@ class FileManager extends Module
 
     public array $openFolders = [];
     public array $selectedFiles = [];
+
+    #[Locked]
+    public array|false $browse = false;
 
     public function __construct()
     {
@@ -343,8 +347,22 @@ class FileManager extends Module
         return $delete;
     }
 
+    public function selectBrowsedFiles()
+    {
+        $full = [];
+        foreach ($this->selectedFiles as $id => $file) {
+            $full[] = $this->full($file);
+        }
+        $this->dispatch('selectBrowsedFiles', $this->browse['attribute'], $full);
+    }
+
     public function selectFile($encodedFileName = null, $depth = null, $multiple = false, $shiftKey = false)
     {
+        // Don't select multiple files if only one is allowed while browsing
+        if ($this->browse && !$this->browse['multiple'] && ($multiple || $shiftKey)) {
+            return;
+        }
+
         // Url decode the name as it's encoded by the blade template
         $fileName = urldecode($encodedFileName);
 

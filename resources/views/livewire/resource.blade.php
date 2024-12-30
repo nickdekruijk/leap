@@ -41,4 +41,11 @@
         </table>
     </div>
     @livewire('leap.editor')
+    @if ($browse)
+        <div class="leap-filebrowser" x-on:keydown.escape.window="$wire.fileBrowser" x-data="{ open: true }">
+            <div class="leap-filebrowser-dialog" x-on:click.outside="$wire.fileBrowser" x-trap.inert="open">
+                @livewire('leap.filemanager', ['browse' => $browse])
+            </div>
+        </div>
+    @endif
 </main>

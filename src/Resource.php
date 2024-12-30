@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use NickDeKruijk\Leap\Classes\Attribute;
@@ -38,6 +39,26 @@ class Resource extends Module
      */
     #[Url(as: 'id', history: false)]
     public ?int $selectedRow = null;
+
+    /**
+     * When set shows the file browser
+     *
+     * @var array
+     */
+    #[Locked]
+    public array|false $browse = false;
+
+    /**
+     * Open or close the file browser for the file(s) or media attribute
+     *
+     * @param [type] $attribute
+     * @return void
+     */
+    #[On('selectBrowsedFiles')]
+    public function fileBrowser($attribute = null, $files = null)
+    {
+        $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
+    }
 
     /**
      * Return a model instance

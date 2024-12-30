@@ -13,6 +13,7 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Traits\CanLog;
+use PHPUnit\Event\Runtime\PHP;
 
 class Editor extends Component
 {
@@ -343,6 +344,33 @@ class Editor extends Component
         $model->delete();
         $this->editing = null;
         $this->dispatch('updateIndex');
+    }
+
+    /**
+     * Add the selected files from the file browser to the attribute value
+     *
+     * @param [type] $files
+     * @return void
+     */
+    #[On('selectBrowsedFiles')]
+    public function selectBrowsedFiles(string $attribute, array $files)
+    {
+        $this->data[$attribute] = trim($this->data[$attribute] . PHP_EOL . implode(PHP_EOL, $files));
+    }
+
+    public function unselectFile($attribute, $id)
+    {
+        $data = explode(PHP_EOL, $this->data[$attribute]);
+        unset($data[$id]);
+        $this->data[$attribute] = implode(PHP_EOL, $data);
+    }
+
+    public function sortData($attribute, $old, $new)
+    {
+        $data = explode(PHP_EOL, $this->data[$attribute]);
+        $out = array_splice($data, $old, 1);
+        array_splice($data, $new, 0, $out);
+        $this->data[$attribute] = implode(PHP_EOL, $data);
     }
 
     public function hydrate()

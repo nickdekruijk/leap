@@ -1,6 +1,9 @@
 <main class="leap-main leap-filemanager">
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
+        @if ($browse)
+            <x-leap::button svg-icon="fas-times" wire:click="$parent.fileBrowser" label="leap::resource.cancel" />
+        @endif
     </header>
     @can('leap::create')
         <form>
@@ -83,7 +86,7 @@
                     </tr>
                 @endforeach
                 @foreach ($directory['files'] as $name => $size)
-                    <tr x-on:click="$wire.selectFile('{{ urlencode($name) }}',{{ $depth }},window.event.altKey||window.event.metaKey,window.event.shiftKey)" class="leap-index-row @if ($depth == count($openFolders) && in_array($name, $selectedFiles)) leap-index-row-selected @endif">
+                    <tr x-on:click="$wire.selectFile('{{ urlencode($name) }}',{{ $depth }},window.event.altKey||window.event.metaKey,window.event.shiftKey)" @if ($browse) wire:dblclick="selectBrowsedFiles" @endif class="leap-index-row @if ($depth == count($openFolders) && in_array($name, $selectedFiles)) leap-index-row-selected @endif">
                         <td>
                             <button class="button-link">
                                 @svg($this->fileIcon($name), 'svg-icon')
@@ -98,6 +101,13 @@
         @if ($selectedFiles)
             <div class="leap-filemanager-selected">
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
+                    @if ($browse && $selectedFiles)
+                        <button
+                            wire:click="selectBrowsedFiles"
+                            class="leap-button primary">
+                            @svg('far-check-circle', 'leap-svg-icon')<span> @lang('leap::filemanager.select_file' . (count($selectedFiles) > 1 ? 's' : ''), ['count' => count($selectedFiles)])</span>
+                        </button>
+                    @endif
                     <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="leap::filemanager.close" />
                     @can('leap::delete')
                         <button
