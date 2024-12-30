@@ -153,11 +153,13 @@
     @script
         <script>
             Livewire.hook('morphed', () => {
-                let e = document.querySelector('.leap-index');
-                e.scrollTo({
-                    left: e.scrollWidth,
-                    behavior: 'smooth'
-                });
+                let e = document.querySelector('.leap-filemanager .leap-index');
+                if (e) {
+                    e.scrollTo({
+                        left: e.scrollWidth,
+                        behavior: 'smooth'
+                    });
+                }
             });
         </script>
     @endscript
