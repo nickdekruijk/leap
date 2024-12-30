@@ -98,7 +98,7 @@
         @if ($selectedFiles)
             <div class="leap-filemanager-selected">
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
-                    <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="Close" />
+                    <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="leap::filemanager.close" />
                     @can('leap::delete')
                         <button
                             wire:click="deleteFiles"
