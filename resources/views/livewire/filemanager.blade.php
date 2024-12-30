@@ -3,24 +3,27 @@
         <h2>{{ $this->currentDirectory() }}</h2>
     </header>
     @can('leap::create')
-        <input type="file" multiple id="leap-filemanager-upload"
-            x-on:change="
-                const uploadStart = new Date().getTime();
-                [...$el.files].forEach((file, index) => {
-                    $wire.uploadStart(uploadStart + index, file.name, file.size);
-                    if (file.size <= @js($this->maxUploadSize())) {
-                        $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
-                            $wire.uploadDone(uploadStart + index);
-                        }, () => {
-                            $wire.uploadFailed(uploadStart + index);
-                        }, (event) => {
-                            $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
-                        }, () => {
-                            // Cancelled callback...
-                        });
-                    }
-                });
-            ">
+        <form>
+            <input type="file" multiple id="leap-filemanager-upload"
+                x-on:change="
+                    const uploadStart = new Date().getTime();
+                    [...$el.files].forEach((file, index) => {
+                        $wire.uploadStart(uploadStart + index, file.name, file.size);
+                        if (file.size <= @js($this->maxUploadSize())) {
+                            $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
+                                $wire.uploadDone(uploadStart + index);
+                            }, () => {
+                                $wire.uploadFailed(uploadStart + index);
+                            }, (event) => {
+                                $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
+                            }, () => {
+                                // Cancelled callback...
+                            });
+                        }
+                    });
+                    $el.parentNode.reset();
+                ">
+        </form>
     @endcan
     <div class="leap-index">
         @foreach ($this->columns as $depth => $directory)
