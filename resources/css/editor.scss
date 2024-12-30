@@ -24,7 +24,7 @@
     }
 
     .leap-editor-open {
-        .leap-index {
+        > .leap-index {
             transition: right 0.4s;
             right: 60vw;
             @media (max-width: 1024px) {
