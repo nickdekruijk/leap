@@ -21,7 +21,7 @@
             <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=null" wire:click="close" label="leap::resource.cancel" />
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
-        <form class="leap-form" wire:submit="submit">
+        <div class="leap-form">
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" />
@@ -30,6 +30,6 @@
                     @endif
                 @endforeach
             </fieldset>
-        </form>
+        </div>
     @endif
 </div>
