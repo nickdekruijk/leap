@@ -4,7 +4,7 @@
     </header>
     @can('leap::create')
         <form>
-            <input type="file" multiple id="leap-filemanager-upload"
+            <input type="file" tabindex="-1" multiple id="leap-filemanager-upload"
                 x-on:change="
                     const uploadStart = new Date().getTime();
                     [...$el.files].forEach((file, index) => {
