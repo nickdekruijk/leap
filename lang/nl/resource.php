@@ -4,6 +4,7 @@ return [
     'add_file' => 'Bestand toevoegen',
     'add_files' => 'Bestanden toevoegen',
     'cancel' => 'Annuleren',
+    'columns' => 'kolommen',
     'created' => 'aangemaakt',
     'create_new' => 'Toevoegen',
     'delete' => 'Verwijder',

@@ -4,6 +4,7 @@ return [
     'add_file' => 'Add file',
     'add_files' => 'Add files',
     'cancel' => 'Cancel',
+    'columns' => 'columns',
     'created' => 'created',
     'create_new' => 'Add new',
     'delete' => 'Delete',
