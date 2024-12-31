@@ -26,6 +26,7 @@ return [
     'files' => 'bestanden',
     'invalid_characters' => ':attribute bevat ongeldige tekens',
     'is_not_empty' => ':attribute is niet leeg',
+    'media_in_use' => ':attribute wordt gebruikt als media en kan niet worden verwijderd',
     'new_folder' => 'Nieuwe map',
     'select_file' => 'Selecteer bestand',
     'select_files' => 'Selecteer :count bestanden',

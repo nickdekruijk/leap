@@ -172,6 +172,22 @@ class Attribute
     }
 
     /**
+     * Make the Attribute a media element
+     * 
+     * Allows you to select multiple media files from the FileManager
+     *
+     * @return Attribute
+     */
+    public function media(): Attribute
+    {
+        $this->type = 'media';
+        $this->input = 'media';
+        $this->options['media'] = true;
+        $this->options['multiple'] = true;
+        return $this;
+    }
+
+    /**
      * Make the Attribute a rich text editor input
      * 
      * This will enable the TinyMCE html editor for this attribute

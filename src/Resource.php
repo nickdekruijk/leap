@@ -55,6 +55,7 @@ class Resource extends Module
      * @return void
      */
     #[On('selectBrowsedFiles')]
+    #[On('selectMediaFiles')]
     public function fileBrowser($attribute = null, $files = null)
     {
         $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;

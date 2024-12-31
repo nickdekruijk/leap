@@ -26,6 +26,7 @@ return [
     'files' => 'files',
     'invalid_characters' => ':attribute contains invalid characters',
     'is_not_empty' => ':attribute is not empty',
+    'media_in_use' => ':attribute is used as media and cannot be deleted',
     'new_folder' => 'New folder',
     'select_file' => 'Select file',
     'select_files' => 'Select :count files',

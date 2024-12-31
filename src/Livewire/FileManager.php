@@ -9,9 +9,9 @@ use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Module;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -102,6 +102,7 @@ class FileManager extends Module
         }
 
         if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
+            Media::forFile($file['path'] . '/' . $file['name']);
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
             $this->log('upload', $file['path'] . '/' . $file['name']);
             unset($this->columns);
@@ -316,6 +317,15 @@ class FileManager extends Module
         Leap::validatePermission('delete');
         foreach ($this->selectedFiles as $id => $file) {
             $full = $this->full($file);
+            $media = Media::findFile($full);
+            if ($media) {
+                if ($media->mediables->count()) {
+                    $this->dispatch('toast-error', __('leap::filemanager.media_in_use', ['attribute' => $file]))->to(Toasts::class);
+                    continue;
+                } else {
+                    $media->delete();
+                }
+            }
             $delete = $this->getStorage()->delete($full);
             if ($delete) {
                 $this->dispatch('toast', __('leap::filemanager.deleted_file', ['attribute' => $file]))->to(Toasts::class);
@@ -371,7 +381,11 @@ class FileManager extends Module
         foreach ($this->selectedFiles as $id => $file) {
             $full[] = $this->full($file);
         }
-        $this->dispatch('selectBrowsedFiles', $this->browse['attribute'], $full);
+        if (isset($this->browse['media'])) {
+            $this->dispatch('selectMediaFiles', $this->browse['attribute'], $full);
+        } else {
+            $this->dispatch('selectBrowsedFiles', $this->browse['attribute'], $full);
+        }
     }
 
     public function selectFile($encodedFileName = null, $depth = null, $multiple = false, $shiftKey = false)

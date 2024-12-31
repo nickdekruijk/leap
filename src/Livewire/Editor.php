@@ -12,6 +12,8 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Models\Media;
+use NickDeKruijk\Leap\Models\Mediable;
 use NickDeKruijk\Leap\Traits\CanLog;
 
 class Editor extends Component
@@ -51,6 +53,13 @@ class Editor extends Component
      */
     #[Locked]
     public string $parentModuleEncrypted;
+
+    /**
+     * Keep track of updated media attributes
+     *
+     * @var array
+     */
+    public array $mediaUpdated = [];
 
     /**
      * Returns the parent Livewire component
@@ -138,6 +147,22 @@ class Editor extends Component
                 }
             }
         }
+
+        // Get the media attributes data
+        $allMedia = $this->getModel($id)
+            ->morphToMany(Media::class, 'model', config('leap.table_prefix') . 'mediables')
+            ->withPivot('sort', 'model_attribute')
+            ->orderBy(config('leap.table_prefix') . 'mediables.sort');
+        foreach ($allMedia->get() as $media) {
+            $this->data[$media->pivot->model_attribute][] = $media->id;
+        }
+
+        // // Get the media attributes data
+        // $allMedia = Mediable::where('model_id', $id)->where('model_type', get_class($this->getModel($id)))->orderBy();
+        // foreach ($allMedia->get() as $mediable) {
+        //     $this->data[$mediable->model_attribute][] = $mediable->media_id;
+        // }
+
 
         // Clear existing validation errors
         $this->resetValidation();
@@ -256,10 +281,27 @@ class Editor extends Component
         foreach ($this->attributes() as $attribute) {
             if ($attribute->type == 'password' && !$this->data[$attribute->name]) {
                 // Ignore empty passwords
+            } elseif ($attribute->type == 'media') {
+                // Ignore media files
             } else {
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
             }
         }
+    }
+
+    public function syncMedia(Model $model)
+    {
+        $mediables = $model->morphToMany(Media::class, 'model', config('leap.table_prefix') . 'mediables')->withTimestamps();
+        foreach ($this->mediaUpdated as $attribute) {
+            Mediable::where('model_id', $model->id)->where('model_attribute', $attribute)->delete();
+            foreach ($this->data[$attribute] as $sort => $media_id) {
+                $mediables->attach($media_id, [
+                    'model_attribute' => $attribute,
+                    'sort' => $sort,
+                ]);
+            }
+        }
+        $this->mediaUpdated = [];
     }
 
     /**
@@ -278,23 +320,27 @@ class Editor extends Component
             $this->updateAttributes($model);
 
             // Check if anything changed
-            if ($model->isDirty()) {
+            if ($model->isDirty() || $this->mediaUpdated) {
                 if ($this->editing == self::CREATE_NEW) {
                     $model->save();
+                    $this->syncMedia($model);
+
                     $this->log('create', ['id' => $model->id]);
                     $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
-                    if (count($model->getDirty()) > 3) {
-                        $this->dispatch('toast', count($model->getDirty()) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                    if (count($model->getDirty()) + count($this->mediaUpdated) > 3) {
+                        $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                     } else {
-                        foreach ($model->getDirty() as $attribute => $value) {
+                        foreach (array_merge($model->getDirty(), $this->mediaUpdated) as $attribute => $value) {
                             $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
-                    $this->log('update', ['id' => $this->editing]);
                     $model->save();
+                    $this->syncMedia($model);
+
+                    $this->log('update', ['id' => $this->editing]);
                     $this->dispatch('updateIndex', $model->id);
                 }
                 // Force reload of editor data
@@ -321,6 +367,8 @@ class Editor extends Component
             $this->updateAttributes($model);
 
             $model->save();
+            $this->syncMedia($model);
+
             $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             // Force reload of editor data
             $this->openEditor($model->id);
@@ -357,6 +405,29 @@ class Editor extends Component
         $this->data[$attribute] = trim($this->data[$attribute] . PHP_EOL . implode(PHP_EOL, $files));
     }
 
+    /**
+     * Add the selected media files from the file browser to the mediable attribute
+     *
+     * @param [type] $files
+     * @return void
+     */
+    #[On('selectMediaFiles')]
+    public function selectMediaFiles(string $attribute, array $files)
+    {
+        $this->mediaUpdated[$attribute] = $attribute;
+        foreach ($files as $file) {
+            $media = Media::forFile($file);
+            $this->data[$attribute][] = $media->id;
+        }
+    }
+
+    public function unselectMedia($attribute, $id)
+    {
+        $this->mediaUpdated[$attribute] = $attribute;
+        unset($this->data[$attribute][$id]);
+        $this->data[$attribute] = array_values($this->data[$attribute]);
+    }
+
     public function unselectFile($attribute, $id)
     {
         $data = explode(PHP_EOL, $this->data[$attribute]);
@@ -366,10 +437,27 @@ class Editor extends Component
 
     public function sortData($attribute, $old, $new)
     {
-        $data = explode(PHP_EOL, $this->data[$attribute]);
-        $out = array_splice($data, $old, 1);
-        array_splice($data, $new, 0, $out);
-        $this->data[$attribute] = implode(PHP_EOL, $data);
+        if (is_array($this->data[$attribute])) {
+            $out = array_splice($this->data[$attribute], $old, 1);
+            array_splice($this->data[$attribute], $new, 0, $out);
+            $this->mediaUpdated[$attribute] = $attribute;
+        } else {
+            $data = explode(PHP_EOL, $this->data[$attribute]);
+            $out = array_splice($data, $old, 1);
+            array_splice($data, $new, 0, $out);
+            $this->data[$attribute] = implode(PHP_EOL, $data);
+        }
+    }
+
+    public function media(string $attribute)
+    {
+        $media = Media::find($this->data[$attribute]);
+
+        $return = [];
+        foreach ($this->data[$attribute] as $sort => $id) {
+            $return[] = $media->where('id', $id)->first();
+        }
+        return $return;
     }
 
     public function hydrate()
