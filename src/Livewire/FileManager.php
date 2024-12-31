@@ -83,6 +83,24 @@ class FileManager extends Module
 
         $file = $this->uploads[$id];
 
+        // Check if uploaded file already exists
+        if ($this->getStorage()->exists($file['path'] . '/' . $file['name'])) {
+            // Compare sha256 hash of both files
+            $hash_existing = hash('sha256', $this->getStorage()->get($file['path'] . '/' . $file['name']));
+            $hash_uploaded = hash_file('sha256', $file['file']->path());
+            if ($hash_existing === $hash_uploaded) {
+                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
+                return;
+            }
+            $n = 1;
+            $fileParts = pathinfo($file['name']);
+            while ($this->getStorage()->exists($file['path'] . '/' . $fileParts['filename'] . '-' . $n . '.' . $fileParts['extension'])) {
+                $n++;
+            }
+            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
+            $file['name'] = $fileParts['filename'] . '-' . $n . '.' . $fileParts['extension'];
+        }
+
         if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
             $this->log('upload', $file['path'] . '/' . $file['name']);
