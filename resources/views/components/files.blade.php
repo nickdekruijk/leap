@@ -4,6 +4,7 @@
         <button class="leap-button-add" wire:click="$parent.fileBrowser('{{ $attribute->name }}')" type="button" aria-label="@lang($attribute->options['multiple'] ? 'leap::resource.add_files' : 'leap::resource.add_file')">@svg('fas-file-circle-plus', 'svg-icon')</button>
     @endif
 </x-leap::label>
+
 @if ($this->data[$attribute->name])
     <ul @if ($attribute->options['multiple']) x-sort.ghost="$wire.sortData('{{ $attribute->name }}', $item, $position)" class="leap-files leap-files-sortable" @else class="leap-files" @endif>
         @foreach (explode(PHP_EOL, $this->data[$attribute->name]) as $id => $file)
@@ -15,4 +16,3 @@
         @endforeach
     </ul>
 @endif
-{{-- <textarea disabled class="leap-input" wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"></textarea> --}}
