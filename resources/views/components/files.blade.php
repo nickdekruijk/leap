@@ -11,7 +11,7 @@
             <li x-sort:item="{{ $id }}">
                 {{ $file }}
                 <a href="{{ (new \NickDeKruijk\Leap\Livewire\FileManager())->downloadUrl($file) }}" target="_blank" rel="noopener" aria-label="Open {{ $file }}">@svg('fas-external-link-alt', 'svg-icon')</a>
-                <button wire:click="unselectFile('{{ $attribute->name }}', {{ $id }})" aria-label="Delete {{ $file }}">@svg('fas-trash', 'svg-icon')</button>
+                <button wire:click="unselectFile('{{ $attribute->name }}', {{ $id }})" aria-label="Delete {{ $file }}">@svg('fas-trash-alt', 'svg-icon')</button>
             </li>
         @endforeach
     </ul>
