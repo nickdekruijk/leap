@@ -13,7 +13,6 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Traits\CanLog;
-use PHPUnit\Event\Runtime\PHP;
 
 class Editor extends Component
 {
