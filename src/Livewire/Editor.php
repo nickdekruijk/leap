@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Traits\CanLog;
 
