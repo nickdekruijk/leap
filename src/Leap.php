@@ -36,6 +36,22 @@ class Leap
     }
 
     /**
+     * Sort an array by key with locale-sensitive collator
+     *
+     * @param array $array The array to sort
+     * @param string $key The key to sort by
+     * @param boolean $desc Sort in descending order
+     * @return boolean true on success or false on failure
+     */
+    public static function sortBy(array &$array, $key, $desc = false): bool
+    {
+        $coll = collator_create(app()->getLocale());
+        return usort($array, function ($a, $b) use ($coll, $key, $desc) {
+            return  $desc ? collator_compare($coll, $b[$key], $a[$key]) : collator_compare($coll, $a[$key], $b[$key]);
+        });
+    }
+
+    /**
      * Sort an array by basename with locale-sensitive collator
      *
      * @param array $array The array to sort
