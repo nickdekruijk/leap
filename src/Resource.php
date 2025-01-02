@@ -118,11 +118,29 @@ class Resource extends Module
     {
         $data = $this->getModel();
 
-        if ($this->orderBy) {
+        // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
+        $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()->type == 'foreign';
+
+        if ($this->orderBy && !$sortForeign) {
             $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
         }
 
-        return $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+        $data = $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+
+        // Replace all foreign keys with their value
+        foreach ($this->indexAttributes()->where('type', 'foreign') as $foreignAttribute) {
+            $values = $foreignAttribute->getValues();
+            foreach ($data as $id => $row) {
+                // debug($foreignAttribute->name, $values);
+                $data[$id][$foreignAttribute->name] = $values[$row[$foreignAttribute->name]] ?? null;
+            }
+        }
+
+        if ($sortForeign) {
+            Leap::sortBy($data, $this->orderBy, $this->orderDesc);
+        }
+
+        return $data;
     }
 
     /**

@@ -194,7 +194,72 @@ class Attribute
      */
     public function getValues(): array
     {
-        return $this->$values;
+        if ($this->type == 'foreign') {
+            return $this->valuesFromModel();
+        } else {
+            return $this->$values;
+        }
+    }
+
+    /**
+     * Return values from the model, this is used for foreign keys
+     *
+     * @return array
+     */
+    public function valuesFromModel(): array
+    {
+        $model = new $this->options['model'];
+        $values = [];
+
+        // Apply scope and/or orderBy
+        if ($this->options['orderBy']) {
+            $model = $model->orderBy($this->options['orderBy']);
+        }
+        if ($this->options['scope']) {
+            $model = $model->{$this->options['scope']}();
+        }
+
+        if ($this->options['index']) {
+            // Get only index columns and the id
+            $model = $model->get(array_merge($this->options['index'], [$this->options['id_column']]));
+        } else {
+            // Get all columns
+            $model = $model->get();
+        }
+
+        foreach ($model as $value) {
+            // Add the index columns or only the next 3 columns after the first (since first is usualy id)
+            $values[$value->id] = implode('; ', $this->options['index'] ? $value->only($this->options['index']) : array_slice($value->toArray(), 1, 3));
+        }
+
+        return $values;
+    }
+
+    /**
+     * Make the Attribute a foreign key, resulting in a select input element with all values from a foreign model
+     *
+     * @param [type] $model The model to get the values from
+     * @param [type] $id_column The column to get the id from
+     * @param [type] $scope The scope to apply
+     * @param [type] $orderBy The column to order by
+     * @param [type] $index The columns to show in the select input element, defaults to the next 3 columns after the first (since first is usualy id)
+     * @return Attribute
+     */
+    public function foreign($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
+    {
+        $this->type = 'foreign';
+        $this->input = 'select';
+
+        // Set model and id column based on column name, e.g. user_id will make the model App\Models\User referenced by id
+        $this->options['model'] = $model ?: 'App\\Models\\' . ucfirst(explode('_', $this->name)[0]);
+        $this->options['id_column'] = $id_column ?: explode('_', $this->name)[1] ?? 'id';
+        $this->options['scope'] = $scope;
+        $this->options['orderBy'] = $orderBy;
+
+        // If index is set make sure it's an array
+        $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
+
+        return $this;
     }
 
     /**
