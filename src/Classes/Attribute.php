@@ -197,7 +197,7 @@ class Attribute
         if ($this->type == 'foreign') {
             return $this->valuesFromModel();
         } else {
-            return $this->$values;
+            return $this->values;
         }
     }
 
