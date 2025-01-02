@@ -157,13 +157,6 @@ class Editor extends Component
             $this->data[$media->pivot->model_attribute][] = $media->id;
         }
 
-        // // Get the media attributes data
-        // $allMedia = Mediable::where('model_id', $id)->where('model_type', get_class($this->getModel($id)))->orderBy();
-        // foreach ($allMedia->get() as $mediable) {
-        //     $this->data[$mediable->model_attribute][] = $mediable->media_id;
-        // }
-
-
         // Clear existing validation errors
         $this->resetValidation();
     }
