@@ -193,6 +193,44 @@
         }
     }
 
+    .leap-pivot {
+        display: flex;
+        flex-wrap: wrap;
+        gap: calc(var(--spacing) / 3);
+        LABEL {
+            position: relative;
+            border: 0 none;
+            font: inherit;
+            background-color: rgba(black, 0.1);
+            color: rgba(black, 0.6);
+            padding: calc(var(--spacing) / 4) calc(var(--spacing) / 2);
+            border-radius: 3px;
+            font-size: 0.9em;
+            &:hover {
+                opacity: 0.8;
+            }
+            &:has(INPUT[type="checkbox"]:checked) {
+                color: white;
+                background-color: $blue-normal;
+            }
+            &:has(INPUT[type="checkbox"]) {
+                INPUT[type="checkbox"] {
+                    cursor: pointer;
+                    appearance: none;
+                    display: block;
+                    border-radius: 3px;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    margin: 0;
+                    padding: 0;
+                }
+            }
+        }
+    }
+
     .tox-tinymce {
         border: 1px solid rgba(black, 0.2);
         border-radius: 3px;

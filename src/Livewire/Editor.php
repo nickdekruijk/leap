@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
@@ -102,6 +103,33 @@ class Editor extends Component
     }
 
     /**
+     * Return the relationship pivot data for the given attribute
+     *
+     * @param Attribute $attribute
+     * @return array
+     */
+    public function pivotData(Attribute $attribute): array
+    {
+        return $this->getModel($this->editing)->{$attribute->name}->pluck('id')->toArray();
+    }
+
+    public function pivotIsDirty(Attribute $attribute = null): array
+    {
+        $dirty = [];
+        if ($attribute) {
+            $attributes = [$attribute];
+        } else {
+            $attributes = $this->attributes()->where('type', 'pivot');
+        }
+        foreach ($attributes as $attribute) {
+            if ($this->data[$attribute->name] != $this->pivotData($attribute)) {
+                $dirty[$attribute->name] = $attribute->name;
+            }
+        }
+        return $dirty;
+    }
+
+    /**
      * Show the editor for the given id
      *
      * @param int $id the id of the Model to update
@@ -157,6 +185,11 @@ class Editor extends Component
             $this->data[$media->pivot->model_attribute][] = $media->id;
         }
 
+        // Get pivot data
+        foreach ($this->attributes()->where('type', 'pivot') as $attribute) {
+            $this->data[$attribute->name] = $this->pivotData($attribute, $id);
+        }
+
         // Clear existing validation errors
         $this->resetValidation();
     }
@@ -195,7 +228,7 @@ class Editor extends Component
                 foreach ($replace as $old => $new) {
                     foreach ($attribute->validate as $key => $value) {
                         if (!is_object($value)) {
-                            $attribute->validate[$key] = str_replace($old, $new, $value);
+                            $attribute->validate[$key] = str_replace($old, $new ?: '', $value);
                         }
                     }
                 }
@@ -276,6 +309,8 @@ class Editor extends Component
                 // Ignore empty passwords
             } elseif ($attribute->type == 'media') {
                 // Ignore media files
+            } elseif ($attribute->type == 'pivot') {
+                // Ignore pivot data
             } else {
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
             }
@@ -297,6 +332,13 @@ class Editor extends Component
         $this->mediaUpdated = [];
     }
 
+    public function syncPivot(Model $model)
+    {
+        foreach ($this->attributes()->where('type', 'pivot') as $attribute) {
+            $model->{$attribute->name}()->sync($this->data[$attribute->name]);
+        }
+    }
+
     /**
      * Save or create the edited model
      *
@@ -313,25 +355,27 @@ class Editor extends Component
             $this->updateAttributes($model);
 
             // Check if anything changed
-            if ($model->isDirty() || $this->mediaUpdated) {
+            if ($model->isDirty() || $this->mediaUpdated || $this->pivotIsDirty()) {
                 if ($this->editing == self::CREATE_NEW) {
                     $model->save();
                     $this->syncMedia($model);
+                    $this->syncPivot($model);
 
                     $this->log('create', ['id' => $model->id]);
                     $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
-                    if (count($model->getDirty()) + count($this->mediaUpdated) > 3) {
+                    if (count($model->getDirty()) + count($this->mediaUpdated) + count($this->pivotIsDirty()) > 3) {
                         $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                     } else {
-                        foreach (array_merge($model->getDirty(), $this->mediaUpdated) as $attribute => $value) {
+                        foreach (array_merge($model->getDirty(), $this->mediaUpdated, $this->pivotIsDirty()) as $attribute => $value) {
                             $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
                     $model->save();
                     $this->syncMedia($model);
+                    $this->syncPivot($model);
 
                     $this->log('update', ['id' => $this->editing]);
                     $this->dispatch('updateIndex', $model->id);
@@ -361,6 +405,7 @@ class Editor extends Component
 
             $model->save();
             $this->syncMedia($model);
+            $this->syncPivot($model);
 
             $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
             // Force reload of editor data

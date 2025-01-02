@@ -196,6 +196,8 @@ class Attribute
     {
         if ($this->type == 'foreign') {
             return $this->valuesFromModel();
+        } elseif ($this->type == 'pivot') {
+            return $this->valuesFromModel();
         } else {
             return $this->values;
         }
@@ -253,6 +255,35 @@ class Attribute
         // Set model and id column based on column name, e.g. user_id will make the model App\Models\User referenced by id
         $this->options['model'] = $model ?: 'App\\Models\\' . ucfirst(explode('_', $this->name)[0]);
         $this->options['id_column'] = $id_column ?: explode('_', $this->name)[1] ?? 'id';
+        $this->options['scope'] = $scope;
+        $this->options['orderBy'] = $orderBy;
+
+        // If index is set make sure it's an array
+        $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
+
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a pivot, resulting in a multiple select input element with all values from a pivot model. 
+     * The belongsToMany relationship must be defined in the model with the same name.
+     *
+     * @param [type] $model The model to get the values from
+     * @param [type] $id_column The column to get the id from
+     * @param [type] $scope The scope to apply
+     * @param [type] $orderBy The column to order by
+     * @param [type] $index The columns to show in the editor interface, defaults to the next 3 columns after the first (since first is usualy id)
+     * @return Attribute
+     */
+    public function pivot($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
+    {
+        $this->type = 'pivot';
+        $this->input = 'pivot';
+        $this->wire = 'live';
+
+        // Set model and id column based on column name, e.g. users will make the model App\Models\User
+        $this->options['model'] = $model ?: 'App\\Models\\' . ucfirst(Str::singular($this->name));
+        $this->options['id_column'] = $id_column ?: 'id';
         $this->options['scope'] = $scope;
         $this->options['orderBy'] = $orderBy;
 
