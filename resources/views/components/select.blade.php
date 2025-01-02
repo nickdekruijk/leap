@@ -11,7 +11,7 @@
         @if ($attribute->placeholder)
             <option value="">{{ $attribute->placeholder }}</option>
         @endif
-        @foreach ($attribute->values as $key => $value)
+        @foreach ($attribute->getValues() as $key => $value)
             <option value="{{ $key }}">{{ $value }}</option>
         @endforeach
     </select>

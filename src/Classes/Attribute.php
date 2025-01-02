@@ -188,6 +188,16 @@ class Attribute
     }
 
     /**
+     * Return the attribute values depending on type
+     *
+     * @return array
+     */
+    public function getValues(): array
+    {
+        return $this->$values;
+    }
+
+    /**
      * Make the Attribute a rich text editor input
      * 
      * This will enable the TinyMCE html editor for this attribute
