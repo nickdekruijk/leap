@@ -16,7 +16,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create(config('leap.table_prefix') . 'role_user', function (Blueprint $table) {
-            $table->boolean('accepted');
+            $table->boolean('accepted')->default(false);
             $table->foreignIdFor(Role::class, 'role_id')->constrained(config('leap.table_prefix') . 'roles')->cascadeOnDelete();
             $table->foreignIdFor(Leap::userModel()::class, 'user_id')->constrained()->cascadeOnDelete();
             $table->string('accept_token')->nullable();
