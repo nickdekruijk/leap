@@ -5,40 +5,8 @@
             <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
         @endcan
     </header>
-    <div class="leap-index">
-        <table class="leap-index-table">
-            <tr class="leap-index-header">
-                @foreach ($this->indexAttributes() as $attribute)
-                    <th class="{{ $this->orderBy === $attribute->name ? ($this->orderDesc ? 'order-desc' : 'order-asc') : '' }}"><button class="button-link" wire:click="order('{{ $attribute->name }}')">{{ $attribute->labelIndex }}</button></th>
-                @endforeach
-            </tr>
-            @foreach ($this->indexRows() as $row)
-                @if ($this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && strlen($char = ucfirst(mb_substr($row[$this->orderBy], 0, 1))) && (empty($last) || $last !== $char))
-                    <tr class="leap-index-row leap-index-group">
-                        @foreach ($this->indexAttributes() as $attribute)
-                            <td>{{ $attribute->name == $this->orderBy ? ($last = $char) : '' }}</td>
-                        @endforeach
-                    </tr>
-                @endif
-                <tr x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row">
-                    @foreach ($this->indexAttributes() as $attribute)
-                        <td>
-                            @if ($loop->first)
-                                <button class="button-link">
-                            @endif
-                            @if ($attribute->type == 'checkbox')
-                                <span class="leap-row-checkbox leap-row-checkbox-{{ $row[$attribute->name] ? 'checked' : 'unchecked' }}"></span>
-                            @else
-                                {{ $row[$attribute->name] }}
-                            @endif
-                            @if ($loop->first)
-                                </button>
-                            @endif
-                        </td>
-                    @endforeach
-                </tr>
-            @endforeach
-        </table>
+    <div class="leap-index" @if ($this->treeview()) x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
+        @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])
     </div>
     @livewire('leap.editor')
     @if ($browse)
@@ -49,3 +17,36 @@
         </div>
     @endif
 </main>
+
+@if ($this->treeview())
+    @script
+        <script>
+            window.setColumnWidths = function(el) {
+                let widths = [];
+                // Get maximum column widths
+                let spacing = parseInt(getComputedStyle(document.querySelector(':root')).getPropertyValue('--spacing').replace('px', ''));
+                let columnCount = el.querySelectorAll('.leap-index-header .leap-index-column').length;
+                document.querySelectorAll('.leap-index-header, .leap-index-row').forEach(function(row) {
+                    let depth = parseInt(row.getAttribute('data-depth'));
+                    row.querySelectorAll('.leap-index-column').forEach(function(column, index) {
+                        if (widths[index] < column.offsetWidth || !widths[index]) widths[index] = column.offsetWidth + depth * spacing;
+                    });
+                });
+                // Apply column widths to all rows
+                document.querySelectorAll('.leap-index-header, .leap-index-row').forEach(function(row) {
+                    let depth = parseInt(row.getAttribute('data-depth'));
+                    row.querySelectorAll('.leap-index-column').forEach(function(column, index) {
+                        if (index < columnCount - 1) { // Don't set last column
+                            if (index == 0 && depth) {
+                                // Add extra spacing to first column
+                                column.style.width = widths[index] + spacing - depth * spacing + 'px';
+                            } else {
+                                column.style.width = widths[index] + spacing + 'px';
+                            }
+                        }
+                    });
+                });
+            }
+        </script>
+    @endscript
+@endif

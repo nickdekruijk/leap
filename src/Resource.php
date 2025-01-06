@@ -8,6 +8,7 @@ use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Livewire\Toasts;
 
 class Resource extends Module
 {
@@ -48,6 +49,16 @@ class Resource extends Module
     #[Locked]
     public array|false $browse = false;
 
+    public array|false $translatable;
+    public $setColumnWidths = 0;
+    public $sortGroupValue = false;
+
+    public function sortGroup($sortGroup = false)
+    {
+        $this->sortGroupValue = $sortGroup;
+        $this->setColumnWidths++;
+    }
+
     /**
      * Open or close the file browser for the file(s) or media attribute
      *
@@ -61,6 +72,82 @@ class Resource extends Module
         $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
     }
 
+    public function hasTranslation(Attribute $attribute): bool
+    {
+        if ($this->translatable) {
+            return in_array($attribute->name, $this->translatable);
+        }
+        return false;
+    }
+
+    public function sortable(): Attribute|false
+    {
+        return collect($this->attributes())->where('type', 'sortable')->first() ?: false;
+    }
+
+    public function treeview(): Attribute|false
+    {
+        return collect($this->attributes())->where('type', 'tree')->first() ?: false;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param integer $parent_id
+     * @param integer $item_id
+     * @param integer $position
+     * @return void
+     */
+    public function sortableDone(int $parent_id, int $item_id, int $position): void
+    {
+        // Check if item is valid
+        $item = $this->getModel()->find($item_id);
+        if (!$item) {
+            $this->dispatch('toast-error', 'Item not found')->to(Toasts::class);
+            return;
+        }
+
+        if ($this->treeview()) {
+            if ($parent_id == 0) {
+                $parent_id = null;
+                $position--; // Since leap-index-header is at position 0 we need to decrease the position by 1
+            } else {
+                // Check if parent exists
+                $parent = $this->getModel()->find($parent_id);
+                if (!$parent) {
+                    $this->dispatch('toast-error', 'Parent item not found')->to(Toasts::class);
+                    return;
+                }
+            }
+
+            // Move item to different parent if required
+            if ($parent_id != $item->{$this->treeview()->name}) {
+                $item->{$this->treeview()->name} = $parent_id;
+                $item->save();
+                if ($parent_id) {
+                    $this->dispatch('toast', __('leap::resource.parent_changed_under', ['title' => $item->{$this->indexAttributes()->first()->name}, 'parent' => $parent->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
+                } else {
+                    $this->dispatch('toast', __('leap::resource.parent_changed', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
+                }
+            }
+
+            $orderItems = $this->getModel()->where($this->treeview()->name, $parent_id);
+        } else {
+            $orderItems = $this->getModel();
+        }
+
+        // Move item to new position within parent
+        $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
+        foreach ($orderItems->where('id', '!=', $item_id)->orderBy($this->sortable()->name)->get() as $index => $row) {
+            $row->{$this->sortable()->name} = $index >= $position ? $index + 1 : $index;
+            $row->save();
+        }
+        $item->{$this->sortable()->name} = $position;
+        $item->save();
+
+        $this->setColumnWidths++;
+    }
+
     /**
      * Return a model instance
      *
@@ -69,7 +156,9 @@ class Resource extends Module
     public function getModel(): Model
     {
         $model = $this->model ?: 'App\\' . (is_dir(app_path('Models')) ? 'Models\\' : '') . class_basename(static::class);
-        return new $model;
+        $model = new $model;
+        $this->translatable = in_array(\Spatie\Translatable\HasTranslations::class, class_uses($model)) ? $model->getTranslatableAttributes() : false;
+        return $model;
     }
 
     /**
@@ -97,16 +186,23 @@ class Resource extends Module
      * Sort the index by this attribute
      *
      * @param string $attribute The attribute name
-     * @param boolean|null $desc Sort in descending order
      * @return void
      */
-    public function order(string $attribute, bool $desc = null)
+    public function order(string $attribute)
     {
-        // If currently sorted by this attribute, reverse the order
-        $this->orderDesc = ($desc === true || $desc === false) ? $desc : $this->orderBy == $attribute && !$this->orderDesc;
+        if ($this->orderBy == $attribute && !$this->orderDesc) {
+            // If currently ascending sorted by this attribute, change to descending
+            $this->orderDesc = true;
+        } elseif ($this->orderBy == $attribute && $this->orderDesc) {
+            // If currently descending sorted by this attribute set orderBy to null for default sorting
+            $this->orderBy = null;
+        } else {
+            // Set new orderBy attribute
+            $this->orderBy = $attribute;
+            $this->orderDesc = false;
+        }
 
-        // Set new orderBy attribute
-        $this->orderBy = $attribute;
+        $this->setColumnWidths++;
     }
 
     /**
@@ -114,9 +210,13 @@ class Resource extends Module
      *
      * @return array
      */
-    public function indexRows(): array
+    public function indexRows(int $parent_id = null): array
     {
         $data = $this->getModel();
+
+        if ($this->treeview()) {
+            $data = $data->where($this->treeview()->name, $parent_id);
+        }
 
         // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
         $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()->type == 'foreign';
@@ -125,13 +225,13 @@ class Resource extends Module
             $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
         }
 
-        $data = $data->get(array_merge(['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+        // Get all index columns including the id and the treeview parent id if required
+        $data = $data->get(array_merge($this->treeview() ? ['id', $this->treeview()->name] : ['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
 
         // Replace all foreign keys with their value
         foreach ($this->indexAttributes()->where('type', 'foreign') as $foreignAttribute) {
             $values = $foreignAttribute->getValues();
             foreach ($data as $id => $row) {
-                // debug($foreignAttribute->name, $values);
                 $data[$id][$foreignAttribute->name] = $values[$row[$foreignAttribute->name]] ?? null;
             }
         }
@@ -145,7 +245,7 @@ class Resource extends Module
 
     /**
      * Rerender the component when updateIndex event is triggered
-     * 
+     *
      * This is mostly used after updating a model.
      *
      * @return void
@@ -153,6 +253,7 @@ class Resource extends Module
     #[On('updateIndex')]
     public function updateIndex(int $id = null)
     {
+        $this->setColumnWidths++;
         $this->selectedRow = $id;
     }
 

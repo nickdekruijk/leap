@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Classes;
 
 use Illuminate\Support\Str;
+use NickDeKruijk\Leap\Module;
 
 class Attribute
 {
@@ -198,6 +199,8 @@ class Attribute
             return $this->valuesFromModel();
         } elseif ($this->type == 'pivot') {
             return $this->valuesFromModel();
+        } elseif ($this->type == 'tree') {
+            return $this->valuesFromModel();
         } else {
             return $this->values;
         }
@@ -289,6 +292,22 @@ class Attribute
 
         // If index is set make sure it's an array
         $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
+
+        return $this;
+    }
+
+    public function tree(Module $module, $scope = null, $orderBy = null, $index = null): Attribute
+    {
+        $this->type = 'tree';
+        $this->input = null;
+        // $this->wire = 'live';
+
+        // $this->options['model'] = $module->getModel()::class;
+        // $this->options['scope'] = $scope;
+        // $this->options['orderBy'] = $orderBy;
+
+        // If index is set make sure it's an array
+        // $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
 
         return $this;
     }
@@ -549,6 +568,13 @@ class Attribute
             }
         }
         return $attributes;
+    }
+
+    public function sortable(): Attribute
+    {
+        $this->type = 'sortable';
+        $this->input = null;
+        return $this;
     }
 
     /**
