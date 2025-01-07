@@ -531,6 +531,12 @@ class Attribute
         return $this;
     }
 
+    /**
+     * Set the attribute type
+     *
+     * @param string $type
+     * @return Attribute
+     */
     public function type(string $type): Attribute
     {
         $this->type = $type;
@@ -570,6 +576,11 @@ class Attribute
         return $attributes;
     }
 
+    /**
+     * Make the attribute sortable, this will allow dragging in the index and make it hidden in the editor by default
+     *
+     * @return Attribute
+     */
     public function sortable(): Attribute
     {
         $this->type = 'sortable';
@@ -596,6 +607,11 @@ class Attribute
         return $this;
     }
 
+    /**
+     * Convert the attribute to an array
+     *
+     * @return array
+     */
     public function toArray(): array
     {
         return get_object_vars($this);
