@@ -192,7 +192,7 @@
             width: var(--spacing);
             top: 0;
             bottom: 0;
-            color: rgba(black, 0.15);
+            color: rgba(black, 0.2);
             text-align: center;
             .svg-icon {
                 width: calc(var(--spacing) / 1.25);
@@ -218,7 +218,7 @@
         }
     }
 }
-BODY:not(.sorting) .leap-index-table .leap-index-row:not(.leap-index-row-selected):hover {
+BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
     .svg-icon {
         visibility: visible;
     }
@@ -227,5 +227,12 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:not(.leap-index-row-selecte
         cursor: grab;
         color: white;
     }
-    background-color: $leap-index-row-hover;
+    &.leap-index-row-selected {
+        .leap-index-sort-handle-group {
+            background-color: $blue-normal;
+        }
+    }
+    &:not(.leap-index-row-selected) {
+        background-color: $leap-index-row-hover;
+    }
 }

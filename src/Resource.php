@@ -214,7 +214,7 @@ class Resource extends Module
         }
 
         // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
-        $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()->type == 'foreign';
+        $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()?->type == 'foreign';
 
         if ($this->orderBy && !$sortForeign) {
             $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');

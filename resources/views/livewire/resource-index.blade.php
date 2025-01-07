@@ -1,6 +1,6 @@
 <ul
     class="leap-index-table @if ($this->treeview()) leap-index-treeview @endif"
-    @if ($this->sortable()) x-sort:config="{ 
+    @if ($this->sortable() && $this->treeview()) x-sort:config="{ 
         group: {name:'treeview', pull: function(a,b,c,d,e) { console.log(a,b,c,d,e); return sortGroup } }, 
         fallbackOnBody: true, 
         swapThreshold: .1}" 
