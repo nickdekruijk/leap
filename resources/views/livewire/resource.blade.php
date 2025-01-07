@@ -5,7 +5,7 @@
             <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
         @endcan
     </header>
-    <div class="leap-index" @if ($this->treeview()) x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
+    <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
         @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])
     </div>
     @livewire('leap.editor')

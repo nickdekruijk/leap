@@ -185,7 +185,21 @@
                 width: auto;
             }
         }
-
+        .leap-index-sort-handle {
+            display: inline-block;
+            position: absolute;
+            left: 0;
+            width: var(--spacing);
+            top: 0;
+            bottom: 0;
+            color: rgba(black, 0.15);
+            text-align: center;
+            .svg-icon {
+                width: calc(var(--spacing) / 1.25);
+                height: 100%;
+                visibility: hidden;
+            }
+        }
         UL {
             padding-left: var(--spacing);
         }
@@ -205,5 +219,13 @@
     }
 }
 BODY:not(.sorting) .leap-index-table .leap-index-row:not(.leap-index-row-selected):hover {
+    .svg-icon {
+        visibility: visible;
+    }
+    .leap-index-sort-handle-group {
+        background-color: $blue-light;
+        cursor: grab;
+        color: white;
+    }
     background-color: $leap-index-row-hover;
 }

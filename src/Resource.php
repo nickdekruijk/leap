@@ -50,14 +50,13 @@ class Resource extends Module
     public array|false $browse = false;
 
     public array|false $translatable;
-    public $setColumnWidths = 0;
-    public $sortGroupValue = false;
 
-    public function sortGroup($sortGroup = false)
-    {
-        $this->sortGroupValue = $sortGroup;
-        $this->setColumnWidths++;
-    }
+    /**
+     * Update this to recalculate the column widths
+     *
+     * @var integer
+     */
+    public int $setColumnWidths = 0;
 
     /**
      * Open or close the file browser for the file(s) or media attribute
@@ -124,11 +123,6 @@ class Resource extends Module
             if ($parent_id != $item->{$this->treeview()->name}) {
                 $item->{$this->treeview()->name} = $parent_id;
                 $item->save();
-                if ($parent_id) {
-                    $this->dispatch('toast', __('leap::resource.parent_changed_under', ['title' => $item->{$this->indexAttributes()->first()->name}, 'parent' => $parent->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
-                } else {
-                    $this->dispatch('toast', __('leap::resource.parent_changed', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
-                }
             }
 
             $orderItems = $this->getModel()->where($this->treeview()->name, $parent_id);
@@ -137,13 +131,14 @@ class Resource extends Module
         }
 
         // Move item to new position within parent
-        $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
         foreach ($orderItems->where('id', '!=', $item_id)->orderBy($this->sortable()->name)->get() as $index => $row) {
             $row->{$this->sortable()->name} = $index >= $position ? $index + 1 : $index;
             $row->save();
         }
         $item->{$this->sortable()->name} = $position;
         $item->save();
+
+        $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
 
         $this->setColumnWidths++;
     }

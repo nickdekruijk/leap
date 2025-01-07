@@ -1,4 +1,11 @@
-<ul class="leap-index-table @if ($this->treeview()) leap-index-treeview @endif" @if ($this->sortable()) x-sort:config="{ fallbackOnBody:true, swapThreshold:.1 }" x-sort:group="treeview" x-sort.ghost="$wire.sortableDone({{ $parent ?? 0 }}, $item, $position)" @endif>
+<ul
+    class="leap-index-table @if ($this->treeview()) leap-index-treeview @endif"
+    @if ($this->sortable()) x-sort:config="{ 
+        group: {name:'treeview', pull: function(a,b,c,d,e) { console.log(a,b,c,d,e); return sortGroup } }, 
+        fallbackOnBody: true, 
+        swapThreshold: .1}" 
+        x-sort:group="treeview"
+        x-sort.ghost="$wire.sortableDone({{ $parent ?? 0 }}, $item, $position)" @endif>
     @if ($depth == 0)
         <div class="leap-index-header">
             @foreach ($this->indexAttributes() as $attribute)
@@ -14,11 +21,14 @@
                 @endforeach
             </div>
         @endif
-        <li @if ($this->sortable()) x-sort:item="{{ $row['id'] }}" wire:key="row-{{ $row['id'] }}" @endif>
+        <li @if ($this->sortable()) x-on:mouseover="sortGroup = false" x-sort:item="{{ $row['id'] }}" wire:key="row-{{ $row['id'] }}" @endif>
             <div x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row" data-depth="{{ $depth }}">
                 @foreach ($this->indexAttributes() as $attribute)
                     <span class="leap-index-column">
                         @if ($loop->first)
+                            @if ($this->treeview())
+                                <span class="leap-index-sort-handle" :class="sortGroup ? 'leap-index-sort-handle-group' : ''" x-on:mouseover.stop="sortGroup = true">@svg('fas-arrows-alt', 'svg-icon')</span>
+                            @endif
                             <button class="button-link">
                         @endif
                         @if ($attribute->type == 'checkbox')

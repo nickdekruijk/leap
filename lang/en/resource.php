@@ -12,8 +12,6 @@ return [
     'delete_confirm' => 'Are you sure you want to delete this?',
     'moved' => ':title moved',
     'no_changes' => 'No changes to save',
-    'parent_changed' => ':title moved',
-    'parent_changed_under' => ':title moved under :parent',
     'repeat' => 'Repeat',
     'save' => 'Save',
     'save_copy' => 'Save as copy',
