@@ -39,7 +39,6 @@
             placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}"
             @if (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update')) disabled @endif
             {{ $attribute->inputAttributes() }}
-            {{ $attributes }}>
-        </textarea>
+            {{ $attributes }}></textarea>
     </div>
 </x-leap::label>
