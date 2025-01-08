@@ -5,7 +5,7 @@
     @endif
 </x-leap::label>
 
-@if ($this->data[$attribute->name])
+@isset($this->data[$attribute->name])
     <ul @if ($attribute->options['multiple']) x-sort.ghost="$wire.sortData('{{ $attribute->name }}', $item, $position)" class="leap-files leap-files-media leap-files-sortable" @else class="leap-files" @endif>
         @foreach ($this->media($attribute->name) as $id => $media)
             <li x-sort:item="{{ $id }}">
@@ -25,4 +25,4 @@
             </li>
         @endforeach
     </ul>
-@endif
+@endisset
