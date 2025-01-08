@@ -35,4 +35,63 @@
             transform: translateX(0);
         }
     }
+
+    .leap-editor-sections {
+        .leap-editor-section {
+            background-color: rgba(black, 0.02);
+            border: 1px solid rgba(black, 0.1);
+            border-radius: 3px;
+            margin-top: var(--spacing);
+            padding: calc(var(--spacing) / 2);
+            position: relative;
+            > BUTTON {
+                position: absolute;
+                background-color: rgba(black, 0.15);
+                border: 0 none;
+                margin: 0;
+                right: calc(var(--spacing) / 2);
+                top: calc(var(--spacing) / 2);
+                opacity: 0;
+                &:focus {
+                    opacity: 1;
+                }
+                cursor: pointer;
+                .svg-icon {
+                    color: white;
+                    height: 16px;
+                }
+            }
+            > LABEL.leap-label:first-child {
+                > SPAN {
+                    color: inherit;
+                }
+                cursor: grab;
+                .svg-icon {
+                    height: 1em;
+                    opacity: 0;
+                    vertical-align: -0.1em;
+                }
+            }
+            &.sortable-ghost {
+                background: white;
+                box-shadow: inset $blue-light 0 0 0 2px;
+            }
+        }
+    }
+}
+BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
+    &:has(> LABEL.leap-label:first-child:hover) {
+        background-color: rgba(black, 0.05);
+        LABEL.leap-label .svg-icon {
+            opacity: 0.6;
+        }
+    }
+    &:hover {
+        > LABEL.leap-label:first-child .svg-icon {
+            opacity: 0.2;
+        }
+        > BUTTON {
+            opacity: 1;
+        }
+    }
 }

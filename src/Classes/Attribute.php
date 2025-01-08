@@ -28,6 +28,7 @@ class Attribute
     public array $validate = [];
     public array $values = [];
     public string $wire = 'blur';
+    public array $sections;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -604,6 +605,20 @@ class Attribute
         } else {
             $this->values = $values;
         }
+        return $this;
+    }
+
+    /**
+     * Add or or more sections to the attribute
+     *
+     * @param Section ...$sections
+     * @return Attribute
+     */
+    public function sections(Section ...$sections): Attribute
+    {
+        $this->type = 'sections';
+        $this->input = 'sections';
+        $this->sections = $sections;
         return $this;
     }
 

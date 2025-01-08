@@ -63,6 +63,25 @@ class Editor extends Component
     public array $mediaUpdated = [];
 
     /**
+     * A random number to append to some input elements to keep them unique after each sorting action
+     * 
+     * Mainly used as a workaround for tinymce editor issues after section sorting but causes flashing of the sections, looking for a more solid solution
+     *
+     * @var integer
+     */
+    public int $randomSortSeed;
+
+    /**
+     * Generate a new random sort seed number
+     *
+     * @return void
+     */
+    public function setRandomSortSeed()
+    {
+        $this->randomSortSeed = rand();
+    }
+
+    /**
      * Returns the parent Livewire component
      *
      * @return Component
@@ -190,6 +209,22 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->pivotData($attribute, $id);
         }
 
+        // Make sure all section tinymce input values exist
+        foreach ($this->attributes()->where('type', 'sections') as $sectionAttribute) {
+            if ($this->data[$sectionAttribute->name]) {
+                foreach ($this->data[$sectionAttribute->name] as $index => $section) {
+                    if (isset($section['_name'])) {
+                        foreach (collect(collect($sectionAttribute->sections)->where('name', $section['_name'])->first()?->attributes)->where('input', 'tinymce') as $input) {
+                            $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
+                        }
+                    }
+                    if (!isset($section['content'])) {
+                        $section['content'] = '';
+                    }
+                }
+            }
+        }
+
         // Clear existing validation errors
         $this->resetValidation();
     }
@@ -254,8 +289,39 @@ class Editor extends Component
         return $attributes;
     }
 
+    public function sortSection($attribute, $old, $new)
+    {
+        // $a = $this->data[$attribute];
+        $out = array_splice($this->data[$attribute], $old, 1);
+        array_splice($this->data[$attribute], $new, 0, $out);
+
+        $this->setRandomSortSeed();
+        // dd($attribute, $a, $this->data[$attribute]);
+    }
+
+    public function removeSection($field, $index)
+    {
+        unset($this->data[$field][$index]);
+    }
+
+    public function addSection($field, $name)
+    {
+        $field = rtrim($field, ':add');
+        /** @var object */
+        $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
+        $this->data[$attribute->name][] = [
+            '_name' => $name,
+        ];
+        $this->data[ltrim($field, 'data.') . ':add'] = null;
+    }
+
     public function updated($field, $value)
     {
+        // Check if :add field is used, if so add section
+        if (str_ends_with($field, ':add')) {
+            return $this->addSection($field, $value);
+        }
+
         // Get the full attribute, the @var docblock is only here as a workaround for an intelephense bug, may not be needed later
         /** @var object */
         $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
@@ -508,6 +574,8 @@ class Editor extends Component
     {
         // Encrypt the parent module class name
         $this->parentModuleEncrypted = Crypt::encryptString(Context::get('leap.module'));
+
+        $this->setRandomSortSeed();
     }
 
     public function render()

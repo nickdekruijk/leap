@@ -6,6 +6,7 @@
 
 <x-leap::label>
     <div
+        wire:key="{{ $attribute->dataName . $this->randomSortSeed }}"
         wire:ignore
         x-data="{ value: $wire.entangle('{{ $attribute->dataName }}') }"
         x-init="tinymce.init(Object.assign({{ json_encode($attribute->options) }}, {
