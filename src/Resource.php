@@ -69,6 +69,7 @@ class Resource extends Module
     public function fileBrowser($attribute = null, $files = null)
     {
         $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
+        $this->setColumnWidths++;
     }
 
     public function hasTranslation(Attribute $attribute): bool
