@@ -3,6 +3,7 @@
 return [
     'add_file' => 'Bestand toevoegen',
     'add_files' => 'Bestanden toevoegen',
+    'add_section' => 'Sectie toevoegen',
     'cancel' => 'Annuleren',
     'columns' => 'kolommen',
     'created' => 'aangemaakt',

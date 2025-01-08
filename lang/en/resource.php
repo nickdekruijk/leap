@@ -3,6 +3,7 @@
 return [
     'add_file' => 'Add file',
     'add_files' => 'Add files',
+    'add_section' => 'Add section',
     'cancel' => 'Cancel',
     'columns' => 'columns',
     'created' => 'created',
