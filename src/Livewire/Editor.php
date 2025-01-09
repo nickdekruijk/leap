@@ -434,7 +434,7 @@ class Editor extends Component
                         $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                     } else {
                         foreach (array_merge($model->getDirty(), $this->mediaUpdated, $this->pivotIsDirty()) as $attribute => $value) {
-                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . $attribute]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . explode('.', $attribute)[0]]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
                     $model->save();
