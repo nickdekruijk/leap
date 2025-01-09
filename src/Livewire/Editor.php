@@ -291,12 +291,10 @@ class Editor extends Component
 
     public function sortSection($attribute, $old, $new)
     {
-        // $a = $this->data[$attribute];
         $out = array_splice($this->data[$attribute], $old, 1);
         array_splice($this->data[$attribute], $new, 0, $out);
 
         $this->setRandomSortSeed();
-        // dd($attribute, $a, $this->data[$attribute]);
     }
 
     public function removeSection($field, $index)
