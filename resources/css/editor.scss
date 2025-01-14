@@ -79,6 +79,11 @@
         }
     }
 }
+BODY.sorting {
+    .tox {
+        pointer-events: none;
+    }
+}
 BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     &:has(> LABEL.leap-label:first-child:hover) {
         background-color: rgba(black, 0.05);
