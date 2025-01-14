@@ -29,6 +29,7 @@ class Attribute
     public array $values = [];
     public string $wire = 'blur';
     public array $sections;
+    public string $sectionName = '';
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -180,12 +181,12 @@ class Attribute
      *
      * @return Attribute
      */
-    public function media(): Attribute
+    public function media($multiple = true): Attribute
     {
         $this->type = 'media';
         $this->input = 'media';
         $this->options['media'] = true;
-        $this->options['multiple'] = true;
+        $this->options['multiple'] = $multiple;
         return $this;
     }
 

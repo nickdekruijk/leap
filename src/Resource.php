@@ -66,9 +66,21 @@ class Resource extends Module
      */
     #[On('selectBrowsedFiles')]
     #[On('selectMediaFiles')]
-    public function fileBrowser($attribute = null, $files = null)
+    public function fileBrowser($attribute = null, $files = null, $sectionName = '')
     {
-        $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
+        if ($sectionName) {
+            $attributeParts = explode('.', $attribute);
+
+            $sections = collect($this->getAttribute($attributeParts[0])->sections);
+            $section = $sections->where('name', $sectionName)->first();
+            $sectionAttributes = collect($section->attributes);
+            $sectionAttribute = $sectionAttributes->where('name', $attributeParts[2])->first();
+
+            $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $sectionAttribute->options) : false;
+        } else {
+            $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
+        }
+
         $this->setColumnWidths++;
     }
 

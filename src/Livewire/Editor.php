@@ -289,20 +289,65 @@ class Editor extends Component
         return $attributes;
     }
 
-    public function sortSection($attribute, $old, $new)
+    /**
+     * Move a section to a different position in the array
+     *
+     * @param string $attribute
+     * @param integer $index
+     * @param integer $position
+     * @return void
+     */
+    public function sortSection(string $attribute, int $index, int $position)
     {
-        $out = array_splice($this->data[$attribute], $old, 1);
-        array_splice($this->data[$attribute], $new, 0, $out);
+        // Pick the item to move and remove it from the array
+        $itemToMove = [$index => $this->data[$attribute][$index]];
+        unset($this->data[$attribute][$index]);
+
+        // Add the item to the new position
+        $this->data[$attribute] =
+            array_slice($this->data[$attribute], 0, $position, true)
+            + $itemToMove
+            + array_slice($this->data[$attribute], $position, null, true);
+
+        // Add _sort to all sections
+        $sort = 0;
+        foreach ($this->data[$attribute] as $index => $section) {
+            $this->data[$attribute][$index]['_sort'] = $sort;
+            $sort++;
+        }
 
         $this->setRandomSortSeed();
     }
 
-    public function removeSection($field, $index)
+    /**
+     * Remove a section 
+     *
+     * @param string $field
+     * @param string $index
+     * @return void
+     */
+    public function removeSection(string $field, string $index)
     {
         unset($this->data[$field][$index]);
+
+        // Delete section media from data
+        $prefix = $field . '.' . $index . '.';
+        foreach ($this->data as $key => $value) {
+            if (str_starts_with($key, $prefix)) {
+                unset($this->data[$key]);
+                $this->mediaUpdated[$key] = $key;
+            }
+        }
     }
 
-    public function addSection($field, $name)
+    /**
+     * Add a new section
+     *
+     * @param string $field
+     * @param string $name
+     * @return void
+     */
+    public function addSection(string $field, string $name)
     {
         $field = rtrim($field, ':add');
         /** @var object */
@@ -311,6 +356,15 @@ class Editor extends Component
             '_name' => $name,
         ];
         $this->data[ltrim($field, 'data.') . ':add'] = null;
+    }
+
+    public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
+    {
+        $newAttribute = clone $sectionAttribute;
+        $newAttribute->dataName = 'data.' . $name . '.' . $index . '.' . $sectionAttribute->name;
+        $newAttribute->name = $name . '.' . $index . '.' . $sectionAttribute->name;
+        $newAttribute->sectionName = $sectionName;
+        return $newAttribute;
     }
 
     public function updated($field, $value)

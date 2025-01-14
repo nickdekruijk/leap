@@ -1,12 +1,12 @@
 @props(['attribute', 'name', 'label', 'placeholder', 'browse'])
 <x-leap::label>
-    @if ($attribute->options['multiple'] || !$this->data[$attribute->name])
-        <button class="leap-button-add" wire:click="$parent.fileBrowser('{{ $attribute->name }}')" type="button" aria-label="@lang($attribute->options['multiple'] ? 'leap::resource.add_files' : 'leap::resource.add_file')">@svg('fas-file-circle-plus', 'svg-icon')</button>
+    @if ($attribute->options['multiple'] || !($this->data[$attribute->name] ?? false))
+        <button class="leap-button-add" wire:click="$parent.fileBrowser('{{ $attribute->name }}', null, '{{ $attribute->sectionName }}')" type="button" aria-label="@lang($attribute->options['multiple'] ? 'leap::resource.add_files' : 'leap::resource.add_file')">@svg('fas-file-circle-plus', 'svg-icon')</button>
     @endif
 </x-leap::label>
 
 @isset($this->data[$attribute->name])
-    <ul @if ($attribute->options['multiple']) x-sort.ghost="$wire.sortData('{{ $attribute->name }}', $item, $position)" class="leap-files leap-files-media leap-files-sortable" @else class="leap-files" @endif>
+    <ul @if ($attribute->options['multiple']) x-sort.ghost="$wire.sortData('{{ $attribute->name }}', $item, $position)" class="leap-files leap-files-media leap-files-sortable" @else class="leap-files leap-files-media" @endif>
         @foreach ($this->media($attribute->name) as $id => $media)
             <li x-sort:item="{{ $id }}">
                 @if ($media->isImage())
