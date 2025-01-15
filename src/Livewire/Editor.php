@@ -351,12 +351,11 @@ class Editor extends Component
     public function addSection(string $field, string $name)
     {
         $field = rtrim($field, ':add');
-        /** @var object */
-        $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
+        $attribute = $this->attributes()->where('name', substr($field, 5))->first();
         $this->data[$attribute->name][] = [
             '_name' => $name,
         ];
-        $this->data[ltrim($field, 'data.') . ':add'] = null;
+        $this->data[substr($field, 5) . ':add'] = null;
     }
 
     public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
@@ -375,9 +374,7 @@ class Editor extends Component
             return $this->addSection($field, $value);
         }
 
-        // Get the full attribute, the @var docblock is only here as a workaround for an intelephense bug, may not be needed later
-        /** @var object */
-        $attribute = collect($this->attributes())->where('name', ltrim($field, 'data.'))->first();
+        $attribute = $this->attributes()->where('name', substr($field, 5))->first();
 
         // Update slug placeholder if needed
         if ($attribute?->slugify) {
