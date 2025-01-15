@@ -214,6 +214,7 @@ class Editor extends Component
             if ($this->data[$sectionAttribute->name]) {
                 foreach ($this->data[$sectionAttribute->name] as $index => $section) {
                     if (isset($section['_name'])) {
+                        // The code below needs some improvements for readability
                         foreach (collect(collect($sectionAttribute->sections)->where('name', $section['_name'])->first()?->attributes)->where('input', 'tinymce') as $input) {
                             $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                         }
