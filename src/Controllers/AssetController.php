@@ -27,8 +27,8 @@ class AssetController extends Controller
 
         foreach ($css as $id => $file) {
             if (!file_exists($file)) {
-                // Try to get the file from the app resources/css directory
-                $newfile = base_path('resources/css/' . $file);
+                // Try to get the file from the app resources/css/leap directory
+                $newfile = base_path('resources/css/leap/' . $file);
                 if (!file_exists($newfile)) {
                     // Try to get the file from the package resources/css directory
                     $newfile = __DIR__ . '/../../resources/css/' . $file;
