@@ -428,7 +428,7 @@ class Editor extends Component
             } elseif ($attribute->type == 'pivot') {
                 // Ignore pivot data
             } else {
-                $model->{$attribute->name} = $this->data[$attribute->name] ?: null;
+                $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
             }
         }
     }
