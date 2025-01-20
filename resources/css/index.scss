@@ -205,6 +205,11 @@
         }
     }
 
+    .leap-index-row-inactive * {
+        text-decoration: line-through;
+        color: rgba(black, 0.3) !important;
+    }
+
     .leap-index-table {
         .sortable-ghost {
             box-shadow: inset $blue-light 0 0 0 2px;

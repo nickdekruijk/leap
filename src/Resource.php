@@ -34,6 +34,15 @@ class Resource extends Module
     public bool $orderDesc = false;
 
     /**
+     * The attribute that defines if a row is active or not
+     * 
+     * When the attribute returns false the row will be shown as inactive (strikethrough) in the index.
+     *
+     * @var string|null
+     */
+    public $active = null;
+
+    /**
      * The currently selected index row
      *
      * @var integer
@@ -233,8 +242,16 @@ class Resource extends Module
             $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
         }
 
+        $merge = ['id'];
+        if ($this->active) {
+            $merge[] = $this->active;
+        }
+        if ($this->treeview()) {
+            $merge[] = $this->treeview()->name;
+        }
+
         // Get all index columns including the id and the treeview parent id if required
-        $data = $data->get(array_merge($this->treeview() ? ['id', $this->treeview()->name] : ['id'], $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+        $data = $data->get(array_merge($merge, $this->indexAttributes()->pluck('name')->toArray()))->toArray();
 
         // Replace all foreign keys with their value
         foreach ($this->indexAttributes()->where('type', 'foreign') as $foreignAttribute) {
