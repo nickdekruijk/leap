@@ -14,7 +14,7 @@
         </div>
     @endif
     @foreach ($indexRows ?? $this->indexRows() as $row)
-        @if (!$this->treeview() && $this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && strlen($char = ucfirst(mb_substr($this->hasTranslation($attribute) ? $row[$this->orderBy][app()->getLocale()] ?? reset($row[$this->orderBy]) : $row[$this->orderBy] ?? null, 0, 1))) && (empty($last) || $last !== $char))
+        @if (!$this->treeview() && $this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && strlen($char = ucfirst(mb_substr($this->hasTranslation($attribute) ? $row[$this->orderBy][app()->getLocale()] ?? reset($row[$this->orderBy]) : $row[$this->orderBy] ?? '', 0, 1))) && (empty($last) || $last !== $char))
             <div class="leap-index-row leap-index-group">
                 @foreach ($this->indexAttributes() as $attribute)
                     <span class="leap-index-column">{{ $attribute->name == $this->orderBy ? ($last = $char) : '' }}</span>
