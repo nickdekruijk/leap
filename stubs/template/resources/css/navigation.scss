@@ -1,0 +1,350 @@
+$nav-hamburger-breakpoint: 768px; // Show hamburger menu below this screen width, 768px is a good start, set to something like 99999px to always use hamburger navigation
+
+.nav {
+    font-size: var(--fs-nav);
+    padding-top: var(--spacing);
+    padding-bottom: var(--spacing-s);
+    color: var(--primary-color);
+    position: sticky;
+    z-index: 1000;
+    top: 0;
+
+    // Scrolling transition settings
+    --scrolling-transition-duration: 0.4s;
+    --scrolling-transition: translateY(
+        calc(-1 * var(--spacing) + var(--spacing-s))
+    );
+
+    // Logo
+    .nav-logo {
+        display: inline-block;
+        z-index: 1100;
+        margin-left: calc(-1 * var(--spacing-s));
+    }
+
+    // Hide hamburger menu by default
+    .nav-toggle {
+        display: none;
+    }
+
+    // Navigation background color and shadow when scrolling main content
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        transition: all var(--scrolling-transition-duration);
+    }
+    &.scrolling {
+        &::before {
+            box-shadow: var(--shadow);
+            background-color: white;
+        }
+    }
+
+    // Navigation elements that will transition when scrolling main content
+    &::before, // = Background
+    .nav-logo,
+    .nav-toggle,
+    .nav-main-container {
+        transition: transform var(--scrolling-transition-duration);
+    }
+    &.scrolling {
+        &::before, // = Background
+        .nav-logo,
+        .nav-toggle,
+        .nav-main-container {
+            transform: var(--scrolling-transition);
+        }
+    }
+
+    // Base flexbox layout for all navigation elements
+    .nav-container,
+    UL {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing);
+        white-space: nowrap;
+    }
+
+    // Negative margins for LI elements for nicer focus outlines
+    LI {
+        margin-right: calc(-1 * var(--spacing-s));
+        margin-left: calc(-1 * var(--spacing-s));
+    }
+
+    // Base styling for navigation links and submenu toggle buttons
+    UL BUTTON[aria-expanded],
+    A {
+        text-decoration: none;
+        display: inline-block;
+        padding: var(--spacing-s) var(--spacing-s);
+        line-height: var(--fs-nav);
+        border-radius: var(--border-radius);
+    }
+
+    // Hover effects for navigation links
+    A:not([role="button"]):hover {
+        color: var(--primary-color-hover);
+        text-decoration: underline;
+    }
+
+    // Smaller menuitems to the right after 3 main items
+    .nav-main-container,
+    LI:nth-child(3) {
+        flex-basis: 100%;
+        ~ LI A:not([role="button"]):not(.button) {
+            font-size: var(--fs-nav-small);
+        }
+    }
+
+    // Add left/right margin to buttons in navigation when not using hamburger menu
+    @media (min-width: ($nav-hamburger-breakpoint + 1)) {
+        A[role="button"],
+        .button {
+            margin-left: var(--spacing-xs);
+            margin-right: var(--spacing-s);
+        }
+    }
+
+    // Styling specific for hamburger menu
+    @media (max-width: $nav-hamburger-breakpoint) {
+        // Add top margin to buttons in navigation
+        A[role="button"],
+        .button {
+            margin-top: var(--spacing-s);
+        }
+
+        // Hamburger menu toggle button
+        .nav-toggle {
+            display: inline-block;
+            border: 0 none;
+            background: transparent;
+            padding: 0;
+            width: calc(36px + var(--spacing-xs) * 2);
+            height: calc(36px + var(--spacing-xs) * 2);
+            position: relative;
+            z-index: 1100;
+            flex-direction: column;
+            margin-right: 0;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-xs);
+            margin: calc(-1 * var(--spacing-xs));
+            &::after,
+            &::before,
+            > SPAN {
+                position: absolute;
+                content: "";
+                width: calc(100% - var(--spacing-xs) * 2);
+                top: 50%;
+                height: 3px;
+                margin-top: -1.5px; // minus half height
+                background-color: var(--primary-color);
+                transition: transform 0.4s;
+            }
+            &::after {
+                transform: translateY(-13px);
+            }
+            &::before {
+                transform: translateY(13px);
+            }
+            &[aria-expanded="true"] {
+                &::after {
+                    transform: rotate(45deg);
+                }
+                &::before {
+                    transform: rotate(-45deg);
+                }
+                > SPAN {
+                    transform: scaleX(0);
+                }
+                + .nav-main-container {
+                    A,
+                    BUTTON {
+                        visibility: visible;
+                    }
+                    transform: translateY(0) !important;
+                }
+            }
+        }
+
+        // Main navigation when hamburger menu is open
+        .nav-main-container {
+            position: absolute;
+            position: fixed;
+            background: white;
+            left: 0;
+            right: 0;
+            top: 0;
+            padding-top: var(--spacing);
+            // bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transform: translateY(-100%) !important;
+            A,
+            BUTTON {
+                visibility: hidden;
+            }
+            > UL {
+                // max-width: calc(var(--content-width) + var(--spacing) * 2);
+                // margin: auto;
+                flex-basis: auto;
+                flex-direction: column;
+                // align-items: start;
+                gap: 0;
+                padding: var(--spacing);
+            }
+        }
+    }
+
+    // Dropdown submenus
+    UL UL {
+        flex-direction: column;
+        padding: 0 var(--spacing-s);
+        gap: 0;
+    }
+
+    // Submenu toggle buttons
+    UL BUTTON[aria-expanded] {
+        font: inherit;
+        border: 0 none;
+        background: transparent;
+        margin-left: calc(var(--spacing-xs) * -2);
+        padding-left: var(--spacing-xs);
+        color: inherit;
+        cursor: pointer;
+        &:hover {
+            color: var(--primary-color-hover);
+        }
+        &::before {
+            display: inline-block;
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: translateY(-0.2rem) rotate(-45deg);
+            transition: transform 0.2s;
+        }
+    }
+
+    // Dropdown submenus when not using hamburger menu
+    @media (min-width: ($nav-hamburger-breakpoint + 1)) {
+        UL UL {
+            position: absolute;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            background-color: white;
+            align-items: stretch;
+            A {
+                display: block;
+            }
+        }
+        LI:hover > UL {
+            display: flex !important;
+        }
+        LI:has([aria-current="page"]) > A,
+        [aria-current="page"] {
+            color: var(--primary-color-hover);
+            &[role="button"] {
+                color: white;
+                background-color: var(--primary-color-hover);
+            }
+        }
+    }
+
+    // Arrow down when submenu is open
+    @media (min-width: ($nav-hamburger-breakpoint + 1)) {
+        LI:hover > BUTTON::before {
+            transform: translate(0.2rem, -0.4rem) rotate(45deg);
+        }
+    }
+    UL BUTTON[aria-expanded="true"]::before {
+        transform: translate(0.2rem, -0.4rem) rotate(45deg);
+    }
+
+    // Smaller submenu items when using hamburger menu
+    @media (max-width: $nav-hamburger-breakpoint) {
+        UL UL {
+            A {
+                padding-top: var(--spacing-xs);
+                padding-bottom: var(--spacing-xs);
+            }
+            LI {
+                margin-top: calc(-1 * var(--spacing-xs));
+            }
+            font-size: var(--fs-nav-small);
+        }
+    }
+}
+
+// Full size navigation menu behind hamburger
+BODY.nav-full {
+    @media (min-width: $nav-hamburger-breakpoint) {
+        // Disable body scrolling when full size navigation menu is open
+        &.nav-expanded {
+            overflow: hidden;
+        }
+    }
+}
+
+// Breadcrumb navigation
+NAV[aria-label="breadcrumb"] UL {
+    font-size: var(--fs-nav-breadcrumb);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing);
+    A {
+        text-decoration: none;
+        display: inline-block;
+        padding: var(--spacing-xxs) var(--spacing-xxs);
+        border-radius: var(--border-radius);
+        color: var(--primary-color);
+        &:hover {
+            color: var(--primary-color-hover);
+            text-decoration: underline;
+        }
+    }
+    LI:has(A) {
+        margin-right: calc(-1 * var(--spacing-xxs));
+        margin-left: calc(-1 * var(--spacing-xxs));
+    }
+    LI:not(:last-child) {
+        position: relative;
+        &::after {
+            right: calc(-0.5 * var(--spacing) + var(--spacing-xxs));
+            display: inline-block;
+            position: absolute;
+            top: 50%;
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-right: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: translate(1.5px, -50%) rotate(-45deg);
+        }
+    }
+}
+
+// Skip links, only shown on focus
+.skip-link {
+    position: absolute;
+    margin: var(--spacing);
+    z-index: 2000;
+    border: 0;
+    &:not(:focus) {
+        clip: rect(1px, 1px, 1px, 1px);
+        clip-path: inset(50%);
+        height: 1px;
+        overflow: hidden;
+        width: 1px;
+    }
+}
+A[name="main"] {
+    position: absolute;
+    margin-top: -50px;
+}

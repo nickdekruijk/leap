@@ -1,0 +1,198 @@
+// App specific styling, fonts, colors, buttons, custom elements, etc...
+
+:root {
+    --primary-color: #262;
+    --primary-color-hover: #383;
+    --background-color: #f8faf8;
+    --focus-color: #2626;
+    --secondary-color: darkblue;
+    --secondary-color-hover: blue;
+    --body-color: #333;
+    --border-radius: 0.7rem;
+    --shadow: rgba(0, 0, 0, 0.1) 0 0 10px;
+    --fs-h1: 4rem;
+    --fs-h2: 3.6rem;
+    --fs-h3: 3.2rem;
+    --fs-h4: 2.8rem;
+    --fs-h5: 2.4rem;
+    --fs-h6: 2.2rem;
+    --fs-body: 2rem;
+    --fs-nav: 1.8rem;
+    --fs-nav-small: 1.6rem;
+    --fs-nav-breadcrumb: 1.6rem;
+    @media (max-width: $nav-hamburger-breakpoint) {
+        --fs-nav: 2.4rem;
+        --fs-nav-small: 2.2rem;
+    }
+}
+
+BODY {
+    color: var(--body-color);
+    font-family: sans-serif;
+    font-size: var(--fs-body);
+    background-color: var(--background-color);
+}
+
+A {
+    color: inherit;
+}
+
+// Buttons
+A[role="button"],
+ARTICLE BUTTON,
+.button {
+    font: inherit;
+    border: 1px solid transparent;
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+    padding: var(--spacing-s) var(--spacing);
+    border-radius: var(--border-radius);
+    background-color: var(--primary-color);
+    cursor: pointer;
+    &.outline {
+        background-color: transparent;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        &:hover {
+            border-color: var(--primary-color-hover);
+            color: var(--primary-color-hover);
+        }
+    }
+    &:not(.outline):hover {
+        background-color: var(--primary-color-hover);
+    }
+    &.secondary {
+        background-color: var(--secondary-color);
+        &:hover {
+            background-color: var(--secondary-color-hover);
+        }
+        &.outline {
+            border-color: var(--secondary-color);
+            background-color: transparent;
+            color: var(--secondary-color);
+        }
+    }
+    &.contrast {
+        background-color: var(--body-color);
+        color: white;
+        &:hover {
+            background-color: black;
+        }
+        &.outline {
+            border-color: var(--body-color);
+            background-color: transparent;
+            color: var(--body-color);
+        }
+    }
+}
+
+// Focus (input, buttons, links, etc.)
+:focus {
+    outline: 2.5px solid var(--focus-color);
+    outline-offset: 1px;
+    transition: all 0.1s;
+}
+
+// Article
+.article {
+    line-height: 1.8;
+    DETAILS > :not(:first-child),
+    > :not(:first-child) {
+        margin-top: var(--spacing);
+    }
+    H1 {
+        font-size: var(--fs-h1);
+    }
+    H2 {
+        font-size: var(--fs-h2);
+    }
+    H3 {
+        font-size: var(--fs-h3);
+    }
+    H4 {
+        font-size: var(--fs-h4);
+    }
+    H5 {
+        font-size: var(--fs-h5);
+    }
+    H1,
+    H2,
+    H3,
+    H4,
+    H5,
+    H6 {
+        font-weight: bold;
+        &:not(:first-child) {
+            margin-top: var(--spacing-l);
+        }
+    }
+    UL {
+        list-style-type: disc;
+    }
+    OL {
+        list-style-type: decimal;
+    }
+    UL,
+    OL {
+        padding-left: 1.4em;
+    }
+    A:not([role="button"]):not(.button) {
+        color: var(--primary-color);
+    }
+    DETAILS {
+        > SUMMARY {
+            color: var(--primary-color);
+            cursor: pointer;
+            list-style: none;
+            &::after {
+                content: "";
+                // float: right;
+                display: inline-block;
+                border-top: 3px solid currentColor;
+                border-right: 3px solid currentColor;
+                width: 0.4em;
+                height: 0.4em;
+                vertical-align: 0.05em;
+                margin-left: var(--spacing-xs);
+                transform: rotate(45deg);
+                transition: transform 0.2s;
+            }
+        }
+        &[open] > SUMMARY::after {
+            transform: translate(10%, -30%) rotate(135deg);
+        }
+    }
+    HR {
+        border: 0 none;
+        border-top: 1px solid var(--primary-color);
+    }
+}
+
+// Give links and accordeon summaries extra margin and border radius for nice focus style and easier clickable
+.article,
+FOOTER {
+    SUMMARY,
+    A:not([role="button"]):not(.button) {
+        padding: var(--spacing-xxs);
+        margin: calc(-1 * var(--spacing-xxs));
+        border-radius: var(--border-radius);
+    }
+}
+
+// Link underline tweaks
+A {
+    text-underline-offset: 1px;
+    text-underline-position: from-font;
+    text-decoration-color: var(--focus-color);
+}
+
+FOOTER {
+    background-color: var(--primary-color);
+    color: white;
+    padding-top: var(--spacing);
+    padding-bottom: var(--spacing);
+    :focus {
+        outline-color: rgba(white, 0.5);
+    }
+}

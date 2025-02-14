@@ -1,0 +1,51 @@
+// Make the whole page full height so footer is always at the bottom
+BODY {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    > MAIN {
+        flex: 1;
+    }
+}
+
+// Fluid container should have a max-width too
+.main-width {
+    max-width: calc(1450px + var(--pico-spacing) * 2);
+}
+
+// Accordion tweaks
+details[open] summary ~ * {
+    animation: sweep 0.2s ease-in-out;
+    // transform-origin: top left;
+}
+
+@keyframes sweep {
+    0% {
+        opacity: 0;
+        transform: scale(0.97); // translateY(-5px);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+// Skip links
+.skip-link {
+    position: absolute;
+    margin: var(--pico-nav-link-spacing-vertical);
+    z-index: 100;
+    &:not(:focus) {
+        border: 0;
+        clip: rect(1px, 1px, 1px, 1px);
+        clip-path: inset(50%);
+        height: 1px;
+        overflow: hidden;
+        width: 1px;
+        word-wrap: normal !important;
+    }
+}
+A[name="main"] {
+    position: absolute;
+    margin-top: 80px;
+}

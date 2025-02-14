@@ -1,0 +1,1 @@
+@extends('sections.image-right')

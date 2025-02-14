@@ -1,0 +1,46 @@
+// Layout styles and frequently used utility classes
+
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 1024px;
+
+HTML {
+    font-size: 62.5%;
+    @media (max-width: $tablet-breakpoint) {
+        font-size: 55.5555555555%;
+    }
+    @media (max-width: $mobile-breakpoint) {
+        font-size: 50%;
+    }
+}
+
+:root {
+    --spacing: 2.4rem;
+    --spacing-xxs: calc(var(--spacing) / 6);
+    --spacing-xs: calc(var(--spacing) / 3);
+    --spacing-s: calc(var(--spacing) / 2);
+    --spacing-l: calc(var(--spacing) * 2);
+    --spacing-xl: calc(var(--spacing) * 3);
+    --content-width: 1450px;
+}
+
+BODY {
+    font-size: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    > MAIN {
+        flex: 1;
+    }
+}
+
+.main-width {
+    max-width: calc(var(--content-width) + var(--spacing) * 2);
+    padding-left: var(--spacing);
+    padding-right: var(--spacing);
+    margin: auto;
+    width: 100%;
+}
+
+.relative {
+    position: relative;
+}

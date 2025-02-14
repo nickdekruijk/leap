@@ -1,0 +1,27 @@
+SECTION.image-wide,
+SECTION.image-right,
+SECTION.image-left {
+    display: flex;
+    gap: var(--spacing-l);
+    margin-top: var(--spacing-l);
+    margin-bottom: var(--spacing-l);
+    > * {
+        flex: 1 1 50%;
+    }
+    IMG {
+        display: block;
+        width: 100%;
+        border-radius: var(--border-radius);
+    }
+}
+
+SECTION.image-left {
+    .images {
+        order: 2;
+    }
+}
+
+SECTION.default {
+    margin-top: var(--spacing);
+    margin-bottom: var(--spacing);
+}
