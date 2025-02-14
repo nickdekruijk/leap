@@ -223,6 +223,9 @@
         }
     }
 }
+BODY.sorting .leap-index {
+    overflow-x: hidden;
+}
 BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
     .svg-icon {
         visibility: visible;
