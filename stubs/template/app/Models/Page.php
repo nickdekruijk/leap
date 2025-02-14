@@ -57,15 +57,9 @@ class Page extends Model
             if ($modelAttribute[0] == $attribute) {
                 $sections[$modelAttribute[1]][$modelAttribute[2]] = $media;
             }
-            // dd($media->model_attribute, $sections);
         }
 
         $sections = collect($sections)->sortBy('_sort') ?? [];
-        // $t = $mediables[0]->media->getDownloadUrlAttribute();
-        // foreach ($sections as $id => $section) {
-        //     $media = $mediables->where('model_attribute', $section['_name'])->first();
-        //     dd($section, $mediables, $media);
-        // }
         return $sections;
     }
 }
