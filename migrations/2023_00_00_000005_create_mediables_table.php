@@ -14,13 +14,13 @@ return new class extends Migration
     {
         Schema::create(config('leap.table_prefix') . 'mediables', function (Blueprint $table) {
             $table->foreignIdFor(Media::class);
-            $table->morphs('model');
-            $table->string('model_attribute')->nullable();
+            $table->morphs('mediable');
+            $table->string('mediable_attribute')->nullable();
             $table->json('meta')->nullable();
             $table->unsignedInteger('sort')->nullable()->index();
             $table->timestamps();
 
-            $table->index(['media_id', 'model_type', 'model_id', 'model_attribute', 'sort'], 'mediable_index');
+            $table->index(['media_id', 'mediable_type', 'mediable_id', 'mediable_attribute', 'sort'], 'mediable_index');
         });
     }
 

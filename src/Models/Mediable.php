@@ -13,9 +13,9 @@ class Mediable extends Model
 
     protected $fillable = [
         'media_id',
-        'model_type',
-        'model_id',
-        'model_attribute',
+        'mediable_type',
+        'mediable_id',
+        'mediable_attribute',
         'sort',
     ];
 

@@ -197,11 +197,11 @@ class Editor extends Component
 
         // Get the media attributes data
         $allMedia = $this->getModel($id)
-            ->morphToMany(Media::class, 'model', config('leap.table_prefix') . 'mediables')
-            ->withPivot('sort', 'model_attribute')
+            ->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')
+            ->withPivot('sort', 'mediable_attribute')
             ->orderBy(config('leap.table_prefix') . 'mediables.sort');
         foreach ($allMedia->get() as $media) {
-            $this->data[$media->pivot->model_attribute][] = $media->id;
+            $this->data[$media->pivot->mediable_attribute][] = $media->id;
         }
 
         // Get pivot data
@@ -435,12 +435,12 @@ class Editor extends Component
 
     public function syncMedia(Model $model)
     {
-        $mediables = $model->morphToMany(Media::class, 'model', config('leap.table_prefix') . 'mediables')->withTimestamps();
+        $mediables = $model->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')->withTimestamps();
         foreach ($this->mediaUpdated as $attribute) {
-            Mediable::where('model_id', $model->id)->where('model_attribute', $attribute)->delete();
+            Mediable::where('mediable_id', $model->id)->where('mediable_attribute', $attribute)->delete();
             foreach ($this->data[$attribute] as $sort => $media_id) {
                 $mediables->attach($media_id, [
-                    'model_attribute' => $attribute,
+                    'mediable_attribute' => $attribute,
                     'sort' => $sort,
                 ]);
             }

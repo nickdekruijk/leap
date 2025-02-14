@@ -53,7 +53,7 @@ class Page extends Model
     {
         $sections = $this->$attribute;
         foreach (Mediable::with('media')->where('model_type', self::class)->where('model_id', $this->id)->get() as $media) {
-            $modelAttribute = explode('.', $media->model_attribute);
+            $modelAttribute = explode('.', $media->mediable_attribute);
             if ($modelAttribute[0] == $attribute) {
                 $sections[$modelAttribute[1]][$modelAttribute[2]] = $media;
             }
