@@ -149,6 +149,7 @@ class Resource extends Module
 
             $orderItems = $this->getModel()->where($this->treeview()->name, $parent_id);
         } else {
+            $position--; // Since leap-index-header is at position 0 we need to decrease the position by 1
             $orderItems = $this->getModel();
         }
 
