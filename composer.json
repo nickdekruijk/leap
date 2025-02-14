@@ -15,7 +15,9 @@
 		"laravel/framework": "^11.0",
 		"livewire/livewire": "^3.0",
 		"owenvoke/blade-fontawesome": "^2.3",
-		"scssphp/scssphp": "^1.11"
+		"nickdekruijk/minify": "^2.3",
+		"scssphp/scssphp": "^1.11",
+		"spatie/laravel-translatable": "^6.10"
 	},
 	"autoload": {
 		"psr-4": {
