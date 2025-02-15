@@ -30,6 +30,8 @@ class Attribute
     public string $wire = 'blur';
     public array $sections;
     public string $sectionName = '';
+    public bool $isAccessor = false;
+    public array $accessorColumns;
     public bool $disabled = false;
 
     /**
@@ -621,6 +623,20 @@ class Attribute
         $this->type = 'sections';
         $this->input = 'sections';
         $this->sections = $sections;
+        return $this;
+    }
+
+    /**
+     * Define an attribute as an accessor, this will be a readonly attribute from the model and not the database
+     *
+     * @param string ...$columns The database columns required to be able to feed the accessor
+     * @return Attribute
+     */
+    public function accessor(string ...$columns): Attribute
+    {
+        $this->isAccessor = true;
+        $this->accessorColumns = $columns;
+        $this->disabled = true;
         return $this;
     }
 

@@ -427,6 +427,8 @@ class Editor extends Component
                 // Ignore media files
             } elseif ($attribute->type == 'pivot') {
                 // Ignore pivot data
+            } elseif ($attribute->isAccessor) {
+                // Ignore accessors
             } else {
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
             }

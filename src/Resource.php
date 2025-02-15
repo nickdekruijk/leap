@@ -25,13 +25,15 @@ class Resource extends Module
      * @var string|null
      */
     public $orderBy;
+    public $orderByDefault;
 
     /**
      * Enable descending index order
      *
      * @var boolean
      */
-    public bool $orderDesc = false;
+    public $orderDesc = false;
+    public $orderDescDefault;
 
     /**
      * The attribute that defines if a row is active or not
@@ -215,7 +217,15 @@ class Resource extends Module
      */
     public function order(string $attribute)
     {
-        if ($this->orderBy == $attribute && !$this->orderDesc) {
+        // Set default orderBy attribute 
+        $this->orderByDefault ??= $this->orderBy;
+        $this->orderDescDefault ??= $this->orderDesc;
+
+        if ($this->getAttribute($attribute)->isAccessor) {
+            // If attribute is an accessor restore default orderBy
+            $this->orderBy = $this->orderByDefault;
+            $this->orderDesc =  $this->orderDescDefault;
+        } elseif ($this->orderBy == $attribute && !$this->orderDesc) {
             // If currently ascending sorted by this attribute, change to descending
             $this->orderDesc = true;
         } elseif ($this->orderBy == $attribute && $this->orderDesc) {
@@ -258,8 +268,9 @@ class Resource extends Module
             $merge[] = $this->treeview()->name;
         }
 
-        // Get all index columns including the id and the treeview parent id if required
-        $data = $data->get(array_merge($merge, $this->indexAttributes()->pluck('name')->toArray()))->toArray();
+        // Get all index columns without accessors but including required accessor columns, the id and the treeview parent id if required
+        $accessorColumns = $this->indexAttributes()->where('isAccessor')->pluck('accessorColumns')->flatten()->unique()->toArray();
+        $data = $data->get(array_merge($merge, $accessorColumns, $this->indexAttributes()->where('isAccessor', false)->pluck('name')->toArray()));
 
         // Replace all foreign keys with their value
         foreach ($this->indexAttributes()->where('type', 'foreign') as $foreignAttribute) {
