@@ -6,7 +6,7 @@
         swapThreshold: .1}" 
         x-sort:group="treeview"
         x-sort.ghost="$wire.sortableDone({{ $parent ?? 0 }}, $item, $position)" @endif
-    @if ($this->sortable() && !$this->treeview()) x-sort:config="{ 
+    @if ($this->sortable() && !$this->treeview() && $this->orderBy === 'sort') x-sort:config="{ 
             fallbackOnBody: true, 
             swapThreshold: .1}" 
             x-sort.ghost="$wire.sortableDone(0, $item, $position)" @endif>
