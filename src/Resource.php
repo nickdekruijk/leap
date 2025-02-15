@@ -226,9 +226,9 @@ class Resource extends Module
     /**
      * Return an array of all rows with the id and the index attributes
      *
-     * @return array
+     * @return Collection
      */
-    public function indexRows(int $parent_id = null): array
+    public function indexRows(int $parent_id = null): Collection
     {
         $data = $this->getModel();
 

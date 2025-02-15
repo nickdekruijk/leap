@@ -37,10 +37,8 @@
                         @endif
                         @if ($attribute->type == 'checkbox')
                             <span class="leap-row-checkbox leap-row-checkbox-{{ $row[$attribute->name] ? 'checked' : 'unchecked' }}"></span>
-                        @elseif($this->hasTranslation($attribute))
-                            {{ $row[$attribute->name][app()->getLocale()] ?? ($row[$attribute->name] ? reset($row[$attribute->name]) : '') }}
                         @else
-                            {{ $row[$attribute->name] }}
+                            {{ $row->{$attribute->name} }}
                         @endif
                         @if ($loop->first)
                             </button>
