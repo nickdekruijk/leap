@@ -68,6 +68,13 @@ class Resource extends Module
     public int $setColumnWidths = 0;
 
     /**
+     * If enabled shows an extra row with a index letter based on the current index ordering, not all attribute types support it
+     *
+     * @var boolean
+     */
+    public $showIndexGroups = true;
+
+    /**
      * Open or close the file browser for the file(s) or media attribute
      *
      * @param [type] $attribute
