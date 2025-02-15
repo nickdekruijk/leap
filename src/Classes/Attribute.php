@@ -30,6 +30,7 @@ class Attribute
     public string $wire = 'blur';
     public array $sections;
     public string $sectionName = '';
+    public bool $disabled = false;
 
     /**
      * Make a new Attribute instance and set default label based on name.
