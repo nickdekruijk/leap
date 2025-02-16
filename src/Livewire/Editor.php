@@ -437,11 +437,13 @@ class Editor extends Component
 
     public function syncMedia(Model $model)
     {
-        $mediables = $model->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')->withTimestamps();
         foreach ($this->mediaUpdated as $attribute) {
-            Mediable::where('mediable_id', $model->id)->where('mediable_attribute', $attribute)->delete();
+            Mediable::where('mediable_type', $model::class)->where('mediable_id', $model->id)->where('mediable_attribute', $attribute)->delete();
             foreach ($this->data[$attribute] as $sort => $media_id) {
-                $mediables->attach($media_id, [
+                Mediable::create([
+                    'media_id' => $media_id,
+                    'mediable_type' => $model::class,
+                    'mediable_id' => $model->id,
                     'mediable_attribute' => $attribute,
                     'sort' => $sort,
                 ]);
