@@ -3,15 +3,6 @@
 <x-leap::label></x-leap::label>
 
 <div class="leap-editor-sections">
-    <select class="leap-select"
-        wire:model.live="{{ $attribute->dataName }}:add"
-        aria-label="@lang($attribute->label ?? ($label ?? $name))">
-        <option value="">@lang('leap::resource.add_section')</option>
-        @foreach ($attribute->sections as $section)
-            <option value="{{ $section->name }}">{{ $section->label }}</option>
-        @endforeach
-    </select>
-
     <ul class="leap-editor-sections" x-sort.ghost="$wire.sortSection('{{ $attribute->name }}', $item, $position); $nextTick(() => console.log($el))" x-sort:config="{ swapThreshold: .5 }">
         @foreach (collect($this->data[$attribute->name])->sortBy('_sort') ?: [] as $index => $sectionContent)
             <li x-sort:item="{{ $index }}" class="leap-editor-section" wire:key="{{ $attribute->name }}-{{ $index }}" x-sort:group="">
@@ -30,5 +21,14 @@
             </li>
         @endforeach
     </ul>
+
+    <select class="leap-select leap-select-button"
+        wire:model.live="{{ $attribute->dataName }}:add"
+        aria-label="@lang($attribute->label ?? ($label ?? $name))">
+        <option value="">@lang('leap::resource.add_section')</option>
+        @foreach ($attribute->sections as $section)
+            <option value="{{ $section->name }}">{{ $section->label }}</option>
+        @endforeach
+    </select>
 
 </div>
