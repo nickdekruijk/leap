@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Models\Role;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
@@ -96,20 +97,12 @@ class UserCommand extends Command
         }
         $this->info('User ' . $user[$this->getUsernameColumn()] . ' "' . $user->name . '" ' . $status);
 
-        // // Give the user all permissions when requested
-        // if (strtolower($this->ask('Do you want to give this user all permissions? (y/n)', 'n'))[0] == 'y') {
-        //     if (Permission::where('user_id', $user->id)->count()) {
-        //         $this->warn('User already has some permissions. Skipping.');
-        //     } else {
-        //         Permission::create([
-        //             'user_id' => $user->id,
-        //             'module' => '*',
-        //             'create' => true,
-        //             'read' => true,
-        //             'update' => true,
-        //             'delete' => true,
-        //         ]);
-        //     }
-        // }
+        // If user has no roles suggest to give it the first role available
+        if (!$user->roles->count()) {
+            $role = Role::first();
+            if (strtolower($this->ask('Do you want to give this user the "' . $role->name . '" role? (y/n)', 'n'))[0] == 'y') {
+                $user->roles()->attach($role);
+            }
+        }
     }
 }
