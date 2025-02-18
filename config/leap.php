@@ -309,6 +309,10 @@ return [
                 ['title' => 'H4', 'block' => 'h4'],
                 ['title' => 'Quote', 'block' => 'blockquote'],
             ],
+            'link_class_list' => [
+                ['title' => 'Default', 'value' => ''],
+                ['title' => 'Button', 'value' => 'button'],
+            ],
             'toolbar_mode' => 'sliding',
             'toolbar_sticky_offset' => 0, // Doesn't seem to do anything due to our custom sticky toolbar implementation with alpine.js
             'toolbar_sticky' => true,
