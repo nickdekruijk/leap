@@ -81,8 +81,7 @@ class UserCommand extends Command
             $user->name = $name;
 
             // Set username/emailaddress
-            $column = $this->getUsernameColumn();
-            $user->$column = $this->arguments()[$this->getUsernameColumn()];
+            $user->{$this->getUsernameColumn()} = $username;
 
             // Generate random password
             $random_password = Str::password(symbols: false);
