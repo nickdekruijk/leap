@@ -93,13 +93,17 @@ class TemplateCommand extends Command
         file_put_contents($file, $newFileContents);
     }
 
+    /**
+     * Ask to create a directory if it doesn't exist
+     *
+     * @param string $directory
+     * @return void
+     */
     public function createDirectory(string $directory)
     {
-        if (!file_exists($directory)) {
-            if (confirm("Create $directory directory?")) {
-                mkdir($directory);
-                $this->info("Created $directory");
-            }
+        if (!file_exists($directory) && confirm("Create $directory directory?")) {
+            mkdir($directory);
+            $this->info("Created $directory");
         }
     }
 
