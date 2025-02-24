@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
 
 class PageController extends Controller
@@ -31,13 +30,6 @@ class PageController extends Controller
         $attributes = ['id', 'title', 'slug', 'parent', 'menuitem'];
         foreach (Page::active()->get($attributes) as $page) {
             $pages[$page->parent ?: 0][] = $page->only($attributes);
-            // dd($page->toArray(), $page, $page->slug, $page->only('slug'));
-            // $pages['parents'][$page->id] = (int)$page->parent ?: 0;
-            // $pages['titles'][$page->id] = $page->slug;
-            // $pages['slugs'][$page->id] = $page->slug;
-            // if ($page->menuitem) {
-            //     $pages['menuitem'][$page->id] = true;
-            // }
         }
 
         // Traverse the pages to find the active page and build menu
@@ -94,21 +86,5 @@ class PageController extends Controller
         $page = Page::find($pages['current']['id']);
 
         return view('page', compact('page'));
-    }
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        // Context
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Page $page)
-    {
-        //
     }
 }
