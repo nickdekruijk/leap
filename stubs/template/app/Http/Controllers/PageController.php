@@ -71,9 +71,9 @@ class PageController extends Controller
      *
      * @return array
      */
-    public static function getMenu(int $parent = 0): null|array
+    public static function getMenu(int $parent = 0): array
     {
-        return self::getPages()['menu'][$parent] ?? null;
+        return self::getPages()['menu'][$parent] ?? [];
     }
 
     public function route(string $uri = null): View
