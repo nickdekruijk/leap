@@ -51,7 +51,7 @@ class PageController extends Controller
                 }
 
                 // Determine active state for the page by checking if slug matches of if it's the first child when segment is empty
-                $active = $activeParent && isset($segments[$depth]) && ($segments[$depth] === $page['slug'] || $n == 0);
+                $active = $activeParent && isset($segments[$depth]) && ($segments[$depth] === $page['slug'] || ($segments[$depth] == '' && $n == 0));
                 if ($active) {
                     $pages['active'][$page['id']] = true;
                     // If the active page is the last segment, it is the current page
