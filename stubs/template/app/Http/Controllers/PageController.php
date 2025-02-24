@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Str;
 
 class PageController extends Controller
 {
@@ -27,8 +28,16 @@ class PageController extends Controller
         ];
 
         // Get all pages but only the attributes we need for navigation
-        $attributes = ['id', 'title', 'slug', 'parent', 'menuitem'];
+        $attributes = ['id', 'title', 'slug', 'parent', 'menuitem', 'sections'];
         foreach (Page::active()->get($attributes) as $page) {
+            // Only save titles for sections with menuitem set so they can be added to the navigation menu later
+            if (isset($page->sections)) {
+                $menuitemTitles = [];
+                foreach (collect($page->sections)->where('menuitem', 1)->sortBy('_sort') as $menuitem) {
+                    $menuitemTitles[] = $menuitem['head'];
+                }
+                $page->sections = $menuitemTitles;
+            }
             $pages[$page->parent ?: 0][] = $page->only($attributes);
         }
 
@@ -40,6 +49,10 @@ class PageController extends Controller
                 if ($page['menuitem']) {
                     $pages['menu'][$parent][$page['id']] = $page;
                     $pages['menu'][$parent][$page['id']]['url'] = $path . '/' . $page['slug'];
+                }
+                foreach ($page['sections'] ?: [] as $i => $section) {
+                    $pages['menu'][$page['id']][$i] = ['title' => $section];
+                    $pages['menu'][$page['id']][$i]['url'] = $path . '/' . $page['slug'] . '#' . Str::slug($section);
                 }
 
                 // Determine active state for the page by checking if slug matches of if it's the first child when segment is empty
