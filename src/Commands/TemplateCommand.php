@@ -93,6 +93,16 @@ class TemplateCommand extends Command
         file_put_contents($file, $newFileContents);
     }
 
+    public function createDirectory(string $directory)
+    {
+        if (!file_exists($directory)) {
+            if (confirm("Create $directory directory?")) {
+                mkdir($directory);
+                $this->info("Created $directory");
+            }
+        }
+    }
+
     /**
      * Execute the console command.
      *
@@ -111,18 +121,15 @@ class TemplateCommand extends Command
         }
 
         // Ask to create app/Leap directory if it doesn't exist
-        if (!file_exists('app/Leap')) {
-            if (confirm('Create app/Leap directory?')) {
-                mkdir('app/Leap');
-                $this->info('Created app/Leap');
-            }
-        }
+        $this->createDirectory('app/Leap');
+        $this->createDirectory('app/Traits');
 
         // Ask to copy or replace files
         $this->copyOrReplace('app/Http/Controllers/PageController.php', 'PageController');
         $this->copyOrReplace('database/migrations/2025_01_03_094203_create_pages_table.php', 'pages table migration');
         $this->copyOrReplace('app/Models/Page.php', 'Page model');
         $this->copyOrReplace('app/Leap/Page.php', 'Page model Leap module');
+        $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
 
         // Ask to delete default Laravel welcome view, js/app.js, app/bootstrap.js and css/app.css
         $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c']);
