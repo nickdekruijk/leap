@@ -17,8 +17,8 @@ class PageController extends Controller
     public static function getPages(array $segments = []): array
     {
         // Prevent getting all pages over and over
-        if (Context::get('PageController.pages')) {
-            return Context::get('PageController.pages');
+        if (Context::getHidden('PageController.pages')) {
+            return Context::getHidden('PageController.pages');
         }
 
         // Boilerplate for the getPages array
@@ -69,7 +69,7 @@ class PageController extends Controller
         traverse($pages, $segments);
 
         // Store in context
-        Context::add('PageController.pages', $pages);
+        Context::addHidden('PageController.pages', $pages);
 
         return $pages;
     }
