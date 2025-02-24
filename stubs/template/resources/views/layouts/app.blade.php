@@ -34,23 +34,25 @@
                 <button class="nav-toggle" aria-expanded="false" :aria-expanded="navExpanded" :aria-label="navExpanded ? 'Close main menu' : 'Open main menu'" aria-controls="nav-main" x-on:click="navExpanded = !navExpanded">
                     <span></span>
                 </button>
-                <div class="nav-main-container">
-                    <ul id="nav-main">
-                        @foreach (App\Http\Controllers\PageController::getMenu() as $page)
-                            <li @if (App\Http\Controllers\PageController::getMenu($page['id'])) x-data="{ open: false }" x-id="['submenu']" x-on:keydown.escape="open=false" @endif>
-                                <a role="{{ $loop->last ? 'button' : '' }}" aria-current="{{ $page['id'] == request('id') ? 'page' : 'false' }}" href="{{ $page['url'] }}">{{ $page['title'] }}</a>
-                                @if (App\Http\Controllers\PageController::getMenu($page['id']))
-                                    <button aria-expanded="false" :aria-expanded="open" :aria-controls="$id('submenu')" :aria-label="open ? 'Close {{ $page['title'] }} submenu' : 'Open {{ $page['title'] }} submenu'" x-on:click.stop="open=!open"></button>
-                                    <ul x-show="open" x-transition :id="$id('submenu')" x-on:click.outside="open=false">
-                                        @foreach (App\Http\Controllers\PageController::getMenu($page['id']) as $subpage)
-                                            <li><a aria-current="{{ $subpage['id'] == request('id') ? 'page' : 'false' }}" href="{{ $subpage['url'] }}">{{ $subpage['title'] }}</a></li>
-                                        @endforeach
-                                    </ul>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
+                @if (empty($hideNavigation))
+                    <div class="nav-main-container">
+                        <ul id="nav-main">
+                            @foreach (App\Http\Controllers\PageController::getMenu() as $page)
+                                <li @if (App\Http\Controllers\PageController::getMenu($page['id'])) x-data="{ open: false }" x-id="['submenu']" x-on:keydown.escape="open=false" @endif>
+                                    <a role="{{ $loop->last ? 'button' : '' }}" aria-current="{{ $page['id'] == request('id') ? 'page' : 'false' }}" href="{{ $page['url'] }}">{{ $page['title'] }}</a>
+                                    @if (App\Http\Controllers\PageController::getMenu($page['id']))
+                                        <button aria-expanded="false" :aria-expanded="open" :aria-controls="$id('submenu')" :aria-label="open ? 'Close {{ $page['title'] }} submenu' : 'Open {{ $page['title'] }} submenu'" x-on:click.stop="open=!open"></button>
+                                        <ul x-show="open" x-transition :id="$id('submenu')" x-on:click.outside="open=false">
+                                            @foreach (App\Http\Controllers\PageController::getMenu($page['id']) as $subpage)
+                                                <li><a aria-current="{{ $subpage['id'] == request('id') ? 'page' : 'false' }}" href="{{ $subpage['url'] }}">{{ $subpage['title'] }}</a></li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
         </nav>
         @yield('content')
