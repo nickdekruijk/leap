@@ -21,7 +21,7 @@
             <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=null" wire:click="close" label="leap::resource.cancel" />
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
-        <div class="leap-form">
+        <div class="leap-form" wire:key="editor-{{ $editing }}">
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     @if ($attribute->input)
