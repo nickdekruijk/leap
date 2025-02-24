@@ -101,7 +101,7 @@ return [
     | a new guard in the config/auth.php file.
     |
     */
-    'guard' => Auth::getDefaultDriver(),
+    'guard' => 'web',
 
     /*
     |--------------------------------------------------------------------------
