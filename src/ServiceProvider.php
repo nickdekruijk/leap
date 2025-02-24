@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Commands\TemplateCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
@@ -54,6 +55,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                TemplateCommand::class,
                 UserCommand::class,
             ]);
         }
