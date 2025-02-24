@@ -44,7 +44,7 @@ class PageController extends Controller
         // Traverse the pages to find the active page and build menu
         function traverse(array &$pages, array $segments = [], $parent = 0, $depth = 0, $activeParent = true, $path = '')
         {
-            foreach ($pages[$parent] as $n => $page) {
+            foreach ($pages[$parent] ?? [] as $n => $page) {
                 // If page is a menuitems add it to do menu array too
                 if ($page['menuitem']) {
                     $pages['menu'][$parent][$page['id']] = $page;
