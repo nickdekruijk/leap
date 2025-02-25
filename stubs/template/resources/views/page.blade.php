@@ -16,7 +16,7 @@
             </article>
         @endisset
         @foreach ($page->sections() as $section)
-            @include('sections.' . $section['_name'])
+            @include('sections.' . $section->_name)
         @endforeach
     </main>
 @endsection
