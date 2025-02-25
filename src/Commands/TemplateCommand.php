@@ -131,6 +131,7 @@ class TemplateCommand extends Command
         // Ask to copy or replace files
         $this->copyOrReplace('app/Http/Controllers/PageController.php', 'PageController');
         $this->copyOrReplace('database/migrations/2025_01_03_094203_create_pages_table.php', 'pages table migration');
+        $this->copyOrReplace('database/seeders/PageSeeder.php', 'PageSeeder');
         $this->copyOrReplace('app/Models/Page.php', 'Page model');
         $this->copyOrReplace('app/Leap/Page.php', 'Page model Leap module');
         $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
