@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use ArrayObject;
 use Illuminate\Support\Collection;
 use NickDeKruijk\Leap\Models\Mediable;
 
@@ -22,10 +23,17 @@ trait HasSections
         foreach (Mediable::with('media')->where('mediable_type', self::class)->where('mediable_id', $this->id)->get() as $media) {
             $modelAttribute = explode('.', $media->mediable_attribute);
             if ($modelAttribute[0] == $attribute) {
-                $sections[$modelAttribute[1]][$modelAttribute[2]][] = $media;
+                $sections[$modelAttribute[1]][$modelAttribute[2]] = ($sections[$modelAttribute[1]][$modelAttribute[2]] ?? new Collection())->concat([$media->media]);
             }
         }
 
+        // Convert each section to an ArrayObject
+        foreach ($sections ?: [] as $key => $section) {
+            $sections[$key] = new ArrayObject($section);
+            $sections[$key]->setFlags(ArrayObject::STD_PROP_LIST | ArrayObject::ARRAY_AS_PROPS);
+        }
+
+        // Return sorted sections as collection
         return collect($sections)->sortBy('_sort');
     }
 }
