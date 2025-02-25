@@ -42,7 +42,7 @@
                                     <a role="{{ $loop->last ? 'button' : '' }}" aria-current="{{ $page['id'] == request('id') ? 'page' : 'false' }}" href="{{ $page['url'] }}">{{ $page['title'] }}</a>
                                     @if (App\Http\Controllers\PageController::getMenu($page['id']))
                                         <button aria-expanded="false" :aria-expanded="open" :aria-controls="$id('submenu')" :aria-label="open ? 'Close {{ $page['title'] }} submenu' : 'Open {{ $page['title'] }} submenu'" x-on:click.stop="open=!open"></button>
-                                        <ul x-show="open" x-transition :id="$id('submenu')" x-on:click.outside="open=false">
+                                        <ul x-cloak x-show="open" x-transition :id="$id('submenu')" x-on:click.outside="open=false">
                                             @foreach (App\Http\Controllers\PageController::getMenu($page['id']) as $subpage)
                                                 <li><a aria-current="{{ $subpage['id'] == request('id') ? 'page' : 'false' }}" href="{{ $subpage['url'] }}">{{ $subpage['title'] }}</a></li>
                                             @endforeach
