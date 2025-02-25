@@ -98,10 +98,11 @@ class UserCommand extends Command
         $this->info('User ' . $user[$this->getUsernameColumn()] . ' "' . $user->name . '" ' . $status);
 
         // If user has no roles suggest to give it the first role available
-        if (!$user->roles->count()) {
+        $roles = $user->belongsToMany(Role::class, config('leap.table_prefix') . 'role_user')->withTimestamps();
+        if (!$roles->count()) {
             $role = Role::first();
             if (strtolower($this->ask('Do you want to give this user the "' . $role->name . '" role? (y/n)', 'n'))[0] == 'y') {
-                $user->roles()->attach($role);
+                $roles->attach($role, ['accepted' => true]);
             }
         }
     }
