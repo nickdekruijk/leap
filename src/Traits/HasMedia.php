@@ -9,6 +9,6 @@ trait HasMedia
 {
     public function media(): MorphToMany
     {
-        return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables');
+        return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')->withPivot('mediable_attribute');
     }
 }
