@@ -136,10 +136,10 @@ class TemplateCommand extends Command
         $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
 
         // Ask to delete default Laravel welcome view, js/app.js, app/bootstrap.js and css/app.css
-        $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c']);
+        $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', '0dfa96ec792216b2a15879337263058107986e2e']);
         $this->deleteFile('resources/js/app.js', ['d2e5cf4f96d815b68a4f2a012b54a0d25daa4952']);
         $this->deleteFile('resources/js/bootstrap.js', ['737674b888fd746d93f53ca3b748936d85f14c20']);
-        $this->deleteFile('resources/css/app.css', ['d88dc6b14989074f8d407e9b7f7f855d5816203e']);
+        $this->deleteFile('resources/css/app.css', ['d88dc6b14989074f8d407e9b7f7f855d5816203e', '314f72fa2d086fd98b3b89fe957c08b440370cd9']);
 
         // Ask to copy scss files and views
         $this->copyDir('resources/css', 'SCSS files');
