@@ -355,7 +355,7 @@ class Editor extends Component
 
         // Determine the highest sort value currently in use
         $sort = 0;
-        foreach ($this->data[$attribute->name] as $section) {
+        foreach ($this->data[$attribute->name] ?? [] as $section) {
             if (isset($section['_sort']) && $section['_sort'] > $sort) {
                 $sort = $section['_sort'];
             }
