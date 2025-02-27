@@ -352,9 +352,22 @@ class Editor extends Component
     {
         $field = rtrim($field, ':add');
         $attribute = $this->attributes()->where('name', substr($field, 5))->first();
+
+        // Determine the highest sort value currently in use
+        $sort = 0;
+        foreach ($this->data[$attribute->name] as $section) {
+            if (isset($section['_sort']) && $section['_sort'] > $sort) {
+                $sort = $section['_sort'];
+            }
+        }
+
+        // Add the new section to the data with higher sort
         $this->data[$attribute->name][] = [
             '_name' => $name,
+            '_sort' => $sort + 1,
         ];
+
+        // Reset the :add field
         $this->data[substr($field, 5) . ':add'] = null;
     }
 
