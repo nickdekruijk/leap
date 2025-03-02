@@ -452,10 +452,13 @@ class Editor extends Component
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
             } else {
-                // Update section _view values
                 if ($attribute->type == 'sections') {
+                    // Extra treatment for each section
                     foreach ($this->data[$attribute->name] as $key => $section) {
+                        // Update section _view values
                         $this->data[$attribute->name][$key]['_view'] = collect($attribute->sections)->where('name', $section['_name'])->first()->view;
+                        // Set empty values to null
+                        $this->data[$attribute->name][$key] = array_map(fn($value) => $value ?: null, $this->data[$attribute->name][$key]);
                     }
                 }
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
