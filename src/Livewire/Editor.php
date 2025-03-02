@@ -232,9 +232,6 @@ class Editor extends Component
                             $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                         }
                     }
-                    if (!isset($section['content'])) {
-                        $section['content'] = '';
-                    }
                 }
             }
         }
