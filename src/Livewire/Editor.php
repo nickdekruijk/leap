@@ -209,6 +209,19 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->pivotData($attribute, $id);
         }
 
+        $this->richtextValues();
+
+        // Clear existing validation errors
+        $this->resetValidation();
+    }
+
+    /**
+     * Make sure all section tinymce input values exist to prevent livewire errors
+     *
+     * @return void
+     */
+    public function richtextValues()
+    {
         // Make sure all section tinymce input values exist
         foreach ($this->attributes()->where('type', 'sections') as $sectionAttribute) {
             if ($this->data[$sectionAttribute->name]) {
@@ -225,9 +238,6 @@ class Editor extends Component
                 }
             }
         }
-
-        // Clear existing validation errors
-        $this->resetValidation();
     }
 
     /**
@@ -367,6 +377,8 @@ class Editor extends Component
             '_sort' => $sort + 1,
         ];
 
+        $this->richtextValues();
+
         // Reset the :add field
         $this->data[substr($field, 5) . ':add'] = null;
     }
@@ -446,6 +458,7 @@ class Editor extends Component
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
             }
         }
+        // dd($this->data, $model->toArray());
     }
 
     public function syncMedia(Model $model)
