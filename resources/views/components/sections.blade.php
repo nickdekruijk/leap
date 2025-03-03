@@ -14,7 +14,7 @@
                     <x-leap::button svg-icon="far-trash-alt" wire:click="removeSection('{{ $attribute->name }}', {{ $index }})" wire:confirm="{{ __('leap::resource.delete_confirm') }}" label="leap::resource.delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
                 @endcan
                 <fieldset class="leap-fieldset">
-                    @foreach ($section->attributes as $sectionAttribute)
+                    @foreach ($section->attributes ?? [] as $sectionAttribute)
                         <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'])" :placeholder="$placeholder" />
                     @endforeach
                 </fieldset>
