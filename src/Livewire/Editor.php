@@ -454,7 +454,7 @@ class Editor extends Component
             } else {
                 if ($attribute->type == 'sections') {
                     // Extra treatment for each section
-                    foreach ($this->data[$attribute->name] as $key => $section) {
+                    foreach ($this->data[$attribute->name] ?? [] as $key => $section) {
                         // Update section _view values
                         $this->data[$attribute->name][$key]['_view'] = collect($attribute->sections)->where('name', $section['_name'])->first()->view;
                         // Set empty values to null
@@ -471,7 +471,7 @@ class Editor extends Component
     {
         foreach ($this->mediaUpdated as $attribute) {
             Mediable::where('mediable_type', $model::class)->where('mediable_id', $model->id)->where('mediable_attribute', $attribute)->delete();
-            foreach ($this->data[$attribute] as $sort => $media_id) {
+            foreach ($this->data[$attribute] ?? [] as $sort => $media_id) {
                 Mediable::create([
                     'media_id' => $media_id,
                     'mediable_type' => $model::class,
