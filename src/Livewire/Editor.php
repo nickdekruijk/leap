@@ -132,7 +132,7 @@ class Editor extends Component
         return $this->getModel($this->editing)->{$attribute->name}->pluck('id')->toArray();
     }
 
-    public function pivotIsDirty(Attribute $attribute = null): array
+    public function pivotIsDirty(Attribute|null $attribute = null): array
     {
         $dirty = [];
         if ($attribute) {
@@ -254,7 +254,7 @@ class Editor extends Component
      * @param integer|null $id the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
      * @return array
      */
-    public function rules(int $id = null): array
+    public function rules(int|null $id = null): array
     {
         // The Attribute class sets some placeholders in the validation rules that needs to be replaced with actual values, this array defines those replacements
         $replace = [
@@ -412,7 +412,7 @@ class Editor extends Component
      * @param integer|null $id the id of the model to update or null if creating, passed to the rules method to replace {id} in rules (usualy the unique rule)
      * @return boolean
      */
-    public function isValid(int $id = null): bool
+    public function isValid(int|null $id = null): bool
     {
         // Replace empty values with placeholders if present in temporary variable
         $data = $this->data;
