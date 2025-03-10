@@ -65,7 +65,7 @@ class Editor extends Component
     /**
      * A random number to append to some input elements to keep them unique after each sorting action
      * 
-     * Mainly used as a workaround for tinymce editor issues after section sorting but causes flashing of the sections, looking for a more solid solution
+     * Mainly used as a workaround for tinymce editor issues after section sorting and deleting but causes flashing of the sections, looking for a more solid solution
      *
      * @var integer
      */
@@ -346,6 +346,8 @@ class Editor extends Component
                 $this->mediaUpdated[$key] = $key;
             }
         }
+
+        $this->setRandomSortSeed();
     }
 
     /**
