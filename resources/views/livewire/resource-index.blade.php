@@ -25,7 +25,7 @@
                 @endforeach
             </div>
         @endif
-        <li @if ($this->sortable()) x-on:mouseover="sortGroup = false" x-sort:item="{{ $row['id'] }}" wire:key="row-{{ $row['id'] }}" @endif>
+        <li @if ($this->sortable()) x-on:mouseover="sortGroup = false" x-sort:item="{{ $row['id'] }}" @endif wire:key="row-{{ $row['id'] }}">
             <div x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row{{ $this->active && !$row[$this->active] ? ' leap-index-row-inactive' : '' }}" data-depth="{{ $depth }}">
                 @foreach ($this->indexAttributes() as $attribute)
                     <span class="leap-index-column">
