@@ -257,7 +257,14 @@ class Resource extends Module
         $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()?->type == 'foreign';
 
         if ($this->orderBy && !$sortForeign) {
-            $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
+            if (is_array($this->orderBy)) {
+                foreach ($this->orderBy as $orderBy => $desc) {
+                    debug($desc);
+                    $data = $data->orderBy($orderBy ?: $desc, $desc == 'desc' ? 'desc' : ($this->orderDesc ? 'desc' : 'asc'));
+                }
+            } else {
+                $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
+            }
         }
 
         $merge = ['id'];
