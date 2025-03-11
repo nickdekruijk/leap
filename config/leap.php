@@ -298,7 +298,7 @@ return [
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/' . app()->getLocale() . '.js',
             'language' => app()->getLocale(),
             'license_key' => 'gpl',
-            'link_default_target' => '_blank',
+            // 'link_default_target' => '_blank',
             'menubar' => false,
             'plugins' => 'accordion anchor autolink autoresize charmap code emoticons image link lists media searchreplace table visualblocks wordcount', // autosave codesample directionality fullscreen help preview visualchars importcss
             'promotion' => false,
