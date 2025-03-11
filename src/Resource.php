@@ -245,7 +245,7 @@ class Resource extends Module
      *
      * @return Collection
      */
-    public function indexRows(int $parent_id = null): Collection
+    public function indexRows(int|null $parent_id = null): Collection
     {
         $data = $this->getModel();
 
@@ -295,7 +295,7 @@ class Resource extends Module
      * @return void
      */
     #[On('updateIndex')]
-    public function updateIndex(int $id = null)
+    public function updateIndex(int|null $id = null)
     {
         $this->setColumnWidths++;
         $this->selectedRow = $id;
