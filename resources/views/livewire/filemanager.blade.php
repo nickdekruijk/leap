@@ -1,4 +1,22 @@
-<main class="leap-main leap-filemanager">
+<main class="leap-main leap-filemanager" x-data="{
+    uploadFiles: function(el) {
+        const uploadStart = new Date().getTime();
+        [...el.files].forEach((file, index) => {
+            $wire.uploadStart(uploadStart + index, file.name, file.size);
+            if (file.size <= @js($this->maxUploadSize())) {
+                $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
+                    $wire.uploadDone(uploadStart + index);
+                }, () => {
+                    $wire.uploadFailed(uploadStart + index);
+                }, (event) => {
+                    $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
+                }, () => {
+                    // Cancelled callback...
+                });
+            }
+        });
+    }
+}">
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
         @if ($browse)
@@ -7,28 +25,17 @@
     </header>
     @can('leap::create')
         <form>
-            <input type="file" tabindex="-1" multiple id="leap-filemanager-upload"
-                x-on:change="
-                    const uploadStart = new Date().getTime();
-                    [...$el.files].forEach((file, index) => {
-                        $wire.uploadStart(uploadStart + index, file.name, file.size);
-                        if (file.size <= @js($this->maxUploadSize())) {
-                            $wire.upload('uploads.' + (uploadStart + index) + '.file', file, () => {
-                                $wire.uploadDone(uploadStart + index);
-                            }, () => {
-                                $wire.uploadFailed(uploadStart + index);
-                            }, (event) => {
-                                $wire.set('uploads.' + (uploadStart + index) + '.progress', event.detail.progress);
-                            }, () => {
-                                // Cancelled callback...
-                            });
-                        }
-                    });
-                    $el.parentNode.reset();
-                ">
+            <input type="file" tabindex="-1" multiple id="leap-filemanager-upload" x-on:change="uploadFiles($el);$el.parentNode.reset()">
         </form>
     @endcan
-    <div class="leap-index">
+    <div class="leap-index"
+        @can('leap::create')
+            x-data="{ dropping: false }"
+            x-bind:class="{ 'leap-index-dropzone': dropping }"
+            x-on:dragover.prevent="dropping = true"
+            x-on:dragleave.prevent="dropping = false"
+            x-on:drop.prevent="dropping = false; uploadFiles($event.dataTransfer)"
+        @endcan>
         @foreach ($this->columns as $depth => $directory)
             <table class="leap-index-table">
                 <tr class="leap-index-header">

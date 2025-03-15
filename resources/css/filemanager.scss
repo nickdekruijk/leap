@@ -88,6 +88,10 @@
             color: $blue-normal;
             vertical-align: -1px;
         }
+        &.leap-index-dropzone .leap-index-table:last-child,
+        &.leap-index-dropzone .leap-index-table:last-child TR {
+            background-color: rgba($blue-light, 0.4);
+        }
     }
     .leap-filemanager-uploading {
         position: relative;
