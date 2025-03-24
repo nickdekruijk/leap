@@ -48,7 +48,7 @@ class PageController extends Controller
                 // If page is a menuitems add it to do menu array too
                 if ($page['menuitem']) {
                     $pages['menu'][$parent][$page['id']] = $page;
-                    $pages['menu'][$parent][$page['id']]['url'] = $path . '/' . $page['slug'];
+                    $pages['menu'][$parent][$page['id']]['url'] = rtrim($path . '/' . $page['slug'], '/') ?: '/';
                 }
                 foreach ($page['sections'] ?: [] as $i => $section) {
                     $pages['menu'][$page['id']][$i] = ['title' => $section];
@@ -89,13 +89,12 @@ class PageController extends Controller
         return self::getPages()['menu'][$parent] ?? [];
     }
 
-    public function route(string $uri = null): View
+    public function route(null|string $uri = null): View
     {
         $pages = $this->getPages(explode('/', $uri ?: ''));
 
         abort_if(!$pages['current'], 404);
 
-        // dd($this->getPages(), $this->getPages()['menu']);
         $page = Page::find($pages['current']['id']);
 
         return view('page', compact('page'));
