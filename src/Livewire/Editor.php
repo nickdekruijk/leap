@@ -118,7 +118,7 @@ class Editor extends Component
         $model = $this->parentModule()->getModel();
 
         // Find the model if an id is passed
-        return $id > 0 ? $model->find($id) : $model;
+        return $id > 0 ? $model->findOrFail($id) : $model;
     }
 
     /**
