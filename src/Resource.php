@@ -70,6 +70,13 @@ class Resource extends Module
     public int $setColumnWidths = 0;
 
     /**
+     * Eager load model with these relationships
+     *
+     * @var array|string|null
+     */
+    public $with = null;
+
+    /**
      * If enabled shows an extra row with a index letter based on the current index ordering, not all attribute types support it
      *
      * @var boolean
@@ -251,6 +258,11 @@ class Resource extends Module
 
         if ($this->treeview()) {
             $data = $data->where($this->treeview()->name, $parent_id);
+        }
+
+        // Eager load relationships
+        if ($this->with) {
+            $data = $data->with($this->with);
         }
 
         // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
