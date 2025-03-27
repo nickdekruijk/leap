@@ -558,6 +558,23 @@ class Editor extends Component
             $this->updateAttributes($model);
 
             $model->save();
+
+            // Set media updated to all possible media attributes to force syncing all media
+            $this->mediaUpdated = $this->attributes()->where('type', 'media')->pluck('name')->toArray();
+            // Do the same for all media attributes of sections
+            foreach ($this->attributes()->where('type', 'sections') as $sectionAttribute) {
+                if ($this->data[$sectionAttribute->name]) {
+                    foreach ($this->data[$sectionAttribute->name] as $index => $section) {
+                        if (isset($section['_name'])) {
+                            // The code below needs some improvements for readability
+                            foreach (collect(collect($sectionAttribute->sections)->where('name', $section['_name'])->first()?->attributes)->where('input', 'media') as $input) {
+                                $this->mediaUpdated[] = $sectionAttribute->name . '.' . $index . '.' . $input->name;
+                            }
+                        }
+                    }
+                }
+            }
+
             $this->syncMedia($model);
             $this->syncPivot($model);
 
