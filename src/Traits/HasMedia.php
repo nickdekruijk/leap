@@ -13,21 +13,26 @@ trait HasMedia
         return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')->withPivot('mediable_attribute');
     }
 
-    public function mediaAsset(null|string $attribute = null): string|null
+    /**
+     * Return the asset for the first media for the given attribute
+     *
+     * @param string $attribute
+     * @return string|null
+     */
+    public function mediaAsset(string $attribute): string|null
     {
-        $media = $this->mediaAssets($attribute)->first();
-        if ($media) {
-            return asset('storage/' . $media->file_name);
-        }
-        return null;
+        $media = $this->mediaFor($attribute)->first();
+        return $media ? asset(($this->mediaAssetPrefix ?? 'storage/') . $media->file_name) : null;
     }
 
-    public function mediaAssets(null|string $attribute = null): Collection
+    /**
+     * Return the media for the given attribute
+     *
+     * @param string $attribute
+     * @return Collection
+     */
+    public function mediaFor(string $attribute): Collection
     {
-        if ($attribute) {
-            return $this->media->where('pivot.mediable_attribute', $attribute);
-        } else {
-            return $this->media;
-        }
+        return $this->media->where('pivot.mediable_attribute', $attribute);
     }
 }
