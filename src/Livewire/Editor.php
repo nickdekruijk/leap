@@ -307,6 +307,9 @@ class Editor extends Component
      */
     public function sortSection(string $attribute, int $index, int $position)
     {
+        // Sort all current data first
+        $this->data[$attribute] = collect($this->data[$attribute])->sortBy('_sort')->toArray();
+
         // Pick the item to move and remove it from the array
         $itemToMove = [$index => $this->data[$attribute][$index]];
         unset($this->data[$attribute][$index]);
