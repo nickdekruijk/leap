@@ -219,7 +219,7 @@ class Attribute
     public function valuesFromModel(): array
     {
         $model = new $this->options['model'];
-        $values = [];
+        $values = [null];
 
         // Apply scope and/or orderBy
         if ($this->options['orderBy']) {
