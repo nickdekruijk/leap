@@ -25,7 +25,7 @@
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     @if ($attribute->input)
-                        <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" />
+                        <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" :value="$data[$attribute->name]" />
                         @if ($attribute->confirmed)
                             <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute->confirmedAttribute()" :placeholder="$placeholder" />
                         @endif
