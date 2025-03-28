@@ -640,6 +640,13 @@ class Attribute
         return $this;
     }
 
+    public function json(): Attribute
+    {
+        $this->type = 'json';
+        $this->input = 'json';
+        return $this;
+    }
+
     /**
      * Convert the attribute to an array
      *
