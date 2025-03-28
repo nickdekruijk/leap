@@ -408,7 +408,10 @@ class Editor extends Component
             $this->placeholder[$attribute->slugify] = Str::slug($value);
         }
 
-        $this->validateOnly($field);
+        // Only validate if there are actual rules
+        if ($this->rules()) {
+            $this->validateOnly($field);
+        }
     }
 
     /**
