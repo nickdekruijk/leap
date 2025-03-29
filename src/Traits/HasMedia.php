@@ -26,6 +26,18 @@ trait HasMedia
     }
 
     /**
+     * Return the filename for the first media for the given attribute
+     *
+     * @param string $attribute
+     * @return string|null
+     */
+    public function mediaFile(string $attribute): string|null
+    {
+        $media = $this->mediaFor($attribute)->first();
+        return $media ? $media->file_name : null;
+    }
+
+    /**
      * Return the media for the given attribute
      *
      * @param string $attribute
