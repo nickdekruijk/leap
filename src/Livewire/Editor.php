@@ -670,8 +670,11 @@ class Editor extends Component
 
         $return = [];
         foreach ($this->data[$attribute] as $sort => $id) {
-            $return[] = $media->where('id', $id)->first();
+            if ($media->where('id', $id)->first()) {
+                $return[] = $media->where('id', $id)->first();
+            }
         }
+
         return $return;
     }
 
