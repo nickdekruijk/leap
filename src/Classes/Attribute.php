@@ -640,6 +640,37 @@ class Attribute
         return $this;
     }
 
+    /**
+     * Add disabled attribute to the input making it readonly
+     *
+     * Effectively the same as readonly() but might have slight differences in future versions
+     * 
+     * @return Attribute
+     */
+    public function disabled(): Attribute
+    {
+        $this->disabled = true;
+        return $this;
+    }
+
+    /**
+     * Make the attribute readonly by adding the disabled attribute to the input
+     *
+     * Effectively the same as disabled() but might have slight differences in future versions
+     * 
+     * @return Attribute
+     */
+    public function readonly(): Attribute
+    {
+        $this->disabled = true;
+        return $this;
+    }
+
+    /**
+     * Make the attribute a json attribute allowing readonly access
+     *
+     * @return Attribute
+     */
     public function json(): Attribute
     {
         $this->type = 'json';
