@@ -300,7 +300,11 @@ class Resource extends Module
         }
 
         if ($sortForeign) {
-            Leap::sortBy($data, $this->orderBy, $this->orderDesc);
+            if (is_array($data)) {
+                Leap::sortBy($data, $this->orderBy, $this->orderDesc);
+            } else {
+                $data = $data->sortBy($this->orderBy, SORT_NATURAL, $this->orderDesc);
+            }
         }
 
         return $data;
