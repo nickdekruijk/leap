@@ -274,7 +274,7 @@ class FileManager extends Module
         unset($this->columns);
     }
 
-    public function currentDirectory(int $depth = null): string
+    public function currentDirectory(null|int $depth = null): string
     {
         if ($depth === null) {
             $depth = count($this->openFolders);

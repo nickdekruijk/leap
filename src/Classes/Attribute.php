@@ -548,7 +548,7 @@ class Attribute
         return $this;
     }
 
-    public function unique(string $table = null, string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false): Attribute
+    public function unique(null|string $table = null, null|string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false): Attribute
     {
         $this->validate[] = 'unique:' .
             ($table ?: '{table}') . ',' .
