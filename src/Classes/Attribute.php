@@ -33,6 +33,7 @@ class Attribute
     public bool $isAccessor = false;
     public array $accessorColumns;
     public bool $disabled = false;
+    public bool $filterable = false;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -504,6 +505,12 @@ class Attribute
     public function searchable(bool $searchable = true): Attribute
     {
         $this->searchable = $searchable;
+        return $this;
+    }
+
+    public function filterable(bool $filterable = true): Attribute
+    {
+        $this->filterable = $filterable;
         return $this;
     }
 

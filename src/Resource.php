@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -85,6 +86,26 @@ class Resource extends Module
      */
     #[Locked]
     public $with = null;
+
+    /**
+     * Active filters
+     *
+     * @var array
+     */
+    #[Locked]
+    public array $filters = [];
+
+    /**
+     * Return all unique values for the attribute
+     *
+     * @param Attribute $attribute
+     * @return array
+     */
+    #[Computed()]
+    public function filterData(Attribute $attribute): array
+    {
+        return $this->rows(index: true, filtered: false)->pluck($attribute->name)->unique()->toArray();
+    }
 
     /**
      * If enabled shows an extra row with a index letter based on the current index ordering, not all attribute types support it
@@ -289,9 +310,10 @@ class Resource extends Module
      *
      * @param integer|null $parent_id The parent id for the treeview
      * @param boolean $index Only return index attributes
+     * @param boolean $filtered Apply filters if true
      * @return Collection
      */
-    public function rows(int|null $parent_id = null, bool $index = false): Collection
+    public function rows(int|null $parent_id = null, bool $index = false, bool $filtered = true): Collection
     {
         $data = $this->getModel();
 
@@ -343,6 +365,14 @@ class Resource extends Module
                 Leap::sortBy($data, $this->orderBy, $this->orderDesc);
             } else {
                 $data = $data->sortBy($this->orderBy, SORT_NATURAL, $this->orderDesc);
+            }
+        }
+
+        if ($filtered) {
+            foreach ($this->filters as $key => $value) {
+                if ($value) {
+                    $data = $data->where($key, $value);
+                }
             }
         }
 
@@ -414,6 +444,11 @@ class Resource extends Module
             }
             fclose($handle);
         }, 200, $headers);
+    }
+
+    public function filterBy($attribute, $value)
+    {
+        $this->filters[$attribute] = $value;
     }
 
     public function render()

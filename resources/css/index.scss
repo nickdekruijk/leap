@@ -220,6 +220,25 @@
             }
         }
     }
+
+    .leap-index-filter {
+        appearance: none;
+        max-width: 50%;
+        color: inherit;
+        font: inherit;
+        border: 0 none;
+        background: transparent;
+        opacity: 0.6;
+        line-height: 2;
+        font-size: 0.8em;
+        padding: 0 5px;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        &:hover {
+            background-color: $blue-light;
+        }
+    }
 }
 BODY.sorting .leap-index {
     overflow-x: hidden;

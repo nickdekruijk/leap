@@ -13,7 +13,17 @@
     @if ($depth == 0)
         <div class="leap-index-header">
             @foreach ($this->indexAttributes() as $attribute)
-                <span class="leap-index-column {{ $this->orderBy === $attribute->name ? ($this->orderDesc ? 'order-desc' : 'order-asc') : '' }}"><button class="button-link" wire:click="order('{{ $attribute->name }}')">{{ $attribute->labelIndex }}</button></span>
+                <span class="leap-index-column {{ $this->orderBy === $attribute->name ? ($this->orderDesc ? 'order-desc' : 'order-asc') : '' }}">
+                    <button class="button-link" wire:click="order('{{ $attribute->name }}')">{{ $attribute->labelIndex }}</button>
+                    @if ($attribute->filterable)
+                        <select class="leap-index-filter" wire:change="filterBy('{{ $attribute->name }}', $event.target.value)">
+                            <option value="">&bullet;&bullet;&bullet;</option>
+                            @foreach ($this->filterData($attribute) as $value)
+                                <option @selected(($filters[$attribute->name] ?? null) == $value)>{{ $value }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                </span>
             @endforeach
         </div>
     @endif
