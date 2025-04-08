@@ -43,19 +43,19 @@
                     border-radius: 6px;
                     outline-offset: -3px;
                 }
-                &.order-desc::after,
-                &.order-asc::after {
+                &.order-desc .button-link::after,
+                &.order-asc .button-link::after {
                     content: "";
                     display: inline-block;
                     border: 5px solid transparent;
                     opacity: 0.5;
                     margin-left: 0.2em;
                 }
-                &.order-asc::after {
+                &.order-asc .button-link::after {
                     border-top-color: white;
                     transform: translateY(30%);
                 }
-                &.order-desc::after {
+                &.order-desc .button-link::after {
                     border-bottom-color: white;
                     transform: translateY(-25%);
                 }
