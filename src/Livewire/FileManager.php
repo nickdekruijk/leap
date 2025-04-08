@@ -211,7 +211,7 @@ class FileManager extends Module
      * @param string|null $directory The directory to look in, null for filesystem root
      * @return array An array of folders and files
      */
-    private function getFiles(string $directory = null): array
+    private function getFiles(null|string $directory = null): array
     {
         $folders = [];
         $entries = $this->getStorage()->directories($directory);

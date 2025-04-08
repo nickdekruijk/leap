@@ -17,7 +17,7 @@ trait CanLog
      * @param array|string $context Context of the action, e.g. email address when trying to login
      * @return Log|null
      */
-    public static function log(string $action, array|string $context = null): ?Log
+    public static function log(string $action, null|array|string $context = null): ?Log
     {
         $module = get_called_class();
 
