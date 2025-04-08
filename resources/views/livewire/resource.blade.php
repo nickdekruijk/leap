@@ -4,6 +4,11 @@
         @can('leap::create')
             <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
         @endcan
+        @can('leap::read')
+            @isset($this->downloadCSV)
+                <x-leap::button svg-icon="fas-download" wire:click="downloadCSVfile()" label="leap::resource.downloadCSV" />
+            @endisset
+        @endcan
     </header>
     <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
         @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])

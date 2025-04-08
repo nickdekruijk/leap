@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -350,6 +351,59 @@ class Resource extends Module
     {
         $this->setColumnWidths++;
         $this->selectedRow = $id;
+    }
+
+    public function downloadCSVfile()
+    {
+        $data = [];
+        $keys = [];
+        foreach ($this->rows()->toArray() as $row) {
+            $line = [];
+            foreach ($this->allAttributes() as $attribute) {
+                if (is_array($row[$attribute->name] ?? null)) {
+                    foreach ($row[$attribute->name] as $key => $value) {
+                        if (isset($line[$key])) {
+                            $keys[$attribute->name . '.' . $key] = 'value';
+                            $line[$attribute->name . '.' . $key] = $value;
+                        } else {
+                            $keys[$key] = 'value';
+                            $line[$key] = $value;
+                        }
+                    }
+                } elseif (!$attribute->isAccessor) {
+                    $keys[$attribute->name] = $attribute->type;
+                    $line[$attribute->name] = $row[$attribute->name] ?? null;
+                }
+            }
+            $data[] = $line;
+        }
+
+        // Reorder keys and values
+        foreach ($data as $id => $row) {
+            $data[$id] = [];
+            foreach ($keys as $key => $type) {
+                $data[$id][$key] = $row[$key];
+            }
+        }
+
+        $filename = Str::slug($this->title) . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->stream(function () use ($data, $keys) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, array_keys($keys));
+            foreach ($data as $line) {
+                fputcsv($handle, $line);
+            }
+            fclose($handle);
+        }, 200, $headers);
     }
 
     public function render()
