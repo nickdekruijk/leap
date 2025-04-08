@@ -119,12 +119,12 @@ class Resource extends Module
 
     public function sortable(): Attribute|false
     {
-        return collect($this->attributes())->where('type', 'sortable')->first() ?: false;
+        return $this->allAttributes()->where('type', 'sortable')->first() ?: false;
     }
 
     public function treeview(): Attribute|false
     {
-        return collect($this->attributes())->where('type', 'tree')->first() ?: false;
+        return $this->allAttributes()->where('type', 'tree')->first() ?: false;
     }
 
     /**
@@ -177,7 +177,7 @@ class Resource extends Module
         $item->{$this->sortable()->name} = $position;
         $item->save();
 
-        $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->indexAttributes()->first()->name}]))->to(Toasts::class);
+        $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->allAttributes()->first()->name}]))->to(Toasts::class);
 
         $this->setColumnWidths++;
     }
@@ -202,7 +202,22 @@ class Resource extends Module
      */
     public function indexAttributes(): Collection
     {
-        return collect($this->attributes())->where('index')->sortBy('index');
+        return $this->allAttributes(true);
+    }
+
+    /**
+     * Return all editable model attributes
+     *
+     * @param boolean $index Only return index attributes
+     * @return Collection
+     */
+    public function allAttributes(bool $index = false): Collection
+    {
+        if ($index) {
+            return collect($this->attributes())->where('index')->sortBy('index');
+        } else {
+            return collect($this->attributes());
+        }
     }
 
     /**
@@ -213,7 +228,7 @@ class Resource extends Module
      */
     public function getAttribute(string $attribute): Attribute
     {
-        return collect($this->attributes())->where('name', $attribute)->first();
+        return $this->allAttributes()->where('name', $attribute)->first();
     }
 
     /**
@@ -250,9 +265,22 @@ class Resource extends Module
     /**
      * Return an array of all rows with the id and the index attributes
      *
+     * @param integer|null $parent_id The parent id for the treeview
      * @return Collection
      */
     public function indexRows(int|null $parent_id = null): Collection
+    {
+        return $this->rows($parent_id, true);
+    }
+
+    /**
+     * Return an array of all rows with the id and all attributes
+     *
+     * @param integer|null $parent_id The parent id for the treeview
+     * @param boolean $index Only return index attributes
+     * @return Collection
+     */
+    public function rows(int|null $parent_id = null, bool $index = false): Collection
     {
         $data = $this->getModel();
 
@@ -266,7 +294,7 @@ class Resource extends Module
         }
 
         // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
-        $sortForeign = $this->orderBy && $this->indexAttributes()->where('name', $this->orderBy)->first()?->type == 'foreign';
+        $sortForeign = $this->orderBy && $this->allAttributes($index)->where('name', $this->orderBy)->first()?->type == 'foreign';
 
         if ($this->orderBy && !$sortForeign) {
             if (is_array($this->orderBy)) {
@@ -288,11 +316,11 @@ class Resource extends Module
         }
 
         // Get all index columns without accessors but including required accessor columns, the id and the treeview parent id if required
-        $accessorColumns = $this->indexAttributes()->where('isAccessor')->pluck('accessorColumns')->flatten()->unique()->toArray();
-        $data = $data->get(array_merge($merge, $accessorColumns, $this->indexAttributes()->where('isAccessor', false)->pluck('name')->toArray()));
+        $accessorColumns = $this->allAttributes($index)->where('isAccessor')->pluck('accessorColumns')->flatten()->unique()->toArray();
+        $data = $data->get(array_merge($merge, $accessorColumns, $this->allAttributes($index)->where('isAccessor', false)->pluck('name')->toArray()));
 
         // Replace all foreign keys with their value
-        foreach ($this->indexAttributes()->where('type', 'foreign') as $foreignAttribute) {
+        foreach ($this->allAttributes($index)->where('type', 'foreign') as $foreignAttribute) {
             $values = $foreignAttribute->getValues();
             foreach ($data as $id => $row) {
                 $data[$id][$foreignAttribute->name] = $values[$row[$foreignAttribute->name]] ?? null;
