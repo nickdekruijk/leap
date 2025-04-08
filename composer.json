@@ -16,7 +16,7 @@
 		"livewire/livewire": "^3.0",
 		"owenvoke/blade-fontawesome": "^2.3",
 		"nickdekruijk/minify": "dev-master",
-		"scssphp/scssphp": "^1.11",
+		"scssphp/scssphp": "^2.0",
 		"spatie/laravel-translatable": "^6.10"
 	},
 	"autoload": {
