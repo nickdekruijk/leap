@@ -18,6 +18,7 @@ class Resource extends Module
      *
      * @var string
      */
+    #[Locked]
     public $model;
 
     /**
@@ -25,7 +26,9 @@ class Resource extends Module
      *
      * @var string|null
      */
+    #[Locked]
     public $orderBy;
+    #[Locked]
     public $orderByDefault;
 
     /**
@@ -33,7 +36,9 @@ class Resource extends Module
      *
      * @var boolean
      */
+    #[Locked]
     public $orderDesc = false;
+    #[Locked]
     public $orderDescDefault;
 
     /**
@@ -43,6 +48,7 @@ class Resource extends Module
      *
      * @var string|null
      */
+    #[Locked]
     public $active = null;
 
     /**
@@ -61,6 +67,7 @@ class Resource extends Module
     #[Locked]
     public array|false $browse = false;
 
+    #[Locked]
     public array|false $translatable;
 
     /**
@@ -68,6 +75,7 @@ class Resource extends Module
      *
      * @var integer
      */
+    #[Locked]
     public int $setColumnWidths = 0;
 
     /**
@@ -75,6 +83,7 @@ class Resource extends Module
      *
      * @var array|string|null
      */
+    #[Locked]
     public $with = null;
 
     /**
@@ -82,6 +91,7 @@ class Resource extends Module
      *
      * @var boolean
      */
+    #[Locked]
     public $showIndexGroups = true;
 
     /**
