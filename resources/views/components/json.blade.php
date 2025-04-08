@@ -5,7 +5,7 @@
         @foreach ($value as $key => $value)
             <label class="leap-label">
                 <span class="leap-label">{{ ucfirst(strtolower(Str::headline($key))) }}</span>
-                <div disabled class="leap-textarea">{!! nl2br($value) !!}</div>
+                <div disabled class="leap-textarea">{!! nl2br(is_array($value) ? implode(', ', $value) : $value) !!}</div>
             </label>
         @endforeach
     @else
