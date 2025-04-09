@@ -58,8 +58,8 @@ class Media extends Model
                 'mime_type' => $storage->mimeType($file_name),
                 'sha256' => hash('sha256', $storage->get($file_name)),
                 'uuid' => Str::uuid(),
-                'user_id' => Auth::user()->id,
-                'history' => [now() . ' Added by ' . Auth::user()->name . ' #' . Auth::user()->id],
+                'user_id' => Auth::user()?->id,
+                'history' => [now() . ' Added by ' . Auth::user()?->name . ' #' . Auth::user()?->id],
             ]);
         }
 
