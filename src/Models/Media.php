@@ -50,6 +50,9 @@ class Media extends Model
         $file_name = ltrim($file_name, '/');
 
         if ($storage->exists($file_name)) {
+            /**
+             * @disregard P1013 Undefined method 'mimeType'
+             */
             return static::firstOrCreate([
                 'file_name' => $file_name,
                 'disk' => $disk,
