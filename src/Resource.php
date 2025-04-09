@@ -116,6 +116,21 @@ class Resource extends Module
     public $showIndexGroups = true;
 
     /**
+     * Return the first letter of a value to use as the index group
+     *
+     * @param Model $row
+     * @param Attribute $attribute
+     * @return string
+     */
+    public function indexGroupChar(Model $row, Attribute $attribute): string
+    {
+        $value = $this->hasTranslation($attribute) ? $row[$this->orderBy][app()->getLocale()] ?? reset($row[$this->orderBy]) : $row[$this->orderBy] ?? '';
+        $char = ucfirst(mb_substr($value, 0, 1));
+        $char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
+        return $char;
+    }
+
+    /**
      * Open or close the file browser for the file(s) or media attribute
      *
      * @param [type] $attribute
