@@ -73,7 +73,7 @@ class RequireRole
             }, $organizations->toArray()));
 
             // Set the role as context so we can use it during the request
-            Context::add('leap.role.name', $global_role?->name . '/' . $organization_role?->name);
+            Context::add('leap.role.name', ($global_role ? $global_role->name . '/' : '') . $organization_role?->name);
         } else {
             // Set the role as context so we can use it during the request
             Context::add('leap.role.name', $global_role?->name);
