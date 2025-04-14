@@ -47,6 +47,7 @@ class RequireRole
 
             // If no organization slug is given, redirect to the user home organization
             if (!$request->route()->organization) {
+                abort_if($organizations->isEmpty(), 403, __('No active organization.'));
                 return redirect()->route('leap.home', $organizations->first()->slug);
             }
 
