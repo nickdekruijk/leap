@@ -42,7 +42,7 @@ class RequireRole
 
             // If user has a global role get all organizations otherwise only get organizations the user has a role for
             $organizations = $global_role
-                ? $organizations->orderBy($order)->get([$slug, $label])
+                ? $organizations->orderBy($order)->get(['id', $slug, $label])
                 : $organizations->orderBy($order)->whereIn('id', $roles->pluck('organization_id'))->get();
 
             // If no organization slug is given, redirect to the user home organization
@@ -63,6 +63,7 @@ class RequireRole
             abort_if(!$global_role && !$organization_role, 404);
 
             // Set the available organizations as context so we can use it during the request
+            Context::add('leap.organization.id', $organization->id);
             Context::add('leap.organization.slug', $organization->$slug);
             Context::add('leap.organization.label', $organization->$label);
             Context::add('leap.user.organizations', array_map(function ($org) use ($slug, $label) {
@@ -73,7 +74,7 @@ class RequireRole
             }, $organizations->toArray()));
 
             // Set the role as context so we can use it during the request
-            Context::add('leap.role.name', ($global_role ? $global_role->name . '/' : '') . $organization_role?->name);
+            Context::add('leap.role.name', $global_role?->name . ($global_role && $organization_role ? ' / ' : '') . $organization_role?->name);
         } else {
             // Set the role as context so we can use it during the request
             Context::add('leap.role.name', $global_role?->name);
