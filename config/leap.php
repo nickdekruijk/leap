@@ -297,7 +297,7 @@ return [
             'file_picker_types' => 'file image media',
             'relative_urls' => false,
             'remove_script_host' => true,
-            'document_base_url' => url('/'),
+            // 'document_base_url' => env('APP_URL'),
             // 'height' => 200, // Not used with autoresize
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/' . app()->getLocale() . '.js',
             'language' => app()->getLocale(),
