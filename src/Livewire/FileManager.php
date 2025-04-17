@@ -381,7 +381,13 @@ class FileManager extends Module
         foreach ($this->selectedFiles as $id => $file) {
             $full[] = $this->full($file);
         }
-        if (isset($this->browse['media'])) {
+        if ($this->browse['attribute'] === '_tinymce') {
+            // Get full url of first file
+            $file = $this->getStorage()->url($full[0]);
+            // Strip current domain from url
+            $file = str_replace(url('/'), '', $file);
+            $this->dispatch('tinymceBrowser', $file);
+        } elseif (isset($this->browse['media'])) {
             $this->dispatch('selectMediaFiles', $this->browse['attribute'], $full);
         } else {
             $this->dispatch('selectBrowsedFiles', $this->browse['attribute'], $full);

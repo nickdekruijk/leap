@@ -294,6 +294,7 @@ return [
             //     ['title' => 'Dutch', 'code' => 'nl'],
             // ],
             'contextmenu' => false,
+            'file_picker_types' => 'file image media',
             'relative_urls' => false,
             'remove_script_host' => true,
             'document_base_url' => url('/'),

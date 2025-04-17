@@ -131,13 +131,24 @@ class Resource extends Module
     }
 
     /**
+     * Close the file browser
+     *
+     * @return void
+     */
+    #[On('selectBrowsedFiles')]
+    #[On('selectMediaFiles')]
+    #[On('tinymceBrowser')]
+    public function closeBrowser()
+    {
+        $this->browse = false;
+    }
+
+    /**
      * Open or close the file browser for the file(s) or media attribute
      *
      * @param [type] $attribute
      * @return void
      */
-    #[On('selectBrowsedFiles')]
-    #[On('selectMediaFiles')]
     public function fileBrowser($attribute = null, $files = null, $sectionName = '')
     {
         if ($sectionName) {
@@ -154,6 +165,20 @@ class Resource extends Module
         }
 
         $this->setColumnWidths++;
+    }
+
+    /**
+     * Open the browser as tinymc file picker
+     *
+     * @return void
+     */
+    public function tinymceBrowser()
+    {
+        $this->browse = [
+            'attribute' => '_tinymce',
+            'media' => false,
+            'multiple' => false,
+        ];
     }
 
     public function hasTranslation(Attribute $attribute): bool

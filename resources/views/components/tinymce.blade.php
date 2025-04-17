@@ -11,6 +11,12 @@
         x-data="{ value: $wire.entangle('{{ $attribute->dataName }}') }"
         x-init="tinymce.init(Object.assign({{ json_encode($attribute->options) }}, {
             target: $refs.textarea,
+            file_picker_callback: (callback, value, meta) => {
+                $wire.$parent.tinymceBrowser();
+                Livewire.on('tinymceBrowser', (e) => {
+                    callback(e[0]);
+                });
+            },
             setup: function(editor) {
                 editor.on('blur', function(e) {
                     value = editor.getContent()
