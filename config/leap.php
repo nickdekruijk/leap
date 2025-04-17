@@ -294,6 +294,9 @@ return [
             //     ['title' => 'Dutch', 'code' => 'nl'],
             // ],
             'contextmenu' => false,
+            'relative_urls' => false,
+            'remove_script_host' => true,
+            'document_base_url' => url('/'),
             // 'height' => 200, // Not used with autoresize
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/' . app()->getLocale() . '.js',
             'language' => app()->getLocale(),
