@@ -9,7 +9,9 @@
     @endforeach
 @else
     <tr class="leap-json-readonly-depth-{{ $depth ?? 0 }}">
-        <td>{!! $key !!}</td>
+        @isset($depth)
+            <td>{!! $key !!}</td>
+        @endisset
         <td>{!! $value !!}</td>
     </tr>
 @endif

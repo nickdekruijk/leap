@@ -482,15 +482,24 @@
     }
 
     .leap-json-readonly {
-        opacity: 0.5;
-        .leap-json-readonly-depth-2 TD {
+        font-size: 0.9em;
+        .leap-json-readonly-depth-2 TD:first-child {
             padding-left: 1em;
         }
-        .leap-json-readonly-depth-3 TD {
+        .leap-json-readonly-depth-3 TD:first-child {
             padding-left: 2em;
         }
         TH {
             text-align: left;
+            font-weight: 500;
+            opacity: 0.5;
+        }
+        TD {
+            opacity: 0.4;
+            padding-right: 0.4em;
+        }
+        TD:last-child {
+            opacity: 0.7;
         }
     }
 }
