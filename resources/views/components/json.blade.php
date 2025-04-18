@@ -5,7 +5,9 @@
         @foreach ($value as $key => $value)
             <label class="leap-label">
                 <span class="leap-label">{{ ucfirst(strtolower(Str::headline($key))) }}</span>
-                <div disabled class="leap-textarea">{!! nl2br(is_array($value) ? implode(', ', $value) : $value) !!}</div>
+                <table class="leap-json-readonly">
+                    @include('leap::components.json-value')
+                </table>
             </label>
         @endforeach
     @else
