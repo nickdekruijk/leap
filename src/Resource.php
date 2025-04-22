@@ -372,7 +372,6 @@ class Resource extends Module
         if ($this->orderBy && !$sortForeign) {
             if (is_array($this->orderBy)) {
                 foreach ($this->orderBy as $orderBy => $desc) {
-                    debug($desc);
                     $data = $data->orderBy($orderBy ?: $desc, $desc == 'desc' ? 'desc' : ($this->orderDesc ? 'desc' : 'asc'));
                 }
             } else {
