@@ -17,7 +17,7 @@
                     <button class="button-link" wire:click="order('{{ $attribute->name }}')">{{ $attribute->labelIndex }}</button>
                     @if ($attribute->filterable)
                         <select class="leap-index-filter" wire:change="filterBy('{{ $attribute->name }}', $event.target.value)">
-                            <option value="">&bullet;&bullet;&bullet;</option>
+                            <option value="NULL">&bullet;&bullet;&bullet;</option>
                             @foreach ($this->filterData($attribute) as $value => $display)
                                 <option value="{{ $value }}" @selected(($filters[$attribute->name] ?? null) === $value)>{{ $display }}</option>
                             @endforeach

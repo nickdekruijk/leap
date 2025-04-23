@@ -415,8 +415,9 @@ class Resource extends Module
         }
 
         if ($filtered) {
+            debug($this->filters);
             foreach ($this->filters as $key => $value) {
-                if ($value || $value === '0') {
+                if ($value != 'NULL' && ($value || $value === '0' || $value === "")) {
                     $data = $data->where($key, $value);
                 }
             }
