@@ -104,7 +104,14 @@ class Resource extends Module
     #[Computed()]
     public function filterData(Attribute $attribute): array
     {
-        return $this->rows(index: true, filtered: false)->pluck($attribute->name)->unique()->toArray();
+        if ($attribute->type == 'checkbox') {
+            return [
+                0 => __('No'),
+                1 => __('Yes'),
+            ];
+        }
+
+        return $this->rows(index: true, filtered: false)->pluck($attribute->name, $attribute->name)->unique()->toArray();
     }
 
     /**
@@ -409,7 +416,7 @@ class Resource extends Module
 
         if ($filtered) {
             foreach ($this->filters as $key => $value) {
-                if ($value) {
+                if ($value || $value === '0') {
                     $data = $data->where($key, $value);
                 }
             }
