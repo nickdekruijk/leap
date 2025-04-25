@@ -7,7 +7,7 @@
         @foreach (collect($this->data[$attribute->name])->sortBy('_sort') ?: [] as $index => $sectionContent)
             <li x-sort:item="{{ $index }}" class="leap-editor-section" wire:key="{{ $attribute->name }}-{{ $index }}" x-sort:group="">
                 <label x-sort:handle class="leap-label">
-                    <span class="leap-label">{{ ($section = collect($attribute->sections)->where('name', $sectionContent['_name'])->first())?->label ?: $sectionContent['_name'] ?? 'Invalid section' }}</span>
+                    <span class="leap-label">{{ ($section = collect($attribute->sections)->where('name', $sectionContent['_name'])->first())?->label ?: $sectionContent['_name'] }}</span>
                     @svg('fas-arrows-alt-v', 'svg-icon')
                 </label>
                 @can('leap::delete')

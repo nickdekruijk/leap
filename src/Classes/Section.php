@@ -9,7 +9,7 @@ class Section
     public static $_instance = null;
 
     public string $name;
-    public string $view;
+    public string|null $view;
     public string $label;
     public array $attributes;
 
@@ -36,11 +36,21 @@ class Section
      * @param string $name
      * @return Section
      */
-    public function view(string $view): Section
+    public function view(string|null $view): Section
     {
         $this->view = $view;
 
         return $this;
+    }
+
+    /**
+     * Don't set _view for the section
+     *
+     * @return Section
+     */
+    public function withoutView(): Section
+    {
+        return $this->view(null);
     }
 
     /**

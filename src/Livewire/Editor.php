@@ -209,28 +209,40 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->pivotData($attribute, $id);
         }
 
-        $this->richtextValues();
+        $this->checkSectionValues();
 
         // Clear existing validation errors
         $this->resetValidation();
     }
 
     /**
-     * Make sure all section tinymce input values exist to prevent livewire errors
+     * Make sure all section values exist to prevent livewire errors
      *
      * @return void
      */
-    public function richtextValues()
+    public function checkSectionValues()
     {
-        // Make sure all section tinymce input values exist
         foreach ($this->attributes()->where('type', 'sections') as $sectionAttribute) {
             if ($this->data[$sectionAttribute->name]) {
                 foreach ($this->data[$sectionAttribute->name] as $index => $section) {
-                    if (isset($section['_name'])) {
-                        // The code below needs some improvements for readability
-                        foreach (collect(collect($sectionAttribute->sections)->where('name', $section['_name'])->first()?->attributes)->where('input', 'tinymce') as $input) {
-                            $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
-                        }
+                    // Make sure _name is set
+                    if (empty($section['_name'])) {
+                        $section['_name'] = 'Invalid section';
+                        $this->data[$sectionAttribute->name][$index]['_name'] = 'Invalid section';
+                    }
+
+                    // Get all section attributes
+                    $sectionAttributes = collect($sectionAttribute->sections)
+                        ->where('name', $section['_name'])
+                        ->first()
+                        ?->attributes;
+
+                    // Make sure all section tinymce input values exist
+                    $tinymceAttributes = collect($sectionAttributes)
+                        ->where('input', 'tinymce');
+
+                    foreach ($tinymceAttributes as $input) {
+                        $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                     }
                 }
             }
@@ -379,7 +391,7 @@ class Editor extends Component
             '_sort' => $sort + 1,
         ];
 
-        $this->richtextValues();
+        $this->checkSectionValues();
 
         // Reset the :add field
         $this->data[substr($field, 5) . ':add'] = null;
@@ -464,7 +476,10 @@ class Editor extends Component
                     // Extra treatment for each section
                     foreach ($this->data[$attribute->name] ?? [] as $key => $section) {
                         // Update section _view values
-                        $this->data[$attribute->name][$key]['_view'] = collect($attribute->sections)->where('name', $section['_name'])->first()->view;
+                        $view = collect($attribute->sections)->where('name', $section['_name'])->first()?->view;
+                        if ($view) {
+                            $this->data[$attribute->name][$key]['_view'] = $view;
+                        }
                         // Set empty values to null
                         $this->data[$attribute->name][$key] = array_map(fn($value) => $value ?: null, $this->data[$attribute->name][$key]);
                     }
