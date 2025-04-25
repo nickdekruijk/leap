@@ -8,7 +8,7 @@ class Dashboard extends Module
 {
     public $component = 'leap.dashboard';
     public $icon = 'fas-gauge-high';
-    public $priority = -99;
+    public $priority = -100;
     public $title = 'Dashboard';
     public $default_permissions = ['read'];
 

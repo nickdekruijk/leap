@@ -5,7 +5,6 @@ use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Livewire\Profile;
-use NickDeKruijk\Leap\Navigation\Divider;
 use NickDeKruijk\Leap\Navigation\Logout;
 use NickDeKruijk\Leap\Navigation\Organizations;
 
@@ -84,7 +83,6 @@ return [
     */
     'default_modules' => [
         Dashboard::class,
-        Divider::class,
         Organizations::class,
         FileManager::class,
         Profile::class,

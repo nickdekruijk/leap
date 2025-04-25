@@ -5,6 +5,11 @@
         @include('leap::logo')
         <ul class="leap-nav-group">
             @foreach (Leap::modules() as $module)
+                @if (str_ends_with($module->priority, '00'))
+                    <li class="leap-nav-item">
+                        <hr>
+                    </li>
+                @endif
                 @if ($module instanceof NickDeKruijk\Leap\Navigation\Organizations && config('leap.organizations') && count(Context::get('leap.user.organizations')) > 1)
                     <li class="leap-nav-item leap-nav-collapsable @if ($this->showOrganizations) leap-nav-collapsable-open @endif">
                         <a wire:click="toggleOrganizations"><x-leap::icon svg-icon="{{ $module->icon }}" />{{ Context::get('leap.organization.label') }}</a>

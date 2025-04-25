@@ -13,7 +13,7 @@ class Profile extends Module
     public $component = 'leap.profile';
     public $icon = 'fas-user-circle';
     public $slug = 'profile';
-    public $priority = 1001;
+    public $priority = 1000;
 
     public $data;
     public $user;

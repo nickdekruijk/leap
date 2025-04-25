@@ -8,7 +8,7 @@ use NickDeKruijk\Leap\Module;
 class Organizations extends Module
 {
     public $icon = 'fas-building';
-    public $priority = -100;
+    public $priority = -101;
     public $slug = false;
 
     public $default_permissions = ['read'];
