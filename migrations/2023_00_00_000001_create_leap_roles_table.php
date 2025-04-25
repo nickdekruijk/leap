@@ -14,7 +14,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists(config('leap.table_prefix') . 'roles');
         Schema::create(config('leap.table_prefix') . 'roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->nullable();
