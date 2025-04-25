@@ -15,6 +15,7 @@ class Dashboard extends Module
     public function render()
     {
         $this->log('read');
+        /** @disregard P1013 Undefined method intelephense error */
         return view('leap::livewire.dashboard')->layout('leap::layouts.app');
     }
 }
