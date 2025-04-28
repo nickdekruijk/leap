@@ -34,7 +34,10 @@ return new class extends Migration
             [
                 'name' => 'superuser',
                 'permissions' => [
-                    '*' => ['create', 'read', 'update', 'delete'],
+                    [
+                        '_name' => 'all_modules',
+                        'all_permissions' => true
+                    ],
                 ]
             ],
         );

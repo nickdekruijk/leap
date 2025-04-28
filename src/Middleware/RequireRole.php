@@ -83,17 +83,25 @@ class RequireRole
             abort_if(!$global_role, 403, 'No role found for this user');
         }
 
+        // Make permissions collections for easier access
+        $global_permissions = $global_role ? collect($global_role->permissions) : collect();
+        $organization_permissions = isset($organization_role) ? collect($organization_role->permissions) : collect();
+
         // Determine permissions for each module
         foreach (ModuleController::getAllModules() as $module) {
             if (config('leap.permission_priority') === 'global') {
                 $permissions[$module::class]
-                    = $global_role->permissions[$module::class] ?? $global_role->permissions['*']
-                    ?? $organization_role?->permissions[$module::class] ?? $organization_role?->permissions['*']
+                    = $global_permissions->where('_name', $module::class)->first()
+                    ?? $global_permissions->where('_name', 'all_modules')->first()
+                    ?? $organization_permissions->where('_name', $module::class)->first()
+                    ?? $organization_permissions->where('_name', 'all_modules')->first()
                     ?? $module->getDefaultPermissions();
             } elseif (config('leap.permission_priority') === 'organization') {
                 $permissions[$module::class]
-                    = $organization_role->permissions[$module::class] ?? $organization_role->permissions['*']
-                    ?? $global_role?->permissions[$module::class] ?? $global_role?->permissions['*']
+                    = $organization_permissions->where('_name', $module::class)->first()
+                    ?? $organization_permissions->where('_name', 'all_modules')->first()
+                    ?? $global_permissions->where('_name', $module::class)->first()
+                    ?? $global_permissions->where('_name', 'all_modules')->first()
                     ?? $module->getDefaultPermissions();
             }
         }
