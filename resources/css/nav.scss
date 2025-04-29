@@ -123,6 +123,9 @@
                 border: 0 none;
                 border-bottom: 1px solid rgba(white, 0.15);
             }
+            &:first-child HR {
+                display: none;
+            }
         }
 
         .leap-svg-icon {
