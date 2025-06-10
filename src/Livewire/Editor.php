@@ -469,6 +469,8 @@ class Editor extends Component
                 // Ignore media files
             } elseif ($attribute->type == 'pivot') {
                 // Ignore pivot data
+            } elseif ($attribute->type == 'sortable') {
+                // Ignore sortable data
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
             } else {
