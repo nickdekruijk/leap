@@ -63,10 +63,10 @@ class RequireRole
             abort_if(!$global_role && !$organization_role, 404);
 
             // Set the available organizations as context so we can use it during the request
-            Context::add('leap.organization.id', $organization->id);
-            Context::add('leap.organization.slug', $organization->$slug);
-            Context::add('leap.organization.label', $organization->$label);
-            Context::add('leap.user.organizations', array_map(function ($org) use ($slug, $label) {
+            Context::addHidden('leap.organization.id', $organization->id);
+            Context::addHidden('leap.organization.slug', $organization->$slug);
+            Context::addHidden('leap.organization.label', $organization->$label);
+            Context::addHidden('leap.user.organizations', array_map(function ($org) use ($slug, $label) {
                 return [
                     'slug' => $org[$slug],
                     'label' => $org[$label],
@@ -74,10 +74,10 @@ class RequireRole
             }, $organizations->toArray()));
 
             // Set the role as context so we can use it during the request
-            Context::add('leap.role.name', $global_role?->name . ($global_role && $organization_role ? ' / ' : '') . $organization_role?->name);
+            Context::addHidden('leap.role.name', $global_role?->name . ($global_role && $organization_role ? ' / ' : '') . $organization_role?->name);
         } else {
             // Set the role as context so we can use it during the request
-            Context::add('leap.role.name', $global_role?->name);
+            Context::addHidden('leap.role.name', $global_role?->name);
 
             // If no role was found, return 403
             abort_if(!$global_role, 403, 'No role found for this user');
@@ -107,7 +107,7 @@ class RequireRole
         }
 
         // Set the permissions as context so we can use it during the request
-        Context::add('leap.permissions', $permissions);
+        Context::addHidden('leap.permissions', $permissions);
 
         return $next($request);
     }

@@ -22,9 +22,9 @@ trait CanLog
         $module = get_called_class();
 
         // If module is already set in context and is different from the get_called_class then use that as main module and keep get_called_class as module in context
-        if (Context::get('leap.module') && Context::get('leap.module') !== $module) {
+        if (Context::getHidden('leap.module') && Context::getHidden('leap.module') !== $module) {
             $context['module'] = $module;
-            $module = Context::get('leap.module');
+            $module = Context::getHidden('leap.module');
         }
 
         // Check if logging is enabled globaly or should be skipped for current action or module

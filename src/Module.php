@@ -45,7 +45,7 @@ class Module extends Component
     public function boot()
     {
         // Add this module to the context so we can use it during the request
-        Context::add('leap.module', $this::class);
+        Context::addHidden('leap.module', $this::class);
 
         // If the user has no read permission to this module raise a 404 error because we want to hide the fact that this module exists
         Leap::validatePermission('read', 404);

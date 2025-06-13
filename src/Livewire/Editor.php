@@ -698,7 +698,7 @@ class Editor extends Component
     public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request
-        Context::add('leap.module', Crypt::decryptString($this->parentModuleEncrypted));
+        Context::addHidden('leap.module', Crypt::decryptString($this->parentModuleEncrypted));
     }
 
     public function mount()
