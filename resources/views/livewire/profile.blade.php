@@ -7,7 +7,7 @@
             @can('leap::update')
                 <x-leap::button svg-icon="far-save" wire:click="submit" label="leap::resource.save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan
-            <x-leap::button svg-icon="fas-xmark" href="{{ route('leap.home', Context::get('leap.organization')?->slug) }}" label="leap::resource.cancel" />
+            <x-leap::button svg-icon="fas-xmark" href="{{ route('leap.home', Context::getHidden('leap.organization')?->slug) }}" label="leap::resource.cancel" />
         </div>
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">

@@ -6,7 +6,7 @@
         <hgroup>
             <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
             <h4>
-                @lang(config('leap.organizations') ? 'leap::dashboard.logged_in_as_organization' : 'leap::dashboard.logged_in_as', ['role' => Context::get('leap.role.name'), 'organization' => Context::get('leap.organization.label')])
+                @lang(config('leap.organizations') ? 'leap::dashboard.logged_in_as_organization' : 'leap::dashboard.logged_in_as', ['role' => Context::getHidden('leap.role.name'), 'organization' => Context::getHidden('leap.organization.label')])
             </h4>
         </hgroup>
         <script>
