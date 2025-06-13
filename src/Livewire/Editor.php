@@ -704,7 +704,7 @@ class Editor extends Component
     public function mount()
     {
         // Encrypt the parent module class name
-        $this->parentModuleEncrypted = Crypt::encryptString(Context::get('leap.module'));
+        $this->parentModuleEncrypted = Crypt::encryptString(Context::getHidden('leap.module'));
 
         $this->setRandomSortSeed();
     }

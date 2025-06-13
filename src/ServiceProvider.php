@@ -82,7 +82,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function can(string $ability)
     {
-        $modulePermissions = Context::get('leap.permissions')[Context::get('leap.module')];
+        $modulePermissions = Context::getHidden('leap.permissions')[Context::getHidden('leap.module')];
 
         return ($modulePermissions[$ability] ?? false === true)
             || ($modulePermissions['all_permissions'] ?? false === true);
