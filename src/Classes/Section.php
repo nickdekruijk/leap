@@ -11,7 +11,7 @@ class Section
     public string $name;
     public string|null $view;
     public string $label;
-    public array $attributes;
+    public array $attributes = [];
 
     /**
      * Make a new Section instance and set default view based on name.
