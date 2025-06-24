@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Classes;
 
+use Exception;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Module;
 
@@ -187,6 +188,9 @@ class Attribute
      */
     public function media($multiple = true): Attribute
     {
+        if ($this->name == 'media') {
+            throw new Exception('The media attribute cannot be named "media"');
+        }
         $this->type = 'media';
         $this->input = 'media';
         $this->options['media'] = true;
