@@ -306,7 +306,7 @@ class Attribute
         return $this;
     }
 
-    public function tree(Module $module, $scope = null, $orderBy = null, $index = null): Attribute
+    public function tree(Module|null $module = null, $scope = null, $orderBy = null, $index = null): Attribute
     {
         $this->type = 'tree';
         $this->input = null;
