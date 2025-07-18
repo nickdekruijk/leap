@@ -148,6 +148,7 @@ class Resource extends Module
     public function closeBrowser()
     {
         $this->browse = false;
+        $this->setColumnWidths++;
     }
 
     /**
