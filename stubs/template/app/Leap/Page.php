@@ -20,7 +20,7 @@ class Page extends Resource
             Attribute::make('id')->indexOnly(),
             Attribute::make('slug')->index()->searchable()->unique()->label('Slug'),
             Attribute::make('sort')->sortable(),
-            Attribute::make('media')->media(),
+            Attribute::make('images')->media(),
             Attribute::make('sections')->label('Secties')->sections(
                 Section::make('default')->label('Alleen tekst')->attributes(
                     Attribute::make('head')->required()->label('Kop'),
