@@ -117,8 +117,16 @@ class Editor extends Component
         // Get the model instance
         $model = $this->parentModule()->getModel();
 
-        // Find the model if an id is passed
-        return $id > 0 ? $model->findOrFail($id) : $model;
+        if ($id > 0) {
+            // id is passed, return the model with data
+            return $model->findOrFail($id);
+        } else {
+            // New model, set default attribute values if provided
+            foreach ($this->attributes()->where('default') as $default) {
+                $model->{$default->name} = $default->default;
+            }
+            return $model;
+        }
     }
 
     /**
@@ -385,11 +393,19 @@ class Editor extends Component
             }
         }
 
-        // Add the new section to the data with higher sort
-        $this->data[$attribute->name][] = [
+        // Initialize the new section data values with higher sort
+        $data = [
             '_name' => $name,
             '_sort' => $sort + 1,
         ];
+
+        // Add default values
+        foreach (collect(collect($attribute->sections)->where('name', $name)->first()->attributes)->where('default') as $default) {
+            $data[$default->name] = $default->default;
+        }
+
+        // Add the new section to the data
+        $this->data[$attribute->name][] = $data;
 
         $this->checkSectionValues();
 

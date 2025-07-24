@@ -35,6 +35,7 @@ class Attribute
     public array $accessorColumns;
     public bool $disabled = false;
     public bool $filterable = false;
+    public mixed $default = null;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -686,6 +687,18 @@ class Attribute
     {
         $this->type = 'json';
         $this->input = 'json';
+        return $this;
+    }
+
+    /**
+     * Sets the default value for the attribute
+     *
+     * @param mixed $value
+     * @return Attribute
+     */
+    public function default(mixed $value): Attribute
+    {
+        $this->default = $value;
         return $this;
     }
 
