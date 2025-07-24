@@ -382,7 +382,7 @@ class Editor extends Component
      */
     public function addSection(string $field, string $name)
     {
-        $field = rtrim($field, ':add');
+        $field = substr($field, 0, -4);
         $attribute = $this->attributes()->where('name', substr($field, 5))->first();
 
         // Determine the highest sort value currently in use
