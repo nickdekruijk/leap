@@ -17,7 +17,7 @@ class Attribute
     public bool $indexOnly = false;
     public ?string $input = 'input';
     public ?int $rows = null;
-    public string $label;
+    public string|null $label;
     public string $labelIndex;
     public string $placeholder = '';
     public ?string $role = null;
@@ -391,10 +391,12 @@ class Attribute
      * @param string|null $labelIndex
      * @return Attribute
      */
-    public function label(string $label, ?string $labelIndex = null): Attribute
+    public function label(string|null $label = null, ?string $labelIndex = null): Attribute
     {
         $this->label = $label;
-        $this->labelIndex = $labelIndex ?: $label;
+        if ($label) {
+            $this->labelIndex = $labelIndex ?: $label;
+        }
         return $this;
     }
 
