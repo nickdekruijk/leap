@@ -49,7 +49,7 @@ class Attribute
         self::$_instance->dataName = 'data.' . $name;
         self::$_instance->name = $name;
 
-        self::$_instance->label = self::$_instance->labelIndex = Str::headline($name);
+        self::$_instance->label = self::$_instance->labelIndex = trans(Str::headline($name));
 
         return self::$_instance;
     }
