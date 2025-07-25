@@ -33,7 +33,22 @@ trait HasSections
             $sections[$key]->setFlags(ArrayObject::STD_PROP_LIST | ArrayObject::ARRAY_AS_PROPS);
         }
 
-        // Return sorted sections as collection
-        return collect($sections)->sortBy('_sort');
+        // Sort sections as collection
+        $sections = collect($sections)->sortBy('_sort');
+
+        // Determine _first and _last values
+        $previousName = null;
+        $previousKey = null;
+        foreach ($sections as $key => $section) {
+            $sections[$key]['_first'] = $section['_name'] != $previousName;
+            $sections[$key]['_last'] = true;
+            if ($previousName && !$sections[$key]['_first']) {
+                $sections[$previousKey]['_last'] = false;
+            }
+            $previousName = $section['_name'];
+            $previousKey = $key;
+        }
+
+        return $sections;
     }
 }
