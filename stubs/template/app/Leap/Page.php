@@ -11,8 +11,8 @@ class Page extends Resource
     public function attributes()
     {
         return [
-            Attribute::make('active')->switch()->label('Actief'),
-            Attribute::make('menuitem')->index(3)->switch()->label('Toon in navigatie', 'Nav'),
+            Attribute::make('active')->switch()->label('Actief')->default(true),
+            Attribute::make('menuitem')->index(3)->switch()->label('Toon in navigatie', 'Nav')->default(true),
             Attribute::make('title')->index(1)->searchable()->required()->slugify('slug')->label('Titel'),
             Attribute::make('parent')->tree($this)->label('Subpagina van'),
             Attribute::make('head')->index(2)->searchable(),
