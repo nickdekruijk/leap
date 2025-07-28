@@ -9,16 +9,16 @@
                         <x-leap::input
                             :wire:model.blur="$column"
                             :name="$column"
-                            :label="'leap::auth.' . $column"
+                            :label="__('leap::auth.' . $column)"
                             :type="$column == 'password' ? 'password' : ($column == 'email' ? 'email' : 'text')"
                             :autocomplete="$column == 'password' ? 'current-password' : ($loop->first ? 'username' : '')"
                             :autofocus="$loop->first ? 'true' : 'false'" />
                     @endforeach
 
-                    <x-leap::input type="checkbox" role="switch" name="remember" wire:model.blur="remember" label="leap::auth.remember_me" />
+                    <x-leap::input type="checkbox" role="switch" name="remember" wire:model.blur="remember" label="{{ __('leap::auth.remember_me') }}" />
                 </fieldset>
                 <fieldset class="leap-fieldset">
-                    <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="leap::auth.login" />
+                    <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="{{ __('leap::auth.login') }}" />
                 </fieldset>
             </form>
         </div>
