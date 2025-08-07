@@ -42,6 +42,7 @@ trait CanLog
             }
 
             // Create log entry and return model instance
+            /** @disregard P1013 Undefined method 'id' intelephense */
             return Log::create([
                 'ip' => config('leap.logging.ip_address') ? $ip : null,
                 'user_agent' => config('leap.logging.user_agent') ? request()->userAgent() : null,
