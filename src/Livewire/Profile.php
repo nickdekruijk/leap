@@ -18,7 +18,10 @@ class Profile extends Module
     public $data;
     public $user;
 
-    public $default_permissions = ['read', 'update'];
+    protected $default_permissions = [
+        'read' => true,
+        'update' => true,
+    ];
 
     public function mount()
     {

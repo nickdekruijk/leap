@@ -11,5 +11,7 @@ class Organizations extends Module
     public $priority = -101;
     public $slug = false;
 
-    public $default_permissions = ['read'];
+    protected $default_permissions = [
+        'read' => true,
+    ];
 }

@@ -49,7 +49,7 @@ class ModuleController extends Controller
         $modules = static::getAllModules();
 
         foreach ($modules as $n => $module) {
-            if (empty(Context::getHidden('leap.permissions')[$module::class])) {
+            if (empty(Context::getHidden('leap.permissions')[$module::class]['read']) && empty(Context::getHidden('leap.permissions')[$module::class]['all_permissions'])) {
                 unset($modules[$n]);
             }
         }

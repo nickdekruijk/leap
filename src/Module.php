@@ -15,13 +15,17 @@ class Module extends Component
     use NavigationItem;
 
     /**
-     * The default permissions for this module, a global or organization role with permissions to this module will overrule these.
-     * When set to an empty array [] users won't be able to access unless permissions are set by a role.
-     * Example of a valid permissions array: ['create', 'read', update', 'delete']
+     * The available permissions for this module and their default values.
+     * A global or organization role with permissions to this module will overrule these.
      *
      * @var array
      */
-    public $default_permissions = [];
+    protected $default_permissions = [
+        'create' => false,
+        'read' => false,
+        'update' => false,
+        'delete' => false,
+    ];
 
     /**
      * Return the default_permissions for this module.

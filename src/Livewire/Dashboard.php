@@ -10,7 +10,9 @@ class Dashboard extends Module
     public $icon = 'fas-gauge-high';
     public $priority = -100;
     public $title = 'Dashboard';
-    public $default_permissions = ['read'];
+    protected $default_permissions = [
+        'read' => true,
+    ];
 
     public function render()
     {
