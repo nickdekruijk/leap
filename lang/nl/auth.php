@@ -1,7 +1,12 @@
 <?php
 
 return [
+    'all_modules' => 'Alle modules',
+    'create' => 'Aanmaken',
+    'delete' => 'Verwijderen',
+    'edit' => 'Bewerken',
     'email' => 'E-mailadres',
+    'full_access' => 'Volledige toegang',
     'login' => 'Inloggen',
     'logout' => 'Uitloggen',
     'name' => 'Naam',
@@ -10,7 +15,10 @@ return [
     'password_new_confirmation' => 'Bevestig wachtwoord',
     'password_new' => 'Nieuw wachtwoord',
     'password' => 'Wachtwoord',
+    'permissions' => 'Rechten',
     'profile_edit' => 'Profiel aanpassen',
+    'read' => 'Lezen',
     'remember_me' => 'Onthoud mij',
     'update_password' => 'Wachtwoord bijwerken',
+    'user_roles' => 'Gebruikersrollen',
 ];

@@ -7,6 +7,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Classes\Section;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Traits\CanLog;
 
@@ -106,5 +108,32 @@ class Leap
         /** @disregard P1013 Prevent intelephense warning "Undefined method 'getModel'" */
         $model = Auth::getProvider()->getModel();
         return new $model;
+    }
+
+    /**
+     * Generate the permissions section for the role management
+     *
+     * @return Attribute
+     */
+    public static function generatePermissionsSection(): Attribute
+    {
+        // First add the all modules section with full access switch
+        $sections[] = Section::make('all_modules')->withoutView()->label(__('leap::auth.all_modules'))->attributes(
+            Attribute::make('all_permissions')->switch()->label(__('leap::auth.full_access')),
+        );
+
+        // Then add the sections for each module with their permissions as switches
+        foreach (ModuleController::getAllModules() as $module) {
+            if (config('leap.organizations') || $module::class !== 'NickDeKruijk\Leap\Navigation\Organizations') {
+                $attributes = [];
+                foreach ($module->getDefaultPermissions() as $permission => $default) {
+                    $attributes[] = Attribute::make($permission)->switch(); //->default($default)->label(__('leap::auth.' . $permission));
+                }
+                $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
+            }
+        }
+
+        // Return the sections as an Attribute
+        return Attribute::make('permissions')->label(__('leap::auth.permissions'))->sections(...$sections);
     }
 }
