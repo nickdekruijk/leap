@@ -58,6 +58,11 @@ trait NavigationItem
      */
     public function getTitle(): string
     {
+        // If the title is a string and starts with 'leap::', we assume it's a translation key
+        if (is_string($this->title) && str_starts_with($this->title, 'leap::')) {
+            return __($this->title);
+        }
+
         $plural = __(Str::plural(class_basename(static::class)));
         if (is_array($this->title)) {
             $this->title = $this->title[app()->getLocale()] ?? $plural;
