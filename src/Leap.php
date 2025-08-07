@@ -102,6 +102,7 @@ class Leap
      */
     public static function userModel(): Authenticatable
     {
+        /** @disregard P1013 Prevent intelephense warning "Undefined method 'getModel'" */
         $model = Auth::getProvider()->getModel();
         return new $model;
     }
