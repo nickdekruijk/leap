@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use NickDeKruijk\Leap\Controllers\ModuleController;
@@ -16,9 +17,9 @@ class Leap
     /**
      * Return all modules the current user has access to
      *
-     * @return string
+     * @return Collection
      */
-    public static function modules()
+    public static function modules(): Collection
     {
         return ModuleController::getModules();
     }
