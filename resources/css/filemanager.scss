@@ -12,7 +12,14 @@
             overflow-y: auto;
             display: flex;
             background-color: $grey-light;
-            box-shadow: inset rgba(black, 0.1) -1px 0 0px;
+            position: relative;
+            &::after {
+                content: "";
+                position: absolute;
+                inset: 0 0 0 auto;
+                width: 1px;
+                background-color: rgba(black, 0.05);
+            }
             align-items: start;
             -webkit-user-select: none;
             -ms-user-select: none;
