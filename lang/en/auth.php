@@ -18,6 +18,7 @@ return [
     'profile_edit' => 'Edit Profile',
     'read' => 'Read',
     'remember_me' => 'Remember Me',
+    'roles' => 'Roles',
     'update' => 'Update',
     'update_password' => 'Update Password',
     'user_roles' => 'User Roles',

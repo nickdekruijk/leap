@@ -18,6 +18,7 @@ return [
     'profile_edit' => 'Profiel aanpassen',
     'read' => 'Lezen',
     'remember_me' => 'Onthoud mij',
+    'roles' => 'Rollen',
     'update' => 'Bewerken',
     'update_password' => 'Wachtwoord bijwerken',
     'user_roles' => 'Gebruikersrollen',
