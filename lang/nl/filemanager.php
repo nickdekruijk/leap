@@ -2,6 +2,7 @@
 
 return [
     'already_exist' => ':attribute bestaat al',
+    'cancel' => 'Annuleren',
     'close' => 'Sluiten',
     'create_folder_failed' => 'Map :attribute aanmaken mislukt',
     'created_folder' => 'Map :attribute aangemaakt',
@@ -28,6 +29,7 @@ return [
     'is_not_empty' => ':attribute is niet leeg',
     'media_in_use' => ':attribute wordt gebruikt als media en kan niet worden verwijderd',
     'new_folder' => 'Nieuwe map',
+    'save' => 'Opslaan',
     'select_file' => 'Selecteer bestand',
     'select_files' => 'Selecteer :count bestanden',
     'size' => 'Grootte',

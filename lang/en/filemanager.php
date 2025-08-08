@@ -2,6 +2,7 @@
 
 return [
     'already_exist' => ':attribute already exists',
+    'cancel' => 'Cancel',
     'close' => 'Close',
     'create_folder_failed' => 'Failed to create directory :attribute',
     'created_folder' => 'Folder :attribute created',
@@ -28,6 +29,7 @@ return [
     'is_not_empty' => ':attribute is not empty',
     'media_in_use' => ':attribute is used as media and cannot be deleted',
     'new_folder' => 'New folder',
+    'save' => 'Save',
     'select_file' => 'Select file',
     'select_files' => 'Select :count files',
     'size' => 'Size',

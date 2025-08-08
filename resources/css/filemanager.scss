@@ -228,6 +228,25 @@
                 font-size: 1.1em;
                 font-weight: bold;
                 padding: 0 var(--spacing);
+                width: 100%;
+                text-align: center;
+                .leap-input {
+                    text-align: center;
+                }
+                .editFile:hover {
+                    text-decoration: underline;
+                }
+            }
+            .leap-buttons {
+                background: none;
+                padding: 0;
+                justify-content: center;
+                .leap-button {
+                    background-color: $blue-light;
+                    &:hover {
+                        background-color: $blue-normal;
+                    }
+                }
             }
             TABLE {
                 font-size: 0.85em;

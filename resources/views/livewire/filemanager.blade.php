@@ -149,8 +149,19 @@
                     <h3>
                         @if (count($selectedFiles) > 1)
                             {{ count($selectedFiles) }} @lang('leap::filemanager.files')
+                        @elseif ($editingFile)
+                            <x-leap::input wire:keydown.enter="renameSelectedFile" x-init="$el.focus();
+                            $el.setSelectionRange(0, $el.value.lastIndexOf('.'))" wire:model="newFileName" label="" />
+                            <div class="leap-buttons">
+                                <x-leap::button svg-icon="fas-check" wire:click="renameSelectedFile" label="leap::filemanager.save" />
+                                <x-leap::button svg-icon="fas-times" wire:click="editFile(true)" label="leap::filemanager.close" />
+                            </div>
                         @else
-                            {{ reset($selectedFiles) }}
+                            @can('leap::update')
+                                <span class="editFile" wire:click="editFile">{{ reset($selectedFiles) }}</span>
+                            @else
+                                {{ reset($selectedFiles) }}
+                            @endcan
                         @endif
                     </h3>
                     <table>

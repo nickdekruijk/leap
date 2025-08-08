@@ -36,6 +36,9 @@ class FileManager extends Module
     public array $openFolders = [];
     public array $selectedFiles = [];
 
+    public bool $editingFile = false;
+    public string|null $newFileName;
+
     #[Locked]
     public array|false $browse = false;
 
@@ -401,6 +404,9 @@ class FileManager extends Module
 
     public function selectFile($encodedFileName = null, $depth = null, $multiple = false, $shiftKey = false)
     {
+        // Reset edit mode
+        $this->editFile(true);
+
         // Don't select multiple files if only one is allowed while browsing
         if ($this->browse && !$this->browse['multiple'] && ($multiple || $shiftKey)) {
             return;
@@ -516,6 +522,25 @@ class FileManager extends Module
         return $this->getStorage()->response($file);
     }
 
+    public function editFile($close = false)
+    {
+        if ($close) {
+            $this->editingFile = false;
+            $this->newFileName = null;
+        } else {
+            $this->editingFile = true;
+            $this->newFileName = reset($this->selectedFiles);
+        }
+    }
+
+    public function renameSelectedFile()
+    {
+        Leap::validatePermission('update');
+        $this->getStorage()->move($this->full(reset($this->selectedFiles)), $this->full($this->newFileName));
+        $this->selectFile(ltrim($this->newFileName, './'));
+        $this->editFile(true);
+    }
+
     public function selectedFilesStats()
     {
         $size = 0;
@@ -563,7 +588,7 @@ class FileManager extends Module
 
     public function hasExtension(string $file, array|string $extensions): bool
     {
-        $extension = strtolower(pathinfo($file)['extension']);
+        $extension = strtolower(pathinfo($file)['extension'] ?? null);
         if (!is_array($extensions)) {
             $extensions = explode(',', $extensions);
         }
