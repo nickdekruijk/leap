@@ -29,6 +29,8 @@ return [
     'is_not_empty' => ':attribute is niet leeg',
     'media_in_use' => ':attribute wordt gebruikt als media en kan niet worden verwijderd',
     'new_folder' => 'Nieuwe map',
+    'rename_invalid_path' => ':attribute bevat een ongeldig pad',
+    'rename_success' => ':attribute hernoemd',
     'save' => 'Opslaan',
     'select_file' => 'Selecteer bestand',
     'select_files' => 'Selecteer :count bestanden',

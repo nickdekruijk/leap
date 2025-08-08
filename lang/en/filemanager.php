@@ -29,6 +29,8 @@ return [
     'is_not_empty' => ':attribute is not empty',
     'media_in_use' => ':attribute is used as media and cannot be deleted',
     'new_folder' => 'New folder',
+    'rename_invalid_path' => ':attribute contains an invalid path',
+    'rename_success' => ':attribute renamed',
     'save' => 'Save',
     'select_file' => 'Select file',
     'select_files' => 'Select :count files',

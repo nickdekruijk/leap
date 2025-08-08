@@ -538,22 +538,64 @@ class FileManager extends Module
     {
         Leap::validatePermission('update');
 
+        // Don't allow multiple slashes, starting with a slash, containing /. or starting with a dot except for ../ if inside folder
+        if (
+            substr_count($this->newFileName, '/') > 1
+            || str_starts_with($this->newFileName, '/')
+            || str_contains($this->newFileName, '/.')
+            || (str_starts_with($this->newFileName, '.') && !str_starts_with($this->newFileName, '../'))
+            || (str_starts_with($this->newFileName, '../') && count($this->openFolders) == 0)
+        ) {
+            $this->dispatch('toast-error', __('leap::filemanager.rename_invalid_path', ['attribute' => $this->newFileName]))->to(Toasts::class);
+            return;
+        }
+
+        // Get from and to file with full path
         $from = $this->full(reset($this->selectedFiles));
         $to = $this->full($this->newFileName);
-        $this->getStorage()->move($from, $to);
-        $this->selectedFiles = [$this->newFileName];
-        $this->editFile(true);
-        unset($this->columns);
 
-        // Update media entry and history if present
-        $media = Media::findFile($from);
-        if ($media) {
-            $media->file_name = $to;
-            $history = $media->history;
-            $history[] = now() . ' Renamed from ' . $from . ' to ' . $to . ' by ' . Auth::user()?->name . ' #' . Auth::user()?->id;
-            $media->history = $history;
-            $media->save();
+        // Check if new file exists
+        if ($this->getStorage()->exists($to)) {
+            $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $this->newFileName]))->to(Toasts::class);
+            return;
         }
+
+        // Only rename if the file names are different
+        if ($from != $to) {
+            // Move or rename the file inside storage
+            $this->getStorage()->move($from, $to);
+
+            if (str_starts_with($this->newFileName, '../')) {
+                // Moving to parent folder, strip ../ from the beginning and close directory
+                $this->newFileName = substr($this->newFileName, 3);
+                $this->closeDirectory(count($this->openFolders) - 1);
+            } elseif (str_contains($this->newFileName, '/')) {
+                // Moving to new folder, only return the part after the first slash and open new directory
+                $this->newFileName = substr($this->newFileName, strpos($this->newFileName, '/') + 1);
+                $this->openDirectory(urlencode(substr($this->newFileName, 0, strpos($this->newFileName, '/'))), count($this->openFolders) + 1);
+            }
+
+            // Set new selected file
+            $this->selectedFiles = [$this->newFileName];
+
+            // Update media entry and history if present
+            if ($media = Media::findFile($from)) {
+                $media->file_name = $to;
+                $history = $media->history;
+                $history[] = now() . ' Renamed from ' . $from . ' to ' . $to . ' by ' . Auth::user()?->name . ' #' . Auth::user()?->id;
+                $media->history = $history;
+                $media->save();
+            }
+
+            // Show success message
+            $this->dispatch('toast', __('leap::filemanager.rename_success', ['attribute' => $this->newFileName]))->to(Toasts::class);
+
+            // Force refresh
+            unset($this->columns);
+        }
+
+        // Close file rename input
+        $this->editFile(true);
     }
 
     public function selectedFilesStats()
