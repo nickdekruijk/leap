@@ -3,7 +3,7 @@
 <x-leap::label>
     <input class="leap-input"
         @if (($attribute->type ?? false) == 'password') autocomplete="new-password" @endif
-        @error($attribute->dataName ?? $name) aria-errormessage="{{ $message }}" aria-invalid="true" @enderror
+        @error($attribute->dataName ?? ($name ?? '')) aria-errormessage="{{ $message }}" aria-invalid="true" @enderror
         @if ($attribute->disabled ?? false || (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update'))) disabled @endif
         @isset($attribute)
             placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}"
