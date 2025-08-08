@@ -3,6 +3,8 @@
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Profile;
+use NickDeKruijk\Leap\Livewire\Roles;
+use NickDeKruijk\Leap\Livewire\User;
 use NickDeKruijk\Leap\Navigation\Logout;
 use NickDeKruijk\Leap\Navigation\Organizations;
 
@@ -85,6 +87,8 @@ return [
         FileManager::class,
         Profile::class,
         Logout::class,
+        Roles::class,
+        User::class,
     ],
 
     /*
