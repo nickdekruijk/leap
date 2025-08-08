@@ -4,7 +4,6 @@ return [
     'all_modules' => 'Alle modules',
     'create' => 'Aanmaken',
     'delete' => 'Verwijderen',
-    'edit' => 'Bewerken',
     'email' => 'E-mailadres',
     'full_access' => 'Volledige toegang',
     'login' => 'Inloggen',
@@ -19,6 +18,7 @@ return [
     'profile_edit' => 'Profiel aanpassen',
     'read' => 'Lezen',
     'remember_me' => 'Onthoud mij',
+    'update' => 'Bewerken',
     'update_password' => 'Wachtwoord bijwerken',
     'user_roles' => 'Gebruikersrollen',
 ];

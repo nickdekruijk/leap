@@ -4,7 +4,6 @@ return [
     'all_modules' => 'All modules',
     'create' => 'Create',
     'delete' => 'Delete',
-    'edit' => 'Edit',
     'email' => 'Email Address',
     'full_access' => 'Full Access',
     'login' => 'Login',
@@ -19,6 +18,7 @@ return [
     'profile_edit' => 'Edit Profile',
     'read' => 'Read',
     'remember_me' => 'Remember Me',
+    'update' => 'Update',
     'update_password' => 'Update Password',
     'user_roles' => 'User Roles',
 ];
