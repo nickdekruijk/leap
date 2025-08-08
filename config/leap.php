@@ -1,9 +1,7 @@
 <?php
 
-use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
-use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Navigation\Logout;
 use NickDeKruijk\Leap\Navigation\Organizations;
