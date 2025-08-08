@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
@@ -536,10 +537,23 @@ class FileManager extends Module
     public function renameSelectedFile()
     {
         Leap::validatePermission('update');
-        $this->getStorage()->move($this->full(reset($this->selectedFiles)), $this->full($this->newFileName));
+
+        $from = $this->full(reset($this->selectedFiles));
+        $to = $this->full($this->newFileName);
+        $this->getStorage()->move($from, $to);
         $this->selectedFiles = [$this->newFileName];
         $this->editFile(true);
         unset($this->columns);
+
+        // Update media entry and history if present
+        $media = Media::findFile($from);
+        if ($media) {
+            $media->file_name = $to;
+            $history = $media->history;
+            $history[] = now() . ' Renamed from ' . $from . ' to ' . $to . ' by ' . Auth::user()?->name . ' #' . Auth::user()?->id;
+            $media->history = $history;
+            $media->save();
+        }
     }
 
     public function selectedFilesStats()
