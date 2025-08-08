@@ -537,8 +537,9 @@ class FileManager extends Module
     {
         Leap::validatePermission('update');
         $this->getStorage()->move($this->full(reset($this->selectedFiles)), $this->full($this->newFileName));
-        $this->selectFile(ltrim($this->newFileName, './'));
+        $this->selectedFiles = [$this->newFileName];
         $this->editFile(true);
+        unset($this->columns);
     }
 
     public function selectedFilesStats()
