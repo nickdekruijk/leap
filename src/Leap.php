@@ -127,7 +127,7 @@ class Leap
             if (config('leap.organizations') || $module::class !== 'NickDeKruijk\Leap\Navigation\Organizations') {
                 $attributes = [];
                 foreach ($module->getDefaultPermissions() as $permission => $default) {
-                    $attributes[] = Attribute::make($permission)->switch(); //->default($default)->label(__('leap::auth.' . $permission));
+                    $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
                 }
                 $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
             }
