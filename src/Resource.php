@@ -469,7 +469,11 @@ class Resource extends Module
         foreach ($data as $id => $row) {
             $data[$id] = [];
             foreach ($keys as $key => $type) {
-                $data[$id][$key] = $row[$key];
+                if (is_array($row[$key] ?? null)) {
+                    $data[$id][$key] = implode(', ', $row[$key]);
+                } else {
+                    $data[$id][$key] = $row[$key] ?? null;
+                }
             }
         }
 
