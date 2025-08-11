@@ -485,9 +485,9 @@ class Resource extends Module
 
         return response()->stream(function () use ($data, $keys) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, array_keys($keys));
+            fputcsv($handle, array_keys($keys), escape: "");
             foreach ($data as $line) {
-                fputcsv($handle, $line);
+                fputcsv($handle, $line, escape: "");
             }
             fclose($handle);
         }, 200, $headers);
