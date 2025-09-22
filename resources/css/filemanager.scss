@@ -178,6 +178,10 @@
                         max-width: 100%;
                         max-height: 100%;
                         display: block;
+                        border: 1px solid white;
+                        &:hover {
+                            border-color: #ccc;
+                        }
                     }
                     A {
                         text-decoration: none;
