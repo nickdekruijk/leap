@@ -200,6 +200,32 @@ class Attribute
     }
 
     /**
+     * Make the Attribute a single media element
+     * 
+     * This currently functions the same as ->media(multiple: false) but is more descriptive
+     * 
+     * @return Attribute
+     */
+    public function image(): Attribute
+    {
+        $this->media(multiple: false);
+        return $this;
+    }
+
+    /**
+     * Make the Attribute a multiple media element
+     * 
+     * This currently functions the same as ->media() but is more descriptive
+     * 
+     * @return Attribute
+     */
+    public function images(): Attribute
+    {
+        $this->media(multiple: true);
+        return $this;
+    }
+
+    /**
      * Return the attribute values depending on type
      *
      * @return array
