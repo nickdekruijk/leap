@@ -47,7 +47,7 @@
                         @endif
                         @if ($attribute->type == 'checkbox')
                             <span class="leap-row-checkbox leap-row-checkbox-{{ $row[$attribute->name] ? 'checked' : 'unchecked' }}"></span>
-                        @elseif ($attribute->input == 'select')
+                        @elseif ($attribute->input == 'select' || $attribute->input == 'radio')
                             {{ $attribute->values[$row->{$attribute->name}] ?? $row->{$attribute->name} }}
                         @else
                             {{ $row->{$attribute->name} }}
