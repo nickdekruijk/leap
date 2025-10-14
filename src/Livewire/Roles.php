@@ -21,6 +21,8 @@ class Roles extends Resource
     public $model = Role::class;
     public $priority = 901;
     public $icon = 'fas-user-lock';
+    public $orderBy = 'name';
+    public $showIndexGroups = false;
 
     public $title = 'leap::auth.user_roles';
 }

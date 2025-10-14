@@ -14,7 +14,7 @@ class User extends Resource
             Attribute::make('name')->index()->searchable()->required()->label(__('leap::auth.name')),
             Attribute::make('email')->index()->email()->searchable()->unique()->label(__('leap::auth.email')),
             Attribute::make('password')->password()->confirmed()->label(__('leap::auth.password')),
-            Attribute::make('roles')->pivot(model: Role::class, index: 'name,organization_id', orderBy: 'name')->required()->label(__('leap::auth.roles')),
+            Attribute::make('roles')->pivot(model: Role::class, index: 'name', orderBy: 'name')->required()->label(__('leap::auth.roles')),
         ];
     }
 
