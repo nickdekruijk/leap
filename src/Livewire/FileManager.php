@@ -25,7 +25,7 @@ class FileManager extends Module
 
     public $component = 'leap.filemanager';
     public $icon = 'fas-folder-tree'; // fas-file-alt far-copy fas-folder-tree
-    public $priority = 3;
+    public $priority = 50;
     protected $default_permissions = [
         'create' => false,
         'read' => true,
