@@ -83,6 +83,22 @@ class Attribute
     }
 
     /**
+     * Make the Attribute a time
+     *
+     * @param boolean $includeSeconds Include seconds input when editing
+     * @return Attribute
+     */
+    public function time(bool $includeSeconds = false): Attribute
+    {
+        $this->type = 'time';
+        $this->validate('dateformat:H:i' . ($includeSeconds ? ':s' : ''));
+        if ($includeSeconds) {
+            $this->step = 1;
+        }
+        return $this;
+    }
+
+    /**
      * Make the Attribute an email
      * 
      * The type will be set to email and a validation rules 'email' will be added.
