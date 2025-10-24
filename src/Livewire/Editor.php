@@ -486,7 +486,10 @@ class Editor extends Component
             } elseif ($attribute->type == 'pivot') {
                 // Ignore pivot data
             } elseif ($attribute->type == 'sortable') {
-                // Ignore sortable data
+                // Set sort value to highest current sort + 1
+                if ($model->{$attribute->name} === null) {
+                    $model->{$attribute->name} = $model::max($attribute->name) + 1;
+                }
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
             } else {
