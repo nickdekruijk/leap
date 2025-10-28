@@ -35,7 +35,7 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
                 Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
                 if ($module::class === FileManager::class) {
                     // Filemanager download/preview route
-                    Route::get($organizations_prefix . $module->getSlug() . '/download/{name}', [FileManager::class, 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
+                    Route::get($organizations_prefix . $module->getSlug() . '/download/{name}', [FileManager::class, config('leap.organizations') ? 'downloadForOrganization' : 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
                 }
             }
         }
