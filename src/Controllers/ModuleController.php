@@ -64,6 +64,6 @@ class ModuleController extends Controller
      */
     public static function home($organization = null): RedirectResponse
     {
-        return redirect()->route('leap.module.' . static::getModules()->where('priority', '>', -100)->first()->getSlug(), $organization);
+        return redirect()->route('leap.module.' . static::getModules()->where('priority', '>=', -100)->first()->getSlug(), $organization);
     }
 }
