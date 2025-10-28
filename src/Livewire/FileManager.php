@@ -70,7 +70,7 @@ class FileManager extends Module
             'progress' => 0,
             'depth' => count($this->openFolders),
             'currentDirectory' => $this->currentDirectory(),
-            'path' => implode('/', $this->openFolders),
+            'path' => $this->storagePrefix() . implode('/', $this->openFolders),
             'error' => false,
         ];
         if (!$this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
@@ -198,6 +198,23 @@ class FileManager extends Module
     }
 
     /**
+     * Get the storage prefix for the current organization if applicable
+     *
+     * @return string
+     */
+    public function storagePrefix(): string
+    {
+        if (config('leap.organizations')) {
+            if (config('leap.filemanager.organization_prefix') === 'slug') {
+                return Context::getHidden('leap.organization.slug') . '/';
+            } elseif (config('leap.filemanager.organization_prefix') === 'id') {
+                return Context::getHidden('leap.organization.id') . '/';
+            }
+        }
+        return '';
+    }
+
+    /**
      * Return all filemanager columns with folders and files
      *
      * @return array
@@ -224,7 +241,7 @@ class FileManager extends Module
     private function getFiles(null|string $directory = null): array
     {
         $folders = [];
-        $entries = $this->getStorage()->directories($directory);
+        $entries = $this->getStorage()->directories($this->storagePrefix() . $directory);
         Leap::basenamesort($entries);
         foreach ($entries as $folder) {
             $size = 0;
@@ -237,7 +254,7 @@ class FileManager extends Module
             }
         };
         $files = [];
-        $entries = $this->getStorage()->files($directory);
+        $entries = $this->getStorage()->files($this->storagePrefix() . $directory);
         Leap::basenamesort($entries);
         foreach ($entries as $file) {
             if (!str_starts_with(basename($file), '.')) {
@@ -359,7 +376,7 @@ class FileManager extends Module
         Leap::validatePermission('delete');
 
         $this->closeDirectory($depth);
-        $full = implode('/', $this->openFolders);
+        $full = $this->storagePrefix() . implode('/', $this->openFolders);
 
         // Check if the directory exists and is in the columns array, toast error if it doesn't
         if (!$this->getStorage()->exists($full)) {
@@ -481,7 +498,7 @@ class FileManager extends Module
             $full = str_replace('%2F', '/', $full);
         }
 
-        return $full;
+        return $this->storagePrefix() . $full;
     }
 
     /**

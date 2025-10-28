@@ -292,6 +292,7 @@ return [
             'zip',
         ],
         'disk' => 'public', // Must refer to a disk defined in config/filesystems.php, e.g. 'local' or 'public'
+        'organization_prefix' => 'slug', // Store files for each organization in a separate directory, e.g. 'slug' or 'id'. Set to null to disable.
         'upload_max_filesize' => '128G', // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
     ],
 
