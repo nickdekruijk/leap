@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
@@ -79,7 +80,14 @@ class Media extends Model
 
     public function getDownloadUrlAttribute(): string
     {
-        return route('leap.module.filemanager.download', str_replace('%2F', '/', rawurlencode($this->file_name)));
+        // This should only be used by Leap editor so needs to move to Leap class somehow...
+        return route(
+            'leap.module.filemanager.download',
+            [
+                'name' => str_replace('%2F', '/', rawurlencode($this->file_name)),
+                'organization' => Context::getHidden('leap.organization.slug'),
+            ]
+        );
     }
 
     public function isImage(): bool
