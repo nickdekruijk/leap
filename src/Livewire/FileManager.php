@@ -503,7 +503,6 @@ class FileManager extends Module
      */
     public function downloadUrl(string $file): string
     {
-        debug($this->encode($file), $this->getSlug());
         return route(
             'leap.module.' . $this->getSlug() . '.download',
             [
