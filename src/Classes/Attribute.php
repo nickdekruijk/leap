@@ -200,10 +200,12 @@ class Attribute
      * Make the Attribute a media element
      * 
      * Allows you to select multiple media files from the FileManager
+     * @param boolean $multiple Whether multiple files can be selected
+     * @param boolean $ignoreOrganizationPrefix Whether to ignore the organization prefix when selecting files
      *
      * @return Attribute
      */
-    public function media($multiple = true): Attribute
+    public function media($multiple = true, bool $ignoreOrganizationPrefix = false): Attribute
     {
         if ($this->name == 'media') {
             throw new Exception('The media attribute cannot be named "media"');
@@ -211,6 +213,7 @@ class Attribute
         $this->type = 'media';
         $this->input = 'media';
         $this->options['media'] = true;
+        $this->options['ignoreOrganizationPrefix'] = $ignoreOrganizationPrefix;
         $this->options['multiple'] = $multiple;
         return $this;
     }
@@ -222,9 +225,9 @@ class Attribute
      * 
      * @return Attribute
      */
-    public function image(): Attribute
+    public function image(bool $ignoreOrganizationPrefix = false): Attribute
     {
-        $this->media(multiple: false);
+        $this->media(multiple: false, ignoreOrganizationPrefix: $ignoreOrganizationPrefix);
         return $this;
     }
 
@@ -235,9 +238,9 @@ class Attribute
      * 
      * @return Attribute
      */
-    public function images(): Attribute
+    public function images(bool $ignoreOrganizationPrefix = false): Attribute
     {
-        $this->media(multiple: true);
+        $this->media(multiple: true, ignoreOrganizationPrefix: $ignoreOrganizationPrefix);
         return $this;
     }
 

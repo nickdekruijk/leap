@@ -204,7 +204,7 @@ class FileManager extends Module
      */
     public function storagePrefix(): string
     {
-        if (config('leap.organizations')) {
+        if (config('leap.organizations') && empty($this->browse['ignoreOrganizationPrefix'])) {
             if (config('leap.filemanager.organization_prefix') === 'slug') {
                 return Context::getHidden('leap.organization.slug') . '/';
             } elseif (config('leap.filemanager.organization_prefix') === 'id') {
