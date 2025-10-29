@@ -79,6 +79,16 @@
             }
         }
     }
+
+    .leap-dialog {
+        border: 0 none;
+        box-shadow: rgba(black, 0.5) 1px 0 10px;
+        background-color: $grey-light;
+        padding: 0;
+        &::backdrop {
+            background-color: rgba(black, 0.7);
+        }
+    }
 }
 BODY.sorting {
     .tox {

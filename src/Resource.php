@@ -525,6 +525,23 @@ class Resource extends Module
         $this->filters[$attribute] = $value;
     }
 
+    /**
+     * Extra buttons to add to editor toolbar just before the cancel/close button
+     *
+     * @return array
+     */
+    public function editorButtons()
+    {
+        return [
+            // [
+            //     'label' => 'Opslaan',
+            //     'icon' => 'fas-save',
+            //     'livewire' => 'ComponentName',
+            //     'action' => 'method',
+            // ],
+        ];
+    }
+
     public function render()
     {
         $this->log('read');

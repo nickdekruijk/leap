@@ -18,6 +18,13 @@
                     <x-leap::button svg-icon="far-trash-alt" wire:click="delete" wire:confirm="{{ __('leap::resource.delete_confirm') }}" label="leap::resource.delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
                 @endcan
             @endif
+            @if ($this->parentModule()->editorButtons() && $editing > 0)
+                @foreach ($this->parentModule()->editorButtons() as $button)
+                    @isset($button['livewire'])
+                        @livewire($button['livewire'], ['button' => $button, 'resource' => $this->parentModule(), 'editing' => $editing])
+                    @endisset
+                @endforeach
+            @endif
             <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=null" wire:click="close" label="leap::resource.cancel" />
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
