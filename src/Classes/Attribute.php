@@ -36,6 +36,7 @@ class Attribute
     public bool $disabled = false;
     public bool $filterable = false;
     public mixed $default = null;
+    public bool $hidden = false;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -746,6 +747,19 @@ class Attribute
     public function default(mixed $value): Attribute
     {
         $this->default = $value;
+        return $this;
+    }
+
+    /**
+     * Make attribute hidden in index and editor but make it available for queries
+     *
+     * @param boolean $hidden
+     * @return Attribute
+     */
+    public function hidden($hidden = true): Attribute
+    {
+        $this->hidden = $hidden;
+        $this->accessor($this->name);
         return $this;
     }
 
