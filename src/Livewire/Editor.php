@@ -119,7 +119,9 @@ class Editor extends Component
 
         if ($id > 0) {
             // id is passed, return the model with data
-            return $model->findOrFail($id);
+            $model = $model->findOrFail($id);
+            abort_if($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute && $model->{$this->parentModule()->organizationScopeAttribute} != Context::getHidden('leap.organization.id'), 404);
+            return $model;
         } else {
             // New model, set default attribute values if provided
             foreach ($this->attributes()->where('default') as $default) {
@@ -553,6 +555,9 @@ class Editor extends Component
             // Check if anything changed
             if ($model->isDirty() || $this->mediaUpdated || $this->pivotIsDirty()) {
                 if ($this->editing == self::CREATE_NEW) {
+                    if ($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute) {
+                        $model->{$this->parentModule()->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
+                    }
                     $model->save();
                     $this->syncMedia($model);
                     $this->syncPivot($model);

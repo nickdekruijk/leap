@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -21,6 +22,24 @@ class Resource extends Module
      */
     #[Locked]
     public $model;
+
+    /**
+     * Scope the resource to an organization
+     *
+     * @var boolean
+     */
+    #[Locked]
+    public $organizationScope = false;
+
+    /**
+     * The organization scope attribute
+     *
+     * When organizationScope is set, the resource will be scoped using this attribute on the resource model.
+     *
+     * @var string
+     */
+    #[Locked]
+    public $organizationScopeAttribute = 'organization_id';
 
     /**
      * Sort the index by this attribute
@@ -364,6 +383,10 @@ class Resource extends Module
     public function rows(int|null $parent_id = null, bool $index = false, bool $filtered = true): Collection
     {
         $data = $this->getModel();
+
+        if ($this->organizationScope) {
+            $data = $data->where($this->organizationScopeAttribute, Context::getHidden('leap.organization.id'));
+        }
 
         if ($this->treeview()) {
             $data = $data->where($this->treeview()->name, $parent_id);
