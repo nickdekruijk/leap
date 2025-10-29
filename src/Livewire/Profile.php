@@ -104,6 +104,7 @@ class Profile extends Module
 
     public function render()
     {
+        /** @disregard P1013 Undefined method intelephense error */
         return view('leap::livewire.profile')->layout('leap::layouts.app');
     }
 }
