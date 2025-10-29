@@ -604,6 +604,10 @@ class Editor extends Component
 
             $this->updateAttributes($model);
 
+            if ($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute) {
+                $model->{$this->parentModule()->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
+            }
+
             $model->save();
 
             // Set media updated to all possible media attributes to force syncing all media
