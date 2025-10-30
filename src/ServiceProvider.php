@@ -60,17 +60,17 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             ]);
         }
 
-        Gate::define('leap::create', function ($user, $id = null) {
-            return $this->can('create');
+        Gate::define('leap::create', function ($user, ?Module $module = null) {
+            return $this->can('create', $module);
         });
-        Gate::define('leap::read', function ($user, $id = null) {
-            return $this->can('read');
+        Gate::define('leap::read', function ($user, ?Module $module = null) {
+            return $this->can('read', $module);
         });
-        Gate::define('leap::update', function ($user, $id = null) {
-            return $this->can('update');
+        Gate::define('leap::update', function ($user, ?Module $module = null) {
+            return $this->can('update', $module);
         });
-        Gate::define('leap::delete', function ($user, $id = null) {
-            return $this->can('delete');
+        Gate::define('leap::delete', function ($user, ?Module $module = null) {
+            return $this->can('delete', $module);
         });
     }
 
@@ -80,10 +80,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      * @param string $ability
      * @return boolean
      */
-    public function can(string $ability)
+    public function can(string $ability, ?Module $module = null)
     {
-        $modulePermissions = Context::getHidden('leap.permissions')[Context::getHidden('leap.module')];
-
+        $modulePermissions = Context::getHidden('leap.permissions')[$module ? $module::class : Context::getHidden('leap.module')];
         return ($modulePermissions[$ability] ?? false === true)
             || ($modulePermissions['all_permissions'] ?? false === true);
     }
