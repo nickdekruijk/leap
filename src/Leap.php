@@ -6,6 +6,7 @@ use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Classes\Section;
@@ -135,5 +136,19 @@ class Leap
 
         // Return the sections as an Attribute
         return Attribute::make('permissions')->label(__('leap::auth.permissions'))->sections(...$sections);
+    }
+
+    public static function htmlTitle(): string
+    {
+        $title = config('leap.title');
+
+        if (Context::getHidden('leap.module')) {
+            $moduleTitle = (new (Context::getHidden('leap.module')))->getTitle();
+            $title = str_replace('{module}', $moduleTitle, $title);
+        } else {
+            $title = str_replace('{module} - ', '', $title);
+        }
+
+        return $title;
     }
 }
