@@ -21,7 +21,7 @@
             @if ($this->parentModule()->editorButtons() && $editing > 0)
                 @foreach ($this->parentModule()->editorButtons() as $button)
                     @isset($button['livewire'])
-                        @livewire($button['livewire'], ['button' => $button, 'resource' => $this->parentModule(), 'editing' => $editing])
+                        @livewire($button['livewire'], ['button' => $button, 'resource' => $this->parentModule(), 'editing' => $editing], key('editor-button-' . $button['livewire'] . '-' . $editing))
                     @endisset
                 @endforeach
             @endif
