@@ -397,8 +397,8 @@ class Resource extends Module
             $data = $data->with($this->with);
         }
 
-        // Check if data needs to be sorted by a foreign attribute, in that case we can't use orderBy on the model but manually sort the array later
-        $sortForeign = $this->orderBy && $this->allAttributes($index)->where('name', $this->orderBy)->first()?->type == 'foreign';
+        // Check if data needs to be sorted by a foreign or pivot attribute, in that case we can't use orderBy on the model but manually sort the array later
+        $sortForeign = $this->orderBy && in_array($this->allAttributes($index)->where('name', $this->orderBy)->first()?->type, ['foreign', 'pivot']);
 
         if ($this->orderBy && !$sortForeign) {
             if (is_array($this->orderBy)) {
@@ -420,13 +420,25 @@ class Resource extends Module
 
         // Get all index columns without accessors but including required accessor columns, the id and the treeview parent id if required
         $accessorColumns = $this->allAttributes($index)->where('isAccessor')->pluck('accessorColumns')->flatten()->unique()->toArray();
-        $data = $data->get(array_merge($merge, $accessorColumns, $this->allAttributes($index)->where('isAccessor', false)->pluck('name')->toArray()));
+        $data = $data->get(array_merge($merge, $accessorColumns, $this->allAttributes($index)->where('isAccessor', false)->where('type', '!=', 'pivot')->pluck('name')->toArray()));
 
         // Replace all foreign keys with their value
         foreach ($this->allAttributes($index)->where('type', 'foreign') as $foreignAttribute) {
             $values = $foreignAttribute->getValues();
             foreach ($data as $id => $row) {
                 $data[$id][$foreignAttribute->name] = $values[$row[$foreignAttribute->name]] ?? null;
+            }
+        }
+
+        // Replace all pivot keys with their value
+        foreach ($this->allAttributes($index)->where('type', 'pivot') as $foreignAttribute) {
+            $values = $foreignAttribute->getValues();
+            foreach ($data as $id => $row) {
+                $array_values = [];
+                foreach ($row->{$foreignAttribute->name}->pluck('id')->toArray() as $value_id) {
+                    $array_values[] = $values[$value_id] ?? null;
+                }
+                $data[$id][$foreignAttribute->name] = implode(', ', $array_values);
             }
         }
 
