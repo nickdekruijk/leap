@@ -132,7 +132,7 @@
                 cursor: default;
                 .leap-index-column,
                 TD {
-                    background-color: $grey;
+                    background-color: $grey !important;
                     font-size: 1em;
                     color: $leap-index-row-first-color;
                     box-shadow: inset rgba(black, 0.05) 0 1px 0, inset rgba(black, 0.05) 0 -1px 0;
