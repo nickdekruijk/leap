@@ -24,7 +24,7 @@ class FileManager extends Module
     public array $uploads = [];
     public $chunkSize = 1024 * 1024;
 
-    public $component = 'leap.filemanager';
+    public $component = 'leap.file-manager';
     public $icon = 'fas-folder-tree'; // fas-file-alt far-copy fas-folder-tree
     public $priority = 50;
     protected $default_permissions = [

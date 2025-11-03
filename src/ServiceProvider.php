@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use Livewire\Mechanisms\ComponentRegistry;
 use NickDeKruijk\Leap\Commands\TemplateCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
@@ -32,7 +33,9 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         // Register all leap livewire components.
         foreach (glob(__DIR__ . '/Livewire/*.php') as $file) {
-            Livewire::component('leap.' . strtolower(basename($file, '.php')), 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
+            // convert PascalCase to kebab-case
+            $kebabCase = strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', basename($file, '.php')));
+            Livewire::component('leap.' . $kebabCase, 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
         }
 
         // Register all components in app/Leap directory
