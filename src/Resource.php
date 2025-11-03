@@ -430,6 +430,16 @@ class Resource extends Module
             }
         }
 
+        // Replace all attributes with -> in name with their value from the json column json_unquote(json_extract(`json`, '$."key"'))
+        foreach ($this->allAttributes($index) as $attribute) {
+            if (str_contains($attribute->name, '->')) {
+                list($column, $key) = explode('->', $attribute->name);
+                foreach ($data as $id => $row) {
+                    $data[$id][$attribute->name] = $data[$id]['json_unquote(json_extract(`' . $column . '`, \'$."' . $key . '"\'))'];
+                }
+            }
+        }
+
         // Replace all pivot keys with their value
         foreach ($this->allAttributes($index)->where('type', 'pivot') as $foreignAttribute) {
             $values = $foreignAttribute->getValues();
