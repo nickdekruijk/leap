@@ -12,6 +12,7 @@ return [
     'deleted' => 'deleted',
     'delete_confirm' => 'Are you sure you want to delete this?',
     'downloadCSV' => 'Download CSV',
+    'importCSV' => 'Import CSV',
     'moved' => ':title moved',
     'no_changes' => 'No changes to save',
     'repeat' => 'Repeat',

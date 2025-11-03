@@ -12,6 +12,7 @@ return [
     'deleted' => 'verwijderd',
     'delete_confirm' => 'Weet je zeker dat je dit wilt verwijderen?',
     'downloadCSV' => 'Download CSV',
+    'importCSV' => 'Importeer CSV',
     'moved' => ':title verplaatst',
     'no_changes' => 'Geen wijzigingen om op te slaan',
     'repeat' => 'Herhaal',
