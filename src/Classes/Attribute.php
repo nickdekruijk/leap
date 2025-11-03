@@ -705,11 +705,12 @@ class Attribute
      *
      * Effectively the same as readonly() but might have slight differences in future versions
      * 
+     * @param bool $disabled
      * @return Attribute
      */
-    public function disabled(): Attribute
+    public function disabled(bool $disabled = true): Attribute
     {
-        $this->disabled = true;
+        $this->disabled = $disabled;
         return $this;
     }
 
@@ -718,11 +719,12 @@ class Attribute
      *
      * Effectively the same as disabled() but might have slight differences in future versions
      * 
+     * @param bool $readonly
      * @return Attribute
      */
-    public function readonly(): Attribute
+    public function readonly(bool $readonly = true): Attribute
     {
-        $this->disabled = true;
+        $this->disabled = $readonly;
         return $this;
     }
 
