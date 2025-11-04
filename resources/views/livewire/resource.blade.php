@@ -9,6 +9,9 @@
                 <x-leap::button svg-icon="fas-download" wire:click="downloadCSVfile()" label="leap::resource.downloadCSV" />
             @endisset
         @endcan
+        @if ($this->canSearch())
+            <input x-on:keyup.slash.window="if(document.activeElement.tagName=='BODY') $el.focus()" x-on:keyup.escape.window="$el.blur()" type="search" class="leap-search-input" placeholder="{{ __('leap::resource.search_placeholder') }}" wire:model.live.debounce.500ms="search" />
+        @endif
     </header>
     <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
         @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])

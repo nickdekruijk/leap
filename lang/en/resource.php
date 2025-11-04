@@ -18,5 +18,6 @@ return [
     'repeat' => 'Repeat',
     'save' => 'Save',
     'save_copy' => 'Save as copy',
+    'search_placeholder' => 'Search...',
     'updated' => 'updated',
 ];

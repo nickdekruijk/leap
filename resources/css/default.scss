@@ -99,4 +99,33 @@
         padding: 0 var(--spacing);
         background-color: $leap-header-background-buttons;
     }
+
+    .leap-search-input {
+        margin-left: auto;
+        margin-right: var(--spacing);
+        padding: 6px 10px;
+        border: 1px solid rgba(white, 0.2);
+        color: white;
+        border-radius: 3px;
+        font: inherit;
+        font-size: 16px;
+        background-color: transparent;
+        transition: 0.25s;
+        width: 200px;
+        padding: 4px 6px;
+        @media (max-width: 1024px) {
+            max-width: 80px;
+            font-size: 14px;
+            padding: 2px 4px;
+        }
+
+        &:focus {
+            width: 400px;
+            max-width: 40%;
+        }
+
+        &::placeholder {
+            color: rgba(white, 0.6);
+        }
+    }
 }

@@ -18,5 +18,6 @@ return [
     'repeat' => 'Herhaal',
     'save' => 'Opslaan',
     'save_copy' => 'Opslaan als kopie',
+    'search_placeholder' => 'Zoeken...',
     'updated' => 'bijgewerkt',
 ];

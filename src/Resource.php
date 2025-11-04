@@ -410,6 +410,15 @@ class Resource extends Module
             }
         }
 
+        // Apply search in the resource index
+        if ($this->search && $this->canSearch() && $index) {
+            $data = $data->where(function ($query) use ($index) {
+                foreach ($this->allAttributes($index)->where('searchable') as $attribute) {
+                    $query->orWhere($attribute->name, 'like', '%' . $this->search . '%');
+                }
+            });
+        }
+
         $merge = ['id'];
         if ($this->active) {
             $merge[] = $this->active;
@@ -540,6 +549,37 @@ class Resource extends Module
             }
             fclose($handle);
         }, 200, $headers);
+    }
+
+    /**
+     * Search the resource index
+     *
+     * @var string|null
+     */
+    public string|null $search = null;
+
+    /**
+     * Determine if there are searchable attributes
+     *
+     * @return boolean
+     */
+    public function canSearch(): bool
+    {
+        return $this->allAttributes()->where('searchable')->count() > 0;
+    }
+
+    /**
+     * When search input is updated update index
+     *
+     * @param string $search
+     * @return void
+     */
+    public function updatedSearch(string $search)
+    {
+        if ($search == '') {
+            $this->search = null;
+        }
+        $this->setColumnWidths++;
     }
 
     public function filterBy($attribute, $value)
