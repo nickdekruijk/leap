@@ -2,10 +2,10 @@
     position: fixed;
     z-index: 200;
     right: 20px;
-    top: 10px;
+    top: var(--header-height);
 
     .toast {
-        animation: toast 6s both;
+        animation: toast 5s both;
         width: 200px;
         background-color: $green;
         color: white;
