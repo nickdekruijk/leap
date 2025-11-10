@@ -107,6 +107,14 @@ class Resource extends Module
     public $with = null;
 
     /**
+     * Eager load model with counts for these relationships
+     *
+     * @var array|string|null
+     */
+    #[Locked]
+    public $withCount = null;
+
+    /**
      * Active filters
      *
      * @var array
@@ -395,6 +403,10 @@ class Resource extends Module
         // Eager load relationships
         if ($this->with) {
             $data = $data->with($this->with);
+        }
+        // Eager load relationship counts
+        if ($this->withCount) {
+            $data = $data->withCount($this->withCount);
         }
 
         // Check if data needs to be sorted by a foreign or pivot attribute, in that case we can't use orderBy on the model but manually sort the array later
