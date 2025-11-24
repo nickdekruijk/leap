@@ -3,7 +3,7 @@
 <x-leap::label>
     <select class="leap-select"
         @error($attribute->dataName ?? $name) aria-errormessage="{{ $message }}" aria-invalid="true" @enderror
-        @if ($attribute->disabled ?? false || (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update'))) disabled @endif
+        @if ($attribute->disabled ?? false) disabled @endif
         wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
         {{ $attribute->inputAttributes() }}
         aria-label="@lang($attribute->label ?? ($label ?? $name))"

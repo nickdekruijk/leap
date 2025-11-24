@@ -8,7 +8,7 @@
             <span class="leap-label">{{ $value }}</span>
             <input class="leap-input" type="radio"
                 @error($attribute->dataName ?? $name) aria-errormessage="{{ $message }}" aria-invalid="true" @enderror
-                @if (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update')) disabled @endif
+                @if ($attribute->disabled ?? false) disabled @endif
                 wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
                 value="{{ $key }}"
                 {{ $attribute->inputAttributes() }}

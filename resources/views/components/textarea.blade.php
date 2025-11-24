@@ -9,7 +9,7 @@
             aria-invalid="true"
         @enderror
         placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}"
-        @if (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update')) disabled @endif
+        @if ($attribute->disabled ?? false) disabled @endif
         wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
         {{ $attribute->inputAttributes() }}
         {{ $attributes }}>

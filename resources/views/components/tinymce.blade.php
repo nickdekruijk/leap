@@ -44,7 +44,7 @@
                 aria-invalid="true" 
             @enderror
             placeholder="{{ $placeholder[$attribute->name] ?? $attribute->placeholder }}"
-            @if (auth(config('leap.guard'))->user() && Gate::denies('leap::create') && Gate::denies('leap::update')) disabled @endif
+            @if ($attribute->disabled ?? false) disabled @endif
             {{ $attribute->inputAttributes() }}
             {{ $attributes }}></textarea>
     </div>
