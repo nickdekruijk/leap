@@ -22,4 +22,5 @@ return [
     'update' => 'Bewerken',
     'update_password' => 'Wachtwoord bijwerken',
     'user_roles' => 'Gebruikersrollen',
+    'verification_code' => 'Verificatiecode',
 ];

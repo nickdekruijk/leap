@@ -22,4 +22,5 @@ return [
     'update' => 'Update',
     'update_password' => 'Update Password',
     'user_roles' => 'User Roles',
+    'verification_code' => 'Verification Code',
 ];
