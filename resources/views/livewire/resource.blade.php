@@ -16,7 +16,7 @@
     <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
         @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])
     </div>
-    @livewire('leap.editor')
+    @livewire($this->editor)
     @if ($browse)
         <div class="leap-filebrowser" x-on:keydown.escape.window="$wire.fileBrowser" x-data="{ open: true }">
             <div class="leap-filebrowser-dialog" x-on:click.outside="$wire.fileBrowser" x-trap.inert="open">

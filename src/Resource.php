@@ -165,6 +165,14 @@ class Resource extends Module
     }
 
     /**
+     * The livewire editor component to use
+     *
+     * @var string
+     */
+    #[Locked]
+    public $editor = 'leap.editor';
+
+    /**
      * Close the file browser
      *
      * @return void
