@@ -285,7 +285,7 @@ class Resource extends Module
         }
 
         // Move item to new position within parent
-        foreach ($orderItems->where('id', '!=', $item_id)->orderBy($this->sortable()->name)->get() as $index => $row) {
+        foreach ($orderItems->where('id', '!=', $item_id)->orderBy($this->sortable()->name)->get(['id', $this->sortable()->name]) as $index => $row) {
             $row->{$this->sortable()->name} = $index >= $position ? $index + 1 : $index;
             $row->save();
         }
