@@ -339,9 +339,9 @@ class Resource extends Module
      * Return the attribute details as defined by the Leap module
      *
      * @param string $attribute The attribute name
-     * @return Attribute
+     * @return Attribute|null
      */
-    public function getAttribute(string $attribute): Attribute
+    public function getAttribute(string $attribute): Attribute|null
     {
         return $this->allAttributes()->where('name', $attribute)->first();
     }
