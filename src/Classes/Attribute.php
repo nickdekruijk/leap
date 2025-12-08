@@ -608,12 +608,13 @@ class Attribute
         return $this;
     }
 
-    public function unique(null|string $table = null, null|string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false): Attribute
+    public function unique(null|string $table = null, null|string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false, bool $ignoreOrganizationId = false): Attribute
     {
         $this->validate[] = 'unique:' .
             ($table ?: '{table}') . ',' .
             ($column ?: $this->name) . ',' .
             ($ignoreSelf ? '{id}' : 'NULL') . ',id' .
+            ($ignoreOrganizationId ? ',organization_id,{organization_id}' : '') .
             ($ignoreSoftDeletes ? ',deleted_at,NULL' : '');
         return $this;
     }

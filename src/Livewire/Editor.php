@@ -281,6 +281,7 @@ class Editor extends Component
         // The Attribute class sets some placeholders in the validation rules that needs to be replaced with actual values, this array defines those replacements
         $replace = [
             '{id}' => $id,
+            '{organization_id}' => Context::getHidden('leap.organization.id'),
             '{table}' => $this->getModel()->getTable(),
         ];
 
