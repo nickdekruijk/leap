@@ -44,6 +44,7 @@ class Toasts extends Component
     }
 
     #[On('toast-clear-expired')]
+    #[On('closeEditor')]
     #[On('openEditor')]
     public function clearExpired()
     {
