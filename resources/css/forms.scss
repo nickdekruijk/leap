@@ -197,6 +197,13 @@
         display: flex;
         flex-wrap: wrap;
         gap: calc(var(--spacing) / 3);
+        &[aria-invalid="true"] {
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 3px;
+            padding: 2px;
+            margin: -3px;
+        }
         LABEL {
             position: relative;
             border: 0 none;
@@ -468,6 +475,7 @@
 
     .leap-textarea[aria-invalid="true"],
     .leap-select[aria-invalid="true"],
+    .leap-pivot[aria-invalid="true"],
     .leap-input[aria-invalid="true"] {
         border-color: $leap-color-border-error;
         background-color: rgba($red, 0.05);
