@@ -510,6 +510,26 @@
             opacity: 0.7;
         }
     }
+
+    .leap-table {
+        overflow: scroll;
+        position: absolute;
+        // inset: calc(var(--nav-item-height) + var(--spacing) / 2) var(--spacing) calc(var(--spacing) / 2) var(--spacing);
+        padding: calc(var(--spacing) / 2) var(--spacing);
+        inset: var(--nav-item-height) 0 0;
+
+        .leap-table-row-disabled {
+            opacity: 0.4;
+        }
+        TD {
+            border: 1px solid #ccc;
+            padding: 0.05em 0.25em;
+        }
+        .error {
+            background-color: $red;
+            color: white;
+        }
+    }
 }
 
 BODY:not(.sorting) .leap-files LI {

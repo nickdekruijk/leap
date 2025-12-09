@@ -265,6 +265,7 @@ class Editor extends Component
      * @return void
      */
     #[On('closeEditor')]
+    #[On('openImport')]
     public function close()
     {
         $this->editing = null;

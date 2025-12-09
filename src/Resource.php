@@ -4,17 +4,23 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Livewire\Toasts;
 
 class Resource extends Module
 {
+    use WithFileUploads;
+
     /**
      * The model the module corresponds to.
      *
@@ -254,6 +260,260 @@ class Resource extends Module
             $attributes['data.' . $attribute->name] = $attribute->label;
         }
         return $attributes;
+    }
+
+    /**
+     * When set to true shows the import view
+     *
+     * @var boolean
+     */
+    #[Locked]
+    public bool $importing = false;
+
+    /**
+     * CSV file to use for importing new data
+     *
+     * @var TemporaryUploadedFile|null
+     */
+    public TemporaryUploadedFile|null $importCSV = null;
+
+    /**
+     * Data extracted from the CSV file for importing
+     *
+     * @var array
+     */
+    public array $importData = [];
+
+    public array $importRows = [];
+    public array $importColumns = [];
+    public array $importColumnOptions = [];
+    public array $importErrors = [];
+
+    public int $importColumnCount = 0;
+
+    /**
+     * Handle the uploaded CSV file
+     *
+     * @return void
+     */
+    public function updatedImportCSV()
+    {
+        // Open the import view
+        $this->importing = true;
+
+        $this->handleImportCSV();
+
+        // Close editor in case it was open
+        $this->selectedRow = null;
+        $this->dispatch('closeEditor');
+    }
+
+    public function handleImportCSV()
+    {
+        // Prepare import columns
+        $this->importColumns = [];
+        $this->importColumnOptions = [];
+        $this->importColumnCount = 0;
+        $labels = [];
+        foreach ($this->allowImport['columns'] as $key => $value) {
+            if (!is_string($key) && !is_array($value)) {
+                $key = $value;
+            }
+            $this->importColumnOptions[] = $key;
+            $labels[Str::slug($this->getAttribute($key)->label)] = $key;
+        }
+
+        // Initialize attribute data
+        $attributes = $this->importAttributes()->pluck('name')->toArray();
+        $this->data = $this->getModel()->only($attributes);
+        // Pivot attributes need to be initialized as empty arrays
+        foreach ($this->importAttributes()->where('type', 'pivot') as $attribute) {
+            $this->data[$attribute->name] = [];
+        }
+        // Set default values for attributes that have them
+        foreach ($this->importAttributes()->where('default') as $attribute) {
+            $this->data[$attribute->name] = $attribute->default;
+        }
+
+        // Handle CSV file
+        if ($this->importCSV) {
+            $handle = fopen($this->importCSV->getRealPath(), 'r');
+
+            // Determine the delimiter by checking the first line for ; or ,
+            $firstLine = fgets($handle);
+            $delimiter = Str::contains($firstLine, ';') ? ';' : ',';
+            rewind($handle);
+
+            $this->importData = [];
+            $this->importRows = [];
+            while (($row = fgetcsv($handle, null, $delimiter)) !== false) {
+                $this->importData[] = $row;
+                $this->importRows[] = true;
+                $this->importColumnCount = max($this->importColumnCount ?? 0, count($row));
+            }
+
+            fclose($handle);
+
+            // Reset the file input
+            $this->importCSV = null;
+        }
+
+        // Determine if the first line is a header row by checking if any of the values match the allowed columns
+        foreach ($this->importData[0] as $key => $value) {
+            if (isset($labels[Str::slug($value)])) {
+                $this->importColumns[$key] = $labels[Str::slug($value)];
+            }
+            if (in_array($value, $this->importColumnOptions)) {
+                $this->importColumns[$key] = $value;
+            }
+        }
+        if (count($this->importColumns)) {
+            $this->importRows[0] = false;
+        }
+    }
+
+    // Return the import data selected rows mapped to the selected columns
+    public function importData(): array
+    {
+        $data = [];
+        foreach ($this->importData as $index => $row) {
+            if (!$this->importRows[$index]) {
+                continue;
+            }
+            $line = [];
+            foreach ($this->importColumns as $key => $attribute) {
+                if ($attribute) {
+                    $line[$attribute] = $row[$key] ?? null;
+                }
+            }
+            $data[$index] = $line;
+        }
+        return $data;
+    }
+
+    /**
+     * The model data which can be updated by the editor
+     *
+     * @var array
+     */
+    public array $data;
+
+    public function importAttributes()
+    {
+        $attributes = [];
+        foreach ($this->allowImport['attributes'] as $key => $value) {
+            if (!is_string($key) && !is_array($value)) {
+                $key = $value;
+            }
+            $attributes[] = $this->getAttribute($key);
+        }
+        return collect($attributes);
+    }
+
+    public function import(bool $save = true)
+    {
+        // Reset import errors
+        $this->importErrors = [];
+
+        // Validate import attributes
+        $rules = [];
+        foreach ($this->importAttributes()->whereNotNull('validate') as $attribute) {
+            $rules['data.' . $attribute->name] = $attribute->validate;
+        }
+        $validator = Validator::make(['data' => $this->data], $rules, [], $this->validationAttributes());
+        if ($validator->fails()) {
+            foreach ($validator->messages()->keys() as $fieldKey) {
+                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
+            }
+            $validator->validate();
+            return false;
+        }
+        $this->resetValidation();
+
+        // Determine import data validation rules
+        $rules = [];
+        foreach ($this->allowImport['columns'] as $key => $value) {
+            if (!is_string($key) && !is_array($value)) {
+                $key = $value;
+            }
+            $attr = $this->getAttribute($key);
+            if ($attr->validate) {
+                $rules[$key] = $attr->validate;
+            }
+        }
+
+        $replace = [
+            '{id}' => null,
+            '{organization_id}' => Context::getHidden('leap.organization.id'),
+            '{table}' => $this->getModel()->getTable(),
+        ];
+
+        // Validate import data
+        foreach ($this->importData() as $index => $row) {
+            $rulesWithReplacements = $rules;
+            foreach ($rulesWithReplacements as $attribute => $attributeRules) {
+                foreach ($attributeRules as $key => $rule) {
+                    foreach ($replace as $search => $replaceValue) {
+                        $rulesWithReplacements[$attribute][$key] = str_replace($search, $replaceValue ?: '', $rulesWithReplacements[$attribute][$key]);
+                    }
+                }
+            }
+
+            $validator = Validator::make($row, $rulesWithReplacements, [], $this->validationAttributes());
+            if ($validator->fails()) {
+                foreach ($this->importColumns as $key => $attribute) {
+                    if ($attribute && $validator->errors()->has($attribute)) {
+                        $this->importErrors[$index][$attribute] = $validator->errors()->first($attribute);
+                    }
+                }
+                foreach ($validator->errors()->all() as $messages) {
+                    if (empty($this->importErrors[$index])) {
+                        $this->importErrors[$index] = true;
+                    }
+                    $this->dispatch('toast-error', $messages)->to(Toasts::class);
+                }
+            }
+        }
+
+        if (count($this->importErrors) == 0) {
+            // Import each row
+            foreach ($this->importData() as $index => $row) {
+                // Create new model instance
+                $model = $this->getModel();
+                foreach ($row as $key => $value) {
+                    $model->{$key} = $value;
+                }
+                if ($this->organizationScope && $this->organizationScopeAttribute) {
+                    $model->{$this->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
+                }
+                if ($save) {
+                    $model->save();
+                    // Handle pivot attributes
+                    foreach ($this->importAttributes()->where('type', 'pivot') as $attribute) {
+                        $model->{$attribute->name}()->sync($this->data[$attribute->name]);
+                    }
+                }
+            }
+            $this->dispatch('toast', __('leap::resource.imported', ['count' => count($this->importData())]))->to(Toasts::class);
+        }
+    }
+
+    #[On('openImport')]
+    public function openImport()
+    {
+        $this->importing = true;
+        $this->selectedRow = null;
+    }
+
+    #[On('closeImport')]
+    public function closeImport()
+    {
+        $this->importing = false;
+    }
+
+    public function canImport(): bool
+    {
+        return isset($this->allowImport) && Auth::user()->can(['leap::create', 'leap::update']);
     }
 
     /**

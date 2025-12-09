@@ -1,5 +1,6 @@
 <ul
     class="leap-index-table @if ($this->treeview()) leap-index-treeview @endif"
+    x-on:click="if ($wire.importing) $dispatch('closeImport')"
     @if ($this->sortable() && $this->treeview()) x-sort:config="{ 
         group: {name:'treeview', pull: function(a,b,c,d,e) { return sortGroup } }, 
         fallbackOnBody: true, 

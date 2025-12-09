@@ -1,14 +1,20 @@
-<main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow ? 'leap-editor-open' : ''">
+<main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow || $wire.importing ? 'leap-editor-open' : ''">
     <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
         @can('leap::create')
-            <x-leap::button svg-icon="fas-circle-plus" x-on:click="$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
+            <x-leap::button svg-icon="fas-circle-plus" x-on:click="if ($wire.importing) $dispatch('closeImport');$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
         @endcan
         @can('leap::read')
             @isset($this->downloadCSV)
                 <x-leap::button svg-icon="fas-download" wire:click="downloadCSVfile()" label="leap::resource.downloadCSV" />
             @endisset
         @endcan
+        @if ($this->canImport())
+            @if ($this->allowImport['type'] === 'csv')
+                <x-leap::button svg-icon="fas-file-import" x-on:click="$refs.importCSV.click()" label="leap::resource.importCSV" />
+                <input type="file" wire:model="importCSV" x-ref="importCSV" accept=".csv" style="display:none">
+            @endif
+        @endif
         @if ($this->canSearch())
             <input x-on:keyup.slash.window="if(document.activeElement.tagName=='BODY') $el.focus()" x-on:keyup.escape.window="$el.blur()" type="search" class="leap-search-input" placeholder="{{ __('leap::resource.search_placeholder') }}" wire:model.live.debounce.500ms="search" />
         @endif
@@ -23,6 +29,9 @@
             el.style.top = ($el.scrollTop + $el.querySelector('.leap-buttons').offsetHeight) + 'px';
         })
     })">
+        @if ($this->canImport() && $importing)
+            @include('leap::livewire.resource-import')
+        @endif
         @livewire($this->editor)
     </div>
     @if ($browse)
