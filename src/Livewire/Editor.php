@@ -307,20 +307,6 @@ class Editor extends Component
     }
 
     /**
-     * Return the labels for each attribute for nice validation messages
-     *
-     * @return array
-     */
-    public function validationAttributes(): array
-    {
-        $attributes = [];
-        foreach ($this->attributes() as $attribute) {
-            $attributes['data.' . $attribute->name] = $attribute->label;
-        }
-        return $attributes;
-    }
-
-    /**
      * Move a section to a different position in the array
      *
      * @param string $attribute
@@ -461,7 +447,7 @@ class Editor extends Component
             }
         }
 
-        $validator = Validator::make(['data' => $data], $this->rules($id), [], $this->validationAttributes());
+        $validator = Validator::make(['data' => $data], $this->rules($id), [], $this->parentModule()->validationAttributes());
         if ($validator->fails()) {
             // Show validation errors as toasts
             foreach ($validator->messages()->keys() as $fieldKey) {
@@ -572,7 +558,7 @@ class Editor extends Component
                         $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                     } else {
                         foreach (array_merge($model->getDirty(), $this->mediaUpdated, $this->pivotIsDirty()) as $attribute => $value) {
-                            $this->dispatch('toast', ucfirst($this->validationAttributes()['data.' . explode('.', $attribute)[0]]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                            $this->dispatch('toast', ucfirst($this->parentModule()->validationAttributes()['data.' . explode('.', $attribute)[0]]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
                     $model->save();

@@ -243,6 +243,20 @@ class Resource extends Module
     }
 
     /**
+     * Return the labels for each attribute for nice validation messages
+     *
+     * @return array
+     */
+    public function validationAttributes(): array
+    {
+        $attributes = [];
+        foreach ($this->attributes() as $attribute) {
+            $attributes['data.' . $attribute->name] = $attribute->label;
+        }
+        return $attributes;
+    }
+
+    /**
      * Undocumented function
      *
      * @param integer $parent_id
