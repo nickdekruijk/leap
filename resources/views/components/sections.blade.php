@@ -3,7 +3,7 @@
 <x-leap::label></x-leap::label>
 
 <div class="leap-editor-sections">
-    <ul class="leap-editor-sections" x-sort.ghost="$wire.sortSection('{{ $attribute->name }}', $item, $position); $nextTick(() => console.log($el))" x-sort:config="{ swapThreshold: .5 }">
+    <ul class="leap-editor-sections" x-sort.ghost="$wire.sortSection('{{ $attribute->name }}', $item, $position)" x-sort:config="{ swapThreshold: .5 }">
         @foreach (collect($this->data[$attribute->name])->sortBy('_sort') ?: [] as $index => $sectionContent)
             <li x-sort:item="{{ $index }}" class="leap-editor-section" wire:key="{{ $attribute->name }}-{{ $index }}" x-sort:group="">
                 <label x-sort:handle class="leap-label">
