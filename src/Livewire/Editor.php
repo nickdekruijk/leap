@@ -315,8 +315,10 @@ class Editor extends Component
      * @param integer $position
      * @return void
      */
-    public function sortSection(string $attribute, int $index, int $position)
+    public function sortSection(string $attribute, int|null $index, int $position)
     {
+        // If index is null make it 0 to prevent error when json content doesn't have index keys
+        $index ??= 0;
         // Sort all current data first
         $this->data[$attribute] = collect($this->data[$attribute])->sortBy('_sort')->toArray();
 
