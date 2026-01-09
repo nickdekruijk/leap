@@ -33,7 +33,7 @@ return [
     | browser tab.
     |
     */
-    'title' => '{module} - ' . ucfirst(config('leap.route_prefix')) . ' @ ' . config('app.name'),
+    'title' => '{module} - Admin @ ' . config('app.name'),
 
     /*
     |--------------------------------------------------------------------------
