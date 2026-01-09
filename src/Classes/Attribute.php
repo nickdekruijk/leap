@@ -369,6 +369,19 @@ class Attribute
         return $this;
     }
 
+    private function mergeOptions(string $config, mixed $options): array
+    {
+        $config = config($config);
+        foreach ($options as $key => $option) {
+            if (is_string($key)) {
+                $config[$key] = $option;
+            } elseif (is_array($option)) {
+                $config = array_merge($config, $option);
+            }
+        }
+        return $config;
+    }
+
     /**
      * Make the Attribute a rich text editor input
      * 
@@ -381,18 +394,7 @@ class Attribute
      */
     public function richtext(mixed ...$options): Attribute
     {
-        // Merge options with leap.tinymce.options defaults
-        $this->options = config('leap.tinymce.options');
-        foreach ($options as $key => $option) {
-            if (is_string($key)) {
-                $this->options[$key] = $option;
-            } elseif (is_array($option)) {
-                $this->options = array_merge($this->options, $option);
-            } else {
-                dd($options);
-            }
-        }
-
+        $this->options = self::mergeOptions('leap.tinymce.options', $options);
         $this->input = 'tinymce';
         return $this;
     }
