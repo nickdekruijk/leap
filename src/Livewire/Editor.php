@@ -485,6 +485,9 @@ class Editor extends Component
                 }
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
+            } elseif ($attribute->input == 'ace' && $attribute->options['mode'] == 'ace/mode/json') {
+                $this->data[$attribute->name] = $this->data[$attribute->name] ? json_encode(json_decode($this->data[$attribute->name]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : null;
+                $model->{$attribute->name} = $this->data[$attribute->name];
             } else {
                 if ($attribute->type == 'sections') {
                     // Extra treatment for each section

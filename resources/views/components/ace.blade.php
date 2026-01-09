@@ -12,6 +12,11 @@
         x-init="editor = ace.edit($refs.editor, Object.assign({{ json_encode($attribute->options) }}, {
             value: value || '',
         }));
+        $watch('value', function(newValue) {
+            if (newValue !== editor.getValue()) {
+                editor.setValue(newValue);
+            }
+        });
         editor.on('blur', function(e) {
             value = editor.getValue()
         });">
