@@ -400,6 +400,23 @@ class Attribute
     }
 
     /**
+     * Make the Attribute an Ace code editor input
+     * 
+     * This will enable the Ace code editor for this attribute
+     *
+     * @param mixed ...$options Options to pass to Ace config, will be merged with leap.ace.options config, can be arrays of options or variable-length argument, for example:
+     *                          ->ace(['theme' => 'ace/theme/textmate', 'mode' => 'ace/mode/javascript'])
+     *                          ->ace(theme: 'ace/theme/textmate', mode: 'ace/mode/javascript')
+     * @return Attribute
+     */
+    public function ace(mixed ...$options): Attribute
+    {
+        $this->options = self::mergeOptions('leap.ace.options', $options);
+        $this->input = 'ace';
+        return $this;
+    }
+
+    /**
      * If the attribute should be shown in the index set the priority with ->index(priority)
      *
      * The default priority is 999. The Resource index() method will return all attributes with a priority sorted by priority.

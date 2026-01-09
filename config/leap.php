@@ -309,6 +309,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | ace
+    |--------------------------------------------------------------------------
+    | Ace code editor options like CDN and version to use.
+    | cdn: By default the latest 1.x version.
+    |
+    */
+    'ace' => [
+        'cdn' => 'https://cdn.jsdelivr.net/npm/ace-builds@1/src-min-noconflict/ace.min.js',
+        'options' => [
+            'maxLines' => 10,
+            'minLines' => 2,
+            'mode' => 'ace/mode/json',
+            'theme' => 'ace/theme/eclipse',
+            'wrap' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | tinymce
     |--------------------------------------------------------------------------
     | TinyMCE options like CDN and version to use.
