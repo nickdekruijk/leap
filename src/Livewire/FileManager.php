@@ -641,9 +641,11 @@ class FileManager extends Module
             $size += $this->getStorage()->size($full);
             $time = $this->getStorage()->lastModified($full);
             if (count($this->selectedFiles) == 1 && $this->isBitmap($full)) {
-                // When only one file is selected and it's a bitmap image get the dimensions in pixels
-                $image = Image::read($this->getStorage()->get($full));
-                $dimensions = $image->width() . ' x ' . $image->height();
+                // When only one file is selected, is not empty and it's a bitmap image get the dimensions in pixels
+                if ($fileContents = $this->getStorage()->get($full)) {
+                    $image = Image::read($fileContents);
+                    $dimensions = $image->width() . ' x ' . $image->height();
+                }
             }
             if ($timeMin === null || $time < $timeMin) {
                 $timeMin = $time;
