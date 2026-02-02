@@ -2,11 +2,13 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Toasts extends Component
 {
+    #[Locked]
     public $toasts = [];
 
     #[On('toast-error')]
