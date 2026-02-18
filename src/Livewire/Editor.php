@@ -248,9 +248,7 @@ class Editor extends Component
                         ?->attributes;
 
                     // Make sure all section tinymce input values exist
-                    $tinymceAttributes = collect($sectionAttributes)
-                        ->where('input', 'tinymce');
-
+                    $tinymceAttributes = collect($sectionAttributes)->where('input', 'tinymce');
                     foreach ($tinymceAttributes as $input) {
                         $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                     }
