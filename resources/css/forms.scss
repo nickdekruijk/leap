@@ -114,6 +114,13 @@
             opacity: 1;
             cursor: pointer;
         }
+        &:has(+ .leap-button-add) {
+            padding-right: 0px;
+        }
+        + .leap-button-add {
+            margin-left: -2px;
+            padding-left: 0px;
+        }
     }
     .leap-files-sortable {
         cursor: grab;

@@ -252,6 +252,13 @@ class Editor extends Component
                     foreach ($tinymceAttributes as $input) {
                         $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                     }
+
+                    // Set section titles
+                    $this->data[$sectionAttribute->name][$index]['_title'] = '';
+                    $titles = collect($sectionAttributes)->where('sectionTitle', true);
+                    foreach ($titles as $title) {
+                        $this->data[$sectionAttribute->name][$index]['_title'] .= $this->data[$sectionAttribute->name][$index][$title->name] ?? '';
+                    }
                 }
             }
         }
@@ -339,6 +346,64 @@ class Editor extends Component
         }
 
         $this->setRandomSortSeed();
+    }
+
+    /**
+     * Open or close a section
+     *
+     * @param string $field
+     * @param string $index
+     * @return void
+     */
+    public function toggleSection(string $field, string $index)
+    {
+        $this->data[$field][$index]['_closed'] = !($this->data[$field][$index]['_closed'] ?? false);
+    }
+
+    /**
+     * Open or close all sections
+     *
+     * @param string $field
+     * @param boolean $closed true to close all sections, false to open all sections
+     * @return void
+     */
+    public function toggleAllSections(string $field, bool $closed)
+    {
+        foreach ($this->data[$field] as $index => $section) {
+            $this->data[$field][$index]['_closed'] = $closed;
+        }
+    }
+
+    /**
+     * Determine if a field has open sections
+     *
+     * @param string $field
+     * @return boolean
+     */
+    public function hasOpenSection(string $field): bool
+    {
+        foreach ($this->data[$field] as $index => $section) {
+            if (empty($section['_closed'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine if a field has closed sections
+     *
+     * @param string $field
+     * @return boolean
+     */
+    public function hasClosedSection(string $field): bool
+    {
+        foreach ($this->data[$field] as $index => $section) {
+            if (!empty($section['_closed'])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

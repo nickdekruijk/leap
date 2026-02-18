@@ -37,6 +37,7 @@ class Attribute
     public bool $filterable = false;
     public mixed $default = null;
     public bool $hidden = false;
+    public bool $sectionTitle = false;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -782,6 +783,18 @@ class Attribute
     {
         $this->hidden = $hidden;
         $this->accessor($this->name);
+        return $this;
+    }
+
+    /**
+     * Make attribute a section title, when section is collapsed the title will be shown
+     *
+     * @param boolean $sectionTitle
+     * @return Attribute
+     */
+    public function sectionTitle($sectionTitle = true): Attribute
+    {
+        $this->sectionTitle = $sectionTitle;
         return $this;
     }
 
