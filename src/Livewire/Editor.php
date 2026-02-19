@@ -382,7 +382,7 @@ class Editor extends Component
      */
     public function hasOpenSection(string $field): bool
     {
-        foreach ($this->data[$field] as $index => $section) {
+        foreach ($this->data[$field] ?? [] as $index => $section) {
             if (empty($section['_closed'])) {
                 return true;
             }
@@ -398,7 +398,7 @@ class Editor extends Component
      */
     public function hasClosedSection(string $field): bool
     {
-        foreach ($this->data[$field] as $index => $section) {
+        foreach ($this->data[$field] ?? [] as $index => $section) {
             if (!empty($section['_closed'])) {
                 return true;
             }
