@@ -38,6 +38,7 @@ class Attribute
     public mixed $default = null;
     public bool $hidden = false;
     public bool $sectionTitle = false;
+    public bool $raw = false;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -806,5 +807,17 @@ class Attribute
     public function toArray(): array
     {
         return get_object_vars($this);
+    }
+
+    /**
+     * Use raw value from the model without any casting or mutators when editing
+     *
+     * @param boolean $raw
+     * @return Attribute
+     */
+    public function raw(bool $raw = true): Attribute
+    {
+        $this->raw = $raw;
+        return $this;
     }
 }

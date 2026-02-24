@@ -181,6 +181,11 @@ class Editor extends Component
         // Get the model data
         $this->data = $this->getModel($id)->only($attributes);
 
+        // Get raw value from the model without any casting or mutators when editing
+        foreach ($this->attributes()->where('raw') as $attribute) {
+            $this->data[$attribute->name] = $this->getModel($id)->getRawOriginal($attribute->name);
+        }
+
         // Reformat date attributes
         foreach ($this->attributes()->where('type', 'date') as $attribute) {
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD');
