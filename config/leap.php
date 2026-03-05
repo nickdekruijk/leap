@@ -357,6 +357,7 @@ return [
             'license_key' => 'gpl',
             // 'link_default_target' => '_blank',
             'menubar' => false,
+            // 'paste_as_text' => true,
             'plugins' => 'accordion anchor autolink autoresize charmap code emoticons image link lists media searchreplace table visualblocks wordcount', // autosave codesample directionality fullscreen help preview visualchars importcss
             'promotion' => false,
             // 'skin' => 'oxide-dark',
