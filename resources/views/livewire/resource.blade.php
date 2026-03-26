@@ -19,7 +19,7 @@
             <input x-on:keyup.slash.window="if(document.activeElement.tagName=='BODY') $el.focus()" x-on:keyup.escape.window="$el.blur()" type="search" class="leap-search-input" placeholder="{{ __('leap::resource.search_placeholder') }}" wire:model.live.debounce.500ms="search" />
         @endif
     </header>
-    <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el);$watch('$wire.setColumnWidths', () => $nextTick(() => setColumnWidths($el)))" @endif>
+    <div class="leap-index" @if ($this->treeview()) x-data="{ sortGroup: false }" x-init="window.setColumnWidths($el)" x-on:recalculate-columns.window="$nextTick(() => setColumnWidths($el))" @endif>
         @include('leap::livewire.resource-index', ['parent_id' => null, 'depth' => 0])
     </div>
     <div class="leap-editor"

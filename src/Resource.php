@@ -97,14 +97,6 @@ class Resource extends Module
     public array|false $translatable;
 
     /**
-     * Update this to recalculate the column widths
-     *
-     * @var integer
-     */
-    #[Locked]
-    public int $setColumnWidths = 0;
-
-    /**
      * Eager load model with these relationships
      *
      * @var array|string|null
@@ -189,7 +181,7 @@ class Resource extends Module
     public function closeBrowser()
     {
         $this->browse = false;
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
     }
 
     /**
@@ -213,7 +205,7 @@ class Resource extends Module
             $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
         }
 
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
     }
 
     /**
@@ -568,7 +560,7 @@ class Resource extends Module
 
         $this->dispatch('toast', __('leap::resource.moved', ['title' => $item->{$this->allAttributes()->first()->name}]))->to(Toasts::class);
 
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
     }
 
     /**
@@ -648,7 +640,7 @@ class Resource extends Module
             $this->orderDesc = false;
         }
 
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
     }
 
     /**
@@ -784,7 +776,7 @@ class Resource extends Module
     #[On('updateIndex')]
     public function updateIndex(int|null $id = null)
     {
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
         $this->selectedRow = $id;
     }
 
@@ -873,7 +865,7 @@ class Resource extends Module
         if ($search == '') {
             $this->search = null;
         }
-        $this->setColumnWidths++;
+        $this->dispatch('recalculate-columns');
     }
 
     public function filterBy($attribute, $value)
