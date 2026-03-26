@@ -41,12 +41,19 @@ class FileManager extends Module
     public bool $editingFile = false;
     public string|null $newFileName;
 
+    public string $viewMode = 'list';
+
     #[Locked]
     public array|false $browse = false;
 
     public function __construct()
     {
         $this->title = __('leap::filemanager.title');
+    }
+
+    public function toggleViewMode(): void
+    {
+        $this->viewMode = $this->viewMode === 'grid' ? 'list' : 'grid';
     }
 
     #[Computed]

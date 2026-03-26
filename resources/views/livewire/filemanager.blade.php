@@ -37,7 +37,7 @@
             x-on:drop.prevent="dropping = false; uploadFiles($event.dataTransfer)"
         @endcan>
         @foreach ($this->columns as $depth => $directory)
-            <table class="leap-index-table">
+            <table class="leap-index-table @if ($depth == count($openFolders) && $viewMode === 'grid') leap-index-gridview @endif">
                 <tr class="leap-index-header">
                     <th colspan="2">
                         <div class="leap-buttons">
@@ -50,7 +50,9 @@
                                         @svg('fas-upload', 'svg-icon')
                                         <span>@lang('Upload') <small>(max {{ $this->humanFileSize($this->maxUploadSize(), 0) }})</small></span>
                                     </button>
-                                @endcan
+                                @endcan <button wire:click="toggleViewMode" class="leap-button">
+                                    @svg($viewMode === 'grid' ? 'fas-list' : 'fas-th', 'svg-icon')
+                                </button>
                             @endif
                             @if ($depth > 0)
                                 @can('leap::delete')
@@ -86,23 +88,50 @@
                         <td></td>
                     </tr>
                 @endif
-                @foreach ($directory['folders'] as $name => $size)
-                    <tr wire:click="openDirectory('{{ urlencode($name) }}',{{ $depth + 1 }})" class="leap-index-row @if (@$openFolders[$depth + 1] == $name) leap-index-row-selected @endif">
-                        <td><button class="button-link">@svg('fas-folder' . ($openFolders[$depth] ?? false == $name ? '-open' : ''), 'svg-icon') {{ $name }}</button></td>
-                        <td align="right">{{ $size }}</td>
-                    </tr>
-                @endforeach
-                @foreach ($directory['files'] as $name => $size)
-                    <tr x-on:click="$wire.selectFile('{{ urlencode($name) }}',{{ $depth }},window.event.altKey||window.event.metaKey,window.event.shiftKey)" @if ($browse) wire:dblclick="selectBrowsedFiles" @endif class="leap-index-row @if ($depth == count($openFolders) && in_array($name, $selectedFiles)) leap-index-row-selected @endif">
-                        <td>
-                            <button class="button-link">
-                                @svg($this->fileIcon($name), 'svg-icon')
-                                {{ $name }}
-                            </button>
+                @if ($depth == count($openFolders) && $viewMode === 'grid')
+                    <tr class="leap-index-grid-row">
+                        <td colspan="2">
+                            <div class="leap-index-grid">
+                                @foreach ($directory['folders'] as $name => $size)
+                                    <div wire:click="openDirectory('{{ urlencode($name) }}', {{ $depth + 1 }})" class="leap-index-grid-item leap-index-grid-folder @if (@$openFolders[$depth + 1] == $name) leap-index-row-selected @endif">
+                                        <div class="leap-index-grid-thumbnail">@svg('fas-folder', 'svg-icon')</div>
+                                        <span>{{ $name }}</span>
+                                    </div>
+                                @endforeach
+                                @foreach ($directory['files'] as $name => $size)
+                                    <div x-on:click="$wire.selectFile('{{ urlencode($name) }}', {{ $depth }}, window.event.altKey||window.event.metaKey, window.event.shiftKey)" @if ($browse) wire:dblclick="selectBrowsedFiles" @endif class="leap-index-grid-item @if (in_array($name, $selectedFiles)) leap-index-row-selected @endif">
+                                        <div class="leap-index-grid-thumbnail">
+                                            @if ($this->isImage($name))
+                                                <img loading="lazy" src="{{ $this->downloadUrl($name) }}" alt="">
+                                            @else
+                                                @svg($this->fileIcon($name), 'svg-icon')
+                                            @endif
+                                        </div>
+                                        <span>{{ $name }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
                         </td>
-                        <td align="right">{{ $size }}</td>
                     </tr>
-                @endforeach
+                @else
+                    @foreach ($directory['folders'] as $name => $size)
+                        <tr wire:click="openDirectory('{{ urlencode($name) }}',{{ $depth + 1 }})" class="leap-index-row @if (@$openFolders[$depth + 1] == $name) leap-index-row-selected @endif">
+                            <td><button class="button-link">@svg('fas-folder' . ($openFolders[$depth] ?? false == $name ? '-open' : ''), 'svg-icon') {{ $name }}</button></td>
+                            <td align="right">{{ $size }}</td>
+                        </tr>
+                    @endforeach
+                    @foreach ($directory['files'] as $name => $size)
+                        <tr x-on:click="$wire.selectFile('{{ urlencode($name) }}',{{ $depth }},window.event.altKey||window.event.metaKey,window.event.shiftKey)" @if ($browse) wire:dblclick="selectBrowsedFiles" @endif class="leap-index-row @if ($depth == count($openFolders) && in_array($name, $selectedFiles)) leap-index-row-selected @endif">
+                            <td>
+                                <button class="button-link">
+                                    @svg($this->fileIcon($name), 'svg-icon')
+                                    {{ $name }}
+                                </button>
+                            </td>
+                            <td align="right">{{ $size }}</td>
+                        </tr>
+                    @endforeach
+                @endif
             </table>
         @endforeach
         @if ($selectedFiles)
