@@ -32,7 +32,9 @@
         @if ($this->canImport() && $importing)
             @include('leap::livewire.resource-import')
         @endif
-        @livewire($this->editor)
+        <div wire:ignore>
+            @livewire($this->editor)
+        </div>
     </div>
     @if ($browse)
         <div class="leap-filebrowser" x-on:keydown.escape.window="$wire.fileBrowser" x-data="{ open: true }">
