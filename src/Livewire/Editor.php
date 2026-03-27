@@ -25,51 +25,44 @@ class Editor extends Component
 
     /**
      * The id of the row currently being edited, also toggles editor
-     *
-     * @var integer
      */
     #[Locked]
     public ?int $editing;
 
     /**
      * The model data which can be updated by the editor
-     *
-     * @var array
      */
     public array $data;
 
     /**
      * The attribute placeholders will be overruled by these and will be the default value when the input is empty
-     *
-     * @var array
      */
     public array $placeholder = [];
 
     /**
      * The name of the parent Livewire component
-     * 
-     * The editor uses this to determine the model and attributes. This will be encrypted to prevent leaking sensitive class name
      *
-     * @var string
+     * The editor uses this to determine the model and attributes. This will be encrypted to prevent leaking sensitive class name
      */
     #[Locked]
     public string $parentModuleEncrypted;
 
     /**
      * Keep track of updated media attributes
-     *
-     * @var array
      */
     public array $mediaUpdated = [];
 
     /**
      * A random number to append to some input elements to keep them unique after each sorting action
-     * 
-     * Mainly used as a workaround for tinymce editor issues after section sorting and deleting but causes flashing of the sections, looking for a more solid solution
      *
-     * @var integer
+     * Mainly used as a workaround for tinymce editor issues after section sorting and deleting but causes flashing of the sections, looking for a more solid solution
      */
     public int $randomSortSeed;
+
+    /**
+     * Cached parent module instance to avoid repeated decryption and instantiation
+     */
+    private ?Component $parentModuleInstance = null;
 
     /**
      * Generate a new random sort seed number
@@ -83,19 +76,14 @@ class Editor extends Component
 
     /**
      * Returns the parent Livewire component
-     *
-     * @return Component
      */
     private function parentModule(): Component
     {
-        $decrypted = Crypt::decryptString($this->parentModuleEncrypted);
-        return new $decrypted;
+        return $this->parentModuleInstance ??= new (Context::getHidden('leap.module'));
     }
 
     /**
      * Return the model attributes to show in the editor
-     *
-     * @return Collection
      */
     public function attributes(): Collection
     {
@@ -107,10 +95,9 @@ class Editor extends Component
     }
 
     /**
-     * Return a model instance 
+     * Return a model instance
      *
      * @param [type] $id
-     * @return Model
      */
     private function getModel($id = null): Model
     {
@@ -121,28 +108,27 @@ class Editor extends Component
             // id is passed, return the model with data
             $model = $model->findOrFail($id);
             abort_if($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute && $model->{$this->parentModule()->organizationScopeAttribute} != Context::getHidden('leap.organization.id'), 404);
+
             return $model;
         } else {
             // New model, set default attribute values if provided
             foreach ($this->attributes()->where('default') as $default) {
                 $model->{$default->name} = $default->default;
             }
+
             return $model;
         }
     }
 
     /**
      * Return the relationship pivot data for the given attribute
-     *
-     * @param Attribute $attribute
-     * @return array
      */
     public function pivotData(Attribute $attribute): array
     {
         return $this->getModel($this->editing)->{$attribute->name}->pluck('id')->toArray();
     }
 
-    public function pivotIsDirty(Attribute|null $attribute = null): array
+    public function pivotIsDirty(?Attribute $attribute = null): array
     {
         $dirty = [];
         if ($attribute) {
@@ -155,13 +141,14 @@ class Editor extends Component
                 $dirty[$attribute->name] = $attribute->name;
             }
         }
+
         return $dirty;
     }
 
     /**
      * Show the editor for the given id
      *
-     * @param int $id the id of the Model to update
+     * @param  int  $id  the id of the Model to update
      * @return void
      */
     #[On('openEditor')]
@@ -179,11 +166,12 @@ class Editor extends Component
         $attributes = $this->attributes()->pluck('name')->toArray();
 
         // Get the model data
-        $this->data = $this->getModel($id)->only($attributes);
+        $model = $this->getModel($id);
+        $this->data = $model->only($attributes);
 
         // Get raw value from the model without any casting or mutators when editing
         foreach ($this->attributes()->where('raw') as $attribute) {
-            $this->data[$attribute->name] = $this->getModel($id)->getRawOriginal($attribute->name);
+            $this->data[$attribute->name] = $model->getRawOriginal($attribute->name);
         }
 
         // Reformat date attributes
@@ -211,17 +199,17 @@ class Editor extends Component
         }
 
         // Get the media attributes data
-        $allMedia = $this->getModel($id)
-            ->morphToMany(Media::class, 'mediable', config('leap.table_prefix') . 'mediables')
+        $allMedia = $model
+            ->morphToMany(Media::class, 'mediable', config('leap.table_prefix').'mediables')
             ->withPivot('sort', 'mediable_attribute')
-            ->orderBy(config('leap.table_prefix') . 'mediables.sort');
+            ->orderBy(config('leap.table_prefix').'mediables.sort');
         foreach ($allMedia->get() as $media) {
             $this->data[$media->pivot->mediable_attribute][] = $media->id;
         }
 
         // Get pivot data
         foreach ($this->attributes()->where('type', 'pivot') as $attribute) {
-            $this->data[$attribute->name] = $this->pivotData($attribute, $id);
+            $this->data[$attribute->name] = $model->{$attribute->name}->pluck('id')->toArray();
         }
 
         $this->checkSectionValues();
@@ -284,10 +272,9 @@ class Editor extends Component
     /**
      * Return the validation rules from the attributes
      *
-     * @param integer|null $id the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
-     * @return array
+     * @param  int|null  $id  the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
      */
-    public function rules(int|null $id = null): array
+    public function rules(?int $id = null): array
     {
         // The Attribute class sets some placeholders in the validation rules that needs to be replaced with actual values, this array defines those replacements
         $replace = [
@@ -304,13 +291,13 @@ class Editor extends Component
                 // Replace placeholders
                 foreach ($replace as $old => $new) {
                     foreach ($attribute->validate as $key => $value) {
-                        if (!is_object($value)) {
+                        if (! is_object($value)) {
                             $attribute->validate[$key] = str_replace($old, $new ?: '', $value);
                         }
                     }
                 }
                 // Add the validation rule
-                $rules['data.' . $attribute->name] = $attribute->validate;
+                $rules['data.'.$attribute->name] = $attribute->validate;
             }
         }
 
@@ -320,12 +307,9 @@ class Editor extends Component
     /**
      * Move a section to a different position in the array
      *
-     * @param string $attribute
-     * @param integer $index
-     * @param integer $position
      * @return void
      */
-    public function sortSection(string $attribute, int|null $index, int $position)
+    public function sortSection(string $attribute, ?int $index, int $position)
     {
         // Make sure index is not null to prevent error when json content doesn't have index keys
         $index ??= 0;
@@ -356,20 +340,17 @@ class Editor extends Component
     /**
      * Open or close a section
      *
-     * @param string $field
-     * @param string $index
      * @return void
      */
     public function toggleSection(string $field, string $index)
     {
-        $this->data[$field][$index]['_closed'] = !($this->data[$field][$index]['_closed'] ?? false);
+        $this->data[$field][$index]['_closed'] = ! ($this->data[$field][$index]['_closed'] ?? false);
     }
 
     /**
      * Open or close all sections
      *
-     * @param string $field
-     * @param boolean $closed true to close all sections, false to open all sections
+     * @param  bool  $closed  true to close all sections, false to open all sections
      * @return void
      */
     public function toggleAllSections(string $field, bool $closed)
@@ -381,9 +362,6 @@ class Editor extends Component
 
     /**
      * Determine if a field has open sections
-     *
-     * @param string $field
-     * @return boolean
      */
     public function hasOpenSection(string $field): bool
     {
@@ -392,30 +370,27 @@ class Editor extends Component
                 return true;
             }
         }
+
         return false;
     }
 
     /**
      * Determine if a field has closed sections
-     *
-     * @param string $field
-     * @return boolean
      */
     public function hasClosedSection(string $field): bool
     {
         foreach ($this->data[$field] ?? [] as $index => $section) {
-            if (!empty($section['_closed'])) {
+            if (! empty($section['_closed'])) {
                 return true;
             }
         }
+
         return false;
     }
 
     /**
-     * Remove a section 
+     * Remove a section
      *
-     * @param string $field
-     * @param string $index
      * @return void
      */
     public function removeSection(string $field, string $index)
@@ -423,7 +398,7 @@ class Editor extends Component
         unset($this->data[$field][$index]);
 
         // Delete section media from data
-        $prefix = $field . '.' . $index . '.';
+        $prefix = $field.'.'.$index.'.';
         foreach ($this->data as $key => $value) {
             if (str_starts_with($key, $prefix)) {
                 unset($this->data[$key]);
@@ -437,8 +412,6 @@ class Editor extends Component
     /**
      * Add a new section
      *
-     * @param string $field
-     * @param string $name
      * @return void
      */
     public function addSection(string $field, string $name)
@@ -471,15 +444,16 @@ class Editor extends Component
         $this->checkSectionValues();
 
         // Reset the :add field
-        $this->data[substr($field, 5) . ':add'] = null;
+        $this->data[substr($field, 5).':add'] = null;
     }
 
     public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
     {
         $newAttribute = clone $sectionAttribute;
-        $newAttribute->dataName = 'data.' . $name . '.' . $index . '.' . $sectionAttribute->name;
-        $newAttribute->name = $name . '.' . $index . '.' . $sectionAttribute->name;
+        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name;
+        $newAttribute->name = $name.'.'.$index.'.'.$sectionAttribute->name;
         $newAttribute->sectionName = $sectionName;
+
         return $newAttribute;
     }
 
@@ -506,10 +480,9 @@ class Editor extends Component
     /**
      * Check if the data is valid, if not show validation error and toasts
      *
-     * @param integer|null $id the id of the model to update or null if creating, passed to the rules method to replace {id} in rules (usualy the unique rule)
-     * @return boolean
+     * @param  int|null  $id  the id of the model to update or null if creating, passed to the rules method to replace {id} in rules (usualy the unique rule)
      */
-    public function isValid(int|null $id = null): bool
+    public function isValid(?int $id = null): bool
     {
         // Replace empty values with placeholders if present in temporary variable
         $data = $this->data;
@@ -527,11 +500,13 @@ class Editor extends Component
             }
             // Show validation errors
             $validator->validate();
+
             return false;
         } else {
             // Validation passed so use data from temporary variable
             $this->data = $data;
             $this->resetValidation();
+
             return true;
         }
     }
@@ -540,7 +515,7 @@ class Editor extends Component
     {
         // Update each attribute
         foreach ($this->attributes() as $attribute) {
-            if ($attribute->type == 'password' && !$this->data[$attribute->name]) {
+            if ($attribute->type == 'password' && ! $this->data[$attribute->name]) {
                 // Ignore empty passwords
             } elseif ($attribute->type == 'media') {
                 // Ignore media files
@@ -566,13 +541,12 @@ class Editor extends Component
                             $this->data[$attribute->name][$key]['_view'] = $view;
                         }
                         // Set empty values to null
-                        $this->data[$attribute->name][$key] = array_map(fn($value) => $value ?: null, $this->data[$attribute->name][$key]);
+                        $this->data[$attribute->name][$key] = array_map(fn ($value) => $value ?: null, $this->data[$attribute->name][$key]);
                     }
                 }
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
             }
         }
-        // dd($this->data, $model->toArray());
     }
 
     public function syncMedia(Model $model)
@@ -625,15 +599,15 @@ class Editor extends Component
                     $this->syncPivot($model);
 
                     $this->log('create', ['id' => $model->id]);
-                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
+                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.created'))->to(Toasts::class);
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
                     if (count($model->getDirty()) + count($this->mediaUpdated) + count($this->pivotIsDirty()) > 3) {
-                        $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated) . ' ' . __('leap::resource.columns') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                        $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated).' '.__('leap::resource.columns').' '.__('leap::resource.updated'))->to(Toasts::class);
                     } else {
                         foreach (array_merge($model->getDirty(), $this->mediaUpdated, $this->pivotIsDirty()) as $attribute => $value) {
-                            $this->dispatch('toast', ucfirst($this->parentModule()->validationAttributes()['data.' . explode('.', $attribute)[0]]) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                            $this->dispatch('toast', ucfirst($this->parentModule()->validationAttributes()['data.'.explode('.', $attribute)[0]]).' '.__('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
                     $model->save();
@@ -681,7 +655,7 @@ class Editor extends Component
                         if (isset($section['_name'])) {
                             // The code below needs some improvements for readability
                             foreach (collect(collect($sectionAttribute->sections)->where('name', $section['_name'])->first()?->attributes)->where('input', 'media') as $input) {
-                                $this->mediaUpdated[] = $sectionAttribute->name . '.' . $index . '.' . $input->name;
+                                $this->mediaUpdated[] = $sectionAttribute->name.'.'.$index.'.'.$input->name;
                             }
                         }
                     }
@@ -691,10 +665,10 @@ class Editor extends Component
             $this->syncMedia($model);
             $this->syncPivot($model);
 
-            $this->log('create', ['clone' => $this->editing . ' -> ' . $model->id]);
+            $this->log('create', ['clone' => $this->editing.' -> '.$model->id]);
             // Force reload of editor data
             $this->openEditor($model->id);
-            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.created'))->to(Toasts::class);
+            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.created'))->to(Toasts::class);
             $this->dispatch('updateIndex', $model->id);
         }
     }
@@ -708,7 +682,7 @@ class Editor extends Component
     {
         Leap::validatePermission('delete');
         $model = $this->getModel($this->editing);
-        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name] . ' (' . $model->id . ') ' . __('leap::resource.deleted'))->to(Toasts::class);
+        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.deleted'))->to(Toasts::class);
         $this->log('delete', ['id' => $this->editing]);
         $model->delete();
         $this->editing = null;
@@ -724,7 +698,7 @@ class Editor extends Component
     #[On('selectBrowsedFiles')]
     public function selectBrowsedFiles(string $attribute, array $files)
     {
-        $this->data[$attribute] = trim($this->data[$attribute] . PHP_EOL . implode(PHP_EOL, $files));
+        $this->data[$attribute] = trim($this->data[$attribute].PHP_EOL.implode(PHP_EOL, $files));
     }
 
     /**
@@ -771,14 +745,14 @@ class Editor extends Component
         }
     }
 
-    public function media(string $attribute)
+    public function media(string $attribute): array
     {
-        $media = Media::find($this->data[$attribute]);
+        $media = Media::find($this->data[$attribute])->keyBy('id');
 
         $return = [];
-        foreach ($this->data[$attribute] as $sort => $id) {
-            if ($media->where('id', $id)->first()) {
-                $return[] = $media->where('id', $id)->first();
+        foreach ($this->data[$attribute] as $id) {
+            if ($media->has($id)) {
+                $return[] = $media->get($id);
             }
         }
 

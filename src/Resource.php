@@ -230,14 +230,18 @@ class Resource extends Module
         return false;
     }
 
+    private Attribute|false|null $sortableCache = null;
+
+    private Attribute|false|null $treeviewCache = null;
+
     public function sortable(): Attribute|false
     {
-        return $this->allAttributes()->where('type', 'sortable')->first() ?: false;
+        return $this->sortableCache ??= ($this->allAttributes()->where('type', 'sortable')->first() ?: false);
     }
 
     public function treeview(): Attribute|false
     {
-        return $this->allAttributes()->where('type', 'tree')->first() ?: false;
+        return $this->treeviewCache ??= ($this->allAttributes()->where('type', 'tree')->first() ?: false);
     }
 
     /**
