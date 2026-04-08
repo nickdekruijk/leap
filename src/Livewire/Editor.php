@@ -226,6 +226,9 @@ class Editor extends Component
     public function checkSectionValues()
     {
         foreach ($this->attributes()->where('type', 'sections') as $sectionAttribute) {
+            // Initialize the :add key so wire:model.live resolves correctly on first interaction
+            $this->data[$sectionAttribute->name.':add'] ??= null;
+
             if ($this->data[$sectionAttribute->name]) {
                 foreach ($this->data[$sectionAttribute->name] as $index => $section) {
                     // Make sure _name is set
