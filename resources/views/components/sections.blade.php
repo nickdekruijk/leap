@@ -14,10 +14,9 @@
             <li x-sort:item="{{ $index }}" class="leap-editor-section" wire:key="{{ $attribute->name }}-{{ $index }}" x-sort:group="">
                 <label x-sort:handle class="leap-label" wire:click="toggleSection('{{ $attribute->name }}', {{ $index }})">
                     <span class="leap-label">
-                        @if (empty($sectionContent['_closed']) || empty($sectionContent['_title']))
-                            {{ ($section = collect($attribute->sections)->where('name', $sectionContent['_name'])->first())?->label ?: $sectionContent['_name'] }}
-                        @else
-                            {{ $sectionContent['_title'] }}
+                        {{ ($section = collect($attribute->sections)->where('name', $sectionContent['_name'])->first())?->label ?: $sectionContent['_name'] }}
+                        @if (isset($sectionContent['_title']) && !empty($sectionContent['_closed']))
+                            <span class="leap-label-sub">{{ $sectionContent['_title'] }}</span>
                         @endif
                     </span>
                     @svg('fas-arrows-alt-v', 'svg-icon')
