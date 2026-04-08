@@ -15,11 +15,11 @@
                 <label x-sort:handle class="leap-label" wire:click="toggleSection('{{ $attribute->name }}', {{ $index }})">
                     <span class="leap-label">
                         {{ ($section = collect($attribute->sections)->where('name', $sectionContent['_name'])->first())?->label ?: $sectionContent['_name'] }}
+                        @svg('fas-arrows-alt-v', 'svg-icon')
                         @if (isset($sectionContent['_title']) && !empty($sectionContent['_closed']))
                             <span class="leap-label-sub">{{ $sectionContent['_title'] }}</span>
                         @endif
                     </span>
-                    @svg('fas-arrows-alt-v', 'svg-icon')
                 </label>
                 @can('leap::delete')
                     <x-leap::button svg-icon="far-trash-alt" wire:click="removeSection('{{ $attribute->name }}', {{ $index }})" wire:confirm="{{ __('leap::resource.delete_confirm') }}" label="leap::resource.delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
