@@ -250,11 +250,12 @@ class Editor extends Component
                     }
 
                     // Set section titles
-                    $this->data[$sectionAttribute->name][$index]['_title'] = '';
-                    $titles = collect($sectionAttributes)->where('sectionTitle', true);
-                    foreach ($titles as $title) {
-                        $this->data[$sectionAttribute->name][$index]['_title'] .= $this->data[$sectionAttribute->name][$index][$title->name] ?? '';
-                    }
+                    $sectionData = &$this->data[$sectionAttribute->name][$index];
+                    $sectionData['_title'] = collect($sectionAttributes)
+                        ->where('sectionTitle', true)
+                        ->map(fn ($title) => strip_tags($sectionData[$title->name] ?? ''))
+                        ->filter()
+                        ->implode(' - ');
                 }
             }
         }
