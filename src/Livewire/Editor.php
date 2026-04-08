@@ -540,8 +540,8 @@ class Editor extends Component
                         if ($view) {
                             $this->data[$attribute->name][$key]['_view'] = $view;
                         }
-                        // Set empty values to null
-                        $this->data[$attribute->name][$key] = array_map(fn ($value) => $value ?: null, $this->data[$attribute->name][$key]);
+                        // Set empty values to null (use strict check to preserve boolean false)
+                        $this->data[$attribute->name][$key] = array_map(fn ($value) => $value === '' || $value === [] ? null : $value, $this->data[$attribute->name][$key]);
                     }
                 }
                 $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);

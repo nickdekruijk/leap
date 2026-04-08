@@ -126,6 +126,7 @@ class Attribute
     public function checkbox(): Attribute
     {
         $this->type = 'checkbox';
+        $this->wire = 'live';
         return $this;
     }
 
@@ -140,6 +141,7 @@ class Attribute
     {
         $this->type = 'checkbox';
         $this->role = 'switch';
+        $this->wire = 'live';
         return $this;
     }
 
@@ -155,6 +157,7 @@ class Attribute
     {
         $this->options['group'] = $group;
         $this->input = 'radio';
+        $this->wire = 'live';
         return $this;
     }
 
@@ -168,6 +171,7 @@ class Attribute
     public function select(): Attribute
     {
         $this->input = 'select';
+        $this->wire = 'live';
         return $this;
     }
 
@@ -313,6 +317,7 @@ class Attribute
     {
         $this->type = 'foreign';
         $this->input = 'select';
+        $this->wire = 'live';
 
         // Set model and id column based on column name, e.g. user_id will make the model App\Models\User referenced by id
         $this->options['model'] = $model ?: 'App\\Models\\' . ucfirst(explode('_', $this->name)[0]);
