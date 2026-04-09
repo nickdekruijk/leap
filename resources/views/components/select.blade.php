@@ -6,7 +6,7 @@
         @if ($attribute->disabled ?? false) disabled @endif
         wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
         {{ $attribute->inputAttributes() }}
-        aria-label="@lang($attribute->label ?? ($label ?? $name))"
+        aria-label="@lang($attribute->label ?? ($label ?? ($name ?? '')))"
         {{ $attributes }}>
         @foreach ($attribute->getValues() as $key => $value)
             <option value="{{ $key ?? '' }}">{{ $value }}</option>
