@@ -8,11 +8,8 @@
         {{ $attribute->inputAttributes() }}
         aria-label="@lang($attribute->label ?? ($label ?? $name))"
         {{ $attributes }}>
-        @if ($attribute->placeholder)
-            <option value="">{{ $attribute->placeholder }}</option>
-        @endif
         @foreach ($attribute->getValues() as $key => $value)
-            <option value="{{ $key }}">{{ $value }}</option>
+            <option value="{{ $key ?? '' }}">{{ $value }}</option>
         @endforeach
     </select>
 </x-leap::label>
