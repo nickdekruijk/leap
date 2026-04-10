@@ -156,7 +156,8 @@ class Resource extends Module
      */
     public function indexGroupChar(Model $row, Attribute $attribute): string
     {
-        $value = $this->hasTranslation($attribute) ? $row[$this->orderBy][app()->getLocale()] ?? reset($row[$this->orderBy]) : $row[$this->orderBy] ?? '';
+        $orderByValue = $row[$this->orderBy];
+        $value = $this->hasTranslation($this->getAttribute($this->orderBy)) ? ($orderByValue[app()->getLocale()] ?? (is_array($orderByValue) ? reset($orderByValue) : $orderByValue)) : ($orderByValue ?? '');
         $char = ucfirst(mb_substr($value, 0, 1));
         $char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
         return $char;
