@@ -16,10 +16,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Leap modules are loaded from a directory inside the app directory of the
-    | Laravel project. The default 'Leap' means app_path('Leap'), which 
+    | Laravel project. The default 'Leap' means app_path('Leap'), which
     | resolves to 'app/Leap', will be used to search for modules and the class
-    | namespace should be App\Leap. Each class in this directory should extend 
-    | the NickDeKruijk\Leap\Module class. 
+    | namespace should be App\Leap. Each class in this directory should extend
+    | the NickDeKruijk\Leap\Module class.
     |
     */
     'app_modules' => 'Leap',
@@ -29,18 +29,18 @@ return [
     | title
     |--------------------------------------------------------------------------
     |
-    | The title of the application used as html <title> and shown in the 
+    | The title of the application used as html <title> and shown in the
     | browser tab.
     |
     */
-    'title' => '{module} - Admin @ ' . config('app.name'),
+    'title' => '{module} - Admin @ '.config('app.name'),
 
     /*
     |--------------------------------------------------------------------------
     | auth_2fa
     |--------------------------------------------------------------------------
     |
-    | Enable two factor authentication. This can be done by mail. 
+    | Enable two factor authentication. This can be done by mail.
     | The mail method will send a code to the users email address.
     | In a future release TOTP (Google Authenticator) will be added.
     |
@@ -88,8 +88,8 @@ return [
     |
     | The default modules to show in the navigation. You can add your own
     | modules in the app/Leap directory (see app_modules configuration above).
-    | A module must extend the Leap/Module or Leap/Resource class or use the 
-    | NavigationItem trait.   
+    | A module must extend the Leap/Module or Leap/Resource class or use the
+    | NavigationItem trait.
     |
     */
     'default_modules' => [
@@ -137,7 +137,7 @@ return [
     | leap_role_user pivot table. The User model should have a belongsToMany
     | relationship with the Role model.
     |
-    | Also a default 'Admin' role will be created with all permissions and 
+    | Also a default 'Admin' role will be created with all permissions and
     | assigned to the first user in the users table with id 1.
     |
     */
@@ -179,11 +179,11 @@ return [
     | route_prefix
     |--------------------------------------------------------------------------
     |
-    | The prefix added to the routes added by leap. 
-    | For example, if the default prefix is 'leap-admin', the routes will be 
+    | The prefix added to the routes added by leap.
+    | For example, if the default prefix is 'leap-admin', the routes will be
     | domain.com/leap-admin and domain.com/leap-admin/componentname
-    | You can change this to for example 'app' to have routes like 
-    | domain.com/app and domain.com/app/componentname or just '/' to have routes 
+    | You can change this to for example 'app' to have routes like
+    | domain.com/app and domain.com/app/componentname or just '/' to have routes
     | like domain.com/ and domain.com/componentname
     |
     */
@@ -210,8 +210,8 @@ return [
     | Be aware that ScssPhp does not support all sass features like @use.
     | The package resource/css directory is added to @import paths. Be careful
     | with @import bacause those files are not watched for cache changes.
-    | If path is ommited the file in the resources/css directory is used. 
-    | 
+    | If path is ommited the file in the resources/css directory is used.
+    |
     */
     'css' => [
         'minireset.scss',
@@ -234,7 +234,7 @@ return [
     | login_image
     |--------------------------------------------------------------------------
     | Image to show on the login screen. By default random from picsum.photos.
-    | Default image viewport is 380x332 pixels and zooms to 1.5 magnification 
+    | Default image viewport is 380x332 pixels and zooms to 1.5 magnification
     | and times two for retina screens. So 1140x996 pixels is a good size.
     |
     */
@@ -245,7 +245,7 @@ return [
     | logging
     |--------------------------------------------------------------------------
     | Options for logging user actions. By default all actions are logged from
-    | all leap modules. The 'skip_actions' and 'skip_modules' option can be 
+    | all leap modules. The 'skip_actions' and 'skip_modules' option can be
     | used to exclude certain actions and modules from being logged.
     |
     */
@@ -352,7 +352,7 @@ return [
             'remove_script_host' => true,
             // 'document_base_url' => env('APP_URL'),
             // 'height' => 200, // Not used with autoresize
-            'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/' . app()->getLocale() . '.js',
+            'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/'.app()->getLocale().'.js',
             'language' => app()->getLocale(),
             'license_key' => 'gpl',
             // 'link_default_target' => '_blank',

@@ -16,6 +16,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Livewire\Toasts;
+use Spatie\Translatable\HasTranslations;
 
 class Resource extends Module
 {
@@ -32,7 +33,7 @@ class Resource extends Module
     /**
      * Scope the resource to an organization
      *
-     * @var boolean
+     * @var bool
      */
     #[Locked]
     public $organizationScope = false;
@@ -54,22 +55,24 @@ class Resource extends Module
      */
     #[Locked]
     public $orderBy;
+
     #[Locked]
     public $orderByDefault;
 
     /**
      * Enable descending index order
      *
-     * @var boolean
+     * @var bool
      */
     #[Locked]
     public $orderDesc = false;
+
     #[Locked]
     public $orderDescDefault;
 
     /**
      * The attribute that defines if a row is active or not
-     * 
+     *
      * When the attribute returns false the row will be shown as inactive (strikethrough) in the index.
      *
      * @var string|null
@@ -79,8 +82,6 @@ class Resource extends Module
 
     /**
      * The currently selected index row
-     *
-     * @var integer
      */
     #[Url(as: 'id', history: false)]
     public ?int $selectedRow = null;
@@ -114,17 +115,12 @@ class Resource extends Module
 
     /**
      * Active filters
-     *
-     * @var array
      */
     #[Locked]
     public array $filters = [];
 
     /**
      * Return all unique values for the attribute
-     *
-     * @param Attribute $attribute
-     * @return array
      */
     #[Computed()]
     public function filterData(Attribute $attribute): array
@@ -142,17 +138,13 @@ class Resource extends Module
     /**
      * If enabled shows an extra row with a index letter based on the current index ordering, not all attribute types support it
      *
-     * @var boolean
+     * @var bool
      */
     #[Locked]
     public $showIndexGroups = true;
 
     /**
      * Return the first letter of a value to use as the index group
-     *
-     * @param Model $row
-     * @param Attribute $attribute
-     * @return string
      */
     public function indexGroupChar(Model $row, Attribute $attribute): string
     {
@@ -160,6 +152,7 @@ class Resource extends Module
         $value = $this->hasTranslation($this->getAttribute($this->orderBy)) ? ($orderByValue[app()->getLocale()] ?? (is_array($orderByValue) ? reset($orderByValue) : $orderByValue)) : ($orderByValue ?? '');
         $char = ucfirst(mb_substr($value, 0, 1));
         $char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
+
         return $char;
     }
 
@@ -201,9 +194,9 @@ class Resource extends Module
             $sectionAttributes = collect($section->attributes);
             $sectionAttribute = $sectionAttributes->where('name', $attributeParts[2])->first();
 
-            $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $sectionAttribute->options) : false;
+            $this->browse = $attribute && ! $files ? array_merge(['attribute' => $attribute], $sectionAttribute->options) : false;
         } else {
-            $this->browse = $attribute && !$files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
+            $this->browse = $attribute && ! $files ? array_merge(['attribute' => $attribute], $this->getAttribute($attribute)->options) : false;
         }
 
         $this->dispatch('recalculate-columns');
@@ -228,6 +221,7 @@ class Resource extends Module
         if ($this->translatable) {
             return in_array($attribute->name, $this->translatable);
         }
+
         return false;
     }
 
@@ -247,43 +241,39 @@ class Resource extends Module
 
     /**
      * Return the labels for each attribute for nice validation messages
-     *
-     * @return array
      */
     public function validationAttributes(): array
     {
         $attributes = [];
         foreach ($this->attributes() as $attribute) {
-            $attributes['data.' . $attribute->name] = $attribute->label;
+            $attributes['data.'.$attribute->name] = $attribute->label;
         }
+
         return $attributes;
     }
 
     /**
      * When set to true shows the import view
-     *
-     * @var boolean
      */
     #[Locked]
     public bool $importing = false;
 
     /**
      * CSV file to use for importing new data
-     *
-     * @var TemporaryUploadedFile|null
      */
-    public TemporaryUploadedFile|null $importCSV = null;
+    public ?TemporaryUploadedFile $importCSV = null;
 
     /**
      * Data extracted from the CSV file for importing
-     *
-     * @var array
      */
     public array $importData = [];
 
     public array $importRows = [];
+
     public array $importColumns = [];
+
     public array $importColumnOptions = [];
+
     public array $importErrors = [];
 
     public int $importColumnCount = 0;
@@ -313,7 +303,7 @@ class Resource extends Module
         $this->importColumnCount = 0;
         $labels = [];
         foreach ($this->allowImport['columns'] as $key => $value) {
-            if (!is_string($key) && !is_array($value)) {
+            if (! is_string($key) && ! is_array($value)) {
                 $key = $value;
             }
             $this->importColumnOptions[] = $key;
@@ -374,7 +364,7 @@ class Resource extends Module
     {
         $data = [];
         foreach ($this->importData as $index => $row) {
-            if (!$this->importRows[$index]) {
+            if (! $this->importRows[$index]) {
                 continue;
             }
             $line = [];
@@ -385,13 +375,12 @@ class Resource extends Module
             }
             $data[$index] = $line;
         }
+
         return $data;
     }
 
     /**
      * The model data which can be updated by the editor
-     *
-     * @var array
      */
     public array $data;
 
@@ -399,11 +388,12 @@ class Resource extends Module
     {
         $attributes = [];
         foreach ($this->allowImport['attributes'] as $key => $value) {
-            if (!is_string($key) && !is_array($value)) {
+            if (! is_string($key) && ! is_array($value)) {
                 $key = $value;
             }
             $attributes[] = $this->getAttribute($key);
         }
+
         return collect($attributes);
     }
 
@@ -415,7 +405,7 @@ class Resource extends Module
         // Validate import attributes
         $rules = [];
         foreach ($this->importAttributes()->whereNotNull('validate') as $attribute) {
-            $rules['data.' . $attribute->name] = $attribute->validate;
+            $rules['data.'.$attribute->name] = $attribute->validate;
         }
         $validator = Validator::make(['data' => $this->data], $rules, [], $this->validationAttributes());
         if ($validator->fails()) {
@@ -423,6 +413,7 @@ class Resource extends Module
                 $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
             }
             $validator->validate();
+
             return false;
         }
         $this->resetValidation();
@@ -430,7 +421,7 @@ class Resource extends Module
         // Determine import data validation rules
         $rules = [];
         foreach ($this->allowImport['columns'] as $key => $value) {
-            if (!is_string($key) && !is_array($value)) {
+            if (! is_string($key) && ! is_array($value)) {
                 $key = $value;
             }
             $attr = $this->getAttribute($key);
@@ -515,18 +506,14 @@ class Resource extends Module
 
     /**
      * Undocumented function
-     *
-     * @param integer $parent_id
-     * @param integer $item_id
-     * @param integer $position
-     * @return void
      */
     public function sortableDone(int $parent_id, int $item_id, int $position): void
     {
         // Check if item is valid
         $item = $this->getModel()->find($item_id);
-        if (!$item) {
+        if (! $item) {
             $this->dispatch('toast-error', 'Item not found')->to(Toasts::class);
+
             return;
         }
 
@@ -537,8 +524,9 @@ class Resource extends Module
             } else {
                 // Check if parent exists
                 $parent = $this->getModel()->find($parent_id);
-                if (!$parent) {
+                if (! $parent) {
                     $this->dispatch('toast-error', 'Parent item not found')->to(Toasts::class);
+
                     return;
                 }
             }
@@ -570,21 +558,18 @@ class Resource extends Module
 
     /**
      * Return a model instance
-     *
-     * @return Model
      */
     public function getModel(): Model
     {
-        $model = $this->model ?: 'App\\' . (is_dir(app_path('Models')) ? 'Models\\' : '') . class_basename(static::class);
+        $model = $this->model ?: 'App\\'.(is_dir(app_path('Models')) ? 'Models\\' : '').class_basename(static::class);
         $model = new $model;
-        $this->translatable = in_array(\Spatie\Translatable\HasTranslations::class, class_uses($model)) ? $model->getTranslatableAttributes() : false;
+        $this->translatable = in_array(HasTranslations::class, class_uses($model)) ? $model->getTranslatableAttributes() : false;
+
         return $model;
     }
 
     /**
      * Return the model attributes to show in the index
-     *
-     * @return Collection
      */
     public function indexAttributes(): Collection
     {
@@ -594,8 +579,7 @@ class Resource extends Module
     /**
      * Return all editable model attributes
      *
-     * @param boolean $index Only return index attributes
-     * @return Collection
+     * @param  bool  $index  Only return index attributes
      */
     public function allAttributes(bool $index = false): Collection
     {
@@ -609,10 +593,9 @@ class Resource extends Module
     /**
      * Return the attribute details as defined by the Leap module
      *
-     * @param string $attribute The attribute name
-     * @return Attribute|null
+     * @param  string  $attribute  The attribute name
      */
-    public function getAttribute(string $attribute): Attribute|null
+    public function getAttribute(string $attribute): ?Attribute
     {
         return $this->allAttributes()->where('name', $attribute)->first();
     }
@@ -620,20 +603,20 @@ class Resource extends Module
     /**
      * Sort the index by this attribute
      *
-     * @param string $attribute The attribute name
+     * @param  string  $attribute  The attribute name
      * @return void
      */
     public function order(string $attribute)
     {
-        // Set default orderBy attribute 
+        // Set default orderBy attribute
         $this->orderByDefault ??= $this->orderBy;
         $this->orderDescDefault ??= $this->orderDesc;
 
         if ($this->getAttribute($attribute)->isAccessor) {
             // If attribute is an accessor restore default orderBy
             $this->orderBy = $this->orderByDefault;
-            $this->orderDesc =  $this->orderDescDefault;
-        } elseif ($this->orderBy == $attribute && !$this->orderDesc) {
+            $this->orderDesc = $this->orderDescDefault;
+        } elseif ($this->orderBy == $attribute && ! $this->orderDesc) {
             // If currently ascending sorted by this attribute, change to descending
             $this->orderDesc = true;
         } elseif ($this->orderBy == $attribute && $this->orderDesc) {
@@ -651,10 +634,9 @@ class Resource extends Module
     /**
      * Return an array of all rows with the id and the index attributes
      *
-     * @param integer|null $parent_id The parent id for the treeview
-     * @return Collection
+     * @param  int|null  $parent_id  The parent id for the treeview
      */
-    public function indexRows(int|null $parent_id = null): Collection
+    public function indexRows(?int $parent_id = null): Collection
     {
         return $this->rows($parent_id, true);
     }
@@ -662,12 +644,11 @@ class Resource extends Module
     /**
      * Return an array of all rows with the id and all attributes
      *
-     * @param integer|null $parent_id The parent id for the treeview
-     * @param boolean $index Only return index attributes
-     * @param boolean $filtered Apply filters if true
-     * @return Collection
+     * @param  int|null  $parent_id  The parent id for the treeview
+     * @param  bool  $index  Only return index attributes
+     * @param  bool  $filtered  Apply filters if true
      */
-    public function rows(int|null $parent_id = null, bool $index = false, bool $filtered = true): Collection
+    public function rows(?int $parent_id = null, bool $index = false, bool $filtered = true): Collection
     {
         $data = $this->getModel();
 
@@ -691,7 +672,7 @@ class Resource extends Module
         // Check if data needs to be sorted by a foreign or pivot attribute, in that case we can't use orderBy on the model but manually sort the array later
         $sortForeign = $this->orderBy && in_array($this->allAttributes($index)->where('name', $this->orderBy)->first()?->type, ['foreign', 'pivot']);
 
-        if ($this->orderBy && !$sortForeign) {
+        if ($this->orderBy && ! $sortForeign) {
             if (is_array($this->orderBy)) {
                 foreach ($this->orderBy as $orderBy => $desc) {
                     $data = $data->orderBy($orderBy ?: $desc, $desc == 'desc' ? 'desc' : ($this->orderDesc ? 'desc' : 'asc'));
@@ -705,7 +686,7 @@ class Resource extends Module
         if ($this->search && $this->canSearch() && $index) {
             $data = $data->where(function ($query) use ($index) {
                 foreach ($this->allAttributes($index)->where('searchable') as $attribute) {
-                    $query->orWhere($attribute->name, 'like', '%' . $this->search . '%');
+                    $query->orWhere($attribute->name, 'like', '%'.$this->search.'%');
                 }
             });
         }
@@ -733,9 +714,9 @@ class Resource extends Module
         // Replace all attributes with -> in name with their value from the json column json_unquote(json_extract(`json`, '$."key"'))
         foreach ($this->allAttributes($index) as $attribute) {
             if (str_contains($attribute->name, '->')) {
-                list($column, $key) = explode('->', $attribute->name);
+                [$column, $key] = explode('->', $attribute->name);
                 foreach ($data as $id => $row) {
-                    $data[$id][$attribute->name] = $data[$id]['json_unquote(json_extract(`' . $column . '`, \'$."' . $key . '"\'))'];
+                    $data[$id][$attribute->name] = $data[$id]['json_unquote(json_extract(`'.$column.'`, \'$."'.$key.'"\'))'];
                 }
             }
         }
@@ -762,7 +743,7 @@ class Resource extends Module
 
         if ($filtered) {
             foreach ($this->filters as $key => $value) {
-                if ($value != 'NULL' && ($value || $value === '0' || $value === "")) {
+                if ($value != 'NULL' && ($value || $value === '0' || $value === '')) {
                     $data = $data->where($key, $value);
                 }
             }
@@ -779,7 +760,7 @@ class Resource extends Module
      * @return void
      */
     #[On('updateIndex')]
-    public function updateIndex(int|null $id = null)
+    public function updateIndex(?int $id = null)
     {
         $this->dispatch('recalculate-columns');
         $this->selectedRow = $id;
@@ -795,14 +776,14 @@ class Resource extends Module
                 if (is_array($row[$attribute->name] ?? null)) {
                     foreach ($row[$attribute->name] as $key => $value) {
                         if (isset($line[$key])) {
-                            $keys[$attribute->name . '.' . $key] = 'value';
-                            $line[$attribute->name . '.' . $key] = $value;
+                            $keys[$attribute->name.'.'.$key] = 'value';
+                            $line[$attribute->name.'.'.$key] = $value;
                         } else {
                             $keys[$key] = 'value';
                             $line[$key] = $value;
                         }
                     }
-                } elseif (!$attribute->isAccessor) {
+                } elseif (! $attribute->isAccessor) {
                     $keys[$attribute->name] = $attribute->type;
                     $line[$attribute->name] = $row[$attribute->name] ?? null;
                 }
@@ -822,7 +803,7 @@ class Resource extends Module
             }
         }
 
-        $filename = Str::slug($this->title) . '.csv';
+        $filename = Str::slug($this->title).'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
@@ -834,9 +815,9 @@ class Resource extends Module
 
         return response()->stream(function () use ($data, $keys) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, array_keys($keys), escape: "");
+            fputcsv($handle, array_keys($keys), escape: '');
             foreach ($data as $line) {
-                fputcsv($handle, $line, escape: "");
+                fputcsv($handle, $line, escape: '');
             }
             fclose($handle);
         }, 200, $headers);
@@ -844,15 +825,11 @@ class Resource extends Module
 
     /**
      * Search the resource index
-     *
-     * @var string|null
      */
-    public string|null $search = null;
+    public ?string $search = null;
 
     /**
      * Determine if there are searchable attributes
-     *
-     * @return boolean
      */
     public function canSearch(): bool
     {
@@ -862,7 +839,6 @@ class Resource extends Module
     /**
      * When search input is updated update index
      *
-     * @param string $search
      * @return void
      */
     public function updatedSearch(string $search)
