@@ -778,6 +778,100 @@ class FileManager extends Module
         return $meta['image_focus'] ?? null;
     }
 
+    public function imageCropEnabled(string $file): bool
+    {
+        $extensions = config('leap.filemanager.image_crop_enabled');
+
+        return $extensions && $this->hasExtension($file, $extensions);
+    }
+
+    public function cropImage(float $x1, float $y1, float $x2, float $y2, bool $saveAsNew, ?string $newFileName): void
+    {
+        Leap::validatePermission('update');
+
+        $file = reset($this->selectedFiles);
+        if (count($this->selectedFiles) !== 1 || ! $this->imageCropEnabled($file)) {
+            return;
+        }
+
+        $full = $this->full($file);
+        $fileContents = $this->getStorage()->get($full);
+        if (! $fileContents) {
+            $this->dispatch('toast-error', __('leap::filemanager.crop_failed'))->to(Toasts::class);
+
+            return;
+        }
+
+        $image = Image::read($fileContents);
+        $imgW = $image->width();
+        $imgH = $image->height();
+
+        // Convert percentages to pixels, normalise so x1<x2 and y1<y2
+        $px1 = (int) round(min($x1, $x2) / 100 * $imgW);
+        $py1 = (int) round(min($y1, $y2) / 100 * $imgH);
+        $px2 = (int) round(max($x1, $x2) / 100 * $imgW);
+        $py2 = (int) round(max($y1, $y2) / 100 * $imgH);
+        $cropW = max(1, $px2 - $px1);
+        $cropH = max(1, $py2 - $py1);
+
+        $cropped = $image->crop($cropW, $cropH, $px1, $py1);
+        $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        $encoded = (string) $cropped->encodeByExtension($extension);
+
+        if ($saveAsNew) {
+            // Validate the new filename
+            $newFileName = trim($newFileName ?? '');
+            if (! $newFileName) {
+                $this->dispatch('toast-error', __('leap::filemanager.crop_failed'))->to(Toasts::class);
+
+                return;
+            }
+            // Auto-append extension if missing
+            if (strtolower(pathinfo($newFileName, PATHINFO_EXTENSION)) !== $extension) {
+                $newFileName = $newFileName.'.'.$extension;
+            }
+            // Reject path traversal
+            if (str_contains($newFileName, '/') || str_contains($newFileName, '\\') || str_starts_with($newFileName, '.')) {
+                $this->dispatch('toast-error', __('leap::filemanager.rename_invalid_path', ['attribute' => $newFileName]))->to(Toasts::class);
+
+                return;
+            }
+            $newFull = $this->full($newFileName);
+            if ($this->getStorage()->exists($newFull)) {
+                $base = pathinfo($newFileName, PATHINFO_FILENAME);
+                // Strip existing trailing -N suffix added by previous auto-increment
+                $base = preg_replace('/-\d+$/', '', $base);
+                $counter = 2;
+                do {
+                    $newFileName = $base.'-'.$counter.'.'.$extension;
+                    $newFull = $this->full($newFileName);
+                    $counter++;
+                } while ($this->getStorage()->exists($newFull));
+            }
+            $this->getStorage()->put($newFull, $encoded);
+            Media::forFile($newFull);
+            $this->selectedFiles = [$newFileName];
+            $this->dispatch('toast', __('leap::filemanager.crop_done', ['attribute' => $newFileName]))->to(Toasts::class);
+            $this->log('create', 'Cropped '.$full.' to '.$newFull);
+        } else {
+            // Overwrite original
+            $this->getStorage()->put($full, $encoded);
+            $media = Media::findFile($full) ?? Media::forFile($full);
+            if ($media) {
+                $media->size = $this->getStorage()->size($full);
+                $media->sha256 = hash('sha256', $encoded);
+                $history = $media->history ?? [];
+                $history[] = now().' Cropped from '.$imgW.'x'.$imgH.' to '.$cropW.'x'.$cropH.' by '.Auth::user()?->name.' #'.Auth::user()?->id;
+                $media->history = $history;
+                $media->save();
+            }
+            $this->dispatch('toast', __('leap::filemanager.crop_done', ['attribute' => $file]))->to(Toasts::class);
+            $this->log('update', 'Cropped '.$full.' from '.$imgW.'x'.$imgH.' to '.$cropW.'x'.$cropH);
+        }
+
+        unset($this->columns);
+    }
+
     public function render()
     {
         $this->log('read');
