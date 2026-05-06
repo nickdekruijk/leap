@@ -33,14 +33,14 @@ class Media extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('leap.table_prefix') . 'media');
+        $this->setTable(config('leap.table_prefix').'media');
     }
 
     /**
      * Get a Media model instance for a file, or create one if file exists
      *
-     * @param string $file The file name including path
-     * @param string|null $disk The storage disk to use, defaults from leap config
+     * @param  string  $file  The file name including path
+     * @param  string|null  $disk  The storage disk to use, defaults from leap config
      * @return Media|false Returns Media model instance or false if file does not exist
      */
     public static function forFile(string $file_name, ?string $disk = null): Media|false
@@ -63,7 +63,7 @@ class Media extends Model
                 'sha256' => hash('sha256', $storage->get($file_name)),
                 'uuid' => Str::uuid(),
                 'user_id' => Auth::user()?->id,
-                'history' => [now() . ' Added by ' . Auth::user()?->name . ' #' . Auth::user()?->id],
+                'history' => [now().' Added by '.Auth::user()?->name.' #'.Auth::user()?->id],
             ]);
         }
 
@@ -94,14 +94,29 @@ class Media extends Model
     {
         return Str::contains($this->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']);
     }
+
+    public function alt(?string $locale = null): string
+    {
+        $value = $this->meta['alt'] ?? null;
+        if (is_array($value)) {
+            $locale = $locale ?? app()->getLocale();
+
+            return $value[$locale] ?? reset($value) ?: '';
+        }
+
+        return (string) ($value ?? '');
+    }
+
     public function isAudio(): bool
     {
         return Str::contains($this->mime_type, ['audio/flac', 'audio/mp3', 'audio/wav', 'audio/aac']);
     }
+
     public function isVideo(): bool
     {
         return Str::contains($this->mime_type, ['video/mp4', 'video/m4v', 'video/mov', 'video/avi', 'video/wmv']);
     }
+
     public function isBitmap(): bool
     {
         return Str::contains($this->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
