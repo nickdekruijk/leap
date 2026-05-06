@@ -176,23 +176,25 @@
                                                 style="left: {{ $fp['x'] }}%; top: {{ $fp['y'] }}%"> @svg('fas-crosshairs', 'svg-icon') </div>
                                         @endif
                                         @can('leap::update')
-                                            <div class="leap-focus-actions">
-                                                <button
-                                                    class="leap-focus-action-btn"
-                                                    :class="{ 'active': settingFocus }"
-                                                    x-on:click.stop="settingFocus = !settingFocus"
-                                                    title="@lang('leap::filemanager.set_focus_point')">
-                                                    @svg('fas-crosshairs', 'svg-icon')
-                                                </button>
-                                                @if ($fp)
+                                            @if ($this->imageFocusEnabled($file))
+                                                <div class="leap-focus-actions">
                                                     <button
                                                         class="leap-focus-action-btn"
-                                                        wire:click.stop="clearFocusPoint"
-                                                        title="@lang('leap::filemanager.clear_focus_point')">
-                                                        @svg('fas-times', 'svg-icon')
+                                                        :class="{ 'active': settingFocus }"
+                                                        x-on:click.stop="settingFocus = !settingFocus"
+                                                        title="@lang('leap::filemanager.set_focus_point')">
+                                                        @svg('fas-crosshairs', 'svg-icon')
                                                     </button>
-                                                @endif
-                                            </div>
+                                                    @if ($fp)
+                                                        <button
+                                                            class="leap-focus-action-btn"
+                                                            wire:click.stop="clearFocusPoint"
+                                                            title="@lang('leap::filemanager.clear_focus_point')">
+                                                            @svg('fas-times', 'svg-icon')
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         @endcan
                                     </div>
                                 @endif

@@ -729,10 +729,17 @@ class FileManager extends Module
         return $this->hasExtension($file, 'pdf');
     }
 
+    public function imageFocusEnabled(string $file): bool
+    {
+        $extensions = config('leap.filemanager.image_focus_enabled');
+
+        return $extensions && $this->hasExtension($file, $extensions);
+    }
+
     public function saveFocusPoint(float $x, float $y): void
     {
         Leap::validatePermission('update');
-        if (count($this->selectedFiles) !== 1 || ! $this->isImage(reset($this->selectedFiles))) {
+        if (count($this->selectedFiles) !== 1 || ! $this->imageFocusEnabled(reset($this->selectedFiles))) {
             return;
         }
 
