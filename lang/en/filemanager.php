@@ -34,6 +34,8 @@ return [
     'save' => 'Save',
     'select_file' => 'Select file',
     'select_files' => 'Select :count files',
+    'set_focus_point' => 'Set focus point',
+    'clear_focus_point' => 'Clear focus point',
     'size' => 'Size',
     'title' => 'File Manager',
     'upload_done' => ':attribute uploaded',

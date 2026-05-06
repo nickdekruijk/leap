@@ -22,24 +22,31 @@ class FileManager extends Module
     use WithFileUploads;
 
     public array $uploads = [];
+
     public $chunkSize = 1024 * 1024;
 
     public $component = 'leap.file-manager';
+
     public $icon = 'fas-folder-tree'; // fas-file-alt far-copy fas-folder-tree
+
     public $priority = 50;
+
     protected $default_permissions = [
         'create' => false,
         'read' => true,
         'update' => false,
         'delete' => false,
     ];
+
     public $slug = 'filemanager';
 
     public array $openFolders = [];
+
     public array $selectedFiles = [];
 
     public bool $editingFile = false;
-    public string|null $newFileName;
+
+    public ?string $newFileName;
 
     public string $viewMode = 'list';
 
@@ -60,10 +67,11 @@ class FileManager extends Module
     public function uploading()
     {
         foreach ($this->uploads as $upload) {
-            if ($upload['progress'] < 100 && !$upload['error']) {
+            if ($upload['progress'] < 100 && ! $upload['error']) {
                 return true;
             }
         }
+
         return false;
     }
 
@@ -77,10 +85,10 @@ class FileManager extends Module
             'progress' => 0,
             'depth' => count($this->openFolders),
             'currentDirectory' => $this->currentDirectory(),
-            'path' => $this->storagePrefix() . implode('/', $this->openFolders),
+            'path' => $this->storagePrefix().implode('/', $this->openFolders),
             'error' => false,
         ];
-        if (!$this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
+        if (! $this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
             $this->uploads[$id]['error'] = true;
             $this->dispatch('toast-error', __('leap::filemanager.upload_not_allowed', ['attribute' => $name]))->to(Toasts::class);
         }
@@ -101,27 +109,28 @@ class FileManager extends Module
         $file = $this->uploads[$id];
 
         // Check if uploaded file already exists
-        if ($this->getStorage()->exists($file['path'] . '/' . $file['name'])) {
+        if ($this->getStorage()->exists($file['path'].'/'.$file['name'])) {
             // Compare sha256 hash of both files
-            $hash_existing = hash('sha256', $this->getStorage()->get($file['path'] . '/' . $file['name']));
+            $hash_existing = hash('sha256', $this->getStorage()->get($file['path'].'/'.$file['name']));
             $hash_uploaded = hash_file('sha256', $file['file']->path());
             if ($hash_existing === $hash_uploaded) {
                 $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
+
                 return;
             }
             $n = 1;
             $fileParts = pathinfo($file['name']);
-            while ($this->getStorage()->exists($file['path'] . '/' . $fileParts['filename'] . '-' . $n . '.' . $fileParts['extension'])) {
+            while ($this->getStorage()->exists($file['path'].'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
                 $n++;
             }
             $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
-            $file['name'] = $fileParts['filename'] . '-' . $n . '.' . $fileParts['extension'];
+            $file['name'] = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
         }
 
         if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
-            Media::forFile($file['path'] . '/' . $file['name']);
+            Media::forFile($file['path'].'/'.$file['name']);
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
-            $this->log('upload', $file['path'] . '/' . $file['name']);
+            $this->log('upload', $file['path'].'/'.$file['name']);
             unset($this->columns);
         } else {
             $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $file['name']]))->to(Toasts::class);
@@ -143,10 +152,10 @@ class FileManager extends Module
     /**
      * Convert a size string to bytes
      *
-     * @param string $value a size string e.g. '1K', '2M', '3G'
+     * @param  string  $value  a size string e.g. '1K', '2M', '3G'
      * @return int e.g. 1024, 2097152, 3221225472
      */
-    function bytes(string $value): int
+    public function bytes(string $value): int
     {
         $value = trim($value);
         $num = (int) $value;
@@ -163,8 +172,6 @@ class FileManager extends Module
 
     /**
      * Return human readable maximum upload filesize
-     *
-     * @return string
      */
     public function maxUploadSize(): string
     {
@@ -174,23 +181,23 @@ class FileManager extends Module
                 $livewireMax = $rule[1] * 1024;
             }
         }
+
         return min($livewireMax ?? $this->bytes('12M'), $this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
     }
 
     /**
      * Convert a number into human readable format
      *
-     * @param int $bytes
-     * @param integer decimals
-     * @return string
+     * @param int decimals
      */
-    function humanFileSize(int $bytes, int $decimals = 1): string
+    public function humanFileSize(int $bytes, int $decimals = 1): string
     {
-        $size = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        $size = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
         $factor = floor((strlen($bytes) - 1) / 3);
         if ($factor == 0) {
             $decimals = 0;
         }
+
         return sprintf("%.{$decimals}f %s", $bytes / (1024 ** $factor), $size[$factor]);
     }
 
@@ -206,25 +213,22 @@ class FileManager extends Module
 
     /**
      * Get the storage prefix for the current organization if applicable
-     *
-     * @return string
      */
     public function storagePrefix(): string
     {
         if (config('leap.organizations') && empty($this->browse['ignoreOrganizationPrefix'])) {
             if (config('leap.filemanager.organization_prefix') === 'slug') {
-                return Context::getHidden('leap.organization.slug') . '/';
+                return Context::getHidden('leap.organization.slug').'/';
             } elseif (config('leap.filemanager.organization_prefix') === 'id') {
-                return Context::getHidden('leap.organization.id') . '/';
+                return Context::getHidden('leap.organization.id').'/';
             }
         }
+
         return '';
     }
 
     /**
      * Return all filemanager columns with folders and files
-     *
-     * @return array
      */
     #[Computed(persist: true)]
     public function columns(): array
@@ -236,19 +240,20 @@ class FileManager extends Module
             $columns[] = $this->getFiles($path);
             $path .= '/';
         }
+
         return $columns;
     }
 
     /**
      * Get all the folders and files for the directory
      *
-     * @param string|null $directory The directory to look in, null for filesystem root
+     * @param  string|null  $directory  The directory to look in, null for filesystem root
      * @return array An array of folders and files
      */
-    private function getFiles(null|string $directory = null): array
+    private function getFiles(?string $directory = null): array
     {
         $folders = [];
-        $entries = $this->getStorage()->directories($this->storagePrefix() . $directory);
+        $entries = $this->getStorage()->directories($this->storagePrefix().$directory);
         Leap::basenamesort($entries);
         foreach ($entries as $folder) {
             $size = 0;
@@ -256,18 +261,19 @@ class FileManager extends Module
             foreach ($files as $file) {
                 $size += $this->getStorage()->size($file);
             }
-            if (!str_starts_with(basename($folder), '.')) {
+            if (! str_starts_with(basename($folder), '.')) {
                 $folders[basename($folder)] = $this->humanFileSize($size);
             }
-        };
+        }
         $files = [];
-        $entries = $this->getStorage()->files($this->storagePrefix() . $directory);
+        $entries = $this->getStorage()->files($this->storagePrefix().$directory);
         Leap::basenamesort($entries);
         foreach ($entries as $file) {
-            if (!str_starts_with(basename($file), '.')) {
+            if (! str_starts_with(basename($file), '.')) {
                 $files[basename($file)] = $this->humanFileSize($this->getStorage()->size($file));
             }
-        };
+        }
+
         return ['files' => $files, 'folders' => $folders];
     }
 
@@ -279,6 +285,7 @@ class FileManager extends Module
         if ($this->isImage($name)) {
             return 'far-file-image';
         }
+
         return 'far-file';
     }
 
@@ -308,11 +315,12 @@ class FileManager extends Module
         unset($this->columns);
     }
 
-    public function currentDirectory(null|int $depth = null): string
+    public function currentDirectory(?int $depth = null): string
     {
         if ($depth === null) {
             $depth = count($this->openFolders);
         }
+
         return ($this->openFolders[$depth] ?? null) ?: $this->getTitle();
     }
 
@@ -325,16 +333,18 @@ class FileManager extends Module
             // Check if folder contains invalid characters
             if (str_starts_with($folder, '.') || preg_match('/[\/\\\]/', $folder)) {
                 $this->dispatch('toast-error', __('leap::filemanager.invalid_characters', ['attribute' => $folder]))->to(Toasts::class);
+
                 return false;
             }
             // Check if the directory already exists, toast error if it doesn't
             if ($this->getStorage()->exists($full)) {
                 $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $full]))->to(Toasts::class);
+
                 return false;
             }
             if ($this->getStorage()->makeDirectory($full)) {
                 $this->dispatch('toast', __('leap::filemanager.created_folder', ['attribute' => $folder]))->to(Toasts::class);
-                $this->log('create', 'Folder ' . $full);
+                $this->log('create', 'Folder '.$full);
             } else {
                 $this->dispatch('toast-error', __('leap::filemanager.create_folder_failed', ['attribute' => $folder]))->to(Toasts::class);
             }
@@ -355,6 +365,7 @@ class FileManager extends Module
             if ($media) {
                 if ($media->mediables->count()) {
                     $this->dispatch('toast-error', __('leap::filemanager.media_in_use', ['attribute' => $file]))->to(Toasts::class);
+
                     continue;
                 } else {
                     $media->delete();
@@ -363,7 +374,7 @@ class FileManager extends Module
             $delete = $this->getStorage()->delete($full);
             if ($delete) {
                 $this->dispatch('toast', __('leap::filemanager.deleted_file', ['attribute' => $file]))->to(Toasts::class);
-                $this->log('delete', 'File ' . $full);
+                $this->log('delete', 'File '.$full);
                 unset($this->selectedFiles[$id]);
             } else {
                 $this->dispatch('toast-error', __('leap::filemanager.deleted_file_error', ['attribute' => $file]))->to(Toasts::class);
@@ -375,25 +386,26 @@ class FileManager extends Module
     /**
      * Delete the directory at the given depth
      *
-     * @param integer $depth
-     * @return boolean true if the directory was deleted, false if not
+     * @return bool true if the directory was deleted, false if not
      */
     public function deleteDirectory(int $depth): bool
     {
         Leap::validatePermission('delete');
 
         $this->closeDirectory($depth);
-        $full = $this->storagePrefix() . implode('/', $this->openFolders);
+        $full = $this->storagePrefix().implode('/', $this->openFolders);
 
         // Check if the directory exists and is in the columns array, toast error if it doesn't
-        if (!$this->getStorage()->exists($full)) {
+        if (! $this->getStorage()->exists($full)) {
             $this->dispatch('toast-error', __('leap::filemanager.does_not_exist', ['attribute' => $full]))->to(Toasts::class);
+
             return false;
         }
 
         // Check if the directory is empty, toast error if it doesn't
         if ($this->getStorage()->allFiles($full) || $this->getStorage()->allDirectories($full)) {
             $this->dispatch('toast-error', __('leap::filemanager.is_not_empty', ['attribute' => $full]))->to(Toasts::class);
+
             return false;
         }
 
@@ -401,11 +413,12 @@ class FileManager extends Module
         $delete = $this->getStorage()->deleteDirectory($full);
         if ($delete) {
             $this->dispatch('toast', __('leap::filemanager.deleted_folder', ['attribute' => $this->currentDirectory()]))->to(Toasts::class);
-            $this->log('delete', 'Folder ' . $full);
+            $this->log('delete', 'Folder '.$full);
             $this->closeDirectory($depth - 1);
         } else {
             $this->dispatch('toast-error', __('leap::filemanager.deleted_folder_error', ['attribute' => $this->currentDirectory()]))->to(Toasts::class);
         }
+
         return $delete;
     }
 
@@ -434,7 +447,7 @@ class FileManager extends Module
         $this->editFile(true);
 
         // Don't select multiple files if only one is allowed while browsing
-        if ($this->browse && !$this->browse['multiple'] && ($multiple || $shiftKey)) {
+        if ($this->browse && ! $this->browse['multiple'] && ($multiple || $shiftKey)) {
             return;
         }
 
@@ -442,7 +455,7 @@ class FileManager extends Module
         $fileName = urldecode($encodedFileName);
 
         // Close folders if new selected file is in different folder
-        if ($fileName && ($depth !== count($this->openFolders) || !$this->selectedFiles)) {
+        if ($fileName && ($depth !== count($this->openFolders) || ! $this->selectedFiles)) {
             // dd($depth, $this->openFolders);
             $this->closeDirectory($depth);
             $this->selectedFiles = [];
@@ -454,19 +467,19 @@ class FileManager extends Module
             // Start with the first currently selected file
             $this->selectedFiles = [reset($this->selectedFiles)];
             // Add the clicked file if it's different from first
-            if (!in_array($fileName, $this->selectedFiles)) {
+            if (! in_array($fileName, $this->selectedFiles)) {
                 $this->selectedFiles[] = $fileName;
             }
             // Loop through all the files and select the files between the first currently selected file and the clicked file
             foreach ($this->columns[$depth]['files'] as $name => $size) {
-                if ($selecting && !in_array($name, $this->selectedFiles)) {
+                if ($selecting && ! in_array($name, $this->selectedFiles)) {
                     $this->selectedFiles[] = $name;
                 }
                 if ($fileName == $name) {
-                    $selecting = !$selecting;
+                    $selecting = ! $selecting;
                 }
-                if ($name    == reset($this->selectedFiles)) {
-                    $selecting = !$selecting;
+                if ($name == reset($this->selectedFiles)) {
+                    $selecting = ! $selecting;
                 }
             }
         } elseif ($multiple) {
@@ -486,15 +499,14 @@ class FileManager extends Module
     /**
      * Add the full path in front of a file or folder name
      *
-     * @param string $name the file or foldername
-     * @param boolean $urlencode specify if the full path should be urlencoded
-     * @return string
+     * @param  string  $name  the file or foldername
+     * @param  bool  $urlencode  specify if the full path should be urlencoded
      */
     public function full(string $name, bool $urlencode = false): string
     {
         // Add open folders to the full path if any
         if ($this->openFolders) {
-            $full = implode('/', $this->openFolders) . '/' . $name;
+            $full = implode('/', $this->openFolders).'/'.$name;
         } else {
             $full = $name;
         }
@@ -505,14 +517,13 @@ class FileManager extends Module
             $full = str_replace('%2F', '/', $full);
         }
 
-        return $this->storagePrefix() . $full;
+        return $this->storagePrefix().$full;
     }
 
     /**
      * Add the full path in front of a file or folder name and urlencode it
      *
-     * @param string $name the file or foldername
-     * @return string
+     * @param  string  $name  the file or foldername
      */
     public function encode(string $name): string
     {
@@ -522,13 +533,13 @@ class FileManager extends Module
     /**
      * Generate an url to download a file
      *
-     * @param string $file the file including full path
+     * @param  string  $file  the file including full path
      * @return string the full url
      */
     public function downloadUrl(string $file): string
     {
         return route(
-            'leap.module.' . $this->getSlug() . '.download',
+            'leap.module.'.$this->getSlug().'.download',
             [
                 'name' => $this->encode($file),
                 'organization' => Context::getHidden('leap.organization.slug'),
@@ -539,9 +550,8 @@ class FileManager extends Module
     /**
      * Return the file from storage as a response
      *
-     * @param string $file the file including full path
-     * @param string|null $organization the organization slug if applicable
-     * @return StreamedResponse
+     * @param  string  $file  the file including full path
+     * @param  string|null  $organization  the organization slug if applicable
      */
     public function download(string $file, ?string $organization = null): StreamedResponse
     {
@@ -549,7 +559,7 @@ class FileManager extends Module
         parent::boot();
 
         // Check if the file exists
-        abort_if(!$this->getStorage()->exists($file), 404);
+        abort_if(! $this->getStorage()->exists($file), 404);
 
         // Return the file as a response to not force downloads in browser
         return $this->getStorage()->response($file);
@@ -580,10 +590,11 @@ class FileManager extends Module
             substr_count($this->newFileName, '/') > 1
             || str_starts_with($this->newFileName, '/')
             || str_contains($this->newFileName, '/.')
-            || (str_starts_with($this->newFileName, '.') && !str_starts_with($this->newFileName, '../'))
+            || (str_starts_with($this->newFileName, '.') && ! str_starts_with($this->newFileName, '../'))
             || (str_starts_with($this->newFileName, '../') && count($this->openFolders) == 0)
         ) {
             $this->dispatch('toast-error', __('leap::filemanager.rename_invalid_path', ['attribute' => $this->newFileName]))->to(Toasts::class);
+
             return;
         }
 
@@ -594,6 +605,7 @@ class FileManager extends Module
         // Check if new file exists
         if ($this->getStorage()->exists($to)) {
             $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $this->newFileName]))->to(Toasts::class);
+
             return;
         }
 
@@ -619,7 +631,7 @@ class FileManager extends Module
             if ($media = Media::findFile($from)) {
                 $media->file_name = $to;
                 $history = $media->history;
-                $history[] = now() . ' Renamed from ' . $from . ' to ' . $to . ' by ' . Auth::user()?->name . ' #' . Auth::user()?->id;
+                $history[] = now().' Renamed from '.$from.' to '.$to.' by '.Auth::user()?->name.' #'.Auth::user()?->id;
                 $media->history = $history;
                 $media->save();
             }
@@ -651,7 +663,7 @@ class FileManager extends Module
                 // When only one file is selected, is not empty and it's a bitmap image get the dimensions in pixels
                 if ($fileContents = $this->getStorage()->get($full)) {
                     $image = Image::read($fileContents);
-                    $dimensions = $image->width() . ' x ' . $image->height();
+                    $dimensions = $image->width().' x '.$image->height();
                 }
             }
             if ($timeMin === null || $time < $timeMin) {
@@ -671,7 +683,7 @@ class FileManager extends Module
             if ($timeMin == $timeMax) {
                 $dates = $timeMin;
             } else {
-                $dates = $timeMin . ' - ' . $timeMax;
+                $dates = $timeMin.' - '.$timeMax;
             }
         }
 
@@ -685,9 +697,10 @@ class FileManager extends Module
     public function hasExtension(string $file, array|string $extensions): bool
     {
         $extension = strtolower(pathinfo($file)['extension'] ?? null);
-        if (!is_array($extensions)) {
+        if (! is_array($extensions)) {
             $extensions = explode(',', $extensions);
         }
+
         return in_array($extension, $extensions);
     }
 
@@ -695,6 +708,7 @@ class FileManager extends Module
     {
         return $this->hasExtension($file, ['flac', 'mp3', 'wav', 'aac']);
     }
+
     public function isVideo(string $file): bool
     {
         return $this->hasExtension($file, ['mp4', 'm4v', 'mov', 'avi', 'wmv']);
@@ -715,9 +729,52 @@ class FileManager extends Module
         return $this->hasExtension($file, 'pdf');
     }
 
+    public function saveFocusPoint(float $x, float $y): void
+    {
+        Leap::validatePermission('update');
+        if (count($this->selectedFiles) !== 1 || ! $this->isImage(reset($this->selectedFiles))) {
+            return;
+        }
+
+        $x = round(max(0, min(100, $x)), 2);
+        $y = round(max(0, min(100, $y)), 2);
+
+        $media = Media::forFile($this->full(reset($this->selectedFiles)));
+        if ($media) {
+            $meta = $media->meta ?? [];
+            $meta['image_focus'] = ['x' => $x, 'y' => $y];
+            $media->meta = $meta;
+            $media->save();
+        }
+    }
+
+    public function clearFocusPoint(): void
+    {
+        Leap::validatePermission('update');
+        if (count($this->selectedFiles) !== 1) {
+            return;
+        }
+
+        $media = Media::findFile($this->full(reset($this->selectedFiles)));
+        if ($media) {
+            $meta = $media->meta ?? [];
+            unset($meta['image_focus']);
+            $media->meta = $meta ?: null;
+            $media->save();
+        }
+    }
+
+    public function focusPoint(string $file): ?array
+    {
+        $meta = Media::findFile($this->full($file))?->meta ?? [];
+
+        return $meta['image_focus'] ?? null;
+    }
+
     public function render()
     {
         $this->log('read');
+
         /** @disregard P1013 Undefined method intelephense error */
         return view('leap::livewire.filemanager')->layout('leap::layouts.app');
     }

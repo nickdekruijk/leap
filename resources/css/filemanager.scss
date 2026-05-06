@@ -290,8 +290,71 @@
                         }
                     }
                     &:not(:hover) VIDEO + A,
-                    &:not(:hover) IMG + A {
+                    &:not(:hover) IMG + A,
+                    &:not(:hover) .leap-focus-wrapper + A {
                         opacity: 0;
+                    }
+                    .leap-focus-wrapper {
+                        position: relative;
+                        display: inline-block;
+                        line-height: 0;
+                        max-width: 100%;
+                        align-self: center;
+                        IMG {
+                            max-height: 65vh;
+                        }
+                        &.leap-focus-selecting {
+                            cursor: crosshair;
+                        }
+                        .leap-focus-actions {
+                            position: absolute;
+                            top: 6px;
+                            left: 6px;
+                            display: flex;
+                            gap: 4px;
+                            opacity: 0;
+                            transition: opacity 0.15s;
+                            pointer-events: none;
+                            .leap-focus-action-btn {
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                width: 26px;
+                                height: 26px;
+                                background: rgba(0, 0, 0, 0.55);
+                                border: none;
+                                border-radius: 4px;
+                                cursor: pointer;
+                                padding: 0;
+                                pointer-events: auto;
+                                .svg-icon {
+                                    width: 14px;
+                                    height: 14px;
+                                    color: white;
+                                    margin: 0;
+                                    vertical-align: middle;
+                                }
+                                &:hover,
+                                &.active {
+                                    background: rgba(0, 170, 0, 0.8);
+                                }
+                            }
+                        }
+                        &:hover .leap-focus-actions {
+                            opacity: 1;
+                        }
+                        .leap-focus-point {
+                            position: absolute;
+                            transform: translate(-50%, -50%);
+                            pointer-events: none;
+                            line-height: 0;
+                            .svg-icon {
+                                width: 20px;
+                                height: 20px;
+                                color: #00dd00;
+                                filter: drop-shadow(0 0 4px rgba(white, 0.6));
+                            }
+                        }
                     }
                 }
             }

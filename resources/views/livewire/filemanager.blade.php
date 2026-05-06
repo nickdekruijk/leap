@@ -135,7 +135,7 @@
             </table>
         @endforeach
         @if ($selectedFiles)
-            <div class="leap-filemanager-selected">
+            <div class="leap-filemanager-selected" x-data="{ settingFocus: false }">
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
                     @if ($browse && $selectedFiles)
                         <button
@@ -159,7 +159,42 @@
                         @foreach ($selectedFiles as $file)
                             <div class="leap-filemanager-preview-item">
                                 @if ($this->isImage($file))
-                                    <img src="{{ $this->downloadUrl($file) }}" alt="">
+                                    @php $fp = $this->focusPoint($file); @endphp
+                                    <div class="leap-focus-wrapper"
+                                        :class="{ 'leap-focus-selecting': settingFocus }"
+                                        x-on:click="if (settingFocus) {
+                                             const img = $el.querySelector('img');
+                                             const rect = img.getBoundingClientRect();
+                                             const x = +((event.clientX - rect.left) / rect.width * 100).toFixed(2);
+                                             const y = +((event.clientY - rect.top) / rect.height * 100).toFixed(2);
+                                             $wire.saveFocusPoint(x, y);
+                                             settingFocus = false;
+                                         }">
+                                        <img src="{{ $this->downloadUrl($file) }}" alt="">
+                                        @if ($fp)
+                                            <div class="leap-focus-point"
+                                                style="left: {{ $fp['x'] }}%; top: {{ $fp['y'] }}%"> @svg('fas-crosshairs', 'svg-icon') </div>
+                                        @endif
+                                        @can('leap::update')
+                                            <div class="leap-focus-actions">
+                                                <button
+                                                    class="leap-focus-action-btn"
+                                                    :class="{ 'active': settingFocus }"
+                                                    x-on:click.stop="settingFocus = !settingFocus"
+                                                    title="@lang('leap::filemanager.set_focus_point')">
+                                                    @svg('fas-crosshairs', 'svg-icon')
+                                                </button>
+                                                @if ($fp)
+                                                    <button
+                                                        class="leap-focus-action-btn"
+                                                        wire:click.stop="clearFocusPoint"
+                                                        title="@lang('leap::filemanager.clear_focus_point')">
+                                                        @svg('fas-times', 'svg-icon')
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        @endcan
+                                    </div>
                                 @endif
                                 @if ($this->isVideo($file))
                                     <video controls src="{{ $this->downloadUrl($file) }}"></video>
@@ -167,7 +202,7 @@
                                 @if ($this->isAudio($file))
                                     <audio controls src="{{ $this->downloadUrl($file) }}"></audio>
                                 @endif
-                                <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener">
+                                <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener" x-show="!settingFocus">
                                     <span>@svg('fas-external-link-alt', 'svg-icon') {{ $file }}</span>
                                 </a>
                             </div>

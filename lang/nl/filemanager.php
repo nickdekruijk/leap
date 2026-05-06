@@ -34,6 +34,8 @@ return [
     'save' => 'Opslaan',
     'select_file' => 'Selecteer bestand',
     'select_files' => 'Selecteer :count bestanden',
+    'set_focus_point' => 'Focuspunt instellen',
+    'clear_focus_point' => 'Focuspunt wissen',
     'size' => 'Grootte',
     'title' => 'Bestandsbeheer',
     'upload_done' => ':attribute geupload',
