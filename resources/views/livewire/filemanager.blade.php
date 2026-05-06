@@ -197,8 +197,7 @@
                                     <div class="leap-focus-wrapper"
                                         :class="{ 'leap-focus-selecting': settingFocus, 'leap-crop-mode': croppingMode }"
                                         x-on:keydown.escape.window="cancelCrop()"
-                                        @if (count($selectedFiles) === 1)
-                                        x-on:click="if (settingFocus) {
+                                        @if (count($selectedFiles) === 1) x-on:click="if (settingFocus) {
                                              const img = $el.querySelector('img');
                                              const rect = img.getBoundingClientRect();
                                              const x = +((event.clientX - rect.left) / rect.width * 100).toFixed(2);
@@ -227,8 +226,7 @@
                                              const r = getCropRect();
                                              if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = '{{ $cropDefaultName }}'; $nextTick(() => { const i = $el.querySelector('.leap-crop-confirm input'); if(i){ i.select(); i.focus(); } }); }
                                              else { cropStart = null; cropCurrent = null; }
-                                         }"
-                                        @endif>
+                                         }" @endif>
                                         <img src="{{ $this->downloadUrl($file) }}" alt="">
                                         @if ($fp)
                                             <div class="leap-focus-point"
