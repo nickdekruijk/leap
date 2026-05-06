@@ -143,6 +143,14 @@
                 cropConfirm: false,
                 cropSaveAsNew: false,
                 cropNewName: '',
+                settingAlt: false,
+                altTexts: {},
+                resetEditState() {
+                    this.settingFocus = false;
+                    this.settingAlt = false;
+                    this.altTexts = {};
+                    this.cancelCrop();
+                },
                 getCropRect() {
                     if (!this.cropStart || !this.cropCurrent) return { x: 0, y: 0, w: 0, h: 0 };
                     return {
@@ -160,7 +168,7 @@
                     this.cropSaveAsNew = false;
                     this.cropNewName = '';
                 },
-            }">
+            }" x-on:file-selected.window="resetEditState()">
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
                     @if ($browse && $selectedFiles)
                         <button
@@ -193,62 +201,97 @@
                                         } else {
                                             $cropDefaultName = $cropBaseName . '-crop.' . $cropExt;
                                         }
+                                        $altTextsData = $this->altTexts($file);
+                                        $altTooltip = implode(' / ', array_filter($altTextsData));
+                                        $altLocales = config('leap.locales') ?? [app()->getLocale() => ''];
                                     @endphp
-                                    <div class="leap-focus-wrapper"
-                                        :class="{ 'leap-focus-selecting': settingFocus, 'leap-crop-mode': croppingMode }"
-                                        x-on:keydown.escape.window="cancelCrop()"
-                                        @if (count($selectedFiles) === 1) x-on:click="if (settingFocus) {
-                                             const img = $el.querySelector('img');
-                                             const rect = img.getBoundingClientRect();
-                                             const x = +((event.clientX - rect.left) / rect.width * 100).toFixed(2);
-                                             const y = +((event.clientY - rect.top) / rect.height * 100).toFixed(2);
-                                             $wire.saveFocusPoint(x, y);
-                                             settingFocus = false;
-                                         }"
-                                        x-on:mousedown.prevent="if (croppingMode && !cropConfirm) {
-                                             const img = $el.querySelector('img');
-                                             const rect = img.getBoundingClientRect();
-                                             cropStart = {
-                                                 x: +((event.clientX - rect.left) / rect.width * 100).toFixed(2),
-                                                 y: +((event.clientY - rect.top) / rect.height * 100).toFixed(2),
-                                             };
-                                             cropCurrent = { ...cropStart };
-                                         }"
-                                        x-on:mousemove="if (croppingMode && cropStart && !cropConfirm) {
-                                             const img = $el.querySelector('img');
-                                             const rect = img.getBoundingClientRect();
-                                             cropCurrent = {
-                                                 x: Math.min(100, Math.max(0, +((event.clientX - rect.left) / rect.width * 100).toFixed(2))),
-                                                 y: Math.min(100, Math.max(0, +((event.clientY - rect.top) / rect.height * 100).toFixed(2))),
-                                             };
-                                         }"
-                                        x-on:mouseup="if (croppingMode && cropStart && !cropConfirm) {
-                                             const r = getCropRect();
-                                             if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = '{{ $cropDefaultName }}'; $nextTick(() => { const i = $el.querySelector('.leap-crop-confirm input'); if(i){ i.select(); i.focus(); } }); }
-                                             else { cropStart = null; cropCurrent = null; }
-                                         }" @endif>
-                                        <img src="{{ $this->downloadUrl($file) }}" alt="">
-                                        @if ($fp)
-                                            <div class="leap-focus-point"
-                                                style="left: {{ $fp['x'] }}%; top: {{ $fp['y'] }}%"> @svg('fas-crosshairs', 'svg-icon') </div>
-                                        @endif
+                                    <div class="leap-image-edit-container">
+                                        <div class="leap-focus-wrapper"
+                                            :class="{ 'leap-focus-selecting': settingFocus, 'leap-crop-mode': croppingMode }"
+                                            x-on:keydown.escape.window="cancelCrop()"
+                                            @if (count($selectedFiles) === 1) x-on:click="if (settingFocus) {
+                                                 const img = $el.querySelector('img');
+                                                 const rect = img.getBoundingClientRect();
+                                                 const x = +((event.clientX - rect.left) / rect.width * 100).toFixed(2);
+                                                 const y = +((event.clientY - rect.top) / rect.height * 100).toFixed(2);
+                                                 $wire.saveFocusPoint(x, y);
+                                                 settingFocus = false;
+                                             }"
+                                            x-on:mousedown.prevent="if (croppingMode && !cropConfirm) {
+                                                 const img = $el.querySelector('img');
+                                                 const rect = img.getBoundingClientRect();
+                                                 cropStart = {
+                                                     x: +((event.clientX - rect.left) / rect.width * 100).toFixed(2),
+                                                     y: +((event.clientY - rect.top) / rect.height * 100).toFixed(2),
+                                                 };
+                                                 cropCurrent = { ...cropStart };
+                                             }"
+                                            x-on:mousemove="if (croppingMode && cropStart && !cropConfirm) {
+                                                 const img = $el.querySelector('img');
+                                                 const rect = img.getBoundingClientRect();
+                                                 cropCurrent = {
+                                                     x: Math.min(100, Math.max(0, +((event.clientX - rect.left) / rect.width * 100).toFixed(2))),
+                                                     y: Math.min(100, Math.max(0, +((event.clientY - rect.top) / rect.height * 100).toFixed(2))),
+                                                 };
+                                             }"
+                                            x-on:mouseup="if (croppingMode && cropStart && !cropConfirm) {
+                                                 const r = getCropRect();
+                                                 if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = '{{ $cropDefaultName }}'; $nextTick(() => { const i = $el.querySelector('.leap-crop-confirm input'); if(i){ i.select(); i.focus(); } }); }
+                                                 else { cropStart = null; cropCurrent = null; }
+                                             }" @endif>
+                                            <img src="{{ $this->downloadUrl($file) }}" alt="">
+                                            @if ($fp)
+                                                <div class="leap-focus-point"
+                                                    style="left: {{ $fp['x'] }}%; top: {{ $fp['y'] }}%"> @svg('fas-crosshairs', 'svg-icon') </div>
+                                            @endif
+                                            <div class="leap-alt-confirm" x-show="settingAlt" x-on:click.stop x-on:mousedown.stop>
+                                                @foreach ($altLocales as $localeKey => $localeName)
+                                                    <div class="leap-alt-confirm-row">
+                                                        @if (count($altLocales) > 1)
+                                                            <span class="leap-alt-locale-label">{{ strtoupper($localeKey) }}</span>
+                                                        @endif
+                                                        <input
+                                                            type="text"
+                                                            x-model="altTexts['{{ $localeKey }}']" placeholder="@lang('leap::filemanager.alt_text_placeholder')"
+                                                            x-on:keydown.enter="$wire.saveAltTexts(altTexts); settingAlt = false;">
+                                                    </div>
+                                                @endforeach
+                                                <div class="leap-alt-confirm-buttons">
+                                                    <button class="leap-focus-action-btn" x-on:click="$wire.saveAltTexts(altTexts); settingAlt = false;" title="@lang('leap::filemanager.alt_text_saved')">@svg('fas-check', 'svg-icon')</button>
+                                                    <button class="leap-focus-action-btn" x-on:click="settingAlt = false" title="@lang('leap::filemanager.crop_cancel')">@svg('fas-times', 'svg-icon')</button>
+                                                </div>
+                                            </div>
+                                            <div class="leap-crop-rect"
+                                                x-show="croppingMode && cropStart"
+                                                :style="`left:${getCropRect().x}%;top:${getCropRect().y}%;width:${getCropRect().w}%;height:${getCropRect().h}%`">
+                                            </div>
+                                            <div class="leap-crop-confirm" x-show="cropConfirm" x-on:click.stop x-on:mousedown.stop>
+                                                <div class="leap-crop-confirm-input">
+                                                    <input type="text" x-model="cropNewName" placeholder="@lang('leap::filemanager.crop_filename')" x-on:keydown.enter="const r = getCropRect(); $wire.cropImage(r.x, r.y, r.x+r.w, r.y+r.h, true, cropNewName); cancelCrop();">
+                                                </div>
+                                                <div class="leap-crop-confirm-buttons">
+                                                    <button class="leap-focus-action-btn" x-on:click="const r = getCropRect(); $wire.cropImage(r.x, r.y, r.x+r.w, r.y+r.h, true, cropNewName); cancelCrop();" title="@lang('leap::filemanager.crop_save_as')">@svg('fas-check', 'svg-icon')</button>
+                                                    <button class="leap-focus-action-btn" x-on:click="cancelCrop()" title="@lang('leap::filemanager.crop_cancel')">@svg('fas-times', 'svg-icon')</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                         @can('leap::update')
-                                            @if (count($selectedFiles) === 1 && ($this->imageFocusEnabled($file) || $this->imageCropEnabled($file)))
+                                            @if (count($selectedFiles) === 1)
                                                 <div class="leap-focus-actions">
                                                     @if ($this->imageFocusEnabled($file))
                                                         <button
                                                             class="leap-focus-action-btn"
                                                             :class="{ 'active': settingFocus }"
-                                                            x-on:click.stop="settingFocus = !settingFocus; cancelCrop()"
+                                                            x-on:click.stop="settingFocus = !settingFocus; cancelCrop(); settingAlt = false;"
                                                             title="@lang('leap::filemanager.set_focus_point')">
                                                             @svg('fas-crosshairs', 'svg-icon')
                                                         </button>
                                                         @if ($fp)
                                                             <button
-                                                                class="leap-focus-action-btn"
+                                                                class="leap-focus-action-btn leap-focus-clear-btn"
                                                                 wire:click.stop="clearFocusPoint"
                                                                 title="@lang('leap::filemanager.clear_focus_point')">
-                                                                @svg('fas-times', 'svg-icon')
+                                                                @svg('fas-crosshairs', 'svg-icon')
                                                             </button>
                                                         @endif
                                                     @endif
@@ -256,27 +299,21 @@
                                                         <button
                                                             class="leap-focus-action-btn"
                                                             :class="{ 'active': croppingMode }"
-                                                            x-on:click.stop="croppingMode = !croppingMode; settingFocus = false; cropStart = null; cropCurrent = null; cropConfirm = false;"
+                                                            x-on:click.stop="croppingMode = !croppingMode; settingFocus = false; cropStart = null; cropCurrent = null; cropConfirm = false; settingAlt = false;"
                                                             title="@lang('leap::filemanager.crop')">
                                                             @svg('fas-crop-alt', 'svg-icon')
                                                         </button>
                                                     @endif
+                                                    <button
+                                                        class="leap-focus-action-btn"
+                                                        :class="{ 'active': settingAlt }"
+                                                        x-on:click.stop="settingAlt = !settingAlt; settingFocus = false; cancelCrop(); if (settingAlt) { altTexts = {{ Js::from((object) $altTextsData) }}; $nextTick(() => { const i = $el.closest('.leap-image-edit-container').querySelector('.leap-alt-confirm input'); if (i) { i.select(); i.focus(); } }); }"
+                                                        title="{{ $altTooltip ?: __('leap::filemanager.set_alt_text') }}">
+                                                        @svg('fas-font', 'svg-icon')
+                                                    </button>
                                                 </div>
                                             @endif
                                         @endcan
-                                        <div class="leap-crop-rect"
-                                            x-show="croppingMode && cropStart"
-                                            :style="`left:${getCropRect().x}%;top:${getCropRect().y}%;width:${getCropRect().w}%;height:${getCropRect().h}%`">
-                                        </div>
-                                        <div class="leap-crop-confirm" x-show="cropConfirm" x-on:click.stop x-on:mousedown.stop>
-                                            <div class="leap-crop-confirm-input">
-                                                <input type="text" x-model="cropNewName" placeholder="@lang('leap::filemanager.crop_filename')" x-on:keydown.enter="const r = getCropRect(); $wire.cropImage(r.x, r.y, r.x+r.w, r.y+r.h, true, cropNewName); cancelCrop();">
-                                            </div>
-                                            <div class="leap-crop-confirm-buttons">
-                                                <button class="leap-focus-action-btn" x-on:click="const r = getCropRect(); $wire.cropImage(r.x, r.y, r.x+r.w, r.y+r.h, true, cropNewName); cancelCrop();" title="@lang('leap::filemanager.crop_save_as')">@svg('fas-check', 'svg-icon')</button>
-                                                <button class="leap-focus-action-btn" x-on:click="cancelCrop()" title="@lang('leap::filemanager.crop_cancel')">@svg('fas-times', 'svg-icon')</button>
-                                            </div>
-                                        </div>
                                     </div>
                                 @endif
                                 @if ($this->isVideo($file))
@@ -285,7 +322,7 @@
                                 @if ($this->isAudio($file))
                                     <audio controls src="{{ $this->downloadUrl($file) }}"></audio>
                                 @endif
-                                <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener" x-show="!settingFocus && !croppingMode">
+                                <a href="{{ $this->downloadUrl($file) }}" target="_blank" rel="noopener" x-show="!settingFocus && !croppingMode && !settingAlt">
                                     <span>@svg('fas-external-link-alt', 'svg-icon') {{ $file }}</span>
                                 </a>
                             </div>

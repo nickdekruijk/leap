@@ -311,6 +311,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | locales
+    |--------------------------------------------------------------------------
+    |
+    | Set to an associative array of locale codes to enable per-locale content
+    | editing (e.g. alt text per language). When null, the current app locale
+    | is used and content is stored as a plain string. When set to an array,
+    | one input is shown per locale and content is stored as
+    | ['nl' => '...', 'en' => '...']. Example:
+    | 'locales' => ['nl' => 'Nederlands', 'en' => 'English']
+    |
+    */
+    'locales' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | ace
     |--------------------------------------------------------------------------
     | Ace code editor options like CDN and version to use.

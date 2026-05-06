@@ -494,6 +494,7 @@ class FileManager extends Module
             $this->selectedFiles = $fileName ? [$fileName] : [];
         }
         Leap::sort($this->selectedFiles);
+        $this->dispatch('file-selected');
     }
 
     /**
@@ -776,6 +777,45 @@ class FileManager extends Module
         $meta = Media::findFile($this->full($file))?->meta ?? [];
 
         return $meta['image_focus'] ?? null;
+    }
+
+    public function altTexts(string $file): array
+    {
+        $value = Media::findFile($this->full($file))?->meta['alt'] ?? null;
+
+        if ($value === null) {
+            return [];
+        }
+
+        // Gracefully handle legacy flat string
+        if (is_string($value)) {
+            return [app()->getLocale() => $value];
+        }
+
+        return (array) $value;
+    }
+
+    public function saveAltTexts(array $texts): void
+    {
+        Leap::validatePermission('update');
+
+        if (count($this->selectedFiles) !== 1) {
+            return;
+        }
+
+        $texts = array_filter(array_map('trim', $texts));
+
+        $media = Media::forFile($this->full(reset($this->selectedFiles)));
+        if ($media) {
+            $meta = $media->meta ?? [];
+            if (empty($texts)) {
+                unset($meta['alt']);
+            } else {
+                $meta['alt'] = $texts;
+            }
+            $media->meta = $meta ?: null;
+            $media->save();
+        }
     }
 
     public function imageCropEnabled(string $file): bool

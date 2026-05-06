@@ -291,57 +291,97 @@
                     }
                     &:not(:hover) VIDEO + A,
                     &:not(:hover) IMG + A,
-                    &:not(:hover) .leap-focus-wrapper + A {
+                    &:not(:hover) .leap-image-edit-container + A {
                         opacity: 0;
                     }
-                    .leap-focus-wrapper {
+                    .leap-image-edit-container {
                         position: relative;
-                        display: inline-block;
-                        line-height: 0;
-                        max-width: 100%;
+                        display: inline-flex;
+                        flex-direction: column;
+                        align-items: flex-start;
                         align-self: center;
-                        IMG {
-                            max-height: 65vh;
+                        .leap-focus-action-btn {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 26px;
+                            height: 26px;
+                            background: rgba(0, 0, 0, 0.55);
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            padding: 0;
+                            .svg-icon {
+                                width: 14px;
+                                height: 14px;
+                                color: white;
+                                margin: 0;
+                                vertical-align: middle;
+                            }
+                            &.leap-focus-clear-btn {
+                                position: relative;
+                                &::after {
+                                    content: "";
+                                    position: absolute;
+                                    top: 50%;
+                                    left: 50%;
+                                    width: 18px;
+                                    height: 2px;
+                                    background: #ff4444;
+                                    transform: translate(-50%, -50%) rotate(-45deg);
+                                    border-radius: 1px;
+                                    pointer-events: none;
+                                }
+                            }
+                            .leap-icon-stack {
+                                position: relative;
+                                display: inline-block;
+                                width: 14px;
+                                height: 14px;
+                                line-height: 0;
+                                vertical-align: middle;
+                                SVG {
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    width: 14px;
+                                    height: 14px;
+                                    color: white;
+                                }
+                            }
+                            &:hover,
+                            &.active {
+                                background: rgba(0, 170, 0, 0.8);
+                            }
                         }
-                        &.leap-focus-selecting {
-                            cursor: crosshair;
+                        &:hover .leap-focus-actions {
+                            opacity: 1;
                         }
                         .leap-focus-actions {
                             position: absolute;
                             top: 6px;
                             left: 6px;
                             display: flex;
+                            flex-wrap: wrap;
                             gap: 4px;
                             opacity: 0;
                             transition: opacity 0.15s;
                             pointer-events: none;
                             .leap-focus-action-btn {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                width: 26px;
-                                height: 26px;
-                                background: rgba(0, 0, 0, 0.55);
-                                border: none;
-                                border-radius: 4px;
-                                cursor: pointer;
-                                padding: 0;
                                 pointer-events: auto;
-                                .svg-icon {
-                                    width: 14px;
-                                    height: 14px;
-                                    color: white;
-                                    margin: 0;
-                                    vertical-align: middle;
-                                }
-                                &:hover,
-                                &.active {
-                                    background: rgba(0, 170, 0, 0.8);
-                                }
                             }
                         }
-                        &:hover .leap-focus-actions {
-                            opacity: 1;
+                    }
+                    .leap-focus-wrapper {
+                        position: relative;
+                        display: inline-block;
+                        line-height: 0;
+                        max-width: 100%;
+                        IMG {
+                            max-height: 65vh;
+                        }
+                        &.leap-focus-selecting {
+                            cursor: crosshair;
                         }
                         &.leap-crop-mode {
                             cursor: crosshair;
@@ -354,11 +394,15 @@
                             pointer-events: none;
                             box-sizing: border-box;
                         }
-                        .leap-crop-confirm {
+                        .leap-crop-confirm,
+                        .leap-alt-confirm {
                             position: absolute;
                             bottom: 8px;
                             left: 50%;
                             transform: translateX(-50%);
+                            width: calc(100% - 16px);
+                            min-width: 200px;
+                            box-sizing: border-box;
                             background: rgba(0, 0, 0, 0.65);
                             border-radius: 6px;
                             padding: 6px 8px;
@@ -366,7 +410,10 @@
                             flex-direction: column;
                             gap: 6px;
                             align-items: center;
+                        }
+                        .leap-crop-confirm {
                             .leap-crop-confirm-input {
+                                width: 100%;
                                 INPUT[type="text"] {
                                     background: rgba(255, 255, 255, 0.15);
                                     border: 1px solid rgba(255, 255, 255, 0.4);
@@ -374,13 +421,47 @@
                                     color: white;
                                     padding: 4px 8px;
                                     font-size: 0.9em;
-                                    width: 280px;
+                                    width: 100%;
+                                    box-sizing: border-box;
                                     &::placeholder {
                                         color: rgba(255, 255, 255, 0.5);
                                     }
                                 }
                             }
                             .leap-crop-confirm-buttons {
+                                display: flex;
+                                gap: 4px;
+                            }
+                        }
+                        .leap-alt-confirm {
+                            .leap-alt-confirm-row {
+                                display: flex;
+                                align-items: center;
+                                gap: 6px;
+                                width: 100%;
+                                .leap-alt-locale-label {
+                                    color: rgba(255, 255, 255, 0.6);
+                                    font-size: 0.7em;
+                                    font-weight: bold;
+                                    min-width: 22px;
+                                    text-align: right;
+                                }
+                                INPUT[type="text"] {
+                                    background: rgba(255, 255, 255, 0.15);
+                                    border: 1px solid rgba(255, 255, 255, 0.4);
+                                    border-radius: 4px;
+                                    color: white;
+                                    flex: 1;
+                                    font-size: 0.9em;
+                                    padding: 4px 8px;
+                                    width: 0;
+                                    box-sizing: border-box;
+                                    &::placeholder {
+                                        color: rgba(255, 255, 255, 0.5);
+                                    }
+                                }
+                            }
+                            .leap-alt-confirm-buttons {
                                 display: flex;
                                 gap: 4px;
                             }
