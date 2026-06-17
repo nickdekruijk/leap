@@ -68,6 +68,8 @@ class Attribute
 
     public bool $raw = false;
 
+    public ?string $showWhenTrue = null;
+
     /**
      * Make a new Attribute instance and set default label based on name.
      */
@@ -777,6 +779,16 @@ class Attribute
     {
         $this->hidden = $hidden;
         $this->accessor($this->name);
+
+        return $this;
+    }
+
+    /**
+     * Only show this attribute in sections when another boolean field is true
+     */
+    public function showWhenTrue(string $fieldName): Attribute
+    {
+        $this->showWhenTrue = $fieldName;
 
         return $this;
     }

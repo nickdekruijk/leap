@@ -28,7 +28,13 @@
                     <fieldset class="leap-fieldset">
                         @if ($section)
                             @foreach ($section->attributes as $sectionAttribute)
-                                <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'])" :placeholder="$placeholder" />
+                                @if ($sectionAttribute->showWhenTrue)
+                                    <div x-show="$wire.data['{{ $attribute->name }}'][{{ $index }}]['{{ $sectionAttribute->showWhenTrue }}']">
+                                        <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'])" :placeholder="$placeholder" />
+                                    </div>
+                                @else
+                                    <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'])" :placeholder="$placeholder" />
+                                @endif
                             @endforeach
                         @else
                             @foreach ($sectionContent as $key => $value)
