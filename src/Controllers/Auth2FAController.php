@@ -2,7 +2,7 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Nette\Utils\Random;
