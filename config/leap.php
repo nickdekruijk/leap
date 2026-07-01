@@ -4,6 +4,7 @@ use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Livewire\Roles;
+use NickDeKruijk\Leap\Livewire\TwoFactor;
 use NickDeKruijk\Leap\Livewire\User;
 use NickDeKruijk\Leap\Navigation\Logout;
 
@@ -39,25 +40,39 @@ return [
     | auth_2fa
     |--------------------------------------------------------------------------
     |
-    | Enable two factor authentication. This can be done by mail.
-    | The mail method will send a code to the users email address.
-    | In a future release TOTP (Google Authenticator) will be added.
+    | Per-user two factor authentication using a TOTP authenticator app
+    | (Google Authenticator, 1Password, etc.), powered by Laravel Fortify.
+    | Each user enrolls individually and receives recovery codes. When
+    | 'confirm' is true a user must enter a valid code to activate 2FA.
     |
     */
     'auth_2fa' => [
-        'method' => null, // 'mail', null
-        'mail' => [
-            'subject' => 'Your 2FA code', // Will be localized with trans()
-            'view' => 'leap::emails.2fa',
-            'from' => config('mail.from'),
-            'code' => [
-                'length' => 6,
-                'charlist' => '0-9', // Examples: '0-9a-zA-Z', 'A-Z' or '0-9'
-                'case_sensitive' => false,
-                'expires' => 15, // Minutes
-            ],
-        ],
+        'enabled' => true, // Enable per-user TOTP two factor authentication
+        'confirm' => true, // Require a valid code to activate 2FA during enrollment
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | password_reset
+    |--------------------------------------------------------------------------
+    |
+    | Enable the forgot/reset password flow. This uses Laravel's password
+    | broker and requires a 'password_reset_tokens' table (present in the
+    | default Laravel schema). Set to false to disable the routes.
+    |
+    */
+    'password_reset' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | password_broker
+    |--------------------------------------------------------------------------
+    |
+    | The password broker to use for the forgot/reset password flow. Null uses
+    | the default broker defined in config/auth.php (usually 'users').
+    |
+    */
+    'password_broker' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -95,6 +110,7 @@ return [
         Dashboard::class,
         FileManager::class,
         Profile::class,
+        TwoFactor::class,
         Logout::class,
         Roles::class,
         User::class,

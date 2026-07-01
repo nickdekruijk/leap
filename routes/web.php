@@ -5,7 +5,9 @@ use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
 use NickDeKruijk\Leap\Livewire\FileManager;
+use NickDeKruijk\Leap\Livewire\ForgotPassword;
 use NickDeKruijk\Leap\Livewire\Login;
+use NickDeKruijk\Leap\Livewire\ResetPassword;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
@@ -19,6 +21,12 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
         Route::get('login', Login::class)->name('leap.login');
         Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([LeapAuth::class]);
         Route::post('logout', LogoutController::class)->name('leap.logout');
+
+        // Forgot/reset password routes
+        if (config('leap.password_reset')) {
+            Route::get('forgot-password', ForgotPassword::class)->name('leap.password.request');
+            Route::get('reset-password/{token}', ResetPassword::class)->name('leap.password.reset');
+        }
     }
 
     // All other routes require authentication and the Leap middleware

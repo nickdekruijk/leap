@@ -112,6 +112,23 @@ class Leap
     }
 
     /**
+     * Determine whether the authenticated user still needs to pass the two
+     * factor authentication challenge before accessing the panel.
+     *
+     * @return bool
+     */
+    public static function mustValidateTwoFactor(): bool
+    {
+        $user = Auth::guard(config('leap.guard'))->user();
+
+        return config('leap.auth_2fa.enabled')
+            && $user
+            && method_exists($user, 'hasEnabledTwoFactorAuthentication')
+            && $user->hasEnabledTwoFactorAuthentication()
+            && ! session('leap.auth_2fa.validated');
+    }
+
+    /**
      * Generate the permissions section for the role management
      *
      * @return Attribute

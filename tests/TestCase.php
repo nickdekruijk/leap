@@ -14,6 +14,7 @@ abstract class TestCase extends Orchestra
     {
         return [
             \Livewire\LivewireServiceProvider::class,
+            \Laravel\Fortify\FortifyServiceProvider::class,
             ServiceProvider::class,
         ];
     }
@@ -49,6 +50,12 @@ abstract class TestCase extends Orchestra
             $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
         });
 
         $this->artisan('migrate')->run();
