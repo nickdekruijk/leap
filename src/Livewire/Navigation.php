@@ -8,7 +8,6 @@ use Livewire\Attributes\On;
 
 class Navigation extends Component
 {
-    public $showOrganizations = false;
     public $currentUrl;
 
     #[On('update-navigation')]
@@ -24,10 +23,5 @@ class Navigation extends Component
     public function mount()
     {
         $this->currentUrl = url()->current();
-    }
-
-    public function toggleOrganizations()
-    {
-        $this->showOrganizations = !$this->showOrganizations;
     }
 }

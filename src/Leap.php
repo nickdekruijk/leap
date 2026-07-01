@@ -125,13 +125,11 @@ class Leap
 
         // Then add the sections for each module with their permissions as switches
         foreach (ModuleController::getAllModules() as $module) {
-            if (config('leap.organizations') || $module::class !== 'NickDeKruijk\Leap\Navigation\Organizations') {
-                $attributes = [];
-                foreach ($module->getDefaultPermissions() as $permission => $default) {
-                    $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
-                }
-                $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
+            $attributes = [];
+            foreach ($module->getDefaultPermissions() as $permission => $default) {
+                $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
             }
+            $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
         }
 
         // Return the sections as an Attribute

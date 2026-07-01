@@ -16,7 +16,7 @@ class Module extends Component
 
     /**
      * The available permissions for this module and their default values.
-     * A global or organization role with permissions to this module will overrule these.
+     * A role with permissions to this module will overrule these.
      *
      * @var array
      */

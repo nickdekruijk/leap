@@ -230,9 +230,8 @@ class Attribute
      * Allows you to select multiple media files from the FileManager
      *
      * @param  bool  $multiple  Whether multiple files can be selected
-     * @param  bool  $ignoreOrganizationPrefix  Whether to ignore the organization prefix when selecting files
      */
-    public function media($multiple = true, bool $ignoreOrganizationPrefix = false): Attribute
+    public function media($multiple = true): Attribute
     {
         if ($this->name == 'media') {
             throw new Exception('The media attribute cannot be named "media"');
@@ -240,7 +239,6 @@ class Attribute
         $this->type = 'media';
         $this->input = 'media';
         $this->options['media'] = true;
-        $this->options['ignoreOrganizationPrefix'] = $ignoreOrganizationPrefix;
         $this->options['multiple'] = $multiple;
 
         return $this;
@@ -251,9 +249,9 @@ class Attribute
      *
      * This currently functions the same as ->media(multiple: false) but is more descriptive
      */
-    public function image(bool $ignoreOrganizationPrefix = false): Attribute
+    public function image(): Attribute
     {
-        $this->media(multiple: false, ignoreOrganizationPrefix: $ignoreOrganizationPrefix);
+        $this->media(multiple: false);
 
         return $this;
     }
@@ -263,9 +261,9 @@ class Attribute
      *
      * This currently functions the same as ->media() but is more descriptive
      */
-    public function images(bool $ignoreOrganizationPrefix = false): Attribute
+    public function images(): Attribute
     {
-        $this->media(multiple: true, ignoreOrganizationPrefix: $ignoreOrganizationPrefix);
+        $this->media(multiple: true);
 
         return $this;
     }
@@ -634,13 +632,12 @@ class Attribute
         return $this;
     }
 
-    public function unique(?string $table = null, ?string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false, bool $ignoreOrganizationId = false): Attribute
+    public function unique(?string $table = null, ?string $column = null, bool $ignoreSelf = true, bool $ignoreSoftDeletes = false): Attribute
     {
         $this->validate[] = 'unique:'.
             ($table ?: '{table}').','.
             ($column ?: $this->name).','.
             ($ignoreSelf ? '{id}' : 'NULL').',id'.
-            ($ignoreOrganizationId ? ',organization_id,{organization_id}' : '').
             ($ignoreSoftDeletes ? ',deleted_at,NULL' : '');
 
         return $this;

@@ -5,7 +5,6 @@ namespace NickDeKruijk\Leap\Livewire;
 use Carbon\Carbon;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
@@ -212,18 +211,10 @@ class FileManager extends Module
     }
 
     /**
-     * Get the storage prefix for the current organization if applicable
+     * Get the storage prefix
      */
     public function storagePrefix(): string
     {
-        if (config('leap.organizations') && empty($this->browse['ignoreOrganizationPrefix'])) {
-            if (config('leap.filemanager.organization_prefix') === 'slug') {
-                return Context::getHidden('leap.organization.slug').'/';
-            } elseif (config('leap.filemanager.organization_prefix') === 'id') {
-                return Context::getHidden('leap.organization.id').'/';
-            }
-        }
-
         return '';
     }
 
@@ -543,7 +534,6 @@ class FileManager extends Module
             'leap.module.'.$this->getSlug().'.download',
             [
                 'name' => $this->encode($file),
-                'organization' => Context::getHidden('leap.organization.slug'),
             ]
         );
     }
@@ -552,9 +542,8 @@ class FileManager extends Module
      * Return the file from storage as a response
      *
      * @param  string  $file  the file including full path
-     * @param  string|null  $organization  the organization slug if applicable
      */
-    public function download(string $file, ?string $organization = null): StreamedResponse
+    public function download(string $file): StreamedResponse
     {
         // Since this is used as a direct route the Module boot method should be called, to set module context and check read permissions
         parent::boot();
@@ -564,11 +553,6 @@ class FileManager extends Module
 
         // Return the file as a response to not force downloads in browser
         return $this->getStorage()->response($file);
-    }
-
-    public function downloadForOrganization(string $organization, string $file): StreamedResponse
-    {
-        return $this->download($file, $organization);
     }
 
     public function editFile($close = false)

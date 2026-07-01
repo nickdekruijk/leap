@@ -24,18 +24,15 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     // All other routes require authentication and the Leap middleware
     Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class])->group(function () {
         // Home route to redirect to after login
-        Route::get(config('leap.organizations') ? '{organization?}/' : '/', [ModuleController::class, 'home'])->name('leap.home');
-
-        // If organizations are enabled, add the {organization?} prefix to some routes
-        $organizations_prefix = config('leap.organizations') ? '{organization}/' : '';
+        Route::get('/', [ModuleController::class, 'home'])->name('leap.home');
 
         // Register all modules routes
         foreach (ModuleController::getAllModules() as $module) {
             if ($module->getSlug()) {
-                Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+                Route::get($module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
                 if ($module::class === FileManager::class) {
                     // Filemanager download/preview route
-                    Route::get($organizations_prefix . $module->getSlug() . '/download/{name}', [FileManager::class, config('leap.organizations') ? 'downloadForOrganization' : 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
+                    Route::get($module->getSlug() . '/download/{name}', [FileManager::class, 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
                 }
             }
         }
