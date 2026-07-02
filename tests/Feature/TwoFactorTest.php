@@ -78,6 +78,7 @@ class TwoFactorTest extends TestCase
         $user->refresh();
         $this->assertNotNull($user->two_factor_confirmed_at);
         $this->assertTrue($user->hasEnabledTwoFactorAuthentication());
+        $this->assertTrue(session('leap.auth_2fa.validated'));
     }
 
     public function test_confirm_with_invalid_code_shows_error(): void

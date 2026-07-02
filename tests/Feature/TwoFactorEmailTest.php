@@ -84,6 +84,7 @@ class TwoFactorEmailTest extends TestCase
         $user->refresh();
         $this->assertNotNull($user->two_factor_email_confirmed_at);
         $this->assertSame('email', Leap::twoFactorMethod($user));
+        $this->assertTrue(session('leap.auth_2fa.validated'));
     }
 
     public function test_confirm_email_with_invalid_code_shows_error(): void

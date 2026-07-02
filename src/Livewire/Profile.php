@@ -137,6 +137,11 @@ class Profile extends Module
             return;
         }
 
+        // Successfully confirming already proves possession of the second
+        // factor, so don't immediately bounce the user to the login
+        // challenge for the rest of this session.
+        session(['leap.auth_2fa.validated' => true]);
+
         $this->confirmCode = null;
         $this->showRecoveryCodes = true;
         $this->log('two-factor-confirm');
@@ -190,6 +195,11 @@ class Profile extends Module
         }
 
         $this->user->forceFill(['two_factor_email_confirmed_at' => now()])->save();
+
+        // Successfully confirming already proves possession of the second
+        // factor, so don't immediately bounce the user to the login
+        // challenge for the rest of this session.
+        session(['leap.auth_2fa.validated' => true]);
 
         $this->confirmCode = null;
         $this->log('two-factor-email-confirm');
