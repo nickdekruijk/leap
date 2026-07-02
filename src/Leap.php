@@ -116,7 +116,7 @@ class Leap
 
     /**
      * Determine which two factor method, if any, is active for the given
-     * user. Returns 'totp', 'email' or null.
+     * user. Returns 'totp', 'email', 'passkey' or null.
      */
     public static function twoFactorMethod(?Authenticatable $user = null): ?string
     {
@@ -134,6 +134,14 @@ class Leap
             return 'email';
         }
 
+        if (
+            config('leap.auth_passkeys.satisfies_2fa_requirement')
+            && method_exists($user, 'passkeys')
+            && $user->passkeys()->exists()
+        ) {
+            return 'passkey';
+        }
+
         return null;
     }
 
@@ -149,6 +157,21 @@ class Leap
             && $user
             && self::twoFactorMethod($user) !== null
             && ! session('leap.auth_2fa.validated');
+    }
+
+    /**
+     * Determine whether the authenticated user must enroll a two factor
+     * method before accessing anything besides their own profile.
+     */
+    public static function mustEnrollTwoFactor(): bool
+    {
+        $user = Auth::guard(config('leap.guard'))->user();
+
+        if (! config('leap.auth_2fa.required') || ! $user) {
+            return false;
+        }
+
+        return self::twoFactorMethod($user) === null;
     }
 
     /**

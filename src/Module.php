@@ -4,7 +4,6 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\NavigationItem;
@@ -29,8 +28,6 @@ class Module extends Component
 
     /**
      * Return the default_permissions for this module.
-     *
-     * @return array
      */
     public function getDefaultPermissions(): array
     {
@@ -50,6 +47,13 @@ class Module extends Component
     {
         // Add this module to the context so we can use it during the request
         Context::addHidden('leap.module', $this::class);
+
+        // If mandatory 2FA enrollment is pending, only the profile module (where enrollment happens) is reachable
+        if (Leap::mustEnrollTwoFactor() && $this->getSlug() !== 'profile') {
+            $this->redirect(route('leap.module.profile'));
+
+            return;
+        }
 
         // If the user has no read permission to this module raise a 404 error because we want to hide the fact that this module exists
         Leap::validatePermission('read', 404);

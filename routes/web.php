@@ -11,6 +11,7 @@ use NickDeKruijk\Leap\Livewire\ResetPassword;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
+use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
 
 Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function () {
     // Assets, this way we don't need to publish them to public
@@ -33,17 +34,17 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     }
 
     // All other routes require authentication and the Leap middleware
-    Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class])->group(function () {
+    Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class, RequireTwoFactorEnrollment::class])->group(function () {
         // Home route to redirect to after login
         Route::get('/', [ModuleController::class, 'home'])->name('leap.home');
 
         // Register all modules routes
         foreach (ModuleController::getAllModules() as $module) {
             if ($module->getSlug()) {
-                Route::get($module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+                Route::get($module->getSlug(), $module::class)->name('leap.module.'.$module->getSlug());
                 if ($module::class === FileManager::class) {
                     // Filemanager download/preview route
-                    Route::get($module->getSlug() . '/download/{name}', [FileManager::class, 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
+                    Route::get($module->getSlug().'/download/{name}', [FileManager::class, 'download'])->name('leap.module.'.$module->getSlug().'.download')->where('name', '(.*)');
                 }
             }
         }

@@ -2,18 +2,17 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
+use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Navigation\Logout;
 
 class ModuleController extends Controller
 {
     /**
      * Return all available leap modules
-     *
-     * @return Collection
      */
     public static function getAllModules(): Collection
     {
@@ -23,9 +22,9 @@ class ModuleController extends Controller
         }
 
         // Find all modules in app/Leap directory
-        foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $counter => $file) {
-            $module = 'App\\' . config('leap.app_modules') . '\\' . basename($file, '.php');
-            $module = new $module();
+        foreach (glob(app_path(config('leap.app_modules')).'/*.php') as $counter => $file) {
+            $module = 'App\\'.config('leap.app_modules').'\\'.basename($file, '.php');
+            $module = new $module;
             $module->priority = $module->priority ?: $counter + 1;
             $modules[] = $module;
         }
@@ -41,8 +40,6 @@ class ModuleController extends Controller
 
     /**
      * Return all modules the current user has access to
-     *
-     * @return Collection
      */
     public static function getModules(): Collection
     {
@@ -50,6 +47,13 @@ class ModuleController extends Controller
 
         foreach ($modules as $n => $module) {
             if (empty(Context::getHidden('leap.permissions')[$module::class]['read']) && empty(Context::getHidden('leap.permissions')[$module::class]['all_permissions'])) {
+                unset($modules[$n]);
+
+                continue;
+            }
+
+            // While mandatory 2FA enrollment is pending, only show the profile (to enroll) and logout
+            if (Leap::mustEnrollTwoFactor() && $module->getSlug() !== 'profile' && ! $module instanceof Logout) {
                 unset($modules[$n]);
             }
         }
@@ -59,11 +63,9 @@ class ModuleController extends Controller
 
     /**
      * Redirect to the first module the user has access to
-     *
-     * @return RedirectResponse
      */
     public static function home(): RedirectResponse
     {
-        return redirect()->route('leap.module.' . static::getModules()->where('priority', '>=', -100)->first()->getSlug());
+        return redirect()->route('leap.module.'.static::getModules()->where('priority', '>=', -100)->first()->getSlug());
     }
 }

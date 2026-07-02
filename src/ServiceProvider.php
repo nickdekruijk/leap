@@ -2,22 +2,24 @@
 
 namespace NickDeKruijk\Leap;
 
+use Composer\InstalledVersions;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Events\PasskeyVerified;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
-use Livewire\Mechanisms\ComponentRegistry;
 use NickDeKruijk\Leap\Commands\TemplateCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
+use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
-
     /**
      * Bootstrap the application services.
      *
@@ -26,24 +28,24 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function boot()
     {
         // Load the translations JSON files.
-        $this->loadTranslationsFrom(__DIR__ . '/../lang', 'leap');
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'leap');
 
         $this->publishes([
-            __DIR__ . '/../config/leap.php' => config_path('leap.php'),
+            __DIR__.'/../config/leap.php' => config_path('leap.php'),
         ], 'config');
 
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'leap');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'leap');
 
         // Register all leap livewire components.
-        foreach (glob(__DIR__ . '/Livewire/*.php') as $file) {
+        foreach (glob(__DIR__.'/Livewire/*.php') as $file) {
             // convert PascalCase to kebab-case
             $kebabCase = strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', basename($file, '.php')));
-            Livewire::component('leap.' . $kebabCase, 'NickDeKruijk\Leap\Livewire\\' . basename($file, '.php'));
+            Livewire::component('leap.'.$kebabCase, 'NickDeKruijk\Leap\Livewire\\'.basename($file, '.php'));
         }
 
         // Register all components in app/Leap directory
-        foreach (glob(app_path(config('leap.app_modules')) . '/*.php') as $file) {
-            Livewire::component('leap.app.' . strtolower(basename($file, '.php')), 'App\Leap\\' . basename($file, '.php'));
+        foreach (glob(app_path(config('leap.app_modules')).'/*.php') as $file) {
+            Livewire::component('leap.app.'.strtolower(basename($file, '.php')), 'App\Leap\\'.basename($file, '.php'));
         }
 
         // Leap middleware should be persistent for all livewire requests
@@ -51,12 +53,13 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             Auth2FA::class,
             LeapAuth::class,
             RequireRole::class,
+            RequireTwoFactorEnrollment::class,
         ]);
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         if (config('leap.migrations')) {
-            $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+            $this->loadMigrationsFrom(__DIR__.'/../migrations');
         }
 
         if (config('leap.auth_passkeys.enabled')) {
@@ -74,8 +77,18 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             // in Profile, the same protection level as enabling/disabling
             // TOTP two factor.
             config(['passkeys.management_middleware' => []]);
-            $authProvider = config('auth.guards.' . config('leap.guard') . '.provider');
-            Passkeys::useUserModel(config('auth.providers.' . $authProvider . '.model'));
+            $authProvider = config('auth.guards.'.config('leap.guard').'.provider');
+            Passkeys::useUserModel(config('auth.providers.'.$authProvider.'.model'));
+
+            // When a passkey counts as a 2FA method (leap.auth_passkeys.satisfies_2fa_requirement),
+            // any successful WebAuthn verification -- whether from logging in with a passkey or
+            // from confirming one on the two factor challenge page -- validates the session the
+            // same way entering a TOTP/email code does.
+            Event::listen(PasskeyVerified::class, function () {
+                if (config('leap.auth_passkeys.satisfies_2fa_requirement')) {
+                    session(['leap.auth_2fa.validated' => true]);
+                }
+            });
 
             // laravel/fortify (^1.19) bundles its own passkeys integration
             // and unconditionally calls Passkeys::ignoreRoutes() as soon as
@@ -85,7 +98,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             // never get registered by anyone. Load them directly instead of
             // relying on PasskeysServiceProvider's own auto-registration.
             $this->loadRoutesFrom(
-                \Composer\InstalledVersions::getInstallPath('laravel/passkeys') . '/routes/routes.php'
+                InstalledVersions::getInstallPath('laravel/passkeys').'/routes/routes.php'
             );
         }
 
@@ -113,12 +126,12 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     /**
      * Check if user has permission for the module ability
      *
-     * @param string $ability
-     * @return boolean
+     * @return bool
      */
     public function can(string $ability, ?Module $module = null)
     {
         $modulePermissions = Context::getHidden('leap.permissions')[$module ? $module::class : Context::getHidden('leap.module')];
+
         return ($modulePermissions[$ability] ?? false === true)
             || ($modulePermissions['all_permissions'] ?? false === true);
     }
@@ -130,7 +143,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/leap.php', 'leap');
+        $this->mergeConfigFrom(__DIR__.'/../config/leap.php', 'leap');
 
         // Configure Laravel Fortify for per-user TOTP two factor authentication.
         // Leap drives its own routes and Livewire UI, so Fortify's own routes are

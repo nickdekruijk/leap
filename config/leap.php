@@ -50,6 +50,7 @@ return [
     */
     'auth_2fa' => [
         'enabled' => true, // Enable per-user two factor authentication
+        'required' => false, // Force every user without a configured 2FA method into enrollment-only mode (only Profile reachable) until they set one up
         'email' => [
             'enabled' => false, // Allow email as an alternative two factor method in Profile
             'expires' => 15, // Minutes a mailed code remains valid
@@ -70,6 +71,7 @@ return [
     */
     'auth_passkeys' => [
         'enabled' => true,
+        'satisfies_2fa_requirement' => false, // If true, a user with a registered passkey is exempt from mandatory 2FA enrollment (auth_2fa.required)
     ],
 
     /*

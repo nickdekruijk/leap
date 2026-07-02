@@ -63,6 +63,40 @@
     };
 
     /**
+     * Confirm the current (already authenticated) user's identity with an
+     * existing passkey and redirect on success.
+     */
+    window.leapPasskeyConfirm = function () {
+        if (!supported()) {
+            alert('This browser does not support passkeys.');
+            return;
+        }
+
+        jsonFetch('/passkeys/confirm/options')
+            .then(function (data) {
+                var publicKey = PublicKeyCredential.parseRequestOptionsFromJSON(data.options);
+                return navigator.credentials.get({ publicKey: publicKey });
+            })
+            .then(function (credential) {
+                return jsonFetch('/passkeys/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        credential: credential.toJSON(),
+                    }),
+                });
+            })
+            .then(function (data) {
+                window.location = data.redirect;
+            })
+            .catch(function (error) {
+                if (error.name !== 'NotAllowedError') {
+                    alert(error.message || 'Unable to verify with this passkey.');
+                }
+            });
+    };
+
+    /**
      * Register a new passkey for the current user, then reload to refresh the list.
      */
     window.leapPasskeyRegister = function (name) {

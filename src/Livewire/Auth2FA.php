@@ -137,6 +137,16 @@ class Auth2FA extends Component
             return $this->redirectIntended(route('leap.home'));
         }
 
+        // laravel/passkeys' confirm response redirects via redirect()->intended()
+        // with no fallback of its own (unlike our own redirectIntended() calls,
+        // which always pass route('leap.home')). Seed a sane fallback here so a
+        // passkey confirmation from this page doesn't land on '/' instead of the
+        // admin panel. Leaves a genuinely captured intended URL (e.g. someone
+        // hit a deep link while logged out) untouched.
+        if (! session()->has('url.intended')) {
+            session(['url.intended' => route('leap.home')]);
+        }
+
         $user = Auth::guard(config('leap.guard'))->user();
 
         if (Leap::twoFactorMethod($user) === 'email' && Cache::missing(SendTwoFactorEmailCode::cacheKey($user))) {
