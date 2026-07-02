@@ -84,6 +84,18 @@ class Profile extends Module
     }
 
     /**
+     * Passkeys registered for the current user, newest first. Registration
+     * and deletion happen via plain JS/fetch against the laravel/passkeys
+     * endpoints (see resources/js/passkeys.js), so this list is only ever
+     * read here, never mutated from PHP.
+     */
+    #[Computed]
+    public function passkeys()
+    {
+        return $this->user->passkeys()->orderByDesc('created_at')->get();
+    }
+
+    /**
      * Email two factor authentication is fully enabled once confirmed.
      */
     #[Computed]

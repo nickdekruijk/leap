@@ -15,6 +15,9 @@ use NickDeKruijk\Leap\Middleware\RequireRole;
 Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function () {
     // Assets, this way we don't need to publish them to public
     Route::get('leap.css', [AssetController::class, 'css'])->name('leap.css');
+    if (config('leap.auth_passkeys.enabled')) {
+        Route::get('leap.js', [AssetController::class, 'js'])->name('leap.js');
+    }
 
     // Set login and logout routes if required
     if (config('leap.auth_routes')) {

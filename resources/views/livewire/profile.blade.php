@@ -112,5 +112,32 @@
                 @endif
             </fieldset>
         </form>
+
+        @if (config('leap.auth_passkeys.enabled'))
+            <form class="leap-form">
+                <fieldset class="leap-fieldset">
+                    <h3>@lang('leap::auth.passkeys')</h3>
+                    <label class="leap-label">
+                        <span class="leap-label">{{ __('leap::auth.passkeys_intro') }}</span>
+                    </label>
+
+                    @if ($this->passkeys->isNotEmpty())
+                        <ul class="leap-passkeys">
+                            @foreach ($this->passkeys as $passkey)
+                                <li>
+                                    <span>{{ $passkey->name }}</span>
+                                    <span>{{ $passkey->last_used_at ? $passkey->last_used_at->diffForHumans() : __('leap::auth.passkey_never_used') }}</span>
+                                    <x-leap::button type="button" svg-icon="fas-trash" class="danger" label="leap::auth.delete" onclick="if (confirm('{{ __('leap::auth.passkey_delete_confirm') }}')) leapPasskeyDelete({{ $passkey->id }})" />
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+
+                    <div class="leap-fieldset-buttons">
+                        <x-leap::button type="button" svg-icon="fas-key" label="leap::auth.passkey_add" onclick="var name = prompt('{{ __('leap::auth.passkey_add_prompt') }}'); if (name) leapPasskeyRegister(name)" />
+                    </div>
+                </fieldset>
+            </form>
+        @endif
     </div>
 </main>

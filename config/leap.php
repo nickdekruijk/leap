@@ -59,6 +59,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | auth_passkeys
+    |--------------------------------------------------------------------------
+    |
+    | Passwordless login with passkeys (WebAuthn), powered by Laravel's own
+    | passkeys package. Users register one or more passkeys from Profile and
+    | can then sign in with just their device biometrics/PIN, no password or
+    | two factor challenge needed. Disable to hide the passkey UI entirely.
+    |
+    */
+    'auth_passkeys' => [
+        'enabled' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | password_reset
     |--------------------------------------------------------------------------
     |

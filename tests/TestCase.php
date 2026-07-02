@@ -15,6 +15,7 @@ abstract class TestCase extends Orchestra
         return [
             \Livewire\LivewireServiceProvider::class,
             \Laravel\Fortify\FortifyServiceProvider::class,
+            \Laravel\Passkeys\PasskeysServiceProvider::class,
             ServiceProvider::class,
         ];
     }

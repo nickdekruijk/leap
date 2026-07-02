@@ -123,4 +123,27 @@ class AssetController extends Controller
     {
         return '<link rel="stylesheet" href="' . route('leap.css') . '?' . self::cssFilemtime() . '">';
     }
+
+    /**
+     * Return the filemtime of the passkeys js file, used as a cache buster
+     *
+     * @return integer
+     */
+    public static function jsFilemtime(): int
+    {
+        return filemtime(__DIR__ . '/../../resources/js/passkeys.js');
+    }
+
+    /**
+     * Return the passkeys js file as a Response, this way we don't need to publish it to public
+     *
+     * @return Response
+     */
+    public static function js(): Response
+    {
+        $js = file_get_contents(__DIR__ . '/../../resources/js/passkeys.js');
+
+        $response = new Response($js, 200, ['Content-Type' => 'application/javascript']);
+        return self::cacheResponse($response);
+    }
 }

@@ -4,8 +4,12 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ Leap::htmlTitle() }}</title>
         {!! \NickDeKruijk\Leap\Controllers\AssetController::cssLink() !!}
+        @if (config('leap.auth_passkeys.enabled'))
+            <script src="{{ route('leap.js') }}?{{ \NickDeKruijk\Leap\Controllers\AssetController::jsFilemtime() }}" defer></script>
+        @endif
         <script src="https://cdn.jsdelivr.net/npm/@marcreichel/alpine-autosize@latest/dist/alpine-autosize.min.js" defer></script>
 
     </head>

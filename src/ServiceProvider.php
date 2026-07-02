@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use Livewire\Mechanisms\ComponentRegistry;
 use NickDeKruijk\Leap\Commands\TemplateCommand;
@@ -56,6 +57,36 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+        }
+
+        if (config('leap.auth_passkeys.enabled')) {
+            // Configure laravel/passkeys to log in on the same guard and user
+            // model leap uses. Read here (boot, not register) so this sees
+            // the final auth config after every provider has registered, and
+            // wins even if Fortify's own passkeys wiring (which always runs
+            // in its register(), regardless of provider order) touched these
+            // same keys first.
+            config(['passkeys.guard' => config('leap.guard')]);
+            // Leap has no password.confirm route/flow, so drop the package's
+            // default 'password.confirm' management middleware: passkey
+            // management routes are already gated by leap's own auth stack
+            // (LeapAuth/RequireRole/Auth2FA) plus Leap::validatePermission('update')
+            // in Profile, the same protection level as enabling/disabling
+            // TOTP two factor.
+            config(['passkeys.management_middleware' => []]);
+            $authProvider = config('auth.guards.' . config('leap.guard') . '.provider');
+            Passkeys::useUserModel(config('auth.providers.' . $authProvider . '.model'));
+
+            // laravel/fortify (^1.19) bundles its own passkeys integration
+            // and unconditionally calls Passkeys::ignoreRoutes() as soon as
+            // it registers, whether or not Fortify's passkeys feature is
+            // enabled. Combined with Fortify::ignoreRoutes() above (needed
+            // to keep leap's own Livewire login), the package's routes would
+            // never get registered by anyone. Load them directly instead of
+            // relying on PasskeysServiceProvider's own auto-registration.
+            $this->loadRoutesFrom(
+                \Composer\InstalledVersions::getInstallPath('laravel/passkeys') . '/routes/routes.php'
+            );
         }
 
         if ($this->app->runningInConsole()) {

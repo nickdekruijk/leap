@@ -99,6 +99,43 @@
         padding: calc(var(--spacing) / 2) var(--spacing);
     }
 
+    .leap-passkeys {
+        list-style: none;
+        margin: calc(var(--spacing) / 2) 0 0;
+        padding: 0;
+
+        LI {
+            display: flex;
+            align-items: center;
+            gap: calc(var(--spacing) / 2);
+            padding: calc(var(--spacing) / 3) calc(var(--spacing) / 2);
+            background-color: rgba(black, 0.05);
+            border-radius: 3px;
+
+            &:not(:first-child) {
+                margin-top: calc(var(--spacing) / 4);
+            }
+
+            SPAN:nth-child(2) {
+                margin-right: auto;
+                color: rgba(black, 0.5);
+                font-size: 0.9em;
+            }
+
+            // Outside .leap-fieldset-buttons .leap-button has no background
+            // of its own (white text on transparent), same fix as
+            // .leap-editor .leap-fieldset-buttons above.
+            .leap-button {
+                flex-shrink: 0;
+                background-color: $leap-header-background-buttons;
+
+                &:hover:not([disabled]) {
+                    background-color: $red;
+                }
+            }
+        }
+    }
+
     .leap-buttons {
         background-color: $leap-header-background-buttons;
         height: var(--nav-item-height);
