@@ -36,6 +36,11 @@ abstract class TestCase extends Orchestra
         $config->set('auth.providers.users.model', User::class);
 
         $config->set('leap.migrations', true);
+
+        // The email 2FA method defaults to disabled in the shipped config
+        // (it depends on mail being configured); the test suite exercises
+        // the feature regardless of that default.
+        $config->set('leap.auth_2fa.email.enabled', true);
     }
 
     protected function defineDatabaseMigrations(): void

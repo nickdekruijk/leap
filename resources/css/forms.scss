@@ -72,6 +72,7 @@
 
     .leap-fieldset-buttons {
         display: flex;
+        flex-wrap: wrap;
         justify-content: space-between;
         gap: calc(var(--spacing) / 2);
         margin-top: calc(var(--spacing) / 2);

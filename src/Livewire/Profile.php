@@ -2,7 +2,10 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -11,20 +14,29 @@ use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Livewire\Attributes\Computed;
+use NickDeKruijk\Leap\Actions\SendTwoFactorEmailCode;
+use NickDeKruijk\Leap\Actions\VerifyTwoFactorEmailCode;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
 class Profile extends Module
 {
+    use WithRateLimiting;
+
     public $component = 'leap.profile';
+
     public $icon = 'fas-user-circle';
+
     public $slug = 'profile';
+
     public $priority = 1000;
 
     public $data;
+
     public $user;
 
     public $confirmCode;
+
     public $showRecoveryCodes = false;
 
     protected $default_permissions = [
@@ -71,9 +83,30 @@ class Profile extends Module
         return $this->user->recoveryCodes();
     }
 
+    /**
+     * Email two factor authentication is fully enabled once confirmed.
+     */
+    #[Computed]
+    public function twoFactorEmailEnabled(): bool
+    {
+        return (bool) $this->user->two_factor_email_confirmed_at;
+    }
+
+    /**
+     * A code has been emailed but not yet confirmed.
+     */
+    #[Computed]
+    public function twoFactorEmailEnrolling(): bool
+    {
+        return ! $this->twoFactorEmailEnabled && Cache::has(SendTwoFactorEmailCode::cacheKey($this->user));
+    }
+
     public function enableTwoFactor(EnableTwoFactorAuthentication $enable)
     {
         Leap::validatePermission('update');
+
+        // Only one two factor method can be active at a time
+        $this->disableTwoFactorEmail(silent: true);
 
         $enable($this->user);
 
@@ -121,6 +154,75 @@ class Profile extends Module
         $this->dispatch('toast', __('leap::auth.two_factor_disabled'))->to(Toasts::class);
     }
 
+    public function enableTwoFactorEmail(SendTwoFactorEmailCode $send)
+    {
+        Leap::validatePermission('update');
+        abort_unless(config('leap.auth_2fa.email.enabled', true), 403);
+
+        // Only one two factor method can be active at a time
+        app(DisableTwoFactorAuthentication::class)($this->user);
+
+        $send($this->user);
+
+        $this->log('two-factor-email-enable');
+    }
+
+    public function confirmTwoFactorEmail(VerifyTwoFactorEmailCode $verify)
+    {
+        Leap::validatePermission('update');
+
+        if (! $verify($this->user, $this->confirmCode)) {
+            $this->addError('confirmCode', __('leap::auth.two_factor_invalid'));
+
+            return;
+        }
+
+        $this->user->forceFill(['two_factor_email_confirmed_at' => now()])->save();
+
+        $this->confirmCode = null;
+        $this->log('two-factor-email-confirm');
+        $this->dispatch('toast', __('leap::auth.two_factor_enabled'))->to(Toasts::class);
+    }
+
+    public function resendTwoFactorEmail(SendTwoFactorEmailCode $send)
+    {
+        Leap::validatePermission('update');
+
+        try {
+            $this->rateLimit(1, (int) config('leap.auth_2fa.email.resend_throttle', 60));
+        } catch (TooManyRequestsException $exception) {
+            $this->addError('confirmCode', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
+
+            return;
+        }
+
+        $send($this->user);
+
+        $this->log('two-factor-email-resend');
+        $this->dispatch('toast', __('leap::auth.two_factor_email_resent'))->to(Toasts::class);
+    }
+
+    public function disableTwoFactorEmail(bool $silent = false)
+    {
+        if (! $silent) {
+            Leap::validatePermission('update');
+        }
+
+        Cache::forget(SendTwoFactorEmailCode::cacheKey($this->user));
+
+        if ($this->user->two_factor_email_confirmed_at) {
+            $this->user->forceFill(['two_factor_email_confirmed_at' => null])->save();
+        }
+
+        if ($silent) {
+            return;
+        }
+
+        $this->confirmCode = null;
+        $this->log('two-factor-email-disable');
+        $this->dispatch('toast', __('leap::auth.two_factor_disabled'))->to(Toasts::class);
+    }
+
     public function getTitle(): string
     {
         return Auth::user()->name;
@@ -131,7 +233,7 @@ class Profile extends Module
         return [
             'data.name' => 'required|min:3',
             'data.email' => 'required|email:rfc,spoof,strict,filter', // ,dns
-            'data.password_current' => 'nullable|current_password:' . config('leap.guard') . '|required_with:data.password_new',
+            'data.password_current' => 'nullable|current_password:'.config('leap.guard').'|required_with:data.password_new',
             'data.password_new' => ['nullable', 'different:data.password_current', Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],
             'data.password_new_confirmation' => 'nullable|same:data.password_new|required_with:data.password_new',
         ];
@@ -141,8 +243,9 @@ class Profile extends Module
     {
         $attributes = [];
         foreach ($this->rules() as $field => $rule) {
-            $attributes[$field] = strtolower(__('leap::auth.' . explode('.', $field, 2)[1]));
+            $attributes[$field] = strtolower(__('leap::auth.'.explode('.', $field, 2)[1]));
         }
+
         return $attributes;
     }
 
@@ -169,7 +272,7 @@ class Profile extends Module
             if ($this->user->name != $this->data['name']) {
                 $this->user->name = $this->data['name'];
                 $this->log('update', ['name' => $this->user->name]);
-                $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']) . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']).' '.__('leap::resource.updated'))->to(Toasts::class);
                 // Update title and navigation to reflect name change
                 $this->title = $this->user->name;
                 $this->dispatch('update-navigation')->to(Navigation::class);
@@ -179,7 +282,7 @@ class Profile extends Module
             if (isset($this->data['password_new'])) {
                 $this->log('update', 'new password');
                 $this->user->password = bcrypt($this->data['password_new']);
-                $this->dispatch('toast', __('leap::auth.password') . ' ' . __('leap::resource.updated'))->to(Toasts::class);
+                $this->dispatch('toast', __('leap::auth.password').' '.__('leap::resource.updated'))->to(Toasts::class);
             }
 
             // Check if anything changed

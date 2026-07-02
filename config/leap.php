@@ -39,15 +39,22 @@ return [
     | auth_2fa
     |--------------------------------------------------------------------------
     |
-    | Per-user two factor authentication using a TOTP authenticator app
-    | (Google Authenticator, 1Password, etc.), powered by Laravel Fortify.
-    | Each user enrolls individually and receives recovery codes. When
-    | 'confirm' is true a user must enter a valid code to activate 2FA.
+    | Per-user two factor authentication. Users choose one method: a TOTP
+    | authenticator app (Google Authenticator, 1Password, etc.), powered by
+    | Laravel Fortify, or a 6-digit code emailed at login. Each user enrolls
+    | individually; a valid code is always required to activate TOTP 2FA
+    | before the login gate starts enforcing it. The 'email' sub-array only
+    | gates whether the email method can be enabled from Profile; users who
+    | already confirmed it stay protected even if this is turned off.
     |
     */
     'auth_2fa' => [
-        'enabled' => true, // Enable per-user TOTP two factor authentication
-        'confirm' => true, // Require a valid code to activate 2FA during enrollment
+        'enabled' => true, // Enable per-user two factor authentication
+        'email' => [
+            'enabled' => false, // Allow email as an alternative two factor method in Profile
+            'expires' => 15, // Minutes a mailed code remains valid
+            'resend_throttle' => 60, // Seconds between resend requests
+        ],
     ],
 
     /*

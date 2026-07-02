@@ -5,9 +5,13 @@ namespace NickDeKruijk\Leap\Livewire;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
+use NickDeKruijk\Leap\Actions\SendTwoFactorEmailCode;
+use NickDeKruijk\Leap\Actions\VerifyTwoFactorEmailCode;
 use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Traits\CanLog;
@@ -18,6 +22,7 @@ class Auth2FA extends Component
     use WithRateLimiting;
 
     public $code;
+
     public $message;
 
     protected function rules()
@@ -26,7 +31,16 @@ class Auth2FA extends Component
     }
 
     /**
-     * Validate a TOTP code or a one-time recovery code for the given user.
+     * The active two factor method ('totp' or 'email') for the current user.
+     */
+    #[Computed]
+    public function method(): ?string
+    {
+        return Leap::twoFactorMethod(Auth::guard(config('leap.guard'))->user());
+    }
+
+    /**
+     * Validate a TOTP/email code or a one-time recovery code for the given user.
      */
     private function hasValidCode($user, string $code): bool
     {
@@ -36,15 +50,24 @@ class Auth2FA extends Component
             return false;
         }
 
-        // Try the code as a TOTP code from an authenticator app
-        if (app(TwoFactorAuthenticationProvider::class)->verify(
-            Fortify::currentEncrypter()->decrypt($user->two_factor_secret),
-            $code
-        )) {
+        // Try the code as a TOTP code from an authenticator app, or as an emailed code
+        $verified = Leap::twoFactorMethod($user) === 'email'
+            ? app(VerifyTwoFactorEmailCode::class)($user, $code)
+            : app(TwoFactorAuthenticationProvider::class)->verify(
+                Fortify::currentEncrypter()->decrypt($user->two_factor_secret),
+                $code
+            );
+
+        if ($verified) {
             return true;
         }
 
-        // Otherwise try it as a single-use recovery code
+        // Otherwise try it as a single-use recovery code (TOTP only, the
+        // email method has no recovery codes of its own)
+        if (! $user->two_factor_recovery_codes) {
+            return false;
+        }
+
         $recoveryCode = collect($user->recoveryCodes())->first(function ($stored) use ($code) {
             return hash_equals($stored, $code);
         });
@@ -87,14 +110,37 @@ class Auth2FA extends Component
 
     public function logout()
     {
-        $logout = new LogoutController();
+        $logout = new LogoutController;
         $logout();
+    }
+
+    public function resend(SendTwoFactorEmailCode $send)
+    {
+        try {
+            $this->rateLimit(1, (int) config('leap.auth_2fa.email.resend_throttle', 60));
+        } catch (TooManyRequestsException $exception) {
+            $this->addError('code', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
+
+            return;
+        }
+
+        $user = Auth::guard(config('leap.guard'))->user();
+        $send($user);
+
+        $this->message = __('leap::auth.two_factor_email_resent');
+        $this->log('login-2fa-resend');
     }
 
     public function mount()
     {
         if (! Leap::mustValidateTwoFactor()) {
             return $this->redirectIntended(route('leap.home'));
+        }
+
+        $user = Auth::guard(config('leap.guard'))->user();
+
+        if (Leap::twoFactorMethod($user) === 'email' && Cache::missing(SendTwoFactorEmailCode::cacheKey($user))) {
+            app(SendTwoFactorEmailCode::class)($user);
         }
     }
 

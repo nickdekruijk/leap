@@ -19,8 +19,6 @@ class Leap
 
     /**
      * Return all modules the current user has access to
-     *
-     * @return Collection
      */
     public static function modules(): Collection
     {
@@ -30,41 +28,44 @@ class Leap
     /**
      * Sort an array with locale-sensitive collator
      *
-     * @param array $array The array to sort
-     * @return boolean true on success or false on failure
+     * @param  array  $array  The array to sort
+     * @return bool true on success or false on failure
      */
     public static function sort(array &$array): bool
     {
         $coll = collator_create(app()->getLocale());
+
         return collator_sort($coll, $array);
     }
 
     /**
      * Sort an array by key with locale-sensitive collator
      *
-     * @param array $array The array to sort
-     * @param string $key The key to sort by
-     * @param boolean $desc Sort in descending order
-     * @return boolean true on success or false on failure
+     * @param  array  $array  The array to sort
+     * @param  string  $key  The key to sort by
+     * @param  bool  $desc  Sort in descending order
+     * @return bool true on success or false on failure
      */
     public static function sortBy(array &$array, $key, $desc = false): bool
     {
         $coll = collator_create(app()->getLocale());
+
         return usort($array, function ($a, $b) use ($coll, $key, $desc) {
-            return  $desc ? collator_compare($coll, $b[$key], $a[$key]) : collator_compare($coll, $a[$key], $b[$key]);
+            return $desc ? collator_compare($coll, $b[$key], $a[$key]) : collator_compare($coll, $a[$key], $b[$key]);
         });
     }
 
     /**
      * Sort an array by basename with locale-sensitive collator
      *
-     * @param array $array The array to sort
-     * @return boolean true on success or false on failure
+     * @param  array  $array  The array to sort
+     * @return bool true on success or false on failure
      */
     public static function basenamesort(array &$array): bool
     {
         $coll = collator_create(app()->getLocale());
         $coll->setAttribute(Collator::NUMERIC_COLLATION, Collator::ON);
+
         return usort($array, function ($a, $b) use ($coll) {
             return collator_compare($coll, basename($a), basename($b));
         });
@@ -73,12 +74,13 @@ class Leap
     /**
      * Sort an array by key with locale-sensitive collator
      *
-     * @param array $array The array to sort
-     * @return boolean true on success or false on failure
+     * @param  array  $array  The array to sort
+     * @return bool true on success or false on failure
      */
     public static function ksort(array &$array): bool
     {
         $coll = collator_create(app()->getLocale());
+
         return uksort($array, function ($a, $b) use ($coll) {
             return collator_compare($coll, $a, $b);
         });
@@ -87,13 +89,13 @@ class Leap
     /**
      * Check if the user has permission for the ability, if not raise HtmlException and Log
      *
-     * @param string $ability The permission to check
-     * @param integer $code Http response code to throw on gate failure (default 403: Unauthorized)
+     * @param  string  $ability  The permission to check
+     * @param  int  $code  Http response code to throw on gate failure (default 403: Unauthorized)
      * @return void
      */
     public static function validatePermission(string $ability, int $code = 403)
     {
-        if (Gate::denies('leap::' . $ability)) {
+        if (Gate::denies('leap::'.$ability)) {
             self::log('unauthorized', ['ability' => $ability, 'code' => $code, 'requestUri' => request()->getRequestUri()]);
             abort($code);
         }
@@ -108,14 +110,36 @@ class Leap
     {
         /** @disregard P1013 Prevent intelephense warning "Undefined method 'getModel'" */
         $model = Auth::getProvider()->getModel();
+
         return new $model;
+    }
+
+    /**
+     * Determine which two factor method, if any, is active for the given
+     * user. Returns 'totp', 'email' or null.
+     */
+    public static function twoFactorMethod(?Authenticatable $user = null): ?string
+    {
+        $user ??= Auth::guard(config('leap.guard'))->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        if (method_exists($user, 'hasEnabledTwoFactorAuthentication') && $user->hasEnabledTwoFactorAuthentication()) {
+            return 'totp';
+        }
+
+        if (! empty($user->two_factor_email_confirmed_at)) {
+            return 'email';
+        }
+
+        return null;
     }
 
     /**
      * Determine whether the authenticated user still needs to pass the two
      * factor authentication challenge before accessing the panel.
-     *
-     * @return bool
      */
     public static function mustValidateTwoFactor(): bool
     {
@@ -123,15 +147,12 @@ class Leap
 
         return config('leap.auth_2fa.enabled')
             && $user
-            && method_exists($user, 'hasEnabledTwoFactorAuthentication')
-            && $user->hasEnabledTwoFactorAuthentication()
+            && self::twoFactorMethod($user) !== null
             && ! session('leap.auth_2fa.validated');
     }
 
     /**
      * Generate the permissions section for the role management
-     *
-     * @return Attribute
      */
     public static function generatePermissionsSection(): Attribute
     {
@@ -144,7 +165,7 @@ class Leap
         foreach (ModuleController::getAllModules() as $module) {
             $attributes = [];
             foreach ($module->getDefaultPermissions() as $permission => $default) {
-                $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
+                $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.'.$permission));
             }
             $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
         }

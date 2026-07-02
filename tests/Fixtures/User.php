@@ -21,5 +21,6 @@ class User extends Authenticatable
 
     protected $casts = [
         'two_factor_confirmed_at' => 'datetime',
+        'two_factor_email_confirmed_at' => 'datetime',
     ];
 }

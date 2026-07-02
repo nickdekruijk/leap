@@ -110,8 +110,12 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         Fortify::ignoreRoutes();
         config(['fortify.guard' => config('leap.guard')]);
         config(['fortify.features' => config('leap.auth_2fa.enabled') ? [
+            // 'confirm' must stay true: the Profile UI always requires a
+            // valid code before showing 2FA as enabled, so leaving this
+            // false would only desync the login gate from that (risking
+            // lockout on an unconfirmed secret) with no upside.
             Features::twoFactorAuthentication([
-                'confirm' => (bool) config('leap.auth_2fa.confirm', true),
+                'confirm' => true,
                 'confirmPassword' => false,
             ]),
         ] : []]);

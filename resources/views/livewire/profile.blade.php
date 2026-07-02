@@ -25,7 +25,7 @@
             </fieldset>
         </form>
 
-        <form class="leap-form" wire:submit="confirmTwoFactor">
+        <form class="leap-form" wire:submit="{{ $this->twoFactorEmailEnrolling ? 'confirmTwoFactorEmail' : 'confirmTwoFactor' }}">
             <fieldset class="leap-fieldset">
                 <h3>@lang('leap::auth.two_factor')</h3>
 
@@ -79,12 +79,35 @@
                         <x-leap::button type="submit" svg-icon="fas-check" class="primary" label="leap::auth.two_factor_confirm" />
                         <x-leap::button type="button" svg-icon="fas-xmark" wire:click="disableTwoFactor" label="leap::resource.cancel" />
                     </div>
+                @elseif ($this->twoFactorEmailEnabled)
+                    <label class="leap-label">
+                        <span class="leap-label">{{ __('leap::auth.two_factor_email_is_enabled') }}</span>
+                    </label>
+
+                    <div class="leap-fieldset-buttons">
+                        <x-leap::button type="button" svg-icon="fas-ban" wire:click="disableTwoFactorEmail" class="danger" label="leap::auth.two_factor_disable" />
+                    </div>
+                @elseif ($this->twoFactorEmailEnrolling)
+                    <label class="leap-label">
+                        <span class="leap-label">{{ __('leap::auth.two_factor_email_setup_hint', ['email' => $this->user->email]) }}</span>
+                    </label>
+
+                    <x-leap::input wire:model.blur="confirmCode" name="confirmCode" label="{{ __('leap::auth.verification_code') }}" autocomplete="one-time-code" autofocus />
+
+                    <div class="leap-fieldset-buttons">
+                        <x-leap::button type="submit" svg-icon="fas-check" class="primary" label="leap::auth.two_factor_confirm" />
+                        <x-leap::button type="button" svg-icon="fas-rotate" wire:click="resendTwoFactorEmail" label="leap::auth.two_factor_email_resend" />
+                        <x-leap::button type="button" svg-icon="fas-xmark" wire:click="disableTwoFactorEmail" label="leap::resource.cancel" />
+                    </div>
                 @else
                     <label class="leap-label">
                         <span class="leap-label">{{ __('leap::auth.two_factor_intro') }}</span>
                     </label>
                     <div class="leap-fieldset-buttons">
                         <x-leap::button type="button" svg-icon="fas-shield-halved" wire:click="enableTwoFactor" class="primary" label="leap::auth.two_factor_enable" />
+                        @if (config('leap.auth_2fa.email.enabled', true))
+                            <x-leap::button type="button" svg-icon="fas-envelope" wire:click="enableTwoFactorEmail" label="leap::auth.two_factor_email_enable" />
+                        @endif
                     </div>
                 @endif
             </fieldset>
