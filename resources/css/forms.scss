@@ -7,6 +7,17 @@
         font-weight: 600;
     }
 
+    .leap-notice-danger {
+        border: 2px solid $leap-color-border-error;
+        background-color: rgba($red, 0.05);
+        color: $leap-color-error;
+        border-radius: 4px;
+        padding: calc(var(--spacing) / 2) var(--spacing);
+        font-weight: 600;
+        margin-top: var(--spacing);
+        margin-bottom: var(--spacing);
+    }
+
     .leap-fieldset {
         border: 0 none;
 

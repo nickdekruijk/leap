@@ -55,6 +55,7 @@ return [
     'two_factor_is_enabled' => 'Two factor authentication is enabled for your account.',
     'two_factor_passkey_hint' => 'Verify your identity with one of your passkeys.',
     'two_factor_passkey_verify' => 'Verify with passkey',
+    'two_factor_required_notice' => 'Two factor authentication is required. Set up a method below before you can access other parts of the panel.',
     'two_factor_recovery_codes' => 'Recovery codes',
     'two_factor_recovery_hint' => 'Store these recovery codes in a safe place. Each can be used once to access your account if you lose your device.',
     'two_factor_recovery_regenerated' => 'New recovery codes have been generated.',

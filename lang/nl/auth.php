@@ -55,6 +55,7 @@ return [
     'two_factor_is_enabled' => 'Tweestapsverificatie is ingeschakeld voor je account.',
     'two_factor_passkey_hint' => 'Verifieer je identiteit met een van je passkeys.',
     'two_factor_passkey_verify' => 'Verifiëren met passkey',
+    'two_factor_required_notice' => 'Tweestapsverificatie is verplicht. Stel hieronder een methode in voordat je bij andere onderdelen van het paneel kunt.',
     'two_factor_recovery_codes' => 'Herstelcodes',
     'two_factor_recovery_hint' => 'Bewaar deze herstelcodes op een veilige plek. Elke code kan één keer worden gebruikt om toegang te krijgen als je je apparaat verliest.',
     'two_factor_recovery_regenerated' => 'Er zijn nieuwe herstelcodes gegenereerd.',

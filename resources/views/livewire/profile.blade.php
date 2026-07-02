@@ -12,6 +12,9 @@
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
                 <h3>@lang('leap::auth.profile_edit')</h3>
+                @if (\NickDeKruijk\Leap\Leap::mustEnrollTwoFactor())
+                    <div class="leap-notice-danger">{{ __('leap::auth.two_factor_required_notice') }}</div>
+                @endif
                 <x-leap::input wire:model.blur="data.name" name="data.name" label="{{ __('leap::auth.name') }}" autocomplete="name" />
                 <x-leap::input wire:model.blur="data.email" name="data.email" label="{{ __('leap::auth.email') }}" type="email" disabled />
             </fieldset>

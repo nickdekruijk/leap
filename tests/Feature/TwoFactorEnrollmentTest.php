@@ -95,6 +95,29 @@ class TwoFactorEnrollmentTest extends TestCase
         $this->assertNotNull($user->two_factor_secret);
     }
 
+    public function test_required_and_no_method_profile_shows_notice(): void
+    {
+        config(['leap.auth_2fa.required' => true]);
+        $user = $this->createUser();
+        $this->actingAs($user);
+        $this->grantProfilePermissions();
+
+        Livewire::test(Profile::class)
+            ->assertSee(__('leap::auth.two_factor_required_notice'));
+    }
+
+    public function test_required_and_method_configured_profile_shows_no_notice(): void
+    {
+        config(['leap.auth_2fa.required' => true]);
+        $user = $this->createUser();
+        $this->confirmTwoFactorFor($user);
+        $this->actingAs($user);
+        $this->grantProfilePermissions();
+
+        Livewire::test(Profile::class)
+            ->assertDontSee(__('leap::auth.two_factor_required_notice'));
+    }
+
     public function test_required_and_method_configured_allows_normal_access(): void
     {
         config(['leap.auth_2fa.required' => true]);
@@ -108,9 +131,12 @@ class TwoFactorEnrollmentTest extends TestCase
         $response->assertRedirect(route('leap.module.dashboard'));
     }
 
-    public function test_passkey_does_not_satisfy_requirement_by_default(): void
+    public function test_passkey_does_not_satisfy_requirement_when_disabled(): void
     {
-        config(['leap.auth_2fa.required' => true]);
+        config([
+            'leap.auth_2fa.required' => true,
+            'leap.auth_passkeys.satisfies_2fa_requirement' => false,
+        ]);
         $user = $this->createUser();
         $user->passkeys()->create([
             'name' => 'Test device',
@@ -184,6 +210,7 @@ class TwoFactorEnrollmentTest extends TestCase
 
     public function test_passkey_verified_event_does_not_validate_session_when_satisfies_requirement_disabled(): void
     {
+        config(['leap.auth_passkeys.satisfies_2fa_requirement' => false]);
         $user = $this->createUser();
         $passkey = $user->passkeys()->create([
             'name' => 'Test device',
