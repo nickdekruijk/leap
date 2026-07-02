@@ -34,7 +34,7 @@ return [
     'two_factor_enabled' => 'Tweestapsverificatie is ingeschakeld.',
     'two_factor_hint' => 'Voer de code uit je authenticator-app in, of een van je herstelcodes.',
     'two_factor_intro' => 'Voeg extra beveiliging toe aan je account door bij het inloggen een code uit een authenticator-app te vereisen.',
-    'two_factor_invalid' => 'De opgegeven verificatiecode was ongeldig.',
+    'two_factor_invalid' => 'Ongeldige code.',
     'two_factor_is_enabled' => 'Tweestapsverificatie is ingeschakeld voor je account.',
     'two_factor_recovery_codes' => 'Herstelcodes',
     'two_factor_recovery_hint' => 'Bewaar deze herstelcodes op een veilige plek. Elke code kan één keer worden gebruikt om toegang te krijgen als je je apparaat verliest.',

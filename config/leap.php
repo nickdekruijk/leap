@@ -4,7 +4,6 @@ use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Livewire\Roles;
-use NickDeKruijk\Leap\Livewire\TwoFactor;
 use NickDeKruijk\Leap\Livewire\User;
 use NickDeKruijk\Leap\Navigation\Logout;
 
@@ -111,7 +110,6 @@ return [
         Dashboard::class,
         FileManager::class,
         Profile::class,
-        TwoFactor::class,
         Logout::class,
         Roles::class,
         User::class,

@@ -20,8 +20,10 @@ See the config file at `config/leap.php`
 ### Two factor authentication
 
 Leap supports per-user two factor authentication (TOTP) with recovery codes,
-powered by [Laravel Fortify](https://laravel.com/docs/fortify). Add the
-`TwoFactorAuthenticatable` trait to your authenticatable model:
+powered by [Laravel Fortify](https://laravel.com/docs/fortify). This is enabled
+by default (`leap.auth_2fa.enabled`), so your authenticatable model **requires**
+the `TwoFactorAuthenticatable` trait — without it the Profile screen throws a
+`Call to undefined method` error:
 
 ```php
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -35,8 +37,8 @@ class User extends Authenticatable
 The required `two_factor_secret`, `two_factor_recovery_codes` and
 `two_factor_confirmed_at` columns are added to your users table by the package
 migrations (when `leap.migrations` is enabled). Users can enable, confirm and
-disable two factor authentication from the **Two Factor Authentication** screen
-in the panel. Disable the feature entirely with `leap.auth_2fa.enabled`.
+disable two factor authentication from the **Profile** screen in the panel.
+Disable the feature entirely with `leap.auth_2fa.enabled`.
 
 ### Password reset
 

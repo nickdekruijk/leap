@@ -34,7 +34,7 @@ return [
     'two_factor_enabled' => 'Two factor authentication has been enabled.',
     'two_factor_hint' => 'Enter the code from your authenticator app, or one of your recovery codes.',
     'two_factor_intro' => 'Add extra security to your account by requiring a code from an authenticator app when logging in.',
-    'two_factor_invalid' => 'The provided two factor authentication code was invalid.',
+    'two_factor_invalid' => 'Invalid code.',
     'two_factor_is_enabled' => 'Two factor authentication is enabled for your account.',
     'two_factor_recovery_codes' => 'Recovery codes',
     'two_factor_recovery_hint' => 'Store these recovery codes in a safe place. Each can be used once to access your account if you lose your device.',

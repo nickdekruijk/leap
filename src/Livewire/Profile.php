@@ -5,6 +5,12 @@ namespace NickDeKruijk\Leap\Livewire;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
+use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
+use Livewire\Attributes\Computed;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
@@ -18,6 +24,9 @@ class Profile extends Module
     public $data;
     public $user;
 
+    public $confirmCode;
+    public $showRecoveryCodes = false;
+
     protected $default_permissions = [
         'read' => true,
         'update' => true,
@@ -30,6 +39,86 @@ class Profile extends Module
         $this->title = $this->user->name;
         $this->data['name'] = $this->user->name;
         $this->data['email'] = $this->user->email;
+    }
+
+    /**
+     * Two factor authentication is fully enabled once confirmed.
+     */
+    #[Computed]
+    public function twoFactorEnabled(): bool
+    {
+        return $this->user->two_factor_secret && $this->user->two_factor_confirmed_at;
+    }
+
+    /**
+     * The user has generated a secret but not yet confirmed a code.
+     */
+    #[Computed]
+    public function twoFactorEnrolling(): bool
+    {
+        return $this->user->two_factor_secret && ! $this->user->two_factor_confirmed_at;
+    }
+
+    #[Computed]
+    public function qrCodeSvg(): string
+    {
+        return $this->user->twoFactorQrCodeSvg();
+    }
+
+    #[Computed]
+    public function recoveryCodes(): array
+    {
+        return $this->user->recoveryCodes();
+    }
+
+    public function enableTwoFactor(EnableTwoFactorAuthentication $enable)
+    {
+        Leap::validatePermission('update');
+
+        $enable($this->user);
+
+        $this->log('two-factor-enable');
+    }
+
+    public function confirmTwoFactor(ConfirmTwoFactorAuthentication $confirm)
+    {
+        Leap::validatePermission('update');
+
+        try {
+            $confirm($this->user, $this->confirmCode);
+        } catch (ValidationException $e) {
+            $this->addError('confirmCode', __('leap::auth.two_factor_invalid'));
+
+            return;
+        }
+
+        $this->confirmCode = null;
+        $this->showRecoveryCodes = true;
+        $this->log('two-factor-confirm');
+        $this->dispatch('toast', __('leap::auth.two_factor_enabled'))->to(Toasts::class);
+    }
+
+    public function regenerateRecoveryCodes(GenerateNewRecoveryCodes $generate)
+    {
+        Leap::validatePermission('update');
+
+        $generate($this->user);
+
+        $this->showRecoveryCodes = true;
+        $this->log('two-factor-recovery-codes');
+        $this->dispatch('toast', __('leap::auth.two_factor_recovery_regenerated'))->to(Toasts::class);
+    }
+
+    public function disableTwoFactor(DisableTwoFactorAuthentication $disable)
+    {
+        Leap::validatePermission('update');
+
+        $disable($this->user);
+
+        $this->confirmCode = null;
+        $this->showRecoveryCodes = false;
+        $this->log('two-factor-disable');
+        $this->dispatch('toast', __('leap::auth.two_factor_disabled'))->to(Toasts::class);
     }
 
     public function getTitle(): string

@@ -7,7 +7,7 @@ use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Fortify;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Livewire\Auth2FA;
-use NickDeKruijk\Leap\Livewire\TwoFactor;
+use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
@@ -29,13 +29,13 @@ class TwoFactorTest extends TestCase
     }
 
     /**
-     * Give the current request full permissions on the TwoFactor module so the
+     * Give the current request full permissions on the Profile module so the
      * Livewire component's read/update gate passes (normally set by RequireRole).
      */
     private function grantTwoFactorPermissions(): void
     {
         Context::addHidden('leap.permissions', [
-            TwoFactor::class => ['read' => true, 'update' => true],
+            Profile::class => ['read' => true, 'update' => true],
         ]);
     }
 
@@ -52,7 +52,7 @@ class TwoFactorTest extends TestCase
         $this->actingAs($user);
         $this->grantTwoFactorPermissions();
 
-        Livewire::test(TwoFactor::class)->call('enable');
+        Livewire::test(Profile::class)->call('enableTwoFactor');
 
         $user->refresh();
         $this->assertNotNull($user->two_factor_secret);
@@ -67,12 +67,12 @@ class TwoFactorTest extends TestCase
         $this->actingAs($user);
         $this->grantTwoFactorPermissions();
 
-        Livewire::test(TwoFactor::class)->call('enable');
+        Livewire::test(Profile::class)->call('enableTwoFactor');
         $user->refresh();
 
-        Livewire::test(TwoFactor::class)
+        Livewire::test(Profile::class)
             ->set('confirmCode', $this->currentOtp($user))
-            ->call('confirm')
+            ->call('confirmTwoFactor')
             ->assertHasNoErrors();
 
         $user->refresh();
@@ -86,11 +86,11 @@ class TwoFactorTest extends TestCase
         $this->actingAs($user);
         $this->grantTwoFactorPermissions();
 
-        Livewire::test(TwoFactor::class)->call('enable');
+        Livewire::test(Profile::class)->call('enableTwoFactor');
 
-        Livewire::test(TwoFactor::class)
+        Livewire::test(Profile::class)
             ->set('confirmCode', '000000')
-            ->call('confirm')
+            ->call('confirmTwoFactor')
             ->assertHasErrors('confirmCode');
 
         $this->assertNull($user->fresh()->two_factor_confirmed_at);
@@ -105,7 +105,7 @@ class TwoFactorTest extends TestCase
         (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
-        Livewire::test(TwoFactor::class)->call('disable');
+        Livewire::test(Profile::class)->call('disableTwoFactor');
 
         $user->refresh();
         $this->assertNull($user->two_factor_secret);
