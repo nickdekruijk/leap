@@ -71,7 +71,7 @@ return [
     */
     'auth_passkeys' => [
         'enabled' => true,
-        'satisfies_2fa_requirement' => false, // If true, a user with a registered passkey is exempt from mandatory 2FA enrollment (auth_2fa.required)
+        'satisfies_2fa_requirement' => true, // If true, a user with a registered passkey is exempt from mandatory 2FA enrollment (auth_2fa.required)
     ],
 
     /*
