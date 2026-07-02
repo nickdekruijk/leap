@@ -45,6 +45,8 @@ class Login extends Component
         try {
             $this->rateLimit(5);
             if (Auth::guard(config('leap.guard'))->attempt($credentials, $this->remember)) {
+                // Require the two factor challenge to be passed again for this login
+                session()->forget('leap.auth_2fa.validated');
                 $this->log('login');
                 return $this->redirectIntended(route('leap.home'));
             } else {

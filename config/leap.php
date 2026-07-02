@@ -6,7 +6,6 @@ use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Livewire\Roles;
 use NickDeKruijk\Leap\Livewire\User;
 use NickDeKruijk\Leap\Navigation\Logout;
-use NickDeKruijk\Leap\Navigation\Organizations;
 
 return [
 
@@ -40,25 +39,40 @@ return [
     | auth_2fa
     |--------------------------------------------------------------------------
     |
-    | Enable two factor authentication. This can be done by mail.
-    | The mail method will send a code to the users email address.
-    | In a future release TOTP (Google Authenticator) will be added.
+    | Per-user two factor authentication using a TOTP authenticator app
+    | (Google Authenticator, 1Password, etc.), powered by Laravel Fortify.
+    | Each user enrolls individually and receives recovery codes. When
+    | 'confirm' is true a user must enter a valid code to activate 2FA.
     |
     */
     'auth_2fa' => [
-        'method' => null, // 'mail', null
-        'mail' => [
-            'subject' => 'Your 2FA code', // Will be localized with trans()
-            'view' => 'leap::emails.2fa',
-            'from' => config('mail.from'),
-            'code' => [
-                'length' => 6,
-                'charlist' => '0-9', // Examples: '0-9a-zA-Z', 'A-Z' or '0-9'
-                'case_sensitive' => false,
-                'expires' => 15, // Minutes
-            ],
-        ],
+        'enabled' => true, // Enable per-user TOTP two factor authentication
+        'confirm' => true, // Require a valid code to activate 2FA during enrollment
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | password_reset
+    |--------------------------------------------------------------------------
+    |
+    | Enable the forgot/reset password flow. This uses Laravel's password
+    | broker and requires a 'password_reset_tokens' table (present in the
+    | default Laravel schema). Only enable this if mail is actually
+    | configured, otherwise reset links will never arrive.
+    |
+    */
+    'password_reset' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | password_broker
+    |--------------------------------------------------------------------------
+    |
+    | The password broker to use for the forgot/reset password flow. Null uses
+    | the default broker defined in config/auth.php (usually 'users').
+    |
+    */
+    'password_broker' => null,
 
     /*
     |--------------------------------------------------------------------------
@@ -94,7 +108,6 @@ return [
     */
     'default_modules' => [
         Dashboard::class,
-        Organizations::class,
         FileManager::class,
         Profile::class,
         Logout::class,
@@ -116,20 +129,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | permission_priority
-    |--------------------------------------------------------------------------
-    |
-    | The priority of permissions when organizations are enabled. When a user
-    | has module permissions from both a global and organization role this
-    | setting determines which role permission to use. Possible values are
-    | 'global' and 'organization'. So you can either overrule the global role
-    | permissions with organization role permissions or the other way around.
-    |
-    */
-    'permission_priority' => 'organization',
-
-    /*
-    |--------------------------------------------------------------------------
     | migrations
     |--------------------------------------------------------------------------
     |
@@ -142,37 +141,6 @@ return [
     |
     */
     'migrations' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | organizations
-    |--------------------------------------------------------------------------
-    |
-    | Enable organizations support. Your application should have a valid
-    | organization model with a belongsToMany relationship with the User model.
-    | See organization_model configuration below.
-    |
-    */
-    'organizations' => false,
-
-    /*
-    |--------------------------------------------------------------------------
-    | organization_model
-    |--------------------------------------------------------------------------
-    |
-    | The model to use for organizations, e.g. App\Models\Organization
-    | By default an organization will be refered to by a slug and the name will
-    | be shown in the navigation. You can overrule this by adding a $leap_slug,
-    | $leap_navigation_label and $leap_navigation_order attribute to the model.
-    | For example (with the default values):
-    | class Organization extends Model
-    | {
-    |     public $leap_slug = 'slug';
-    |     public $leap_navigation_label = 'name';
-    |     public $leap_navigation_order = 'name';
-    |
-    */
-    'organization_model' => 'App\Models\Organization',
 
     /*
     |--------------------------------------------------------------------------
@@ -305,7 +273,6 @@ return [
         'disk' => 'public', // Must refer to a disk defined in config/filesystems.php, e.g. 'local' or 'public'
         'image_crop_enabled' => false, // Set to an array of extensions to enable cropping, e.g. ['jpeg', 'jpg', 'png', 'webp']
         'image_focus_enabled' => false, // Set to an array of extensions to enable focus point editing, e.g. ['jpeg', 'jpg', 'png', 'webp', 'gif']
-        'organization_prefix' => 'slug', // Store files for each organization in a separate directory, e.g. 'slug' or 'id'. Set to null to disable.
         'upload_max_filesize' => '128G', // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
     ],
 

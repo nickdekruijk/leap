@@ -3,6 +3,12 @@
         <div>
             @include('leap::logo')
 
+            @if (session('leap.status'))
+                <div class="form-message">
+                    {{ session('leap.status') }}
+                </div>
+            @endif
+
             <form wire:submit="submit" class="leap-form" novalidate>
                 <fieldset class="leap-fieldset">
                     @foreach (config('leap.credentials') as $column)
@@ -17,8 +23,11 @@
 
                     <x-leap::input type="checkbox" role="switch" name="remember" wire:model.blur="remember" label="{{ __('leap::auth.remember_me') }}" />
                 </fieldset>
-                <fieldset class="leap-fieldset">
+                <fieldset class="leap-fieldset leap-fieldset-buttons">
                     <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="{{ __('leap::auth.login') }}" />
+                    @if (config('leap.auth_routes') && config('leap.password_reset'))
+                        <a href="{{ route('leap.password.request') }}" wire:navigate>{{ __('leap::auth.forgot_password') }}</a>
+                    @endif
                 </fieldset>
             </form>
         </div>

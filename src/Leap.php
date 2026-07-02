@@ -112,6 +112,23 @@ class Leap
     }
 
     /**
+     * Determine whether the authenticated user still needs to pass the two
+     * factor authentication challenge before accessing the panel.
+     *
+     * @return bool
+     */
+    public static function mustValidateTwoFactor(): bool
+    {
+        $user = Auth::guard(config('leap.guard'))->user();
+
+        return config('leap.auth_2fa.enabled')
+            && $user
+            && method_exists($user, 'hasEnabledTwoFactorAuthentication')
+            && $user->hasEnabledTwoFactorAuthentication()
+            && ! session('leap.auth_2fa.validated');
+    }
+
+    /**
      * Generate the permissions section for the role management
      *
      * @return Attribute
@@ -125,13 +142,11 @@ class Leap
 
         // Then add the sections for each module with their permissions as switches
         foreach (ModuleController::getAllModules() as $module) {
-            if (config('leap.organizations') || $module::class !== 'NickDeKruijk\Leap\Navigation\Organizations') {
-                $attributes = [];
-                foreach ($module->getDefaultPermissions() as $permission => $default) {
-                    $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
-                }
-                $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
+            $attributes = [];
+            foreach ($module->getDefaultPermissions() as $permission => $default) {
+                $attributes[] = Attribute::make($permission)->switch()->default($default)->label(__('leap::auth.' . $permission));
             }
+            $sections[] = Section::make($module::class)->withoutView()->label($module->getTitle())->attributes(...$attributes);
         }
 
         // Return the sections as an Attribute

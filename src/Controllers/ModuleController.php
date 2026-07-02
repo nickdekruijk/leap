@@ -2,7 +2,7 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -58,12 +58,12 @@ class ModuleController extends Controller
     }
 
     /**
-     * Redirect to the first module of the users default organization (if any)
+     * Redirect to the first module the user has access to
      *
      * @return RedirectResponse
      */
-    public static function home($organization = null): RedirectResponse
+    public static function home(): RedirectResponse
     {
-        return redirect()->route('leap.module.' . static::getModules()->where('priority', '>=', -100)->first()->getSlug(), $organization);
+        return redirect()->route('leap.module.' . static::getModules()->where('priority', '>=', -100)->first()->getSlug());
     }
 }

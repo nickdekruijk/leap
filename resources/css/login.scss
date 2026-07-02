@@ -38,6 +38,26 @@
         padding: calc(var(--spacing) / 2) var(--spacing);
     }
 
+    .leap-fieldset-buttons {
+        align-items: center;
+
+        A {
+            color: white;
+            font-size: 14px;
+            text-decoration: none;
+            @media (max-width: 1024px) {
+                font-size: 13px;
+            }
+            @media (max-width: 768px) {
+                font-size: 12px;
+            }
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
     .leap-fieldset LABEL.leap-label SPAN.leap-label {
         color: white;
     }

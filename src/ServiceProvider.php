@@ -4,6 +4,8 @@ namespace NickDeKruijk\Leap;
 
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Fortify\Features;
+use Laravel\Fortify\Fortify;
 use Livewire\Livewire;
 use Livewire\Mechanisms\ComponentRegistry;
 use NickDeKruijk\Leap\Commands\TemplateCommand;
@@ -98,6 +100,21 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/leap.php', 'leap');
+
+        // Configure Laravel Fortify for per-user TOTP two factor authentication.
+        // Leap drives its own routes and Livewire UI, so Fortify's own routes are
+        // disabled and only its two factor primitives are used. Registration and
+        // email verification are intentionally left disabled. This runs in
+        // register() so it takes effect before any provider (including Fortify)
+        // boots and registers its routes.
+        Fortify::ignoreRoutes();
+        config(['fortify.guard' => config('leap.guard')]);
+        config(['fortify.features' => config('leap.auth_2fa.enabled') ? [
+            Features::twoFactorAuthentication([
+                'confirm' => (bool) config('leap.auth_2fa.confirm', true),
+                'confirmPassword' => false,
+            ]),
+        ] : []]);
 
         // Register the main class to use with the facade
         $this->app->singleton('leap', function () {

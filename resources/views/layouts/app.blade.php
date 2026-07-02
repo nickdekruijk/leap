@@ -13,7 +13,7 @@
     <body>
         <div class="leap">
             @auth(config('leap.guard'))
-                @if (!NickDeKruijk\Leap\Controllers\Auth2FAController::mustValidate())
+                @if (!NickDeKruijk\Leap\Leap::mustValidateTwoFactor())
                     @livewire('leap.navigation')
                 @endif
             @endauth

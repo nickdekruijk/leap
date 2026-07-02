@@ -13,7 +13,6 @@ class Roles extends Resource
     {
         return [
             Attribute::make('name')->index()->required()->label(__('leap::auth.name')),
-            // Attribute::make('organization_id')->foreign(scope: 'active', index: 'bedrijf')->index()->label('Organisatie')->placeholder('Selecteer organisatie'),
             Leap::generatePermissionsSection(),
         ];
     }

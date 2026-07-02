@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'organizations' => false,
     'login_image' => null,
     'filemanager' => [
         'disk' => 'public', // Must refer to a disk defined in config/filesystems.php

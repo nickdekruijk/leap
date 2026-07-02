@@ -107,7 +107,6 @@ class Editor extends Component
         if ($id > 0) {
             // id is passed, return the model with data
             $model = $model->findOrFail($id);
-            abort_if($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute && $model->{$this->parentModule()->organizationScopeAttribute} != Context::getHidden('leap.organization.id'), 404);
 
             return $model;
         } else {
@@ -283,7 +282,6 @@ class Editor extends Component
         // The Attribute class sets some placeholders in the validation rules that needs to be replaced with actual values, this array defines those replacements
         $replace = [
             '{id}' => $id,
-            '{organization_id}' => Context::getHidden('leap.organization.id'),
             '{table}' => $this->getModel()->getTable(),
         ];
 
@@ -595,9 +593,6 @@ class Editor extends Component
             // Check if anything changed
             if ($model->isDirty() || $this->mediaUpdated || $this->pivotIsDirty()) {
                 if ($this->editing == self::CREATE_NEW) {
-                    if ($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute) {
-                        $model->{$this->parentModule()->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
-                    }
                     $model->save();
                     $this->syncMedia($model);
                     $this->syncPivot($model);
@@ -643,10 +638,6 @@ class Editor extends Component
             $model = $this->getModel();
 
             $this->updateAttributes($model);
-
-            if ($this->parentModule()->organizationScope && $this->parentModule()->organizationScopeAttribute) {
-                $model->{$this->parentModule()->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
-            }
 
             $model->save();
 

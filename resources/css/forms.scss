@@ -77,6 +77,23 @@
         margin-top: calc(var(--spacing) / 2);
     }
 
+    // Outside the login dialog .leap-button relies on a dark ambient
+    // background for contrast (white text). Give it one here since
+    // .leap-fieldset-buttons has no background of its own. Also keep
+    // buttons grouped together instead of the login page's submit+link
+    // space-between layout.
+    .leap-editor .leap-fieldset-buttons {
+        justify-content: flex-start;
+
+        .leap-button {
+            background-color: $leap-header-background-buttons;
+
+            &:hover:not([disabled]) {
+                background-color: $leap-button-hover-background;
+            }
+        }
+    }
+
     .leap-form {
         padding: calc(var(--spacing) / 2) var(--spacing);
     }

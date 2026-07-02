@@ -5,7 +5,6 @@ namespace NickDeKruijk\Leap;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -29,24 +28,6 @@ class Resource extends Module
      */
     #[Locked]
     public $model;
-
-    /**
-     * Scope the resource to an organization
-     *
-     * @var bool
-     */
-    #[Locked]
-    public $organizationScope = false;
-
-    /**
-     * The organization scope attribute
-     *
-     * When organizationScope is set, the resource will be scoped using this attribute on the resource model.
-     *
-     * @var string
-     */
-    #[Locked]
-    public $organizationScopeAttribute = 'organization_id';
 
     /**
      * Sort the index by this attribute
@@ -432,7 +413,6 @@ class Resource extends Module
 
         $replace = [
             '{id}' => null,
-            '{organization_id}' => Context::getHidden('leap.organization.id'),
             '{table}' => $this->getModel()->getTable(),
         ];
 
@@ -470,9 +450,6 @@ class Resource extends Module
                 $model = $this->getModel();
                 foreach ($row as $key => $value) {
                     $model->{$key} = $value;
-                }
-                if ($this->organizationScope && $this->organizationScopeAttribute) {
-                    $model->{$this->organizationScopeAttribute} = Context::getHidden('leap.organization.id');
                 }
                 if ($save) {
                     $model->save();
@@ -651,10 +628,6 @@ class Resource extends Module
     public function rows(?int $parent_id = null, bool $index = false, bool $filtered = true): Collection
     {
         $data = $this->getModel();
-
-        if ($this->organizationScope) {
-            $data = $data->where($this->organizationScopeAttribute, Context::getHidden('leap.organization.id'));
-        }
 
         if ($this->treeview()) {
             $data = $data->where($this->treeview()->name, $parent_id);

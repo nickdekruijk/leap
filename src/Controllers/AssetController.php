@@ -3,7 +3,7 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use ScssPhp\ScssPhp\Compiler;

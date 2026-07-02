@@ -5,7 +5,9 @@ use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
 use NickDeKruijk\Leap\Livewire\FileManager;
+use NickDeKruijk\Leap\Livewire\ForgotPassword;
 use NickDeKruijk\Leap\Livewire\Login;
+use NickDeKruijk\Leap\Livewire\ResetPassword;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
@@ -19,23 +21,26 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
         Route::get('login', Login::class)->name('leap.login');
         Route::get('login/verify', LivewireAuth2FA::class)->name('leap.auth_2fa')->middleware([LeapAuth::class]);
         Route::post('logout', LogoutController::class)->name('leap.logout');
+
+        // Forgot/reset password routes
+        if (config('leap.password_reset')) {
+            Route::get('forgot-password', ForgotPassword::class)->name('leap.password.request');
+            Route::get('reset-password/{token}', ResetPassword::class)->name('leap.password.reset');
+        }
     }
 
     // All other routes require authentication and the Leap middleware
     Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class])->group(function () {
         // Home route to redirect to after login
-        Route::get(config('leap.organizations') ? '{organization?}/' : '/', [ModuleController::class, 'home'])->name('leap.home');
-
-        // If organizations are enabled, add the {organization?} prefix to some routes
-        $organizations_prefix = config('leap.organizations') ? '{organization}/' : '';
+        Route::get('/', [ModuleController::class, 'home'])->name('leap.home');
 
         // Register all modules routes
         foreach (ModuleController::getAllModules() as $module) {
             if ($module->getSlug()) {
-                Route::get($organizations_prefix . $module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
+                Route::get($module->getSlug(), $module::class)->name('leap.module.' . $module->getSlug());
                 if ($module::class === FileManager::class) {
                     // Filemanager download/preview route
-                    Route::get($organizations_prefix . $module->getSlug() . '/download/{name}', [FileManager::class, config('leap.organizations') ? 'downloadForOrganization' : 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
+                    Route::get($module->getSlug() . '/download/{name}', [FileManager::class, 'download'])->name('leap.module.' . $module->getSlug() . '.download')->where('name', '(.*)');
                 }
             }
         }

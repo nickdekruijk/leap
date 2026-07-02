@@ -16,12 +16,21 @@
 		"livewire/livewire": "^3.7|^4.1",
 		"owenvoke/blade-fontawesome": "^3.1",
 		"nickdekruijk/minify": "^3.0",
-		"spatie/laravel-translatable": "^6.10"
+		"spatie/laravel-translatable": "^6.10",
+		"laravel/fortify": "^1.19"
 	},
 	"autoload": {
 		"psr-4": {
 			"NickDeKruijk\\Leap\\": "src/"
 		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"NickDeKruijk\\Leap\\Tests\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "vendor/bin/phpunit"
 	},
 	"minimum-stability": "stable",
 	"extra": {
@@ -33,5 +42,9 @@
 				"Leap": "NickDeKruijk\\Leap\\Facade"
 			}
 		}
+	},
+	"require-dev": {
+		"orchestra/testbench": "^10.0",
+		"phpunit/phpunit": "^11.0"
 	}
 }
