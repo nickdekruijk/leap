@@ -58,10 +58,11 @@ return [
     |
     | Enable the forgot/reset password flow. This uses Laravel's password
     | broker and requires a 'password_reset_tokens' table (present in the
-    | default Laravel schema). Set to false to disable the routes.
+    | default Laravel schema). Only enable this if mail is actually
+    | configured, otherwise reset links will never arrive.
     |
     */
-    'password_reset' => true,
+    'password_reset' => false,
 
     /*
     |--------------------------------------------------------------------------
