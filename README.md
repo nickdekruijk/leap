@@ -17,6 +17,25 @@ Publish the config file if the defaults doesn't suite your needs:
 ### Config
 See the config file at `config/leap.php`
 
+### Roles and permissions
+
+Leap manages module/resource permissions through roles assigned to users, so
+your authenticatable model **requires** the `HasRoles` trait — without it the
+panel throws a `Call to undefined method` error when checking permissions:
+
+```php
+use NickDeKruijk\Leap\Traits\HasRoles;
+
+class User extends Authenticatable
+{
+    use HasRoles;
+}
+```
+
+The `leap_roles` and `leap_role_user` tables are added by the package
+migrations (when `leap.migrations` is enabled). Roles are managed from the
+**Roles** module in the panel.
+
 ### Two factor authentication
 
 Leap supports per-user two factor authentication (TOTP) with recovery codes,
