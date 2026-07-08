@@ -1,5 +1,5 @@
 @if ($section->_first)
-    @php($bg = $section->background?->first()?->file_name ?? null)
+    @php($bg = ($section['background'] ?? null)?->first()?->file_name)
     <section
         class="items highlights items-horizontal @if ($bg) has-background @endif"
         @if ($bg) style="background-image: url('{{ asset_resized('1920', $bg) }}')" @endif>

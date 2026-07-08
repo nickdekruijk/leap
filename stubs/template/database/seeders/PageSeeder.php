@@ -53,6 +53,7 @@ class PageSeeder extends Seeder
                 ],
                 [
                     '_name' => 'cta',
+                    '_view' => 'sections.default',
                     '_sort' => 4,
                     'active' => true,
                     'head' => 'Klaar om te beginnen?',

@@ -1,4 +1,4 @@
-@php($bg = $section->background?->first()?->file_name ?? null)
+@php($bg = ($section['background'] ?? null)?->first()?->file_name)
 <section
     class="default {{ $section['image_position'] ?? 'right' }} {{ $section->_name }} @if ($bg) has-background @endif"
     @if ($bg) style="background-image: url('{{ asset_resized('1920', $bg) }}')" @endif>
