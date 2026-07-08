@@ -61,22 +61,20 @@ class TemplateCommand extends Command
     }
 
     /**
-     * Delete a file if it exists and sha1 hashes match the list
+     * Offer to delete a leftover Laravel scaffolding file that the template
+     * replaces. Always prompts (defaulting to Yes) rather than matching against
+     * hardcoded sha1 hashes, so it keeps working across Laravel releases without
+     * maintenance. The file is git-tracked in a fresh project, so an accidental
+     * delete is recoverable.
      *
      * @param  string  $file  The file including path relative to base path
-     * @param  array  $sha1_list  List of sha1 hashes that match the file, e.g. ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', 'd2e5cf4f96d815b68a4f2a012b54a0d25daa4952']
      * @return void
      */
-    public function deleteFile(string $file, array $sha1_list = [])
+    public function deleteFile(string $file)
     {
-        if (file_exists($file)) {
-            $sha1 = sha1_file($file);
-            if (! in_array($sha1, $sha1_list)) {
-                $this->info("Skipping $file because SHA-1 $sha1 is unknown");
-            } elseif (confirm("Delete $file?", false)) {
-                unlink($file);
-                $this->info('Deleted '.$file);
-            }
+        if (file_exists($file) && confirm("Delete $file? (Laravel default, replaced by the template)", true)) {
+            unlink($file);
+            $this->info('Deleted '.$file);
         }
     }
 
@@ -239,14 +237,10 @@ class TemplateCommand extends Command
         $this->copyOrReplace('tests/Feature/MultilingualTest.php', 'Multilingual test');
 
         // Ask to delete default Laravel welcome view, js/app.js, app/bootstrap.js and css/app.css
-        $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', '0dfa96ec792216b2a15879337263058107986e2e']);
-        $this->deleteFile('resources/js/app.js', ['d2e5cf4f96d815b68a4f2a012b54a0d25daa4952']);
-        $this->deleteFile('resources/js/bootstrap.js', ['737674b888fd746d93f53ca3b748936d85f14c20']);
-        $this->deleteFile('resources/css/app.css', [
-            'd88dc6b14989074f8d407e9b7f7f855d5816203e',
-            '314f72fa2d086fd98b3b89fe957c08b440370cd9',
-            'fef3a03798dd92c1153989eed46c6fef42b4a936',
-        ]);
+        $this->deleteFile('resources/views/welcome.blade.php');
+        $this->deleteFile('resources/js/app.js');
+        $this->deleteFile('resources/js/bootstrap.js');
+        $this->deleteFile('resources/css/app.css');
 
         // Ask to copy scss files, views and javascript
         $this->copyDir('resources/css', 'SCSS files');
