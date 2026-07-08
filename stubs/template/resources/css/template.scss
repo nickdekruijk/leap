@@ -420,7 +420,8 @@ a[role="button"],
         .slide-content {
             position: absolute;
             inset: auto 0 var(--space-l) 0;
-            max-width: 42rem;
+            padding-inline: var(--space);
+            max-width: calc(42rem + var(--space) * 2);
             &.white { color: #fff; }
             .head { font-size: var(--fs-h1); font-weight: 800; line-height: 1; }
         }
