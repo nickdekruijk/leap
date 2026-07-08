@@ -1,0 +1,72 @@
+# Changelog
+
+All notable changes to `nickdekruijk/leap` are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased] — 1.0.0
+
+The first stable release. The public fluent API (`Attribute`, `Section`, `Module`,
+`Resource`) is now frozen; from 1.0 onwards it follows semantic versioning strictly.
+
+### Added
+
+- **Multilingual content editing.** Set `leap.locales` to an associative array
+  (e.g. `['nl' => 'Nederlands', 'en' => 'English']`) to edit translatable fields
+  per locale in the admin. The editor shows a language switcher in the button bar
+  (tabs for two locales, a dropdown for more), a per-field locale badge, and
+  validates the default locale as required with the others optional. Gated on
+  `leap.locales`: when it is `null` (the default) behaviour is byte-for-byte
+  identical to before. Mark section sub-fields with `Attribute::translatable()`;
+  top-level fields derive translatability from the model's `$translatable`.
+- **`Attribute::slugFrom('source')`.** Declared on the slug field, the intuitive
+  inverse of `slugify()`. The source field is made live so the slug placeholder
+  updates as you type. Works per locale.
+- **`Attribute::label()`, `placeholder()` and `hint()` accept a per-locale array**
+  (e.g. `->label(['nl' => 'Titel', 'en' => 'Title'])`), resolved to the current
+  locale. `hint()` renders as an `(i)` tooltip next to the field label.
+- **`Leap::context()` / `LeapContext`** — a request-scoped store for the active
+  module, permission map and role name.
+- **`leap.cache`** config option (default on). The frontend template caches its
+  page tree and invalidates automatically on page save/delete.
+- **`leap:template --diff`** reports how a project's template files differ from
+  the current stubs without changing anything.
+- Frontend template modernised: self-contained `slide`/`default`/`highlights`/
+  `cta`/`quote` sections with optional per-section background photos, a carousel,
+  a keyboard-accessible horizontal scroller, live search, an admin-editable
+  footer, per-page SEO meta (Open Graph, Twitter, canonical, hreflang) and a
+  `sitemap.xml`. Bilingual (nl+en) out of the box, per project switchable.
+- `App\Traits\HasSlug` for the template: per-locale, sibling-and-locale-unique
+  slugs, with `/` reserved for the homepage.
+
+### Changed
+
+- Request-scoped state (active module, permissions, role) moved from Laravel's
+  `Context` hidden keys to the scoped `LeapContext` service, so it no longer
+  leaks into queued jobs or logs. **Backward compatible:** the old
+  `leap.module` / `leap.permissions` / `leap.role.name` Context keys are still
+  mirrored throughout 1.x (see Deprecated).
+- The frontend template's homepage is the page whose slug is `/`
+  (order-independent), and no longer also reachable at `/home`.
+
+### Deprecated
+
+- `Attribute::slugify('target')` — use `slugFrom()` on the slug field instead.
+  Still works as an alias.
+- The `Context` hidden keys `leap.module`, `leap.permissions` and
+  `leap.role.name` are mirrored for backward compatibility only and will be
+  removed in 2.0. Read them through `Leap::context()` instead.
+
+### Notes on upgrading
+
+- Template/stub changes only apply when you re-run `php artisan leap:template`;
+  existing projects are unaffected by `composer update` alone. Use
+  `leap:template --diff` first to preview drift.
+- Enabling `leap.cache` is safe everywhere because page edits invalidate it;
+  disable with `LEAP_CACHE=false` or clear with `php artisan cache:clear`.
+- Supported runtimes are unchanged: PHP 8.2–8.4, Laravel 12/13, Livewire 3/4.
+
+## [0.3.2] and earlier
+
+See the Git history for pre-1.0 changes.
