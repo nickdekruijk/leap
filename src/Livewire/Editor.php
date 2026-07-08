@@ -128,6 +128,7 @@ class Editor extends Component
                 if ($this->parentModule()->hasTranslation($attribute)) {
                     $attribute->dataName = 'data.'.$attribute->name.'.'.($this->activeLocale ?: $this->defaultLocale());
                     $attribute->translatable = true;
+                    $attribute->currentLocale = $this->activeLocale ?: $this->defaultLocale();
                 }
             }
         }
@@ -521,10 +522,12 @@ class Editor extends Component
     {
         $newAttribute = clone $sectionAttribute;
         // Translatable section fields are edited per locale: data.{name}.{index}.{field}.{locale}
-        $suffix = ($sectionAttribute->translatable && $this->editorLocales()) ? '.'.($this->activeLocale ?: $this->defaultLocale()) : '';
-        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name.$suffix;
+        $translatable = $sectionAttribute->translatable && $this->editorLocales();
+        $locale = $this->activeLocale ?: $this->defaultLocale();
+        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name.($translatable ? '.'.$locale : '');
         $newAttribute->name = $name.'.'.$index.'.'.$sectionAttribute->name;
         $newAttribute->sectionName = $sectionName;
+        $newAttribute->currentLocale = $translatable ? $locale : null;
 
         return $newAttribute;
     }

@@ -35,6 +35,13 @@ class Attribute
      */
     public bool $translatable = false;
 
+    /**
+     * The locale this attribute is currently bound to in the editor, set by
+     * Editor::attributes()/sectionAttribute() for translatable fields. Used to
+     * show which language the field's value belongs to.
+     */
+    public ?string $currentLocale = null;
+
     public string $labelIndex;
 
     public string $placeholder = '';

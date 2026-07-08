@@ -5,7 +5,7 @@
             {!! $attribute->label ?? ($label ?? $name) !!}
             @if (($attribute->translatable ?? false) && config('leap.locales'))
                 <span class="leap-translatable leap-hint" tabindex="0" role="note" aria-label="{{ __('leap::resource.translatable') }}">
-                    {{ implode('/', array_map('strtoupper', array_keys(config('leap.locales') ?? []))) }}
+                    {{ strtoupper($attribute->currentLocale ?? array_key_first(config('leap.locales') ?? [])) }}
                     <span class="leap-hint-tooltip">{{ __('leap::resource.translatable') }}</span>
                 </span>
             @endif
