@@ -7,11 +7,13 @@ use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use NickDeKruijk\Leap\Traits\HasMedia;
 use Spatie\Translatable\HasTranslations;
 
 class Page extends Model
 {
     use HasFactory;
+    use HasMedia;
     use HasSections;
     use HasSlug;
     use HasTranslations;

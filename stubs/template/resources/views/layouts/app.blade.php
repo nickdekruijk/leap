@@ -6,15 +6,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        @php($metaTitle = ($page ?? null)?->html_title ?: ($page ?? null)?->title)
-        @php($metaDescription = ($page ?? null)?->description)
+        @php
+            $metaTitle = ($page ?? null)?->html_title ?: ($page ?? null)?->title;
+            $metaDescription = ($page ?? null)?->description;
+        @endphp
         <title>{{ $metaTitle ? $metaTitle . ' — ' . config('app.name') : config('app.name') }}</title>
         @if ($metaDescription)
             <meta name="description" content="{{ $metaDescription }}">
         @endif
         <link rel="canonical" href="{{ url()->current() }}">
-        @php($ogImage = setting('og_image') ?: null)
-        @php($ogImage = $ogImage ? (str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage)) : null)
+        @php
+            // og:image priority: the page's own image, then its first section image, then the og_image setting
+            $ogFile = null;
+            if ($page ?? null) {
+                $ogFile = $page->mediaFor('images')->first()?->file_name;
+                if (! $ogFile) {
+                    foreach ($page->sections() as $ogSection) {
+                        $ogFile = ($ogSection['image'] ?? null)?->first()?->file_name ?? ($ogSection['background'] ?? null)?->first()?->file_name;
+                        if ($ogFile) {
+                            break;
+                        }
+                    }
+                }
+            }
+            $ogImage = $ogFile ? url('storage/' . $ogFile) : null;
+            if (! $ogImage && function_exists('setting') && setting('og_image')) {
+                $ogImage = str_starts_with(setting('og_image'), 'http') ? setting('og_image') : url(setting('og_image'));
+            }
+        @endphp
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -55,7 +74,7 @@
                     <div class="nav-main-container">
                         <ul id="nav-main">
                             @foreach (App\Http\Controllers\PageController::getMenu() as $item)
-                                @php($children = App\Http\Controllers\PageController::getMenu($item['id'] ?? 0))
+                                @php $children = App\Http\Controllers\PageController::getMenu($item['id'] ?? 0); @endphp
                                 <li @if ($children) x-data="{ subOpen: false }" x-on:mouseover="subOpen = true" x-on:mouseleave="subOpen = false" x-on:click.outside="subOpen = false" @endif>
                                     <a href="{{ $item['url'] }}" aria-current="{{ url($item['url']) == url()->current() ? 'page' : 'false' }}">{{ $item['title'] }}</a>
                                     @if ($children)
@@ -89,10 +108,20 @@
         @yield('content')
 
         <footer class="footer">
+            @php
+                // The frontend template suggests nickdekruijk/settings; degrade gracefully when it is absent
+                $hasSettings = function_exists('setting');
+                $footerContact = $hasSettings ? setting('footer_contact') : null;
+                $socials = $hasSettings ? array_filter(setting_array('socials') ?: []) : [];
+                $footerCopyright = $hasSettings ? setting('footer_copyright') : null;
+                $footerLinks = $hasSettings ? array_filter(setting_array('footer_links') ?: []) : [];
+            @endphp
             <div class="main-width">
                 <strong class="footer-name">{{ config('app.name') }}</strong>
                 <div class="footer-columns">
-                    <div>{!! preg_replace('/([\w.+-]+@[\w-]+\.[\w.-]+)/', '<a href="mailto:$1">$1</a>', nl2br(e(setting('footer_contact')))) !!}</div>
+                    @if ($footerContact)
+                        <div>{!! preg_replace('/([\w.+-]+@[\w-]+\.[\w.-]+)/', '<a href="mailto:$1">$1</a>', nl2br(e($footerContact))) !!}</div>
+                    @endif
                     <div>
                         <strong>@lang('Direct naar')</strong>
                         <ul>
@@ -101,7 +130,6 @@
                             @endforeach
                         </ul>
                     </div>
-                    @php($socials = array_filter(setting_array('socials') ?: []))
                     @if ($socials)
                         <div>
                             <strong>@lang('Social media')</strong>
@@ -117,17 +145,18 @@
                         </div>
                     @endif
                 </div>
-                <div class="footer-columns footer-fine">
-                    <div>{!! nl2br(e(setting('footer_copyright'))) !!}</div>
-                    @php($footerLinks = array_filter(setting_array('footer_links') ?: []))
-                    @if ($footerLinks)
-                        <ul class="footer-links">
-                            @foreach ($footerLinks as $label => $url)
-                                <li><a href="{{ $url }}">{{ $label }}</a></li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </div>
+                @if ($footerCopyright || $footerLinks)
+                    <div class="footer-columns footer-fine">
+                        <div>{!! nl2br(e($footerCopyright)) !!}</div>
+                        @if ($footerLinks)
+                            <ul class="footer-links">
+                                @foreach ($footerLinks as $label => $url)
+                                    <li><a href="{{ $url }}">{{ $label }}</a></li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                @endif
             </div>
         </footer>
 
