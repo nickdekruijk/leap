@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Commands;
 
+use Database\Seeders\PageSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Filesystem\Filesystem;
@@ -121,6 +122,7 @@ class TemplateCommand extends Command
             'database/seeders/PageSeeder.php',
             'app/Models/Page.php',
             'app/Leap/Page.php',
+            'app/Livewire/Search.php',
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
             'tests/Feature/PageRoutingTest.php',
@@ -226,6 +228,10 @@ class TemplateCommand extends Command
         $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
         $this->copyOrReplace('app/Traits/HasSlug.php', 'HasSlug trait');
 
+        // Live search (a plain Livewire class component so it works on Livewire 3 and 4)
+        $this->createDirectory('app/Livewire');
+        $this->copyOrReplace('app/Livewire/Search.php', 'Search Livewire component');
+
         // Starter feature tests for the copied template code (run under the host's test suite)
         $this->createDirectory('tests/Feature');
         $this->copyOrReplace('tests/Feature/PageRoutingTest.php', 'PageRouting test');
@@ -273,6 +279,155 @@ class TemplateCommand extends Command
                 return $file .= $route;
             });
         }
+
+        // Register the PageSeeder so `php artisan db:seed` seeds sample pages
+        $this->registerPageSeeder();
+
+        // Offer to enable multilingual (nl/en) content (must run before seeding)
+        $this->configureMultilingual();
+
+        // Warn about the traits/contract the User model needs for Leap
+        $this->checkUserModel();
+
+        // Offer to run migrations and seed the sample pages
+        $this->runMigrationsAndSeed();
+
+        // Closing summary with the remaining manual steps
+        $this->printNextSteps();
+    }
+
+    /**
+     * Register the copied PageSeeder in DatabaseSeeder::run() so `php artisan
+     * db:seed` (and `migrate --seed`) seed the sample pages. No-op if the call
+     * is already present or DatabaseSeeder can't be located.
+     */
+    protected function registerPageSeeder(): void
+    {
+        $path = base_path('database/seeders/DatabaseSeeder.php');
+        if (! file_exists($path)) {
+            return;
+        }
+
+        $contents = file_get_contents($path);
+        if (str_contains($contents, 'PageSeeder')) {
+            return;
+        }
+
+        // Insert the call as the first statement inside run() { ... }
+        $patched = preg_replace(
+            '/(function run\(\)(?:\s*:\s*void)?\s*\{)/',
+            "$1\n        \$this->call(\\Database\\Seeders\\PageSeeder::class);",
+            $contents,
+            1
+        );
+
+        if ($patched && $patched !== $contents && confirm('Register PageSeeder in DatabaseSeeder?', true)) {
+            file_put_contents($path, $patched);
+            $this->info('Registered PageSeeder in DatabaseSeeder');
+        }
+    }
+
+    /**
+     * Offer to enable multilingual (nl/en) content by setting leap.locales and
+     * the app locale. Requires the leap config to have been published.
+     */
+    protected function configureMultilingual(): void
+    {
+        if (! confirm('Enable multilingual content (Dutch + English)?', false)) {
+            return;
+        }
+
+        $config = base_path('config/leap.php');
+        if (! file_exists($config)) {
+            $this->warn('config/leap.php not found — publish it first, then set leap.locales manually.');
+
+            return;
+        }
+
+        $contents = file_get_contents($config);
+        if (preg_match("/'locales'\s*=>\s*null/", $contents)) {
+            $contents = preg_replace(
+                "/'locales'\s*=>\s*null/",
+                "'locales' => ['nl' => 'Nederlands', 'en' => 'English']",
+                $contents,
+                1
+            );
+            file_put_contents($config, $contents);
+            $this->info('Set leap.locales to nl + en');
+        } else {
+            $this->warn('leap.locales is already customised — left untouched.');
+        }
+
+        // Point the app locale at the default (first) locale
+        $env = base_path('.env');
+        if (file_exists($env)) {
+            $envContents = file_get_contents($env);
+            $envContents = preg_replace('/^APP_LOCALE=.*/m', 'APP_LOCALE=nl', $envContents);
+            $envContents = preg_replace('/^APP_FALLBACK_LOCALE=.*/m', 'APP_FALLBACK_LOCALE=nl', $envContents);
+            file_put_contents($env, $envContents);
+            $this->info('Set APP_LOCALE / APP_FALLBACK_LOCALE to nl');
+        }
+    }
+
+    /**
+     * Check the User model for the traits and contract Leap needs and print a
+     * copy-paste snippet for anything missing. Does not modify the model.
+     */
+    protected function checkUserModel(): void
+    {
+        $path = base_path('app/Models/User.php');
+        if (! file_exists($path)) {
+            return;
+        }
+
+        $contents = file_get_contents($path);
+        $missing = [];
+        foreach ([
+            'HasRoles' => 'use NickDeKruijk\Leap\Traits\HasRoles;',
+            'TwoFactorAuthenticatable' => 'use Laravel\Fortify\TwoFactorAuthenticatable;',
+            'PasskeyAuthenticatable' => 'use Laravel\Passkeys\PasskeyAuthenticatable;',
+            'PasskeyUser' => 'use Laravel\Passkeys\Contracts\PasskeyUser; (and "implements PasskeyUser")',
+        ] as $needle => $hint) {
+            if (! str_contains($contents, $needle)) {
+                $missing[] = $hint;
+            }
+        }
+
+        if ($missing) {
+            $this->newLine();
+            $this->warn('Your User model (app/Models/User.php) is missing some Leap requirements. Add:');
+            foreach ($missing as $line) {
+                $this->line('  '.$line);
+            }
+            $this->line('  ...and add the traits to the class\'s "use ...;" statement.');
+        }
+    }
+
+    /**
+     * Offer to run the migrations and seed the sample pages.
+     */
+    protected function runMigrationsAndSeed(): void
+    {
+        if (confirm('Run database migrations now?', false)) {
+            $this->call('migrate');
+        }
+
+        if (confirm('Seed the sample pages now?', false)) {
+            $this->call('db:seed', ['--class' => PageSeeder::class]);
+        }
+    }
+
+    /**
+     * Print the remaining manual steps once the template is installed.
+     */
+    protected function printNextSteps(): void
+    {
+        $this->newLine();
+        $this->info('Template installed. Next steps:');
+        $this->line('  • No asset build needed — SCSS/JS compile on request (no npm/Vite).');
+        $this->line('  • Serve with a public/-rooted server (Herd/nginx), not `php artisan serve`.');
+        $this->line('  • Create an admin user: php artisan leap:user you@example.com');
+        $this->line('  • Visit /admin to manage pages, and / for the site.');
     }
 
     /**
