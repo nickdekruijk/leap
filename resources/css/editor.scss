@@ -185,8 +185,15 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     .leap-locale-tabs {
         display: inline-flex;
         gap: 2px;
+
+        // Already-active tab: hover would be pointless, keep it looking static
+        .leap-editor & .leap-button.primary:hover:not([disabled]) {
+            background-color: rgba(white, 0.33);
+            border-color: transparent;
+            cursor: default;
+        }
     }
-    .leap-locale-select {
+    select.leap-locale-select {
         width: auto;
         min-width: 0;
     }
