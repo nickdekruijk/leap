@@ -414,12 +414,19 @@ a[role="button"],
             object-fit: cover;
         }
 
+        // Anchor the content to the padded container, not the full-bleed slide
+        .main-width { position: relative; height: 100%; }
+
         .slide-content {
             position: absolute;
             inset: auto 0 var(--space-l) 0;
+            max-width: 42rem;
             &.white { color: #fff; }
             .head { font-size: var(--fs-h1); font-weight: 800; line-height: 1; }
         }
+
+        // Placeholder slides have a dark gradient → white text for contrast
+        &.slide-placeholder .slide-content { color: #fff; }
     }
 
     .slider-dots {
@@ -515,11 +522,15 @@ a[role="button"],
         padding-bottom: var(--space-s);
         cursor: grab;
         scrollbar-width: thin;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: var(--space);
+        scroll-behavior: smooth;
         &.dragging { cursor: grabbing; }
     }
 
     .item {
         flex: 0 0 min(80vw, 360px);
+        scroll-snap-align: start;
         display: flex;
         flex-direction: column;
         gap: var(--space-s);
@@ -591,6 +602,12 @@ a[role="button"],
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 35%, #fff), color-mix(in srgb, var(--accent) 80%, #000));
+}
+.slide:nth-of-type(2).slide-placeholder::before {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 55%, #fff), color-mix(in srgb, var(--accent) 90%, #000));
+}
+.slide:nth-of-type(3).slide-placeholder::before {
+    background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 22%, #fff), color-mix(in srgb, var(--accent) 68%, #000));
 }
 
 // ── Footer ────────────────────────────────────────────────────────────────────
