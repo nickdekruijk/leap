@@ -122,13 +122,15 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
 }
 .leap-translatable {
     display: inline-flex;
-    color: rgba(black, 0.4);
+    align-items: center;
+    color: rgba(black, 0.5);
+    background: rgba(black, 0.08);
+    border-radius: 3px;
+    padding: 0.1em 0.4em;
+    font-size: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     cursor: help;
-    svg {
-        display: block;
-        width: 1em;
-        height: 1em;
-    }
 }
 .leap-hint {
     position: relative;
