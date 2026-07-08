@@ -63,9 +63,11 @@ class Section
      * @param string $label
      * @return Section
      */
-    public function label(string $label): Section
+    public function label(string|array $label): Section
     {
-        $this->label = $label;
+        // Accept a per-locale array (['nl' => '…', 'en' => '…']) and resolve to the current locale
+        $this->label = is_array($label) ? ($label[app()->getLocale()] ?? (reset($label) ?: '')) : $label;
+
         return $this;
     }
 
