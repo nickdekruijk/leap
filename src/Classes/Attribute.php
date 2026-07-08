@@ -52,6 +52,8 @@ class Attribute
 
     public ?string $slugify = null;
 
+    public ?string $slugFrom = null;
+
     public ?int $step = null;
 
     public string $type = 'text';
@@ -652,12 +654,32 @@ class Attribute
      * An incrementing number will be appended to the slug to make it unique if the slug already exists.
      * Note that also setting a placeholder for the target input will have no effect.
      *
-     * @param  string  $attribute  attribute to use for slugging
+     * @param  string  $target  the slug attribute to populate from this field's value
+     *
+     * @deprecated Declare the relationship on the slug field with slugFrom() instead; this remains as an alias.
      */
     public function slugify(string $target): Attribute
     {
         $this->wire = 'live';
         $this->slugify = $target;
+
+        return $this;
+    }
+
+    /**
+     * Declared on the slug field: populate it with a slug of another field's value.
+     *
+     * This is the inverse, more intuitive form of slugify(): call it on the slug
+     * attribute and pass the source field name, e.g. Attribute::make('slug')->slugFrom('title').
+     * The source field is made live so the placeholder updates as you type. The
+     * slug shows as a placeholder unless a value was already saved, and an
+     * incrementing number is appended to keep it unique.
+     *
+     * @param  string  $source  the attribute whose value is slugified into this field
+     */
+    public function slugFrom(string $source): Attribute
+    {
+        $this->slugFrom = $source;
 
         return $this;
     }

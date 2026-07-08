@@ -132,6 +132,14 @@ class Editor extends Component
             }
         }
 
+        // slugFrom() lives on the slug field; make its source field push live so
+        // the slug placeholder updates as you type (slugify() sets this itself).
+        foreach ($attributes as $attribute) {
+            if ($attribute->slugFrom && ($source = $attributes->firstWhere('name', $attribute->slugFrom))) {
+                $source->wire = 'live';
+            }
+        }
+
         return $attributes;
     }
 
@@ -233,11 +241,8 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
         }
 
-        // Set the placeholders for slugify attributes (use the active locale when translatable)
-        foreach ($this->attributes()->where('slugify') as $attribute) {
-            $source = $this->data[$attribute->name] ?? '';
-            $this->placeholder[$attribute->slugify] = Str::slug(is_array($source) ? ($source[$this->activeLocale] ?? '') : $source);
-        }
+        // Set the placeholders for slug attributes (use the active locale when translatable)
+        $this->refreshSlugPlaceholders();
 
         // Obfuscate passwords
         foreach ($this->attributes()->where('type', 'password') as $attribute) {
@@ -543,9 +548,11 @@ class Editor extends Component
             // Translatable fields bind to data.{name}.{locale}; strip the locale to find the attribute
             ?? ($this->editorLocales() ? $this->attributes()->firstWhere('name', Str::beforeLast($name, '.')) : null);
 
-        // Update slug placeholder if needed (value is the active-locale value for translatable fields)
-        if ($attribute?->slugify) {
-            $this->placeholder[$attribute->slugify] = Str::slug($value);
+        // Update slug placeholder if this field feeds a slug target (value is the
+        // active-locale value for translatable fields)
+        $slugMap = $this->slugMap();
+        if ($attribute && isset($slugMap[$attribute->name])) {
+            $this->placeholder[$slugMap[$attribute->name]] = Str::slug($value);
         }
 
         // Only validate if there are actual rules
@@ -555,14 +562,50 @@ class Editor extends Component
     }
 
     /**
-     * When the active locale tab changes, refresh slugify placeholders to that locale.
+     * Map of slug relationships as [sourceAttribute => slugTargetAttribute].
+     *
+     * Gathered from both slugify() (declared on the source field, pointing to the
+     * slug field) and slugFrom() (declared on the slug field, pointing back to the
+     * source field), so both conventions drive the same placeholder logic.
+     *
+     * @return array<string, string>
+     */
+    protected function slugMap(): array
+    {
+        $map = [];
+        foreach ($this->attributes() as $attribute) {
+            if ($attribute->slugify) {
+                $map[$attribute->name] = $attribute->slugify;
+            }
+            if ($attribute->slugFrom) {
+                $map[$attribute->slugFrom] = $attribute->name;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Recompute placeholders for all slug targets from their source values,
+     * honouring the active locale for translatable source fields.
+     */
+    protected function refreshSlugPlaceholders(): void
+    {
+        foreach ($this->slugMap() as $source => $target) {
+            $value = $this->data[$source] ?? '';
+            if (is_array($value)) {
+                $value = $value[$this->activeLocale] ?? '';
+            }
+            $this->placeholder[$target] = Str::slug($value);
+        }
+    }
+
+    /**
+     * When the active locale tab changes, refresh slug placeholders to that locale.
      */
     public function updatedActiveLocale()
     {
-        foreach ($this->attributes()->where('slugify') as $attribute) {
-            $source = $this->data[$attribute->name] ?? '';
-            $this->placeholder[$attribute->slugify] = Str::slug(is_array($source) ? ($source[$this->activeLocale] ?? '') : $source);
-        }
+        $this->refreshSlugPlaceholders();
 
         // Section titles (shown when a section is collapsed) are built from
         // sectionTitle fields, which follow the active locale too

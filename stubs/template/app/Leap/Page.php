@@ -13,7 +13,7 @@ class Page extends Resource
         return [
             Attribute::make('active')->switch()->label(['nl' => 'Actief', 'en' => 'Active'])->default(true),
             Attribute::make('menuitem')->index(3)->switch()->label(['nl' => 'Toon in navigatie', 'en' => 'Show in navigation'], 'Nav')->default(true),
-            Attribute::make('title')->index(1)->searchable()->required()->slugify('slug')->label(['nl' => 'Titel', 'en' => 'Title']),
+            Attribute::make('title')->index(1)->searchable()->required()->label(['nl' => 'Titel', 'en' => 'Title']),
             Attribute::make('parent')->tree($this)->label(['nl' => 'Subpagina van', 'en' => 'Subpage of']),
             Attribute::make('html_title')->searchable()
                 ->label(['nl' => 'HTML-titel', 'en' => 'HTML title'])
@@ -23,7 +23,7 @@ class Page extends Resource
                 ->label(['nl' => 'Omschrijving', 'en' => 'Description'])
                 ->hint(['nl' => 'Voor SEO: de meta-omschrijving voor Google en social media (±150 tekens).', 'en' => 'For SEO: the meta description for Google and social media (~150 characters).']),
             Attribute::make('id')->indexOnly(),
-            Attribute::make('slug')->index()->searchable()->unique()->label('Slug'),
+            Attribute::make('slug')->index()->searchable()->unique()->slugFrom('title')->label('Slug'),
             Attribute::make('sort')->sortable(),
             Attribute::make('images')->media(),
             Attribute::make('sections')->label(['nl' => 'Secties', 'en' => 'Sections'])->sections(
