@@ -40,6 +40,12 @@ class Editor extends Component
     public array $placeholder = [];
 
     /**
+     * The active locale for editing translatable fields (multilingual editor).
+     * Empty unless config('leap.locales') is set and the module has translatable attributes.
+     */
+    public string $activeLocale = '';
+
+    /**
      * The name of the parent Livewire component
      *
      * The editor uses this to determine the model and attributes. This will be encrypted to prevent leaking sensitive class name
@@ -83,6 +89,25 @@ class Editor extends Component
     }
 
     /**
+     * The locales to show as tabs in the editor, or empty when the editor is
+     * monolingual (no leap.locales configured, or the module has no translatable attributes).
+     *
+     * @return array<string, string>
+     */
+    public function editorLocales(): array
+    {
+        return $this->parentModule()->translatable ? (config('leap.locales') ?: []) : [];
+    }
+
+    /**
+     * The default (first) locale, used as the base for validation and slug generation.
+     */
+    public function defaultLocale(): string
+    {
+        return array_key_first(config('leap.locales') ?? []) ?? app()->getLocale();
+    }
+
+    /**
      * Return the model attributes to show in the editor
      */
     public function attributes(): Collection
@@ -91,7 +116,18 @@ class Editor extends Component
         $parentAttributes = $this->parentModule()->attributes();
 
         // Filter out the indexOnly attributes
-        return collect($parentAttributes)->where('indexOnly', false);
+        $attributes = collect($parentAttributes)->where('indexOnly', false);
+
+        // Multilingual: bind translatable fields to the active locale (data.{name}.{locale})
+        if ($this->editorLocales()) {
+            foreach ($attributes as $attribute) {
+                if ($this->parentModule()->hasTranslation($attribute)) {
+                    $attribute->dataName = 'data.'.$attribute->name.'.'.($this->activeLocale ?: $this->defaultLocale());
+                }
+            }
+        }
+
+        return $attributes;
     }
 
     /**
@@ -168,6 +204,16 @@ class Editor extends Component
         $model = $this->getModel($id);
         $this->data = $model->only($attributes);
 
+        // Multilingual: initialise the active locale and load translatable fields as per-locale arrays
+        if ($this->editorLocales()) {
+            $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
+            foreach ($this->attributes() as $attribute) {
+                if ($this->parentModule()->hasTranslation($attribute)) {
+                    $this->data[$attribute->name] = $model->getTranslations($attribute->name);
+                }
+            }
+        }
+
         // Get raw value from the model without any casting or mutators when editing
         foreach ($this->attributes()->where('raw') as $attribute) {
             $this->data[$attribute->name] = $model->getRawOriginal($attribute->name);
@@ -182,9 +228,10 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
         }
 
-        // Set the placeholders for slugify attributes
+        // Set the placeholders for slugify attributes (use the active locale when translatable)
         foreach ($this->attributes()->where('slugify') as $attribute) {
-            $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
+            $source = $this->data[$attribute->name] ?? '';
+            $this->placeholder[$attribute->slugify] = Str::slug(is_array($source) ? ($source[$this->activeLocale] ?? '') : $source);
         }
 
         // Obfuscate passwords
@@ -298,8 +345,16 @@ class Editor extends Component
                         }
                     }
                 }
-                // Add the validation rule
-                $rules['data.'.$attribute->name] = $attribute->validate;
+                // Add the validation rule — per locale for translatable fields (default required, rest optional)
+                if ($this->editorLocales() && $this->parentModule()->hasTranslation($attribute)) {
+                    foreach (array_keys($this->editorLocales()) as $locale) {
+                        $rules['data.'.$attribute->name.'.'.$locale] = $locale === $this->defaultLocale()
+                            ? $attribute->validate
+                            : array_map(fn ($rule) => $rule === 'required' ? 'nullable' : $rule, $attribute->validate);
+                    }
+                } else {
+                    $rules['data.'.$attribute->name] = $attribute->validate;
+                }
             }
         }
 
@@ -466,9 +521,12 @@ class Editor extends Component
             return $this->addSection($field, $value);
         }
 
-        $attribute = $this->attributes()->where('name', substr($field, 5))->first();
+        $name = substr($field, 5);
+        $attribute = $this->attributes()->firstWhere('name', $name)
+            // Translatable fields bind to data.{name}.{locale}; strip the locale to find the attribute
+            ?? ($this->editorLocales() ? $this->attributes()->firstWhere('name', Str::beforeLast($name, '.')) : null);
 
-        // Update slug placeholder if needed
+        // Update slug placeholder if needed (value is the active-locale value for translatable fields)
         if ($attribute?->slugify) {
             $this->placeholder[$attribute->slugify] = Str::slug($value);
         }
@@ -476,6 +534,17 @@ class Editor extends Component
         // Only validate if there are actual rules
         if ($this->rules()) {
             $this->validateOnly($field);
+        }
+    }
+
+    /**
+     * When the active locale tab changes, refresh slugify placeholders to that locale.
+     */
+    public function updatedActiveLocale()
+    {
+        foreach ($this->attributes()->where('slugify') as $attribute) {
+            $source = $this->data[$attribute->name] ?? '';
+            $this->placeholder[$attribute->slugify] = Str::slug(is_array($source) ? ($source[$this->activeLocale] ?? '') : $source);
         }
     }
 
@@ -764,6 +833,11 @@ class Editor extends Component
     {
         // Encrypt the parent module class name
         $this->parentModuleEncrypted = Crypt::encryptString(Context::getHidden('leap.module'));
+
+        // Default the active locale for the multilingual editor
+        if ($this->editorLocales()) {
+            $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
+        }
 
         $this->setRandomSortSeed();
     }

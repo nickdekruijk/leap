@@ -167,3 +167,25 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         opacity: 1;
     }
 }
+
+// Multilingual editor: locale tabs
+.leap-locale-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 1em;
+    button {
+        padding: 0.4em 0.9em;
+        border: 0;
+        background: rgba(black, 0.06);
+        border-radius: 4px 4px 0 0;
+        font: inherit;
+        color: rgba(black, 0.55);
+        cursor: pointer;
+        &:hover { background: rgba(black, 0.1); }
+        &.active {
+            background: rgba(black, 0.14);
+            color: black;
+            font-weight: 600;
+        }
+    }
+}

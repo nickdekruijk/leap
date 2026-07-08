@@ -15,6 +15,9 @@
             <meta name="description" content="{{ $metaDescription }}">
         @endif
         <link rel="canonical" href="{{ url()->current() }}">
+        @foreach (App\Http\Controllers\PageController::localeUrls($page ?? null) as $hrefLocale => $alt)
+            <link rel="alternate" hreflang="{{ $hrefLocale }}" href="{{ url($alt['url']) }}">
+        @endforeach
         @php
             // og:image priority: the page's own image, then its first section image, then the og_image setting
             $ogFile = null;
@@ -87,6 +90,14 @@
                                     @endif
                                 </li>
                             @endforeach
+                            @php $localeUrls = App\Http\Controllers\PageController::localeUrls($page ?? null); @endphp
+                            @if (count($localeUrls) > 1)
+                                <li class="nav-locale-switch">
+                                    @foreach ($localeUrls as $code => $l)
+                                        <a href="{{ $l['url'] }}" @class(['active' => $l['active']]) aria-current="{{ $l['active'] ? 'true' : 'false' }}">{{ strtoupper($code) }}</a>
+                                    @endforeach
+                                </li>
+                            @endif
                             <li class="nav-search-item">
                                 <button class="nav-search-button" x-on:click="searchOpen = !searchOpen" :aria-expanded="searchOpen.toString()" aria-controls="search-overlay" aria-label="@lang('Zoeken')">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="20" height="20">

@@ -55,8 +55,9 @@ class PageController extends Controller
                         $pages['menu'][$page['id']][$i]['url'] = $prefix.$path.'/'.$page['slug'].'#'.Str::slug($section);
                     }
 
-                    // The homepage is the page whose slug is "/", not simply the first page (order-independent)
-                    $active = $activeParent && isset($segments[$depth]) && ($segments[$depth] === $page['slug'] || ($segments[$depth] == '' && $page['slug'] == '/'));
+                    // The homepage is the page whose slug is "/", not simply the first page (order-independent).
+                    // Pages without a slug in the active locale (empty) are not routable, so never match.
+                    $active = $activeParent && isset($segments[$depth]) && $page['slug'] !== '' && ($segments[$depth] === $page['slug'] || ($segments[$depth] == '' && $page['slug'] == '/'));
                     if ($active) {
                         $pages['active'][$page['id']] = true;
                         // If the active page is the last segment, it is the current page
@@ -96,6 +97,11 @@ class PageController extends Controller
 
         // When multilingual, strip and apply a leading locale prefix (gated on leap.locales)
         static::detectLocale($segments);
+
+        // A bare locale prefix ("/en") leaves no segments; the homepage matches an empty one
+        if (empty($segments)) {
+            $segments = [''];
+        }
 
         $pages = static::getPages($segments);
 
@@ -160,6 +166,46 @@ class PageController extends Controller
      *
      * @param  \Illuminate\Support\Collection<int, Page>  $map
      */
+    /**
+     * URLs for the given page in each configured locale, for a language switcher.
+     * Empty unless multilingual.
+     *
+     * @return array<string, array{name: string, url: string, active: bool}>
+     */
+    public static function localeUrls(?Page $page): array
+    {
+        $locales = config('leap.locales');
+        if (! $locales || ! $page) {
+            return [];
+        }
+
+        $default = array_key_first($locales);
+        $urls = [];
+        foreach ($locales as $locale => $name) {
+            $prefix = $locale === $default ? '' : '/'.$locale;
+            $urls[$locale] = [
+                'name' => $name,
+                'url' => $prefix.static::localePath($page, $locale),
+                'active' => $locale === app()->getLocale(),
+            ];
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Build a page's path in a specific locale by walking the parent chain.
+     */
+    protected static function localePath(Page $page, string $locale): string
+    {
+        $slug = $page->getTranslation('slug', $locale, false) ?: '';
+        $path = $page->parent && ($parent = Page::find($page->parent))
+            ? static::localePath($parent, $locale).'/'.$slug
+            : '/'.$slug;
+
+        return rtrim($path, '/') ?: '/';
+    }
+
     protected static function buildPath(Page $page, $map): string
     {
         $slug = $page->slug ?: '';

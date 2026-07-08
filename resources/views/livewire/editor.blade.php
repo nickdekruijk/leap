@@ -23,10 +23,18 @@
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
         <div class="leap-form" wire:key="editor-{{ $editing }}">
+            @if ($this->editorLocales())
+                <div class="leap-locale-tabs" role="tablist">
+                    @foreach ($this->editorLocales() as $code => $name)
+                        <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
+                    @endforeach
+                </div>
+            @endif
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     @if ($attribute->input)
-                        <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" :value="$data[$attribute->name]" />
+                        @php($isTranslatable = is_array($data[$attribute->name] ?? null))
+                        <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute" :placeholder="$placeholder" :value="$isTranslatable ? ($data[$attribute->name][$activeLocale] ?? null) : ($data[$attribute->name] ?? null)" wire:key="attr-{{ $attribute->name }}{{ $isTranslatable ? '-' . $activeLocale : '' }}" />
                         @if ($attribute->confirmed)
                             <x-dynamic-component :component="'leap::' . $attribute->input" :attribute="$attribute->confirmedAttribute()" :placeholder="$placeholder" />
                         @endif

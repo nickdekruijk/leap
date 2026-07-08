@@ -261,6 +261,16 @@ a[role="button"],
     }
 }
 
+.nav-locale-switch {
+    display: flex;
+    gap: var(--space-xs);
+    a {
+        padding: var(--space-xs);
+        text-decoration: none;
+        &.active { color: var(--accent); font-weight: 700; }
+    }
+}
+
 .nav-search-button {
     display: inline-flex;
     align-items: center;
