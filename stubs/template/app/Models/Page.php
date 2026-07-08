@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\HasSections;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,6 +13,7 @@ class Page extends Model
 {
     use HasFactory;
     use HasSections;
+    use HasSlug;
     use HasTranslations;
     use SoftDeletes;
 
@@ -30,7 +32,6 @@ class Page extends Model
         'active' => 'boolean',
         'published_at' => 'datetime',
         'menuitem' => 'boolean',
-        'home' => 'integer',
         'sections' => 'array',
         'meta' => 'array',
     ];

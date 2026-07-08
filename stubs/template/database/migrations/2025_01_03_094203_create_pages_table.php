@@ -21,9 +21,6 @@ return new class extends Migration
             $table->datetime('published_at')->nullable();
 
             $table->boolean('menuitem')->default(1);
-            $table->integer('homepage_priority')->nullable();
-
-            $table->string('view', 100)->nullable();
 
             $table->json('title');
             $table->json('head')->nullable();
