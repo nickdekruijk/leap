@@ -7,4 +7,7 @@
         <span class="leap-error">{{ $message }}</span>
     @enderror
     {{ $slot }}
+    @if ($attribute->hint ?? false)
+        <small class="leap-hint">{!! $attribute->hint !!}</small>
+    @endif
 </label>

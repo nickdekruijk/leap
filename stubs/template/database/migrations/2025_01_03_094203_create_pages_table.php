@@ -23,7 +23,6 @@ return new class extends Migration
             $table->boolean('menuitem')->default(1);
 
             $table->json('title');
-            $table->json('head')->nullable();
             $table->json('html_title')->nullable();
             $table->json('slug')->nullable();
             $table->json('description')->nullable();

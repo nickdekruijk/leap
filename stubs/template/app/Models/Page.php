@@ -21,7 +21,6 @@ class Page extends Model
 
     public $translatable = [
         'title',
-        'head',
         'html_title',
         'slug',
         'description',

@@ -15,8 +15,13 @@ class Page extends Resource
             Attribute::make('menuitem')->index(3)->switch()->label(['nl' => 'Toon in navigatie', 'en' => 'Show in navigation'], 'Nav')->default(true),
             Attribute::make('title')->index(1)->searchable()->required()->slugify('slug')->label(['nl' => 'Titel', 'en' => 'Title']),
             Attribute::make('parent')->tree($this)->label(['nl' => 'Subpagina van', 'en' => 'Subpage of']),
-            Attribute::make('head')->index(2)->searchable(),
-            Attribute::make('html_title')->searchable(),
+            Attribute::make('html_title')->searchable()
+                ->label(['nl' => 'HTML-titel', 'en' => 'HTML title'])
+                ->placeholder(['nl' => 'Leeg = paginatitel', 'en' => 'Empty = page title'])
+                ->hint(['nl' => 'Voor SEO: de titel in de browsertab en zoekresultaten. Leeg laten gebruikt de paginatitel.', 'en' => 'For SEO: the title in the browser tab and search results. Leave empty to use the page title.']),
+            Attribute::make('description')->textarea()
+                ->label(['nl' => 'Omschrijving', 'en' => 'Description'])
+                ->hint(['nl' => 'Voor SEO: de meta-omschrijving voor Google en social media (±150 tekens).', 'en' => 'For SEO: the meta description for Google and social media (~150 characters).']),
             Attribute::make('id')->indexOnly(),
             Attribute::make('slug')->index()->searchable()->unique()->label('Slug'),
             Attribute::make('sort')->sortable(),

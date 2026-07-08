@@ -26,6 +26,8 @@ class Attribute
 
     public ?string $label;
 
+    public ?string $hint = null;
+
     public string $labelIndex;
 
     public string $placeholder = '';
@@ -489,6 +491,17 @@ class Attribute
         if ($label) {
             $this->labelIndex = $this->localized($labelIndex) ?: $label;
         }
+
+        return $this;
+    }
+
+    /**
+     * A short hint/explanation shown with the field in the editor.
+     * Accepts a per-locale array like label().
+     */
+    public function hint(string|array $hint): Attribute
+    {
+        $this->hint = $this->localized($hint);
 
         return $this;
     }
