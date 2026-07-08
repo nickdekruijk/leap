@@ -613,6 +613,13 @@ a[role="button"],
         + .footer-columns { margin-top: var(--space-l); }
     }
 
+    .footer-socials {
+        display: flex;
+        gap: var(--space-s);
+        .social-icon { display: block; width: 1.5em; height: 1.5em; }
+        a:hover { opacity: 0.75; }
+    }
+
     .footer-fine {
         font-size: 0.875em;
         opacity: 0.85;

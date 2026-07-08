@@ -78,9 +78,13 @@
                     @if ($socials)
                         <div>
                             <strong>@lang('Social media')</strong>
-                            <ul>
+                            <ul class="footer-socials">
                                 @foreach ($socials as $name => $url)
-                                    <li><a href="{{ $url }}" target="_blank" rel="noopener">{{ ucfirst($name) }}</a></li>
+                                    <li>
+                                        <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($name) }}">
+                                            <x-dynamic-component :component="'fab-' . \Illuminate\Support\Str::slug($name)" class="social-icon" aria-hidden="true" />
+                                        </a>
+                                    </li>
                                 @endforeach
                             </ul>
                         </div>
