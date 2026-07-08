@@ -3,7 +3,6 @@
 namespace NickDeKruijk\Leap;
 
 use Composer\InstalledVersions;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Fortify\Features;
@@ -130,7 +129,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function can(string $ability, ?Module $module = null)
     {
-        $modulePermissions = Context::getHidden('leap.permissions')[$module ? $module::class : Context::getHidden('leap.module')];
+        $modulePermissions = Leap::context()->permissionsFor($module ? $module::class : null);
 
         return ($modulePermissions[$ability] ?? false === true)
             || ($modulePermissions['all_permissions'] ?? false === true);
@@ -168,5 +167,10 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->app->singleton('leap', function () {
             return new Leap;
         });
+
+        // Request-scoped store for the active module, permissions and role.
+        // Scoped so it is flushed between requests / Livewire updates and never
+        // leaks into queued jobs the way Laravel's Context does.
+        $this->app->scoped(LeapContext::class);
     }
 }

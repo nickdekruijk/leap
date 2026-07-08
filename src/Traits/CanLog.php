@@ -2,7 +2,6 @@
 
 namespace NickDeKruijk\Leap\Traits;
 
-use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Log;
 
@@ -10,7 +9,7 @@ trait CanLog
 {
     /**
      * Add a log entry to the logs table and return the new log model
-     * 
+     *
      * Also checks if the action is allowed to be logged and if the ip address should be anonymized
      *
      * @param string $action Action to log, e.g. login, create, update, delete
@@ -22,9 +21,10 @@ trait CanLog
         $module = get_called_class();
 
         // If module is already set in context and is different from the get_called_class then use that as main module and keep get_called_class as module in context
-        if (Context::getHidden('leap.module') && Context::getHidden('leap.module') !== $module) {
+        $activeModule = Leap::context()->module();
+        if ($activeModule && $activeModule !== $module) {
             $context['module'] = $module;
-            $module = Context::getHidden('leap.module');
+            $module = $activeModule;
         }
 
         // Check if logging is enabled globaly or should be skipped for current action or module

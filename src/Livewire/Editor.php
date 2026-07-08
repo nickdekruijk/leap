@@ -4,7 +4,6 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -85,7 +84,7 @@ class Editor extends Component
      */
     private function parentModule(): Component
     {
-        return $this->parentModuleInstance ??= new (Context::getHidden('leap.module'));
+        return $this->parentModuleInstance ??= new (Leap::context()->module());
     }
 
     /**
@@ -848,13 +847,13 @@ class Editor extends Component
     public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request
-        Context::addHidden('leap.module', Crypt::decryptString($this->parentModuleEncrypted));
+        Leap::context()->setModule(Crypt::decryptString($this->parentModuleEncrypted));
     }
 
     public function mount()
     {
         // Encrypt the parent module class name
-        $this->parentModuleEncrypted = Crypt::encryptString(Context::getHidden('leap.module'));
+        $this->parentModuleEncrypted = Crypt::encryptString(Leap::context()->module());
 
         // Default the active locale for the multilingual editor
         if ($this->editorLocales()) {

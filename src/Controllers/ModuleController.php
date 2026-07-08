@@ -5,7 +5,6 @@ namespace NickDeKruijk\Leap\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Navigation\Logout;
 
@@ -46,7 +45,8 @@ class ModuleController extends Controller
         $modules = static::getAllModules();
 
         foreach ($modules as $n => $module) {
-            if (empty(Context::getHidden('leap.permissions')[$module::class]['read']) && empty(Context::getHidden('leap.permissions')[$module::class]['all_permissions'])) {
+            $permissions = Leap::context()->permissionsFor($module::class);
+            if (empty($permissions['read']) && empty($permissions['all_permissions'])) {
                 unset($modules[$n]);
 
                 continue;
