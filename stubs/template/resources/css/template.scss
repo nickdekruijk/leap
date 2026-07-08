@@ -549,20 +549,13 @@ a[role="button"],
         overflow-x: auto;
         padding-bottom: var(--space-s);
         cursor: grab;
+        // Snap to cards. The HorizontalScroller adds .is-dragged during a free
+        // mouse drag (and removes it on button navigation) so a drag doesn't yank
+        // back to a card; touch swipe and wheel keep snapping. Text selection is
+        // suppressed by the scroller itself. See scripts.js (disableSnapClass).
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
-        // Suppress text selection permanently: a selection begins on mousedown,
-        // before the .dragging class lands, so gating user-select on .dragging is
-        // too late to stop it. The row is a drag-to-scroll surface, not prose.
-        // -webkit- prefix required for Safari (no autoprefixer in this pipeline).
-        -webkit-user-select: none;
-        user-select: none;
-        &.dragging {
-            cursor: grabbing;
-        }
-        // Once the row is mouse-dragged, snap stays off (set by scripts.js on
-        // first move) so it doesn't yank back to a card on release. Snap
-        // remains active for wheel/trackpad and arrow-button navigation.
+        &.dragging { cursor: grabbing; }
         &.is-dragged { scroll-snap-type: none; }
 
         // Thin scrollbar drawn as a centered hairline within a taller

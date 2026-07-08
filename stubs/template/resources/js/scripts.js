@@ -46,40 +46,15 @@ document.querySelectorAll('.slider').forEach(function (slider) {
     });
 });
 
-// Horizontal-scroll card sections
+// Horizontal-scroll card sections. disableSnapClass lets the scroller drop CSS
+// scroll-snap during a free mouse drag (via .is-dragged) and restore it on
+// button navigation; touch swipe and wheel keep snapping.
 new HorizontalScroller({
     selector: '.items-horizontal .items-container',
     buttonRight: true,
     buttonLeft: true,
     draggable: true,
-});
-
-// Once a row is dragged with the mouse, keep scroll-snap off (via .is-dragged)
-// so it doesn't yank back to a card on release. Touch swipe is untouched, so
-// mobile keeps snapping; wheel/trackpad and arrow buttons keep snapping too.
-document.querySelectorAll('.items-horizontal .items-container').forEach(function (el) {
-    let downX = null;
-    el.addEventListener('mousedown', function (e) {
-        downX = e.clientX;
-    });
-    el.addEventListener('mousemove', function (e) {
-        if (downX !== null && Math.abs(e.clientX - downX) > 3) {
-            el.classList.add('is-dragged');
-        }
-    });
-    window.addEventListener('mouseup', function () {
-        downX = null;
-    });
-
-    // Clicking the prev/next arrows scrolls to an exact card offset, so re-enable
-    // snap (undo a previous mouse-drag). Use the capture phase so snap is back on
-    // *before* the scroller's own click handler scrolls — otherwise the first
-    // click scrolls with snap still off and only snaps afterwards.
-    el.parentElement.querySelectorAll('.horizontal-scroller-button').forEach(function (button) {
-        button.addEventListener('click', function () {
-            el.classList.remove('is-dragged');
-        }, true);
-    });
+    disableSnapClass: 'is-dragged',
 });
 
 // Light parallax on slider media (skipped when the user prefers reduced motion)
