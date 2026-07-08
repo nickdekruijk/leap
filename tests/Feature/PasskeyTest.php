@@ -2,10 +2,10 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
@@ -38,7 +38,7 @@ class PasskeyTest extends TestCase
      */
     private function grantProfilePermissions(): void
     {
-        Context::addHidden('leap.permissions', [
+        Leap::context()->setPermissions([
             Profile::class => ['read' => true, 'update' => true],
         ]);
     }

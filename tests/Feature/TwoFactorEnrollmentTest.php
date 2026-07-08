@@ -2,7 +2,6 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
-use Illuminate\Support\Facades\Context;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Passkeys\Events\PasskeyVerified;
@@ -36,7 +35,7 @@ class TwoFactorEnrollmentTest extends TestCase
      */
     private function grantProfilePermissions(): void
     {
-        Context::addHidden('leap.permissions', [
+        Leap::context()->setPermissions([
             Profile::class => ['read' => true, 'update' => true],
         ]);
     }
@@ -154,7 +153,7 @@ class TwoFactorEnrollmentTest extends TestCase
         config(['leap.auth_2fa.required' => true]);
         $user = $this->createUser();
         $this->actingAs($user);
-        Context::addHidden('leap.permissions', collect(ModuleController::getAllModules())
+        Leap::context()->setPermissions(collect(ModuleController::getAllModules())
             ->mapWithKeys(fn ($module) => [$module::class => ['read' => true, 'all_permissions' => true]])
             ->all());
 

@@ -2,10 +2,10 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
-use Illuminate\Support\Facades\Context;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Fortify;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\Auth2FA;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Models\Role;
@@ -34,7 +34,7 @@ class TwoFactorTest extends TestCase
      */
     private function grantTwoFactorPermissions(): void
     {
-        Context::addHidden('leap.permissions', [
+        Leap::context()->setPermissions([
             Profile::class => ['read' => true, 'update' => true],
         ]);
     }
