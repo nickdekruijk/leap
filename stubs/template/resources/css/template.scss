@@ -551,11 +551,12 @@ a[role="button"],
         cursor: grab;
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
-        // .dragging is set on mousedown; suppress text selection for the whole
-        // drag so grabbing the row doesn't select card text.
+        // Suppress text selection permanently: a selection begins on mousedown,
+        // before the .dragging class lands, so gating user-select on .dragging is
+        // too late to stop it. The row is a drag-to-scroll surface, not prose.
+        user-select: none;
         &.dragging {
             cursor: grabbing;
-            user-select: none;
         }
         // Once the row is mouse-dragged, snap stays off (set by scripts.js on
         // first move) so it doesn't yank back to a card on release. Snap
