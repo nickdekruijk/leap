@@ -11,7 +11,7 @@
             <div class="main-width">
                 <div class="slide-content article @isset($section->white_text) white @endisset">
                     @isset($section->head)
-                        @if ($section->_first)
+                        @if ($loop->first)
                             <h1 class="head">{{ $section->head }}</h1>
                         @else
                             <p class="head">{{ $section->head }}</p>

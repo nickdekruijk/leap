@@ -6,7 +6,19 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ config('app.name') }}</title>
+        @php($metaTitle = ($page ?? null)?->html_title ?: ($page ?? null)?->title)
+        @php($metaDescription = ($page ?? null)?->description)
+        <title>{{ $metaTitle ? $metaTitle . ' — ' . config('app.name') : config('app.name') }}</title>
+        @if ($metaDescription)
+            <meta name="description" content="{{ $metaDescription }}">
+        @endif
+        <link rel="canonical" href="{{ url()->current() }}">
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="{{ $metaTitle ?: config('app.name') }}">
+        @if ($metaDescription)
+            <meta property="og:description" content="{{ $metaDescription }}">
+        @endif
+        <meta property="og:url" content="{{ url()->current() }}">
         <style>
             [x-cloak] { display: none !important; }
         </style>

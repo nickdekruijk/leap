@@ -228,18 +228,17 @@ a[role="button"],
 
         &::after {
             content: "";
-            width: 0.45em;
-            height: 0.45em;
-            margin-top: -0.15em;
+            width: 0.6em;
+            height: 0.6em;
             border-right: 2px solid currentColor;
             border-bottom: 2px solid currentColor;
-            transform: rotate(45deg);
+            transform: translateY(-1px) rotate(45deg) translateZ(0);
             transition: transform 0.2s;
+            backface-visibility: hidden;
+            transform-origin: center;
+            will-change: transform;
         }
-        &[aria-expanded="true"]::after {
-            margin-top: 0.1em;
-            transform: rotate(-135deg);
-        }
+        &[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg) translateZ(0); }
     }
 
     li[x-data] {
@@ -446,18 +445,25 @@ a[role="button"],
         inset: auto 0 var(--space) 0;
         z-index: 10;
         display: flex;
-        gap: 10px;
+        gap: 0;
         justify-content: center;
 
         .slider-dot {
-            width: var(--space-l);
-            height: var(--space-xxs);
-            background: rgba(255, 255, 255, 0.4);
+            box-sizing: content-box;
+            width: var(--space);
+            height: 3px;
+            border: 9px solid transparent; // enlarges the clickable area, stays invisible
+            border-inline-width: 4px;
+            background-clip: padding-box;
+            background-color: rgba(255, 255, 255, 0.5);
             color: transparent;
             cursor: pointer;
-            transition: background 0.4s;
-            &.active,
-            &:hover { background: #fff; }
+            transition: width 0.3s ease, background-color 0.3s;
+            &:hover { background-color: #fff; }
+            &.active {
+                width: var(--space-l);
+                background-color: #fff;
+            }
         }
         &:not(:has(.slider-dot:not(.active))) { display: none; }
     }

@@ -13,7 +13,8 @@
                     <p class="quote-source">&mdash; {!! $section['body'] !!}</p>
                 @endisset
             @else
-                <h2>{!! $section['head'] !!}</h2>
+                @php($level = $loop->first ? 'h1' : 'h2')
+                <{{ $level }}>{!! $section['head'] !!}</{{ $level }}>
                 {!! $section['body'] ?? '' !!}
             @endif
         </article>

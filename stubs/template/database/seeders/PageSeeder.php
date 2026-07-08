@@ -21,6 +21,7 @@ class PageSeeder extends Seeder
             'slug' => '/',
             'menuitem' => false,
             'sort' => 1,
+            'description' => 'Welkom op de voorbeeldwebsite gebouwd met de leap-template.',
             'sections' => [
                 [
                     '_name' => 'slide',
