@@ -129,6 +129,9 @@ class TemplateCommand extends Command
             'app/Leap/Page.php',
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
+            'tests/Feature/PageRoutingTest.php',
+            'tests/Feature/HasSlugTest.php',
+            'tests/Feature/MultilingualTest.php',
         ];
 
         $stubBase = __DIR__.'/../../stubs/template';
@@ -223,6 +226,12 @@ class TemplateCommand extends Command
         $this->copyOrReplace('app/Leap/Page.php', 'Page model Leap module');
         $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
         $this->copyOrReplace('app/Traits/HasSlug.php', 'HasSlug trait');
+
+        // Starter feature tests for the copied template code (run under the host's test suite)
+        $this->createDirectory('tests/Feature');
+        $this->copyOrReplace('tests/Feature/PageRoutingTest.php', 'PageRouting test');
+        $this->copyOrReplace('tests/Feature/HasSlugTest.php', 'HasSlug test');
+        $this->copyOrReplace('tests/Feature/MultilingualTest.php', 'Multilingual test');
 
         // Ask to delete default Laravel welcome view, js/app.js, app/bootstrap.js and css/app.css
         $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', '0dfa96ec792216b2a15879337263058107986e2e']);
