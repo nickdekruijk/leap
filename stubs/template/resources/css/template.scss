@@ -222,14 +222,14 @@ a[role="button"],
 
         &::after {
             content: "";
-            width: 7px;
-            height: 7px;
-            border: solid currentColor;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+            width: 0.5em;
+            height: 0.5em;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
+            transform: translateY(-0.15em) rotate(45deg);
             transition: transform 0.2s;
         }
-        &[aria-expanded="true"]::after { transform: translateY(-25%) rotate(-135deg); }
+        &[aria-expanded="true"]::after { transform: translateY(0.15em) rotate(225deg); }
     }
 
     li[x-data] {
@@ -255,13 +255,14 @@ a[role="button"],
 .nav-search-button {
     display: inline-flex;
     align-items: center;
-    padding: var(--space-s);
-    margin: calc(-1 * var(--space-s));
+    padding: var(--space-xs) var(--space-s);
+    margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-s));
     background: transparent;
     border: 0;
     cursor: pointer;
     color: inherit;
 
+    svg { display: block; width: 1.2em; height: 1.2em; }
     &:hover { color: var(--accent); }
 }
 

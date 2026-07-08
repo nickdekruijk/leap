@@ -29,7 +29,7 @@
                         <ul id="nav-main">
                             @foreach (App\Http\Controllers\PageController::getMenu() as $item)
                                 @php($children = App\Http\Controllers\PageController::getMenu($item['id'] ?? 0))
-                                <li @if ($children) x-data="{ subOpen: false }" x-on:mouseleave="subOpen = false" x-on:click.outside="subOpen = false" @endif>
+                                <li @if ($children) x-data="{ subOpen: false }" x-on:mouseover="subOpen = true" x-on:mouseleave="subOpen = false" x-on:click.outside="subOpen = false" @endif>
                                     <a href="{{ $item['url'] }}" aria-current="{{ url($item['url']) == url()->current() ? 'page' : 'false' }}">{{ $item['title'] }}</a>
                                     @if ($children)
                                         <button type="button" class="nav-submenu-caret" :aria-expanded="subOpen.toString()" aria-haspopup="true" aria-controls="submenu-{{ $item['id'] }}" x-on:click="subOpen = !subOpen" x-on:mouseover="subOpen = true" aria-label="{{ __('Submenu :name openen/sluiten', ['name' => $item['title']]) }}"></button>
