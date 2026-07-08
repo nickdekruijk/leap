@@ -127,6 +127,7 @@ class Editor extends Component
             foreach ($attributes as $attribute) {
                 if ($this->parentModule()->hasTranslation($attribute)) {
                     $attribute->dataName = 'data.'.$attribute->name.'.'.($this->activeLocale ?: $this->defaultLocale());
+                    $attribute->translatable = true;
                 }
             }
         }

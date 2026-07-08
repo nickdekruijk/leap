@@ -23,5 +23,6 @@ return [
     'save' => 'Opslaan',
     'save_copy' => 'Opslaan als kopie',
     'search_placeholder' => 'Zoeken...',
+    'translatable' => 'Vertaalbaar — dit veld volgt de actieve taal-tab',
     'updated' => 'bijgewerkt',
 ];

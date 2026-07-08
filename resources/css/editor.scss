@@ -114,10 +114,21 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
 
 // Field hint: (i) icon after the label with a hover/focus tooltip
 // Keep the label text and icon centred together, regardless of field type
-.leap .leap-fieldset LABEL.leap-label SPAN.leap-label:has(> .leap-hint) {
+.leap .leap-fieldset LABEL.leap-label SPAN.leap-label:has(> .leap-hint),
+.leap .leap-fieldset LABEL.leap-label SPAN.leap-label:has(> .leap-translatable) {
     display: inline-flex;
     align-items: center;
     gap: 0.35em;
+}
+.leap-translatable {
+    display: inline-flex;
+    color: rgba(black, 0.4);
+    cursor: help;
+    svg {
+        display: block;
+        width: 1em;
+        height: 1em;
+    }
 }
 .leap-hint {
     position: relative;
