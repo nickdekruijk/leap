@@ -11,14 +11,14 @@
 @endif
 
             <li class="item article">
-                @isset($section->image)
-                    @php($file = $section->image->first()?->file_name)
+                @php($file = ($section['image'] ?? null)?->first()?->file_name)
+                <div class="item-thumbnail">
                     @if ($file)
-                        <div class="item-thumbnail">
-                            <img src="{{ asset_resized('600', $file) }}" alt="{{ $section->image->first()?->meta?->alt }}" loading="lazy" draggable="false">
-                        </div>
+                        <img src="{{ asset_resized('600', $file) }}" alt="{{ $section->image->first()?->meta?->alt }}" loading="lazy" draggable="false">
+                    @else
+                        <span class="image-placeholder" aria-hidden="true"></span>
                     @endif
-                @endisset
+                </div>
                 @isset($section->head)
                     <h3>{{ $section->head }}</h3>
                 @endisset

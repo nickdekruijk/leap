@@ -28,6 +28,10 @@
                         loading="lazy">
                 @endforeach
             </div>
+        @elseif (isset($section['image_position']))
+            <div class="images">
+                <span class="image-placeholder" aria-hidden="true"></span>
+            </div>
         @endisset
     </div>
 </section>
