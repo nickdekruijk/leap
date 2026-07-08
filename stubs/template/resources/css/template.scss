@@ -557,8 +557,9 @@ a[role="button"],
         &.dragging { cursor: grabbing; }
 
         // Thin scrollbar drawn as a centered hairline within a taller
-        // (easier to grab) track, rather than a thick bar.
-        scrollbar-width: thin;
+        // (easier to grab) track, rather than a thick bar. Note: WebKit
+        // ignores ::-webkit-scrollbar-* as soon as scrollbar-width is set, so
+        // the hairline is WebKit-only; Firefox falls back to a plain thin bar.
         scrollbar-color: var(--accent) transparent;
         &::-webkit-scrollbar { height: 13px; }
         &::-webkit-scrollbar-track {
