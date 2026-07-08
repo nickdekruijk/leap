@@ -556,13 +556,19 @@ a[role="button"],
         scroll-behavior: smooth;
         &.dragging { cursor: grabbing; }
 
+        // Thin scrollbar drawn as a centered hairline within a taller
+        // (easier to grab) track, rather than a thick bar.
         scrollbar-width: thin;
         scrollbar-color: var(--accent) transparent;
-        &::-webkit-scrollbar { height: 6px; }
-        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar { height: 13px; }
+        &::-webkit-scrollbar-track {
+            background: linear-gradient(transparent, transparent 6px, var(--accent) 6px, var(--accent) 7px, transparent 7px);
+        }
         &::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 3px;
+            background: linear-gradient(transparent, transparent 2px, var(--accent) 2px, var(--accent) 11px, transparent 11px);
+            &:hover {
+                background: linear-gradient(transparent, transparent 2px, black 2px, black 11px, transparent 11px);
+            }
         }
     }
 
