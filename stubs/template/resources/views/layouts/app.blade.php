@@ -13,12 +13,27 @@
             <meta name="description" content="{{ $metaDescription }}">
         @endif
         <link rel="canonical" href="{{ url()->current() }}">
+        @php($ogImage = setting('og_image') ?: null)
+        @php($ogImage = $ogImage ? (str_starts_with($ogImage, 'http') ? $ogImage : url($ogImage)) : null)
         <meta property="og:type" content="website">
+        <meta property="og:site_name" content="{{ config('app.name') }}">
+        <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
         <meta property="og:title" content="{{ $metaTitle ?: config('app.name') }}">
+        <meta property="og:url" content="{{ url()->current() }}">
         @if ($metaDescription)
             <meta property="og:description" content="{{ $metaDescription }}">
         @endif
-        <meta property="og:url" content="{{ url()->current() }}">
+        @if ($ogImage)
+            <meta property="og:image" content="{{ $ogImage }}">
+        @endif
+        <meta name="twitter:card" content="{{ $ogImage ? 'summary_large_image' : 'summary' }}">
+        <meta name="twitter:title" content="{{ $metaTitle ?: config('app.name') }}">
+        @if ($metaDescription)
+            <meta name="twitter:description" content="{{ $metaDescription }}">
+        @endif
+        @if ($ogImage)
+            <meta name="twitter:image" content="{{ $ogImage }}">
+        @endif
         <style>
             [x-cloak] { display: none !important; }
         </style>
