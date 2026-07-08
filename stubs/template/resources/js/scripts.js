@@ -72,11 +72,13 @@ document.querySelectorAll('.items-horizontal .items-container').forEach(function
     });
 
     // Clicking the prev/next arrows scrolls to an exact card offset, so re-enable
-    // snap (undo a previous mouse-drag) to keep the scroller aligned from there.
+    // snap (undo a previous mouse-drag). Use the capture phase so snap is back on
+    // *before* the scroller's own click handler scrolls — otherwise the first
+    // click scrolls with snap still off and only snaps afterwards.
     el.parentElement.querySelectorAll('.horizontal-scroller-button').forEach(function (button) {
         button.addEventListener('click', function () {
             el.classList.remove('is-dragged');
-        });
+        }, true);
     });
 });
 
