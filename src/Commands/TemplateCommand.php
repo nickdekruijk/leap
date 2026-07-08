@@ -135,6 +135,7 @@ class TemplateCommand extends Command
         $this->copyOrReplace('app/Models/Page.php', 'Page model');
         $this->copyOrReplace('app/Leap/Page.php', 'Page model Leap module');
         $this->copyOrReplace('app/Traits/HasSections.php', 'HasSections trait');
+        $this->copyOrReplace('app/Traits/HasSlug.php', 'HasSlug trait');
 
         // Ask to delete default Laravel welcome view, js/app.js, app/bootstrap.js and css/app.css
         $this->deleteFile('resources/views/welcome.blade.php', ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', '0dfa96ec792216b2a15879337263058107986e2e']);
@@ -146,9 +147,13 @@ class TemplateCommand extends Command
             'fef3a03798dd92c1153989eed46c6fef42b4a936',
         ]);
 
-        // Ask to copy scss files and views
+        // Ask to copy scss files, views and javascript
         $this->copyDir('resources/css', 'SCSS files');
         $this->copyDir('resources/views', 'template views');
+        $this->copyDir('resources/js', 'JavaScript files');
+
+        // Suggest installing the frontend packages the template relies on
+        $this->suggestFrontendPackages();
 
         // Ask to delete Laravel default welcome route
         $route = "Route::get('/', function () {\n    return view('welcome');\n});\n";
@@ -158,12 +163,59 @@ class TemplateCommand extends Command
             });
         }
 
+        // Ask to add the sitemap route (before the catch-all so it isn't swallowed)
+        $sitemap = "Route::get('sitemap.xml', [App\Http\Controllers\PageController::class, 'sitemap'])->name('sitemap');\n";
+        if (!str_contains(file_get_contents('routes/web.php'), $sitemap) && confirm('Add sitemap.xml route?', true)) {
+            self::updateFile(base_path('routes/web.php'), function ($file) use ($sitemap) {
+                return $file .= $sitemap;
+            });
+        }
+
         // Ask to add PageController route
         $route = "Route::get('{any}', [App\Http\Controllers\PageController::class, 'route'])->where('any', '(.*)');\n";
         if (!str_contains(file_get_contents('routes/web.php'), $route) && confirm('Add PageController route?', true)) {
             self::updateFile(base_path('routes/web.php'), function ($file) use ($route) {
                 return $file .= $route;
             });
+        }
+    }
+
+    /**
+     * Suggest installing the composer packages the frontend template relies on.
+     * They are kept out of leap's own "require" so existing projects are never
+     * forced to pull them; the template opts in here.
+     */
+    public function suggestFrontendPackages(): void
+    {
+        $packages = [
+            'nickdekruijk/settings' => 'admin-editable settings + footer',
+            'nickdekruijk/imageresize' => 'responsive asset_resized() images',
+            'nickdekruijk/vanilla-slider' => 'carousel',
+            'nickdekruijk/horizontal-scroller' => 'horizontal-scroll sections',
+        ];
+
+        $missing = array_filter(array_keys($packages), fn (string $package): bool => ! is_dir(base_path('vendor/'.$package)));
+
+        if (empty($missing)) {
+            return;
+        }
+
+        $this->info('The frontend template uses these packages:');
+        foreach ($packages as $package => $why) {
+            $this->line('  - '.$package.' ('.$why.')');
+        }
+
+        if (confirm('Run "composer require" for the missing packages now?', true)) {
+            $command = 'composer require '.implode(' ', $missing);
+            $this->info('Running: '.$command);
+            passthru($command, $status);
+            if ($status === 0) {
+                $this->info('Publishing settings and imageresize config...');
+                $this->call('vendor:publish', ['--provider' => 'NickDeKruijk\Settings\ServiceProvider']);
+                $this->call('vendor:publish', ['--provider' => 'NickDeKruijk\ImageResize\ServiceProvider']);
+            }
+        } else {
+            $this->line('Install later with: composer require '.implode(' ', $missing));
         }
     }
 }

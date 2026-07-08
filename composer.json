@@ -20,6 +20,12 @@
 		"laravel/fortify": "^1.19",
 		"laravel/passkeys": "^0.2.1"
 	},
+	"suggest": {
+		"nickdekruijk/settings": "Admin-editable settings and footer used by the frontend template (php artisan leap:template)",
+		"nickdekruijk/imageresize": "Responsive asset_resized() images used by the frontend template",
+		"nickdekruijk/vanilla-slider": "Carousel/slider used by the frontend template",
+		"nickdekruijk/horizontal-scroller": "Horizontal-scroll sections used by the frontend template"
+	},
 	"autoload": {
 		"psr-4": {
 			"NickDeKruijk\\Leap\\": "src/"
