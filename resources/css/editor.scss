@@ -133,8 +133,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     .leap-hint-tooltip {
         position: absolute;
         bottom: calc(100% + 8px);
-        left: 50%;
-        transform: translateX(-50%);
+        left: -0.35em;
         width: max-content;
         max-width: 260px;
         padding: 0.5em 0.7em;
@@ -153,7 +152,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
             content: "";
             position: absolute;
             top: 100%;
-            left: 50%;
+            left: 0.85em;
             transform: translateX(-50%);
             border: 5px solid transparent;
             border-top-color: #2b2b2b;
