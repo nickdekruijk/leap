@@ -186,9 +186,11 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         display: inline-flex;
         gap: 2px;
 
-        // Already-active tab: hover would be pointless, keep it looking static
-        .leap-editor & .leap-button.primary:hover:not([disabled]) {
-            background-color: rgba(white, 0.33);
+        // Active tab keeps the same look as hover (no separate "selected" color),
+        // so hovering it is a no-op instead of implying something new happens.
+        .leap-editor & .leap-button.active,
+        .leap-editor & .leap-button.active:hover:not([disabled]) {
+            background-color: rgba(white, 0.2);
             border-color: transparent;
             cursor: default;
         }

@@ -19,7 +19,7 @@
                 @else
                     <div class="leap-locale-tabs" role="tablist" aria-label="{{ __('leap::resource.language') }}">
                         @foreach ($this->editorLocales() as $code => $name)
-                            <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['leap-button', 'primary' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
+                            <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['leap-button', 'active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
                         @endforeach
                     </div>
                 @endif
