@@ -549,13 +549,21 @@ a[role="button"],
         overflow-x: auto;
         padding-bottom: var(--space-s);
         cursor: grab;
-        scrollbar-width: thin;
         // No scroll-padding-inline: the arrow buttons scroll to an item's exact
         // offsetLeft, and mandatory snap would otherwise rest a bit short of
         // that (aligning to the padded snap zone), leaving a visible gap.
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
         &.dragging { cursor: grabbing; }
+
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) transparent;
+        &::-webkit-scrollbar { height: 6px; }
+        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
     }
 
     .item {
