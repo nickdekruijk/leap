@@ -1,9 +1,9 @@
 # Leap — Laravel Easy Admin Panel
 
-Leap is a Laravel package that gives you a full admin panel with almost no boilerplate,
-or a head start for your next SPA/SaaS. Admin screens are defined in PHP with a fluent
-API — no per-screen Blade or JavaScript — and it ships an optional, semantic-HTML
-frontend template (pages, navigation, sections, search, SEO) for the public site.
+Leap is a Laravel package that gives you a full admin panel with almost no boilerplate.
+Admin screens are defined in PHP with a fluent API — no per-screen Blade or JavaScript —
+and it ships an optional, semantic-HTML frontend template (pages, navigation, sections,
+search, SEO) for the public site.
 
 Built with Livewire; styling is compiled on request (no npm/Vite build step).
 
