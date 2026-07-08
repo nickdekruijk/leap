@@ -16,7 +16,7 @@ class Auth2FA
      * confirmed two factor authentication, they must pass the challenge before
      * accessing any Leap route.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

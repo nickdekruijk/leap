@@ -3,19 +3,20 @@
 namespace NickDeKruijk\Leap\Middleware;
 
 use Closure;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate;
+use Illuminate\Http\Request;
 
 class LeapAuth extends Authenticate
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
+     * @param  Request  $request
      * @param  string[]  ...$guards
      * @return mixed
      *
-     * @throws \Illuminate\Auth\AuthenticationException
+     * @throws AuthenticationException
      */
     public function handle($request, Closure $next, ...$guards)
     {
@@ -27,7 +28,7 @@ class LeapAuth extends Authenticate
     /**
      * Get the path the user should be redirected to when they are not authenticated.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return string|null
      */
     protected function redirectTo($request)

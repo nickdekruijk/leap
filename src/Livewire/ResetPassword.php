@@ -14,8 +14,11 @@ class ResetPassword extends Component
     use CanLog;
 
     public $token;
+
     public $email;
+
     public $password;
+
     public $password_confirmation;
 
     protected function rules()

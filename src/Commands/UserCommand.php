@@ -34,7 +34,7 @@ class UserCommand extends Command
      */
     public function __construct()
     {
-        $this->signature = 'leap:user {' . $this->getUsernameColumn() . '? : A valid ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '} {name? : The fullname of the user, if ommited the name part of the e-mail address is used}';
+        $this->signature = 'leap:user {'.$this->getUsernameColumn().'? : A valid '.($this->getUsernameColumn() == 'email' ? 'e-mail address' : $this->getUsernameColumn()).'} {name? : The fullname of the user, if ommited the name part of the e-mail address is used}';
 
         parent::__construct();
     }
@@ -52,7 +52,7 @@ class UserCommand extends Command
     public function handle()
     {
         // Get username/emailaddress from arguments or ask for it
-        $username = $this->arguments()[$this->getUsernameColumn()] ?: text(label: 'What ' . ($this->getUsernameColumn() == 'email' ? 'e-mail address' :  $this->getUsernameColumn()) . '?', required: true);
+        $username = $this->arguments()[$this->getUsernameColumn()] ?: text(label: 'What '.($this->getUsernameColumn() == 'email' ? 'e-mail address' : $this->getUsernameColumn()).'?', required: true);
 
         // Check if user already exists
         $user = Leap::userModel()->where($this->getUsernameColumn(), $username)->first();
@@ -66,7 +66,7 @@ class UserCommand extends Command
             $user->name = $name;
 
             // Ask for password
-            $password = password('Update password for ' . $username . ' (' . $name . ') (blank to leave unchanged)');
+            $password = password('Update password for '.$username.' ('.$name.') (blank to leave unchanged)');
             if ($password) {
                 $user->password = Hash::make($password);
             }
@@ -88,20 +88,20 @@ class UserCommand extends Command
             $random_password = Str::password(symbols: false);
 
             // Ask for password
-            $password = password('Password for ' . $username . ' (' . $name . ') (blank for ' . $random_password . ')');
+            $password = password('Password for '.$username.' ('.$name.') (blank for '.$random_password.')');
             $user->password = Hash::make($password ?: $random_password);
 
             // Save the new user
             $user->save();
             $status = 'created';
         }
-        $this->info('User ' . $user[$this->getUsernameColumn()] . ' "' . $user->name . '" ' . $status);
+        $this->info('User '.$user[$this->getUsernameColumn()].' "'.$user->name.'" '.$status);
 
         // If user has no roles suggest to give it the first role available
-        $roles = $user->belongsToMany(Role::class, config('leap.table_prefix') . 'role_user')->withTimestamps();
-        if (!$roles->count()) {
+        $roles = $user->belongsToMany(Role::class, config('leap.table_prefix').'role_user')->withTimestamps();
+        if (! $roles->count()) {
             $role = Role::first();
-            if (strtolower($this->ask('Do you want to give this user the "' . $role->name . '" role? (y/n)', 'n'))[0] == 'y') {
+            if (strtolower($this->ask('Do you want to give this user the "'.$role->name.'" role? (y/n)', 'n'))[0] == 'y') {
                 $roles->attach($role, ['accepted' => true]);
             }
         }

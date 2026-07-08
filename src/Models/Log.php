@@ -29,7 +29,7 @@ class Log extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('leap.table_prefix') . 'logs');
+        $this->setTable(config('leap.table_prefix').'logs');
     }
 
     public function user(): BelongsTo

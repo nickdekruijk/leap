@@ -12,9 +12,8 @@ trait CanLog
      *
      * Also checks if the action is allowed to be logged and if the ip address should be anonymized
      *
-     * @param string $action Action to log, e.g. login, create, update, delete
-     * @param array|string $context Context of the action, e.g. email address when trying to login
-     * @return Log|null
+     * @param  string  $action  Action to log, e.g. login, create, update, delete
+     * @param  array|string  $context  Context of the action, e.g. email address when trying to login
      */
     public static function log(string $action, null|array|string $context = null): ?Log
     {
@@ -30,8 +29,8 @@ trait CanLog
         // Check if logging is enabled globaly or should be skipped for current action or module
         if (
             config('leap.logging.enabled')
-            && !in_array($action, config('leap.logging.skip_actions'))
-            && !in_array($module, config('leap.logging.skip_modules'))
+            && ! in_array($action, config('leap.logging.skip_actions'))
+            && ! in_array($module, config('leap.logging.skip_modules'))
         ) {
             // Anonymize IP address if needed
             $ip = config('leap.logging.ip_address_anonymized') ? preg_replace(['/\.\d*$/', '/[\da-f]*:[\da-f]*$/'], ['.xxx', 'xxxx:xxxx'], request()->ip()) : request()->ip();

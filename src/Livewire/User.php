@@ -20,10 +20,12 @@ class User extends Resource
 
     // public $model = 'App\Models\User';
     public $priority = 900;
+
     public $icon = 'fas-users';
+
     public $with = 'roles';
 
     public $title = [
-        'nl' => 'Gebruikers'
+        'nl' => 'Gebruikers',
     ];
 }

@@ -12,7 +12,7 @@ class AccessControlTest extends TestCase
     {
         return User::create(array_merge([
             'name' => 'Test User',
-            'email' => 'test' . uniqid() . '@example.com',
+            'email' => 'test'.uniqid().'@example.com',
             'password' => bcrypt('password'),
         ], $attributes));
     }

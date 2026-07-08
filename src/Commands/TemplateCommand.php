@@ -29,8 +29,8 @@ class TemplateCommand extends Command
     /**
      * Copy or replace a file from the stubs/template folder after confirmation, asks to overwrite if it exists and sha1 hashes differ
      *
-     * @param string $file          The file including path relative to the stubs/template folder
-     * @param string $description   The description of the file to show in confirmation
+     * @param  string  $file  The file including path relative to the stubs/template folder
+     * @param  string  $description  The description of the file to show in confirmation
      * @return void
      */
     public function copyOrReplace(string $file, string $description)
@@ -38,15 +38,15 @@ class TemplateCommand extends Command
         $exists = file_exists($file);
 
         // Skip if file exists and sha1 hashes match
-        if ($exists && sha1_file(__DIR__ . '/../../stubs/template/' . $file) == sha1_file($file)) {
+        if ($exists && sha1_file(__DIR__.'/../../stubs/template/'.$file) == sha1_file($file)) {
             return;
         }
 
-        if (confirm($exists ? ucfirst("$description already exists, do you want to overwrite it?") : "Copy $description?", !$exists)) {
-            copy(__DIR__ . '/../../stubs/template/' . $file, $file);
-            $this->info('Copied ' . $file);
+        if (confirm($exists ? ucfirst("$description already exists, do you want to overwrite it?") : "Copy $description?", ! $exists)) {
+            copy(__DIR__.'/../../stubs/template/'.$file, $file);
+            $this->info('Copied '.$file);
         } else {
-            $this->info('Skipping ' . $file);
+            $this->info('Skipping '.$file);
         }
     }
 
@@ -54,27 +54,27 @@ class TemplateCommand extends Command
     {
         if (confirm("Copy $description?", false)) {
             $filesystem = new Filesystem;
-            $filesystem->copyDirectory(__DIR__ . '/../../stubs/template/' . $directory, $directory);
-            $this->info('Copied ' . $directory);
+            $filesystem->copyDirectory(__DIR__.'/../../stubs/template/'.$directory, $directory);
+            $this->info('Copied '.$directory);
         }
     }
 
     /**
      * Delete a file if it exists and sha1 hashes match the list
      *
-     * @param string $file      The file including path relative to base path
-     * @param array $sha1_list  List of sha1 hashes that match the file, e.g. ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', 'd2e5cf4f96d815b68a4f2a012b54a0d25daa4952']
+     * @param  string  $file  The file including path relative to base path
+     * @param  array  $sha1_list  List of sha1 hashes that match the file, e.g. ['e8928af0db9d15ccd7d75c5fc31ae3c63f7ffe1c', 'd2e5cf4f96d815b68a4f2a012b54a0d25daa4952']
      * @return void
      */
     public function deleteFile(string $file, array $sha1_list = [])
     {
         if (file_exists($file)) {
             $sha1 = sha1_file($file);
-            if (!in_array($sha1, $sha1_list)) {
+            if (! in_array($sha1, $sha1_list)) {
                 $this->info("Skipping $file because SHA-1 $sha1 is unknown");
             } elseif (confirm("Delete $file?", false)) {
                 unlink($file);
-                $this->info('Deleted ' . $file);
+                $this->info('Deleted '.$file);
             }
         }
     }
@@ -82,8 +82,8 @@ class TemplateCommand extends Command
     /**
      * Update the contents of a file with the logic of a given callback
      *
-     * @param string $file          The file to update
-     * @param callable $callback    The callback function to run
+     * @param  string  $file  The file to update
+     * @param  callable  $callback  The callback function to run
      * @return void
      */
     public static function updateFile(string $file, callable $callback)
@@ -96,22 +96,16 @@ class TemplateCommand extends Command
     /**
      * Ask to create a directory if it doesn't exist
      *
-     * @param string $directory
      * @return void
      */
     public function createDirectory(string $directory)
     {
-        if (!file_exists($directory) && confirm("Create $directory directory?")) {
+        if (! file_exists($directory) && confirm("Create $directory directory?")) {
             mkdir($directory);
             $this->info("Created $directory");
         }
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
     /**
      * The template files copied by this command, as paths relative to the project
      * root (and to the stubs/template folder). Individual files plus everything in
@@ -197,6 +191,11 @@ class TemplateCommand extends Command
         return 0;
     }
 
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
     public function handle()
     {
         // Report differences without touching anything
@@ -205,12 +204,12 @@ class TemplateCommand extends Command
         }
 
         // Don't run in production
-        if (!$this->confirmToProceed()) {
+        if (! $this->confirmToProceed()) {
             return 1;
         }
 
         // Ask to publish config if it doesn't exist
-        if (!file_exists('config/leap.php') && confirm('Publish leap config file?', false)) {
+        if (! file_exists('config/leap.php') && confirm('Publish leap config file?', false)) {
             $this->call('vendor:publish', ['--provider' => 'NickDeKruijk\Leap\ServiceProvider', '--tag' => 'config']);
         }
 
@@ -255,13 +254,13 @@ class TemplateCommand extends Command
         $route = "Route::get('/', function () {\n    return view('welcome');\n});\n";
         if (str_contains(file_get_contents('routes/web.php'), $route) && confirm('Delete default Laravel welcome route?', false)) {
             self::updateFile(base_path('routes/web.php'), function ($file) use ($route) {
-                return str_replace($route, "", $file);
+                return str_replace($route, '', $file);
             });
         }
 
         // Ask to add the sitemap route (before the catch-all so it isn't swallowed)
         $sitemap = "Route::get('sitemap.xml', [App\Http\Controllers\PageController::class, 'sitemap'])->name('sitemap');\n";
-        if (!str_contains(file_get_contents('routes/web.php'), $sitemap) && confirm('Add sitemap.xml route?', true)) {
+        if (! str_contains(file_get_contents('routes/web.php'), $sitemap) && confirm('Add sitemap.xml route?', true)) {
             self::updateFile(base_path('routes/web.php'), function ($file) use ($sitemap) {
                 return $file .= $sitemap;
             });
@@ -269,7 +268,7 @@ class TemplateCommand extends Command
 
         // Ask to add PageController route
         $route = "Route::get('{any}', [App\Http\Controllers\PageController::class, 'route'])->where('any', '(.*)');\n";
-        if (!str_contains(file_get_contents('routes/web.php'), $route) && confirm('Add PageController route?', true)) {
+        if (! str_contains(file_get_contents('routes/web.php'), $route) && confirm('Add PageController route?', true)) {
             self::updateFile(base_path('routes/web.php'), function ($file) use ($route) {
                 return $file .= $route;
             });

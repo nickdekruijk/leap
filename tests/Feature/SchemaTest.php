@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Schema;
+use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\TestCase;
 
 class SchemaTest extends TestCase
@@ -27,7 +28,7 @@ class SchemaTest extends TestCase
 
     public function test_superuser_role_is_seeded_with_full_permissions(): void
     {
-        $role = \NickDeKruijk\Leap\Models\Role::find(1);
+        $role = Role::find(1);
 
         $this->assertNotNull($role);
         $this->assertSame('superuser', $role->name);

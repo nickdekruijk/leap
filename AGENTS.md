@@ -17,10 +17,9 @@ package itself**. For using leap in a host application, see `README.md` and `doc
 
 ## Conventions
 
-- **Match existing style.** The package is **not** formatted with Pint; do not
-  reformat files you are not otherwise changing, and keep edits consistent with the
-  surrounding code (e.g. `!$x`, existing docblock style). Run Pint only against files
-  you intentionally rewrite, and never with a config from another project.
+- **Code style is Pint (`laravel` preset, see `pint.json`).** Run
+  `vendor/bin/pint` before committing; CI enforces `vendor/bin/pint --test`. Don't
+  hand-fight the formatter or use a config from another project.
 - **Public API is frozen for 1.x.** Do not rename `Attribute`/`Section`/`Module`/
   `Resource` methods — that breaks every host's `app/Leap/*`. Add functionality
   additively and deprecate rather than remove.

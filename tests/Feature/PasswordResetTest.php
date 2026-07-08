@@ -18,7 +18,7 @@ class PasswordResetTest extends TestCase
     {
         return User::create([
             'name' => 'Test User',
-            'email' => 'test' . uniqid() . '@example.com',
+            'email' => 'test'.uniqid().'@example.com',
             'password' => bcrypt('password'),
         ]);
     }

@@ -4,6 +4,9 @@ namespace NickDeKruijk\Leap\Tests;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Laravel\Fortify\FortifyServiceProvider;
+use Laravel\Passkeys\PasskeysServiceProvider;
+use Livewire\LivewireServiceProvider;
 use NickDeKruijk\Leap\ServiceProvider;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -13,9 +16,9 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
-            \Livewire\LivewireServiceProvider::class,
-            \Laravel\Fortify\FortifyServiceProvider::class,
-            \Laravel\Passkeys\PasskeysServiceProvider::class,
+            LivewireServiceProvider::class,
+            FortifyServiceProvider::class,
+            PasskeysServiceProvider::class,
             ServiceProvider::class,
         ];
     }

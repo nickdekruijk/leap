@@ -2,18 +2,15 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
-use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class Navigation extends Component
 {
     public $currentUrl;
 
     #[On('update-navigation')]
-    public function updateNavigation()
-    {
-    }
+    public function updateNavigation() {}
 
     public function render()
     {

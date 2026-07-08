@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -203,7 +204,7 @@ class PageController extends Controller
     /**
      * Build the full path for a page by walking its parent chain.
      *
-     * @param  \Illuminate\Support\Collection<int, Page>  $map
+     * @param  Collection<int, Page>  $map
      */
     /**
      * URLs for the given page in each configured locale, for a language switcher.

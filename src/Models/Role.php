@@ -15,7 +15,7 @@ class Role extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('leap.table_prefix') . 'roles');
+        $this->setTable(config('leap.table_prefix').'roles');
     }
 
     protected $casts = [
@@ -35,6 +35,6 @@ class Role extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(Leap::userModel()::class, config('leap.table_prefix') . 'role_user');
+        return $this->belongsToMany(Leap::userModel()::class, config('leap.table_prefix').'role_user');
     }
 }

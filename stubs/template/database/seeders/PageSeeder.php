@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Page;
 use Illuminate\Database\Seeder;
+use NickDeKruijk\Settings\Setting;
 
 class PageSeeder extends Seeder
 {
@@ -181,8 +182,8 @@ class PageSeeder extends Seeder
 
         // Default footer settings (only when the settings package is installed).
         // socials and footer_links use "label:url" per line (the ':' key separator of setting_array()).
-        if (class_exists(\NickDeKruijk\Settings\Setting::class)) {
-            \NickDeKruijk\Settings\Setting::set([
+        if (class_exists(Setting::class)) {
+            Setting::set([
                 'footer_contact' => [
                     'value' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
                     'description' => 'Adres/contactgegevens in de footer',
