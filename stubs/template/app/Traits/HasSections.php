@@ -27,8 +27,17 @@ trait HasSections
             }
         }
 
-        // Convert each section to an ArrayObject
+        // Convert each section to an ArrayObject, resolving per-locale fields to the current locale
+        $locales = config('leap.locales');
         foreach ($sections ?: [] as $key => $section) {
+            if ($locales) {
+                foreach ($section as $field => $value) {
+                    // A per-locale array (['nl' => …, 'en' => …]); media fields are Collections and are skipped
+                    if (is_array($value) && $value !== [] && ! array_diff(array_keys($value), array_keys($locales))) {
+                        $section[$field] = $value[app()->getLocale()] ?? (reset($value) ?: '');
+                    }
+                }
+            }
             $sections[$key] = new ArrayObject($section);
             $sections[$key]->setFlags(ArrayObject::STD_PROP_LIST | ArrayObject::ARRAY_AS_PROPS);
         }

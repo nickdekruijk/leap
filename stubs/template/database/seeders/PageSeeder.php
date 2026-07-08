@@ -10,8 +10,8 @@ class PageSeeder extends Seeder
     /**
      * Run the database seeds.
      *
-     * Titles, slugs and descriptions are seeded per locale (nl/en). Section
-     * content is single-locale for now. When leap.locales is null the extra
+     * Titles, slugs, descriptions and translatable section fields (head/body/
+     * button) are seeded per locale (nl/en). When leap.locales is null the extra
      * locales are simply never shown.
      *
      * Note: the homepage uses the reserved slug "/" (not "home"), so it resolves
@@ -33,80 +33,80 @@ class PageSeeder extends Seeder
                     '_name' => 'slide',
                     '_sort' => 0,
                     'active' => true,
-                    'head' => 'Welkom',
-                    'body' => '<p>Een frisse start voor je nieuwe website.</p>',
+                    'head' => ['nl' => 'Welkom', 'en' => 'Welcome'],
+                    'body' => ['nl' => '<p>Een frisse start voor je nieuwe website.</p>', 'en' => '<p>A fresh start for your new website.</p>'],
                 ],
                 [
                     '_name' => 'slide',
                     '_sort' => 1,
                     'active' => true,
-                    'head' => 'Volledig zelf te beheren',
-                    'body' => '<p>Beheer pagina\'s en secties in het adminpaneel.</p>',
+                    'head' => ['nl' => 'Volledig zelf te beheren', 'en' => 'Fully self-manageable'],
+                    'body' => ['nl' => '<p>Beheer pagina\'s en secties in het adminpaneel.</p>', 'en' => '<p>Manage pages and sections in the admin panel.</p>'],
                 ],
                 [
                     '_name' => 'slide',
                     '_sort' => 2,
                     'active' => true,
-                    'head' => 'Toegankelijk & snel',
-                    'body' => '<p>Semantische HTML, responsive en zonder zware buildstap.</p>',
+                    'head' => ['nl' => 'Toegankelijk & snel', 'en' => 'Accessible & fast'],
+                    'body' => ['nl' => '<p>Semantische HTML, responsive en zonder zware buildstap.</p>', 'en' => '<p>Semantic HTML, responsive and without a heavy build step.</p>'],
                 ],
                 [
                     '_name' => 'default',
                     '_sort' => 3,
                     'active' => true,
-                    'head' => 'Tekst met afbeelding',
+                    'head' => ['nl' => 'Tekst met afbeelding', 'en' => 'Text with image'],
                     'image_position' => 'right',
-                    'body' => '<p>Deze sectie combineert tekst met een afbeelding links, rechts, rond of breedbeeld.</p>',
+                    'body' => ['nl' => '<p>Deze sectie combineert tekst met een afbeelding links, rechts, rond of breedbeeld.</p>', 'en' => '<p>This section combines text with an image, positioned left, right, round or wide.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 4,
                     'active' => true,
-                    'head' => 'Eerste highlight',
-                    'body' => '<p>Opeenvolgende highlights vormen samen één horizontaal scrollende rij kaarten.</p>',
+                    'head' => ['nl' => 'Eerste highlight', 'en' => 'First highlight'],
+                    'body' => ['nl' => '<p>Opeenvolgende highlights vormen samen één horizontaal scrollende rij kaarten.</p>', 'en' => '<p>Consecutive highlights form one horizontally scrolling row of cards.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 5,
                     'active' => true,
-                    'head' => 'Tweede highlight',
-                    'body' => '<p>Sleep of gebruik de pijlen om te scrollen.</p>',
+                    'head' => ['nl' => 'Tweede highlight', 'en' => 'Second highlight'],
+                    'body' => ['nl' => '<p>Sleep of gebruik de pijlen om te scrollen.</p>', 'en' => '<p>Drag or use the arrows to scroll.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 6,
                     'active' => true,
-                    'head' => 'Derde highlight',
-                    'body' => '<p>Elke kaart heeft een optionele afbeelding, kop, tekst en knop.</p>',
+                    'head' => ['nl' => 'Derde highlight', 'en' => 'Third highlight'],
+                    'body' => ['nl' => '<p>Elke kaart heeft een optionele afbeelding, kop, tekst en knop.</p>', 'en' => '<p>Each card has an optional image, heading, text and button.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 7,
                     'active' => true,
-                    'head' => 'Vierde highlight',
-                    'body' => '<p>De rij scrollt horizontaal zodra er meer kaarten zijn dan passen.</p>',
+                    'head' => ['nl' => 'Vierde highlight', 'en' => 'Fourth highlight'],
+                    'body' => ['nl' => '<p>De rij scrollt horizontaal zodra er meer kaarten zijn dan passen.</p>', 'en' => '<p>The row scrolls horizontally once there are more cards than fit.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 8,
                     'active' => true,
-                    'head' => 'Vijfde highlight',
-                    'body' => '<p>Op touchscreens kun je gewoon swipen.</p>',
+                    'head' => ['nl' => 'Vijfde highlight', 'en' => 'Fifth highlight'],
+                    'body' => ['nl' => '<p>Op touchscreens kun je gewoon swipen.</p>', 'en' => '<p>On touchscreens you can simply swipe.</p>'],
                 ],
                 [
                     '_name' => 'highlights',
                     '_sort' => 9,
                     'active' => true,
-                    'head' => 'Zesde highlight',
-                    'body' => '<p>Met het toetsenbord: focus de rij en gebruik de pijltjestoetsen.</p>',
+                    'head' => ['nl' => 'Zesde highlight', 'en' => 'Sixth highlight'],
+                    'body' => ['nl' => '<p>Met het toetsenbord: focus de rij en gebruik de pijltjestoetsen.</p>', 'en' => '<p>With the keyboard: focus the row and use the arrow keys.</p>'],
                 ],
                 [
                     '_name' => 'cta',
                     '_view' => 'sections.default',
                     '_sort' => 10,
                     'active' => true,
-                    'head' => 'Klaar om te beginnen?',
-                    'body' => '<p><a class="button" href="/contact">Neem contact op</a></p>',
+                    'head' => ['nl' => 'Klaar om te beginnen?', 'en' => 'Ready to get started?'],
+                    'body' => ['nl' => '<p><a class="button" href="/contact">Neem contact op</a></p>', 'en' => '<p><a class="button" href="/en/contact">Get in touch</a></p>'],
                 ],
             ],
         ]);
@@ -120,9 +120,9 @@ class PageSeeder extends Seeder
                     '_name' => 'default',
                     '_sort' => 0,
                     'active' => true,
-                    'head' => 'Over ons',
+                    'head' => ['nl' => 'Over ons', 'en' => 'About us'],
                     'image_position' => 'left',
-                    'body' => '<p>Vertel hier het verhaal achter je organisatie.</p>',
+                    'body' => ['nl' => '<p>Vertel hier het verhaal achter je organisatie.</p>', 'en' => '<p>Tell the story behind your organisation here.</p>'],
                 ],
             ],
         ]);
@@ -137,8 +137,8 @@ class PageSeeder extends Seeder
                     '_name' => 'default',
                     '_sort' => 0,
                     'active' => true,
-                    'head' => 'Wat we doen',
-                    'body' => '<p>Een voorbeeld van een subpagina onder "Over ons".</p>',
+                    'head' => ['nl' => 'Wat we doen', 'en' => 'What we do'],
+                    'body' => ['nl' => '<p>Een voorbeeld van een subpagina onder "Over ons".</p>', 'en' => '<p>An example of a subpage under "About us".</p>'],
                 ],
             ],
         ]);
@@ -152,8 +152,8 @@ class PageSeeder extends Seeder
                     '_name' => 'default',
                     '_sort' => 0,
                     'active' => true,
-                    'head' => 'Contact',
-                    'body' => '<p>Zet hier je contactgegevens of een formulier.</p>',
+                    'head' => ['nl' => 'Contact', 'en' => 'Contact'],
+                    'body' => ['nl' => '<p>Zet hier je contactgegevens of een formulier.</p>', 'en' => '<p>Put your contact details or a form here.</p>'],
                 ],
             ],
         ]);
@@ -165,7 +165,7 @@ class PageSeeder extends Seeder
             'menuitem' => false,
             'sort' => 4,
             'sections' => [
-                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => 'Privacybeleid', 'body' => '<p>Beschrijf hier hoe je met persoonsgegevens omgaat.</p>'],
+                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => ['nl' => 'Privacybeleid', 'en' => 'Privacy policy'], 'body' => ['nl' => '<p>Beschrijf hier hoe je met persoonsgegevens omgaat.</p>', 'en' => '<p>Describe how you handle personal data here.</p>']],
             ],
         ]);
 
@@ -175,7 +175,7 @@ class PageSeeder extends Seeder
             'menuitem' => false,
             'sort' => 5,
             'sections' => [
-                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => 'Algemene voorwaarden', 'body' => '<p>Zet hier je algemene voorwaarden.</p>'],
+                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => ['nl' => 'Algemene voorwaarden', 'en' => 'Terms & conditions'], 'body' => ['nl' => '<p>Zet hier je algemene voorwaarden.</p>', 'en' => '<p>Put your terms and conditions here.</p>']],
             ],
         ]);
 

@@ -303,7 +303,15 @@ class Editor extends Component
                     $sectionData = &$this->data[$sectionAttribute->name][$index];
                     $sectionData['_title'] = collect($sectionAttributes)
                         ->where('sectionTitle', true)
-                        ->map(fn ($title) => strip_tags($sectionData[$title->name] ?? ''))
+                        ->map(function ($title) use ($sectionData) {
+                            $value = $sectionData[$title->name] ?? '';
+                            // Translatable section fields are stored per locale; use the active one for the label
+                            if (is_array($value)) {
+                                $value = $value[$this->activeLocale] ?? (reset($value) ?: '');
+                            }
+
+                            return strip_tags($value);
+                        })
                         ->filter()
                         ->implode(' - ');
                 }
@@ -511,7 +519,9 @@ class Editor extends Component
     public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
     {
         $newAttribute = clone $sectionAttribute;
-        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name;
+        // Translatable section fields are edited per locale: data.{name}.{index}.{field}.{locale}
+        $suffix = ($sectionAttribute->translatable && $this->editorLocales()) ? '.'.($this->activeLocale ?: $this->defaultLocale()) : '';
+        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name.$suffix;
         $newAttribute->name = $name.'.'.$index.'.'.$sectionAttribute->name;
         $newAttribute->sectionName = $sectionName;
 

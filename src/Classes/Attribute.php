@@ -28,6 +28,13 @@ class Attribute
 
     public ?string $hint = null;
 
+    /**
+     * Marks a section sub-attribute as translatable (edited per locale, stored as
+     * ['nl' => …, 'en' => …]). Top-level attributes derive this from the model's
+     * translatable attributes instead.
+     */
+    public bool $translatable = false;
+
     public string $labelIndex;
 
     public string $placeholder = '';
@@ -502,6 +509,16 @@ class Attribute
     public function hint(string|array $hint): Attribute
     {
         $this->hint = $this->localized($hint);
+
+        return $this;
+    }
+
+    /**
+     * Mark a section sub-attribute as translatable (edited per locale).
+     */
+    public function translatable(bool $translatable = true): Attribute
+    {
+        $this->translatable = $translatable;
 
         return $this;
     }
