@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\PageController;
 use App\Traits\HasSections;
 use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,6 +37,17 @@ class Page extends Model
         'sections' => 'array',
         'meta' => 'array',
     ];
+
+    /**
+     * Flush the cached page tree whenever a page changes, so admin edits show up
+     * immediately (see config('leap.cache') and PageController::flushPageCache()).
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => PageController::flushPageCache());
+        static::deleted(fn () => PageController::flushPageCache());
+        static::restored(fn () => PageController::flushPageCache());
+    }
 
     public function scopePublished($query)
     {

@@ -317,6 +317,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | cache
+    |--------------------------------------------------------------------------
+    |
+    | The frontend template caches its page tree (PageController::getPages())
+    | since pages change rarely. The cache is flushed automatically whenever a
+    | Page is saved or deleted, so keeping this on is safe in every environment.
+    | Set to false to disable persistent caching (a per-request memo still
+    | applies), or clear it manually with `php artisan cache:clear`.
+    |
+    */
+    'cache' => env('LEAP_CACHE', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | ace
     |--------------------------------------------------------------------------
     | Ace code editor options like CDN and version to use.

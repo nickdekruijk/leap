@@ -5,24 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class PageController extends Controller
 {
     /**
-     * Get all active pages, structured so we can build the navigation and resolve
-     * the current page. Memoized for the duration of the request via once().
+     * Load the active pages grouped by parent id (segment-independent).
      *
-     * @return array<string, mixed>
+     * This is the expensive part of getPages() — the database query plus
+     * per-locale slug/title resolution — so it is cached when config('leap.cache')
+     * is on (the default). Pages change rarely and the cache is flushed by the
+     * Page model on save/delete. The cache key includes the active locale because
+     * translated slugs/titles are resolved at build time.
+     *
+     * @return array<int, array<int, array<string, mixed>>>
      */
-    public static function getPages(array $segments = []): array
+    protected static function loadPages(): array
     {
-        return once(function () use ($segments) {
-            // Boilerplate for the getPages array
-            $pages = [
-                'menu' => [],
-                'current' => null,
-            ];
+        $build = function () {
+            $pages = [];
 
             // Get all pages but only the attributes we need for navigation
             $attributes = ['id', 'title', 'slug', 'parent', 'menuitem', 'sections'];
@@ -37,6 +39,43 @@ class PageController extends Controller
                 }
                 $pages[$page->parent ?: 0][] = $page->only($attributes);
             }
+
+            return $pages;
+        };
+
+        if (config('leap.cache', true)) {
+            return Cache::rememberForever('leap.pages.'.app()->getLocale(), $build);
+        }
+
+        return $build();
+    }
+
+    /**
+     * Flush the cached page tree for every configured locale.
+     *
+     * Called by the Page model whenever a page is saved or deleted.
+     */
+    public static function flushPageCache(): void
+    {
+        $locales = array_keys(config('leap.locales') ?: [app()->getLocale() => null]);
+        foreach ($locales as $locale) {
+            Cache::forget('leap.pages.'.$locale);
+        }
+    }
+
+    /**
+     * Get all active pages, structured so we can build the navigation and resolve
+     * the current page. Memoized for the duration of the request via once().
+     *
+     * @return array<string, mixed>
+     */
+    public static function getPages(array $segments = []): array
+    {
+        return once(function () use ($segments) {
+            // Segment-independent page data (cached per locale)
+            $pages = static::loadPages();
+            $pages['menu'] = [];
+            $pages['current'] = null;
 
             // URL prefix for the active locale (empty for the default/only locale)
             $prefix = static::localePrefix();
