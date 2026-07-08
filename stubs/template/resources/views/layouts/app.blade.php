@@ -92,7 +92,14 @@
                 </div>
                 <div class="footer-columns footer-fine">
                     <div>{!! nl2br(e(setting('footer_copyright'))) !!}</div>
-                    <div>{!! nl2br(e(setting('footer_links'))) !!}</div>
+                    @php($footerLinks = array_filter(setting_array('footer_links') ?: []))
+                    @if ($footerLinks)
+                        <ul class="footer-links">
+                            @foreach ($footerLinks as $label => $url)
+                                <li><a href="{{ $url }}">{{ $label }}</a></li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             </div>
         </footer>

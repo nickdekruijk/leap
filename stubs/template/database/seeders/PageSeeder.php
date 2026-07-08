@@ -137,14 +137,35 @@ class PageSeeder extends Seeder
             ],
         ]);
 
+        // Legal pages, linked from the footer but hidden from the main navigation
+        Page::updateOrCreate(['id' => 5], [
+            'title' => 'Privacybeleid',
+            'slug' => 'privacy',
+            'menuitem' => false,
+            'sort' => 4,
+            'sections' => [
+                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => 'Privacybeleid', 'body' => '<p>Beschrijf hier hoe je met persoonsgegevens omgaat.</p>'],
+            ],
+        ]);
+
+        Page::updateOrCreate(['id' => 6], [
+            'title' => 'Algemene voorwaarden',
+            'slug' => 'algemene-voorwaarden',
+            'menuitem' => false,
+            'sort' => 5,
+            'sections' => [
+                ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => 'Algemene voorwaarden', 'body' => '<p>Zet hier je algemene voorwaarden.</p>'],
+            ],
+        ]);
+
         // Default footer settings (only when the settings package is installed).
-        // socials uses "name:url" per line (the ':' key separator of setting_array()).
+        // socials and footer_links use "label:url" per line (the ':' key separator of setting_array()).
         if (class_exists(\NickDeKruijk\Settings\Setting::class)) {
             \NickDeKruijk\Settings\Setting::set([
                 'footer_contact' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
                 'socials' => "instagram:https://instagram.com\nlinkedin:https://linkedin.com\nfacebook:https://facebook.com",
                 'footer_copyright' => '© '.date('Y').' '.config('app.name'),
-                'footer_links' => "Privacy\nAlgemene voorwaarden",
+                'footer_links' => "Privacy:/privacy\nAlgemene voorwaarden:/algemene-voorwaarden",
             ]);
         }
     }

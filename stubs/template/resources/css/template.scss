@@ -599,7 +599,11 @@ a[role="button"],
     background: var(--footer-bg);
     color: var(--footer-text);
 
-    a { color: inherit; }
+    a {
+        color: inherit;
+        text-decoration: none;
+        &:hover { text-decoration: underline; }
+    }
     .footer-name { display: block; font-size: var(--fs-h3); margin-bottom: var(--space); }
 
     .footer-columns {
@@ -625,6 +629,13 @@ a[role="button"],
         font-size: 0.875em;
         opacity: 0.85;
         > div:last-child { text-align: right; }
+    }
+
+    .footer-links {
+        display: flex;
+        gap: var(--space);
+        justify-content: flex-end;
+        list-style: none;
     }
 }
 
