@@ -22,6 +22,7 @@ return [
     'repeat' => 'Repeat',
     'save' => 'Save',
     'save_copy' => 'Save as copy',
+    'language' => 'Language',
     'search_placeholder' => 'Search...',
     'translatable' => 'Translatable — this field follows the active language tab',
     'updated' => 'updated',

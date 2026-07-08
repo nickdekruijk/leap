@@ -8,6 +8,23 @@
                 @can('leap::create')
                     <x-leap::button svg-icon="far-copy" wire:click="clone" label="leap::resource.save_copy" wire:loading.delay.shorter.attr="disabled" />
                 @endcan
+            @endif
+            @if ($this->editorLocales())
+                @if (count($this->editorLocales()) > 2)
+                    <select class="leap-select leap-locale-select" wire:model.live="activeLocale" aria-label="{{ __('leap::resource.language') }}">
+                        @foreach ($this->editorLocales() as $code => $name)
+                            <option value="{{ $code }}">{{ $name }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <div class="leap-locale-tabs" role="tablist" aria-label="{{ __('leap::resource.language') }}">
+                        @foreach ($this->editorLocales() as $code => $name)
+                            <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
+                        @endforeach
+                    </div>
+                @endif
+            @endif
+            @if ($editing > 0)
                 @can('leap::delete')
                     <x-leap::button svg-icon="far-trash-alt" wire:click="delete" wire:confirm="{{ __('leap::resource.delete_confirm') }}" label="leap::resource.delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
                 @endcan
@@ -23,13 +40,6 @@
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
         <div class="leap-form" wire:key="editor-{{ $editing }}">
-            @if ($this->editorLocales())
-                <div class="leap-locale-tabs" role="tablist">
-                    @foreach ($this->editorLocales() as $code => $name)
-                        <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
-                    @endforeach
-                </div>
-            @endif
             <fieldset class="leap-fieldset">
                 @foreach ($this->attributes() as $attribute)
                     @if ($attribute->input)

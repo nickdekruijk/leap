@@ -180,23 +180,29 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
 }
 
 // Multilingual editor: locale tabs
-.leap-locale-tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 1em;
-    button {
-        padding: 0.4em 0.9em;
-        border: 0;
-        background: rgba(black, 0.06);
-        border-radius: 4px 4px 0 0;
-        font: inherit;
-        color: rgba(black, 0.55);
-        cursor: pointer;
-        &:hover { background: rgba(black, 0.1); }
-        &.active {
-            background: rgba(black, 0.14);
-            color: black;
-            font-weight: 600;
+// Locale switcher inside the sticky button bar
+.leap-buttons {
+    .leap-locale-tabs {
+        display: inline-flex;
+        gap: 2px;
+        button {
+            padding: 0.4em 0.9em;
+            border: 0;
+            border-radius: 4px;
+            background: rgba(black, 0.06);
+            font: inherit;
+            color: rgba(black, 0.55);
+            cursor: pointer;
+            &:hover { background: rgba(black, 0.1); }
+            &.active {
+                background: rgba(black, 0.16);
+                color: black;
+                font-weight: 600;
+            }
         }
+    }
+    .leap-locale-select {
+        width: auto;
+        min-width: 0;
     }
 }

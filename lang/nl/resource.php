@@ -22,6 +22,7 @@ return [
     'repeat' => 'Herhaal',
     'save' => 'Opslaan',
     'save_copy' => 'Opslaan als kopie',
+    'language' => 'Taal',
     'search_placeholder' => 'Zoeken...',
     'translatable' => 'Vertaalbaar — dit veld volgt de actieve taal-tab',
     'updated' => 'bijgewerkt',
