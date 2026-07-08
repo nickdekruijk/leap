@@ -554,6 +554,8 @@ a[role="button"],
         // Suppress text selection permanently: a selection begins on mousedown,
         // before the .dragging class lands, so gating user-select on .dragging is
         // too late to stop it. The row is a drag-to-scroll surface, not prose.
+        // -webkit- prefix required for Safari (no autoprefixer in this pipeline).
+        -webkit-user-select: none;
         user-select: none;
         &.dragging {
             cursor: grabbing;
