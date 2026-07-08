@@ -96,7 +96,11 @@ class Editor extends Component
      */
     public function editorLocales(): array
     {
-        return $this->parentModule()->translatable ? (config('leap.locales') ?: []) : [];
+        $module = $this->parentModule();
+        // Resource::$translatable is populated from the model in getModel(); ensure it's initialised
+        $module->getModel();
+
+        return $module->translatable ? (config('leap.locales') ?: []) : [];
     }
 
     /**

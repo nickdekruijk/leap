@@ -10,18 +10,24 @@ class PageSeeder extends Seeder
     /**
      * Run the database seeds.
      *
+     * Titles, slugs and descriptions are seeded per locale (nl/en). Section
+     * content is single-locale for now. When leap.locales is null the extra
+     * locales are simply never shown.
+     *
      * Note: the homepage uses the reserved slug "/" (not "home"), so it resolves
-     * order-independently and is not also reachable under a second URL. See the
-     * PageController::getPages() homepage detection.
+     * order-independently and is not also reachable under a second URL.
      */
     public function run(): void
     {
         Page::updateOrCreate(['id' => 1], [
-            'title' => 'Home',
-            'slug' => '/',
+            'title' => ['nl' => 'Home', 'en' => 'Home'],
+            'slug' => ['nl' => '/', 'en' => '/'],
             'menuitem' => false,
             'sort' => 1,
-            'description' => 'Welkom op de voorbeeldwebsite gebouwd met de leap-template.',
+            'description' => [
+                'nl' => 'Welkom op de voorbeeldwebsite gebouwd met de leap-template.',
+                'en' => 'Welcome to the example website built with the leap template.',
+            ],
             'sections' => [
                 [
                     '_name' => 'slide',
@@ -106,8 +112,8 @@ class PageSeeder extends Seeder
         ]);
 
         Page::updateOrCreate(['id' => 2], [
-            'title' => 'Over ons',
-            'slug' => 'over-ons',
+            'title' => ['nl' => 'Over ons', 'en' => 'About us'],
+            'slug' => ['nl' => 'over-ons', 'en' => 'about-us'],
             'sort' => 2,
             'sections' => [
                 [
@@ -122,9 +128,9 @@ class PageSeeder extends Seeder
         ]);
 
         Page::updateOrCreate(['id' => 3], [
-            'title' => 'Diensten',
+            'title' => ['nl' => 'Diensten', 'en' => 'Services'],
             'parent' => 2,
-            'slug' => 'diensten',
+            'slug' => ['nl' => 'diensten', 'en' => 'services'],
             'sort' => 1,
             'sections' => [
                 [
@@ -138,8 +144,8 @@ class PageSeeder extends Seeder
         ]);
 
         Page::updateOrCreate(['id' => 4], [
-            'title' => 'Contact',
-            'slug' => 'contact',
+            'title' => ['nl' => 'Contact', 'en' => 'Contact'],
+            'slug' => ['nl' => 'contact', 'en' => 'contact'],
             'sort' => 3,
             'sections' => [
                 [
@@ -154,8 +160,8 @@ class PageSeeder extends Seeder
 
         // Legal pages, linked from the footer but hidden from the main navigation
         Page::updateOrCreate(['id' => 5], [
-            'title' => 'Privacybeleid',
-            'slug' => 'privacy',
+            'title' => ['nl' => 'Privacybeleid', 'en' => 'Privacy policy'],
+            'slug' => ['nl' => 'privacy', 'en' => 'privacy'],
             'menuitem' => false,
             'sort' => 4,
             'sections' => [
@@ -164,8 +170,8 @@ class PageSeeder extends Seeder
         ]);
 
         Page::updateOrCreate(['id' => 6], [
-            'title' => 'Algemene voorwaarden',
-            'slug' => 'algemene-voorwaarden',
+            'title' => ['nl' => 'Algemene voorwaarden', 'en' => 'Terms & conditions'],
+            'slug' => ['nl' => 'algemene-voorwaarden', 'en' => 'terms'],
             'menuitem' => false,
             'sort' => 5,
             'sections' => [
