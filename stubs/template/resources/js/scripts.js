@@ -70,6 +70,14 @@ document.querySelectorAll('.items-horizontal .items-container').forEach(function
     window.addEventListener('mouseup', function () {
         downX = null;
     });
+
+    // Clicking the prev/next arrows scrolls to an exact card offset, so re-enable
+    // snap (undo a previous mouse-drag) to keep the scroller aligned from there.
+    el.parentElement.querySelectorAll('.horizontal-scroller-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            el.classList.remove('is-dragged');
+        });
+    });
 });
 
 // Light parallax on slider media (skipped when the user prefers reduced motion)
