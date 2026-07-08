@@ -469,11 +469,25 @@ class Attribute
      *
      * @param  string  $label
      */
-    public function label(?string $label = null, ?string $labelIndex = null): Attribute
+    /**
+     * Resolve a value that may be a per-locale array (['nl' => '…', 'en' => '…'])
+     * to the string for the current locale, falling back to the first entry.
+     */
+    protected function localized(string|array|null $value): ?string
     {
+        if (is_array($value)) {
+            return $value[app()->getLocale()] ?? (reset($value) ?: null);
+        }
+
+        return $value;
+    }
+
+    public function label(string|array|null $label = null, string|array|null $labelIndex = null): Attribute
+    {
+        $label = $this->localized($label);
         $this->label = $label;
         if ($label) {
-            $this->labelIndex = $labelIndex ?: $label;
+            $this->labelIndex = $this->localized($labelIndex) ?: $label;
         }
 
         return $this;
@@ -503,9 +517,9 @@ class Attribute
     /**
      * Set the placeholder value
      */
-    public function placeholder(string $placeholder): Attribute
+    public function placeholder(string|array $placeholder): Attribute
     {
-        $this->placeholder = $placeholder;
+        $this->placeholder = $this->localized($placeholder);
 
         return $this;
     }

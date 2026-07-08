@@ -177,10 +177,26 @@ class PageSeeder extends Seeder
         // socials and footer_links use "label:url" per line (the ':' key separator of setting_array()).
         if (class_exists(\NickDeKruijk\Settings\Setting::class)) {
             \NickDeKruijk\Settings\Setting::set([
-                'footer_contact' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
-                'socials' => "instagram:https://instagram.com\nlinkedin:https://linkedin.com\nfacebook:https://facebook.com",
-                'footer_copyright' => '© '.date('Y').' '.config('app.name'),
-                'footer_links' => "Privacy:/privacy\nAlgemene voorwaarden:/algemene-voorwaarden",
+                'footer_contact' => [
+                    'value' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
+                    'description' => 'Adres/contactgegevens in de footer',
+                ],
+                'socials' => [
+                    'value' => "instagram:https://instagram.com\nlinkedin:https://linkedin.com\nfacebook:https://facebook.com",
+                    'description' => 'Social media, één "naam:url" per regel (naam = FontAwesome brand-icoon)',
+                ],
+                'footer_copyright' => [
+                    'value' => '© '.date('Y').' '.config('app.name'),
+                    'description' => 'Copyright-regel onderaan de footer',
+                ],
+                'footer_links' => [
+                    'value' => "Privacy:/privacy\nAlgemene voorwaarden:/algemene-voorwaarden",
+                    'description' => 'Footer-links, één "label:url" per regel',
+                ],
+                'og_image' => [
+                    'value' => '',
+                    'description' => 'Standaard social-share afbeelding (URL of /storage-pad); pagina-eigen afbeelding gaat voor',
+                ],
             ]);
         }
     }
