@@ -52,9 +52,37 @@ class PageSeeder extends Seeder
                     'body' => '<p>Sleep of gebruik de pijlen om te scrollen.</p>',
                 ],
                 [
+                    '_name' => 'highlights',
+                    '_sort' => 4,
+                    'active' => true,
+                    'head' => 'Derde highlight',
+                    'body' => '<p>Elke kaart heeft een optionele afbeelding, kop, tekst en knop.</p>',
+                ],
+                [
+                    '_name' => 'highlights',
+                    '_sort' => 5,
+                    'active' => true,
+                    'head' => 'Vierde highlight',
+                    'body' => '<p>De rij scrollt horizontaal zodra er meer kaarten zijn dan passen.</p>',
+                ],
+                [
+                    '_name' => 'highlights',
+                    '_sort' => 6,
+                    'active' => true,
+                    'head' => 'Vijfde highlight',
+                    'body' => '<p>Op touchscreens kun je gewoon swipen.</p>',
+                ],
+                [
+                    '_name' => 'highlights',
+                    '_sort' => 7,
+                    'active' => true,
+                    'head' => 'Zesde highlight',
+                    'body' => '<p>Met het toetsenbord: focus de rij en gebruik de pijltjestoetsen.</p>',
+                ],
+                [
                     '_name' => 'cta',
                     '_view' => 'sections.default',
-                    '_sort' => 4,
+                    '_sort' => 8,
                     'active' => true,
                     'head' => 'Klaar om te beginnen?',
                     'body' => '<p><a class="button" href="/contact">Neem contact op</a></p>',
@@ -108,5 +136,16 @@ class PageSeeder extends Seeder
                 ],
             ],
         ]);
+
+        // Default footer settings (only when the settings package is installed).
+        // socials uses "name:url" per line (the ':' key separator of setting_array()).
+        if (class_exists(\NickDeKruijk\Settings\Setting::class)) {
+            \NickDeKruijk\Settings\Setting::set([
+                'footer_contact' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
+                'socials' => "instagram:https://instagram.com\nlinkedin:https://linkedin.com\nfacebook:https://facebook.com",
+                'footer_copyright' => '© '.date('Y').' '.config('app.name'),
+                'footer_links' => "Privacy\nAlgemene voorwaarden",
+            ]);
+        }
     }
 }

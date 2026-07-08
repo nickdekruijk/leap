@@ -74,11 +74,12 @@
                             @endforeach
                         </ul>
                     </div>
-                    @if (setting_array('socials'))
+                    @php($socials = array_filter(setting_array('socials') ?: []))
+                    @if ($socials)
                         <div>
                             <strong>@lang('Social media')</strong>
                             <ul>
-                                @foreach (setting_array('socials') as $name => $url)
+                                @foreach ($socials as $name => $url)
                                     <li><a href="{{ $url }}" target="_blank" rel="noopener">{{ ucfirst($name) }}</a></li>
                                 @endforeach
                             </ul>
