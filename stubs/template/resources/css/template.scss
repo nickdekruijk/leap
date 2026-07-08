@@ -211,7 +211,7 @@ a[role="button"],
         text-decoration: none;
 
         &:hover { color: var(--accent); text-decoration: underline; }
-        &[aria-current="page"] { color: var(--accent); font-weight: 700; }
+        &[aria-current="page"] { color: var(--accent); }
     }
 
     .nav-toggle { display: none; }
