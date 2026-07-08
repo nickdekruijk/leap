@@ -616,6 +616,7 @@ a[role="button"],
     .footer-socials {
         display: flex;
         gap: var(--space-s);
+        margin-top: var(--space-s);
         .social-icon { display: block; width: 1.5em; height: 1.5em; }
         a:hover { opacity: 0.75; }
     }

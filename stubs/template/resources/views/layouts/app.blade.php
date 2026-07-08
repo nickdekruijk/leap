@@ -65,7 +65,7 @@
             <div class="main-width">
                 <strong class="footer-name">{{ config('app.name') }}</strong>
                 <div class="footer-columns">
-                    <div>{!! nl2br(e(setting('footer_contact'))) !!}</div>
+                    <div>{!! preg_replace('/([\w.+-]+@[\w-]+\.[\w.-]+)/', '<a href="mailto:$1">$1</a>', nl2br(e(setting('footer_contact')))) !!}</div>
                     <div>
                         <strong>@lang('Direct naar')</strong>
                         <ul>
