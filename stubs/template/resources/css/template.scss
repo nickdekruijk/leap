@@ -549,18 +549,24 @@ a[role="button"],
         overflow-x: auto;
         padding-bottom: var(--space-s);
         cursor: grab;
-        // No scroll-padding-inline: the arrow buttons scroll to an item's exact
-        // offsetLeft, and mandatory snap would otherwise rest a bit short of
-        // that (aligning to the padded snap zone), leaving a visible gap.
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
-        &.dragging { cursor: grabbing; }
+        // .dragging is set on mousedown; suppress text selection for the whole
+        // drag so grabbing the row doesn't select card text.
+        &.dragging {
+            cursor: grabbing;
+            user-select: none;
+        }
+        // Once the row is mouse-dragged, snap stays off (set by scripts.js on
+        // first move) so it doesn't yank back to a card on release. Snap
+        // remains active for wheel/trackpad and arrow-button navigation.
+        &.is-dragged { scroll-snap-type: none; }
 
         // Thin scrollbar drawn as a centered hairline within a taller
-        // (easier to grab) track, rather than a thick bar. Note: WebKit
-        // ignores ::-webkit-scrollbar-* as soon as scrollbar-width is set, so
-        // the hairline is WebKit-only; Firefox falls back to a plain thin bar.
-        scrollbar-color: var(--accent) transparent;
+        // (easier to grab) track, rather than a thick bar. WebKit-only:
+        // Chrome ignores ::-webkit-scrollbar-* the moment the standard
+        // scrollbar-color/scrollbar-width is set, so neither is used here;
+        // Firefox falls back to its default scrollbar.
         &::-webkit-scrollbar { height: 13px; }
         &::-webkit-scrollbar-track {
             background: linear-gradient(transparent, transparent 6px, var(--accent) 6px, var(--accent) 7px, transparent 7px);

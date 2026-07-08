@@ -54,6 +54,24 @@ new HorizontalScroller({
     draggable: true,
 });
 
+// Once a row is dragged with the mouse, keep scroll-snap off (via .is-dragged)
+// so it doesn't yank back to a card on release. Touch swipe is untouched, so
+// mobile keeps snapping; wheel/trackpad and arrow buttons keep snapping too.
+document.querySelectorAll('.items-horizontal .items-container').forEach(function (el) {
+    let downX = null;
+    el.addEventListener('mousedown', function (e) {
+        downX = e.clientX;
+    });
+    el.addEventListener('mousemove', function (e) {
+        if (downX !== null && Math.abs(e.clientX - downX) > 3) {
+            el.classList.add('is-dragged');
+        }
+    });
+    window.addEventListener('mouseup', function () {
+        downX = null;
+    });
+});
+
 // Light parallax on slider media (skipped when the user prefers reduced motion)
 if (!reduceMotion) {
     let pending = false;
