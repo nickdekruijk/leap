@@ -17,7 +17,7 @@ class TemplateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'leap:template';
+    protected $signature = 'leap:template {--diff : Show how this project'."'".'s template files differ from the current stubs without changing anything}';
 
     /**
      * The console command description.
@@ -112,8 +112,95 @@ class TemplateCommand extends Command
      *
      * @return mixed
      */
+    /**
+     * The template files copied by this command, as paths relative to the project
+     * root (and to the stubs/template folder). Individual files plus everything in
+     * the copied directories. Used by both the installer and --diff.
+     *
+     * @return array<int, string>
+     */
+    protected function templateFiles(): array
+    {
+        $files = [
+            'app/Http/Controllers/PageController.php',
+            'database/migrations/2025_01_03_094203_create_pages_table.php',
+            'database/seeders/PageSeeder.php',
+            'app/Models/Page.php',
+            'app/Leap/Page.php',
+            'app/Traits/HasSections.php',
+            'app/Traits/HasSlug.php',
+        ];
+
+        $stubBase = __DIR__.'/../../stubs/template';
+        $filesystem = new Filesystem;
+        foreach (['resources/css', 'resources/views', 'resources/js'] as $directory) {
+            if (! is_dir($stubBase.'/'.$directory)) {
+                continue;
+            }
+            foreach ($filesystem->allFiles($stubBase.'/'.$directory) as $file) {
+                $files[] = $directory.'/'.$file->getRelativePathname();
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Report how the project's template files differ from the current stubs,
+     * without changing anything. Shows a unified diff per changed file when the
+     * `diff` binary is available, and lists files that are new or unchanged.
+     */
+    public function showDiff(): int
+    {
+        $stubBase = realpath(__DIR__.'/../../stubs/template');
+        $changed = $new = $unchanged = [];
+
+        foreach ($this->templateFiles() as $relative) {
+            $stub = $stubBase.'/'.$relative;
+            $project = base_path($relative);
+
+            if (! file_exists($project)) {
+                $new[] = $relative;
+            } elseif (sha1_file($stub) === sha1_file($project)) {
+                $unchanged[] = $relative;
+            } else {
+                $changed[] = $relative;
+            }
+        }
+
+        foreach ($changed as $relative) {
+            $this->newLine();
+            $this->line('<fg=yellow>changed:</> '.$relative);
+            $output = [];
+            exec('diff -u '.escapeshellarg(base_path($relative)).' '.escapeshellarg($stubBase.'/'.$relative).' 2>/dev/null', $output);
+            foreach ($output as $line) {
+                if (str_starts_with($line, '+')) {
+                    $this->line('<fg=green>'.$line.'</>');
+                } elseif (str_starts_with($line, '-')) {
+                    $this->line('<fg=red>'.$line.'</>');
+                } else {
+                    $this->line($line);
+                }
+            }
+        }
+
+        foreach ($new as $relative) {
+            $this->line('<fg=blue>new:</>     '.$relative.' (not in this project yet)');
+        }
+
+        $this->newLine();
+        $this->info(count($changed).' changed, '.count($new).' new, '.count($unchanged).' unchanged.');
+
+        return 0;
+    }
+
     public function handle()
     {
+        // Report differences without touching anything
+        if ($this->option('diff')) {
+            return $this->showDiff();
+        }
+
         // Don't run in production
         if (!$this->confirmToProceed()) {
             return 1;
