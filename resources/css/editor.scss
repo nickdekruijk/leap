@@ -185,21 +185,6 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     .leap-locale-tabs {
         display: inline-flex;
         gap: 2px;
-        button {
-            padding: 0.4em 0.9em;
-            border: 0;
-            border-radius: 4px;
-            background: rgba(black, 0.06);
-            font: inherit;
-            color: rgba(black, 0.55);
-            cursor: pointer;
-            &:hover { background: rgba(black, 0.1); }
-            &.active {
-                background: rgba(black, 0.16);
-                color: black;
-                font-weight: 600;
-            }
-        }
     }
     .leap-locale-select {
         width: auto;
