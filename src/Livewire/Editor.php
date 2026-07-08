@@ -561,6 +561,10 @@ class Editor extends Component
             $source = $this->data[$attribute->name] ?? '';
             $this->placeholder[$attribute->slugify] = Str::slug(is_array($source) ? ($source[$this->activeLocale] ?? '') : $source);
         }
+
+        // Section titles (shown when a section is collapsed) are built from
+        // sectionTitle fields, which follow the active locale too
+        $this->checkSectionValues();
     }
 
     /**
