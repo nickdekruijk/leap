@@ -66,57 +66,6 @@
                     color: rgba(black, 0.7);
                     font-weight: 600;
                 }
-                .leap-hint {
-                    position: relative;
-                    display: inline-flex;
-                    vertical-align: middle;
-                    margin-left: 0.35em;
-                    color: rgba(black, 0.35);
-                    cursor: help;
-                    font-weight: 400;
-                    svg {
-                        display: block;
-                        width: 1em;
-                        height: 1em;
-                    }
-                    &:hover,
-                    &:focus-visible {
-                        color: rgba(black, 0.6);
-                    }
-                    .leap-hint-tooltip {
-                        position: absolute;
-                        bottom: calc(100% + 8px);
-                        left: 50%;
-                        transform: translateX(-50%);
-                        width: max-content;
-                        max-width: 260px;
-                        padding: 0.5em 0.7em;
-                        border-radius: 5px;
-                        background: #2b2b2b;
-                        color: #fff;
-                        font-size: 0.8rem;
-                        line-height: 1.4;
-                        white-space: normal;
-                        text-align: left;
-                        opacity: 0;
-                        pointer-events: none;
-                        transition: opacity 0.15s;
-                        z-index: 20;
-                        &::after {
-                            content: "";
-                            position: absolute;
-                            top: 100%;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            border: 5px solid transparent;
-                            border-top-color: #2b2b2b;
-                        }
-                    }
-                    &:hover .leap-hint-tooltip,
-                    &:focus-visible .leap-hint-tooltip {
-                        opacity: 1;
-                    }
-                }
                 cursor: grab;
                 .svg-icon {
                     height: 1em;
@@ -160,5 +109,58 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         > BUTTON {
             opacity: 1;
         }
+    }
+}
+
+// Field hint: (i) icon after the label with a hover/focus tooltip
+.leap-hint {
+    position: relative;
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: 0.35em;
+    color: rgba(black, 0.35);
+    cursor: help;
+    font-weight: 400;
+    svg {
+        display: block;
+        width: 1em;
+        height: 1em;
+    }
+    &:hover,
+    &:focus-visible {
+        color: rgba(black, 0.6);
+    }
+    .leap-hint-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        width: max-content;
+        max-width: 260px;
+        padding: 0.5em 0.7em;
+        border-radius: 5px;
+        background: #2b2b2b;
+        color: #fff;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        white-space: normal;
+        text-align: left;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        z-index: 20;
+        &::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #2b2b2b;
+        }
+    }
+    &:hover .leap-hint-tooltip,
+    &:focus-visible .leap-hint-tooltip {
+        opacity: 1;
     }
 }
