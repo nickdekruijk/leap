@@ -228,14 +228,18 @@ a[role="button"],
 
         &::after {
             content: "";
-            width: 0.5em;
-            height: 0.5em;
+            width: 0.45em;
+            height: 0.45em;
+            margin-top: -0.15em;
             border-right: 2px solid currentColor;
             border-bottom: 2px solid currentColor;
-            transform: translateY(-0.15em) rotate(45deg);
+            transform: rotate(45deg);
             transition: transform 0.2s;
         }
-        &[aria-expanded="true"]::after { transform: translateY(0.15em) rotate(225deg); }
+        &[aria-expanded="true"]::after {
+            margin-top: 0.1em;
+            transform: rotate(-135deg);
+        }
     }
 
     li[x-data] {
