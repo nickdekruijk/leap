@@ -197,6 +197,12 @@ a[role="button"],
         list-style: none;
     }
 
+    // Centre each top-level item's content so the search button lines up with the links
+    #nav-main > li {
+        display: flex;
+        align-items: center;
+    }
+
     a {
         display: inline-block;
         padding: var(--space-xs) var(--space-s);
@@ -262,7 +268,7 @@ a[role="button"],
     cursor: pointer;
     color: inherit;
 
-    svg { display: block; width: 1.2em; height: 1.2em; }
+    svg { display: block; width: 1.4em; height: 1.4em; }
     &:hover { color: var(--accent); }
 }
 
