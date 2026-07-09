@@ -317,6 +317,43 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | ai
+    |--------------------------------------------------------------------------
+    |
+    | AI providers and per-task configuration. Provider credentials (API keys)
+    | are the only env vars needed; the per-task provider/model are structural
+    | project choices set as literals below.
+    |
+    | A task is enabled when its 'provider' is set AND that provider's api_key
+    | is non-empty. When 'model' is null the sensible default for the chosen
+    | provider is used (see NickDeKruijk\Leap\Classes\AiTask::defaultModel()) —
+    | only set a literal model to override it.
+    |
+    */
+    'ai' => [
+        // Shared provider credentials — the only env vars this feature needs.
+        'providers' => [
+            'gemini' => ['api_key' => env('GEMINI_API_KEY')],
+            'claude' => ['api_key' => env('ANTHROPIC_API_KEY')],
+            'openai' => ['api_key' => env('OPENAI_API_KEY')],
+            'deepl' => ['api_key' => env('DEEPL_API_KEY')], // translation only; no vision
+        ],
+
+        // Generate image alt texts (per locale) in the filemanager.
+        'alt_text' => [
+            'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
+            'model' => null,    // null => gemini-2.5-flash / claude-haiku-4-5 / gpt-4o-mini
+        ],
+
+        // Reserved for a future AI translation feature.
+        'translate' => [
+            'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
+            'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | cache
     |--------------------------------------------------------------------------
     |

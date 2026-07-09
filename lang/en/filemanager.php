@@ -43,6 +43,8 @@ return [
     'select_files' => 'Select :count files',
     'alt_text_placeholder' => 'Describe this image...',
     'alt_text_saved' => 'Alt text saved',
+    'alt_text_ai_failed' => 'Could not generate alt text',
+    'generate_alt_text' => 'Generate alt text with AI',
     'set_alt_text' => 'Set alt text',
     'set_focus_point' => 'Set focus point',
     'clear_focus_point' => 'Clear focus point',

@@ -394,8 +394,7 @@
                             pointer-events: none;
                             box-sizing: border-box;
                         }
-                        .leap-crop-confirm,
-                        .leap-alt-confirm {
+                        .leap-crop-confirm {
                             position: absolute;
                             bottom: 8px;
                             left: 50%;
@@ -433,37 +432,9 @@
                                 gap: 4px;
                             }
                         }
-                        .leap-alt-confirm {
-                            .leap-alt-confirm-row {
-                                display: flex;
-                                align-items: center;
-                                gap: 6px;
-                                width: 100%;
-                                .leap-alt-locale-label {
-                                    color: rgba(255, 255, 255, 0.6);
-                                    font-size: 0.7em;
-                                    font-weight: bold;
-                                    min-width: 22px;
-                                    text-align: right;
-                                }
-                                INPUT[type="text"] {
-                                    background: rgba(255, 255, 255, 0.15);
-                                    border: 1px solid rgba(255, 255, 255, 0.4);
-                                    border-radius: 4px;
-                                    color: white;
-                                    flex: 1;
-                                    font-size: 0.9em;
-                                    padding: 4px 8px;
-                                    width: 0;
-                                    box-sizing: border-box;
-                                    &::placeholder {
-                                        color: rgba(255, 255, 255, 0.5);
-                                    }
-                                }
-                            }
-                            .leap-alt-confirm-buttons {
-                                display: flex;
-                                gap: 4px;
+                        @keyframes leap-alt-spin {
+                            to {
+                                transform: rotate(360deg);
                             }
                         }
                         .leap-focus-point {
@@ -541,6 +512,113 @@
         .leap-main {
             min-height: 100%;
             box-shadow: rgba(black, 0.5) 1px 0 10px;
+        }
+    }
+}
+
+.leap-alt-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing);
+    background-color: rgba(black, 0.6);
+    .leap-alt-modal-dialog {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 520px;
+        max-height: calc(100vh - 2 * var(--spacing));
+        overflow-y: auto;
+        box-sizing: border-box;
+        padding: 20px;
+        background: white;
+        color: $blue-dark;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(black, 0.4);
+    }
+    .leap-alt-modal-header {
+        font-size: 1.15em;
+        font-weight: 600;
+    }
+    .leap-alt-modal-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        label {
+            font-size: 0.7em;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            opacity: 0.55;
+        }
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            resize: none;
+            overflow: hidden;
+            min-height: 2.6em;
+            font: inherit;
+            line-height: 1.4;
+            padding: 8px 10px;
+            color: inherit;
+            border: 1px solid rgba($blue-dark, 0.25);
+            border-radius: 6px;
+            &::placeholder {
+                color: rgba($blue-dark, 0.4);
+            }
+            &:focus {
+                outline: none;
+                border-color: $blue-light;
+                box-shadow: 0 0 0 2px rgba($blue-light, 0.3);
+            }
+        }
+    }
+    .leap-alt-modal-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        .leap-alt-modal-spacer {
+            flex: 1;
+        }
+    }
+    .leap-alt-modal-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: inherit;
+        cursor: pointer;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid rgba($blue-dark, 0.25);
+        background: white;
+        color: $blue-dark;
+        transition: 0.2s;
+        &:hover:not([disabled]) {
+            background: $grey-light;
+        }
+        &[disabled] {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .svg-icon {
+            width: 1em;
+            height: 1em;
+        }
+    }
+    .leap-alt-generate-btn.leap-alt-generating .svg-icon {
+        animation: leap-alt-spin 0.8s linear infinite;
+    }
+    .leap-alt-modal-save {
+        background: $blue-light;
+        border-color: $blue-light;
+        color: white;
+        &:hover:not([disabled]) {
+            background: $blue-normal;
+            border-color: $blue-normal;
         }
     }
 }

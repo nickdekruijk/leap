@@ -11,6 +11,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\WithFileUploads;
+use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Module;
@@ -800,6 +801,57 @@ class FileManager extends Module
             }
             $media->meta = $meta ?: null;
             $media->save();
+        }
+    }
+
+    /**
+     * Whether the AI alt-text feature is configured (provider + api key).
+     */
+    public function aiAltEnabled(): bool
+    {
+        return AiTask::for('alt_text')->enabled();
+    }
+
+    /**
+     * Generate an alt text suggestion per configured locale for the given
+     * image via the configured AI provider. Returns a [locale => text] map for
+     * the frontend to fill the inputs with (review-then-save; nothing is saved
+     * here). Returns an empty array on non-images or provider errors.
+     *
+     * @return array<string, string>
+     */
+    public function generateAltTexts(string $file): array
+    {
+        Leap::validatePermission('update');
+
+        $media = Media::forFile($this->full($file));
+        if (! $media || ! $media->isBitmap()) {
+            return [];
+        }
+
+        $locales = config('leap.locales') ?? [app()->getLocale() => ''];
+
+        try {
+            $data = base64_encode(Storage::disk($media->disk ?: config('leap.filemanager.disk'))->get($media->file_name));
+            $prompt = 'Write alt text for screen-reader users, one per language. Describe only the main '
+                .'subject and its purpose, in the shortest phrase that is still complete. Omit '
+                .'decorative background, colours, lighting and styling unless they are essential to the '
+                .'meaning. Most images need only a few words; add detail only when a complex image '
+                .'(chart, diagram, busy scene) truly requires it. Do not start with "image of" or '
+                .'"photo of". Return ONLY a JSON object mapping locale code to alt text. Languages: '
+                .collect($locales)->map(fn ($name, $code) => trim("$code $name"))->implode(', ');
+
+            $reply = AiTask::for('alt_text')->prompt($prompt, [['mime' => $media->mime_type, 'data' => $data]], json: true);
+
+            // Some providers (e.g. Claude) wrap the JSON in a ```json code
+            // fence despite the instruction, so extract the object first.
+            $decoded = preg_match('/\{.*\}/s', $reply, $match) ? json_decode($match[0], true) : null;
+
+            return array_map('strval', array_intersect_key(is_array($decoded) ? $decoded : [], $locales));
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.alt_text_ai_failed'))->to(Toasts::class);
+
+            return [];
         }
     }
 

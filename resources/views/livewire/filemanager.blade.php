@@ -145,6 +145,7 @@
                 cropNewName: '',
                 settingAlt: false,
                 altTexts: {},
+                generatingAlt: false,
                 resetEditState() {
                     this.settingFocus = false;
                     this.settingAlt = false;
@@ -204,6 +205,7 @@
                                         $altTextsData = $this->altTexts($file);
                                         $altTooltip = implode(' / ', array_filter($altTextsData));
                                         $altLocales = config('leap.locales') ?? [app()->getLocale() => ''];
+                                        $aiAltEnabled = $this->aiAltEnabled() && $this->isBitmap($file);
                                     @endphp
                                     <div class="leap-image-edit-container">
                                         <div class="leap-focus-wrapper"
@@ -244,23 +246,6 @@
                                                 <div class="leap-focus-point"
                                                     style="left: {{ $fp['x'] }}%; top: {{ $fp['y'] }}%"> @svg('fas-crosshairs', 'svg-icon') </div>
                                             @endif
-                                            <div class="leap-alt-confirm" x-show="settingAlt" x-on:click.stop x-on:mousedown.stop>
-                                                @foreach ($altLocales as $localeKey => $localeName)
-                                                    <div class="leap-alt-confirm-row">
-                                                        @if (count($altLocales) > 1)
-                                                            <span class="leap-alt-locale-label">{{ strtoupper($localeKey) }}</span>
-                                                        @endif
-                                                        <input
-                                                            type="text"
-                                                            x-model="altTexts['{{ $localeKey }}']" placeholder="@lang('leap::filemanager.alt_text_placeholder')"
-                                                            x-on:keydown.enter="$wire.saveAltTexts(altTexts); settingAlt = false;">
-                                                    </div>
-                                                @endforeach
-                                                <div class="leap-alt-confirm-buttons">
-                                                    <button class="leap-focus-action-btn" x-on:click="$wire.saveAltTexts(altTexts); settingAlt = false;" title="@lang('leap::filemanager.alt_text_saved')">@svg('fas-check', 'svg-icon')</button>
-                                                    <button class="leap-focus-action-btn" x-on:click="settingAlt = false" title="@lang('leap::filemanager.crop_cancel')">@svg('fas-times', 'svg-icon')</button>
-                                                </div>
-                                            </div>
                                             <div class="leap-crop-rect"
                                                 x-show="croppingMode && cropStart"
                                                 :style="`left:${getCropRect().x}%;top:${getCropRect().y}%;width:${getCropRect().w}%;height:${getCropRect().h}%`">
@@ -307,7 +292,7 @@
                                                     <button
                                                         class="leap-focus-action-btn"
                                                         :class="{ 'active': settingAlt }"
-                                                        x-on:click.stop="settingAlt = !settingAlt; settingFocus = false; cancelCrop(); if (settingAlt) { altTexts = {{ Js::from((object) $altTextsData) }}; $nextTick(() => { const i = $el.closest('.leap-image-edit-container').querySelector('.leap-alt-confirm input'); if (i) { i.select(); i.focus(); } }); }"
+                                                        x-on:click.stop="settingAlt = !settingAlt; settingFocus = false; cancelCrop(); if (settingAlt) { altTexts = {{ Js::from((object) $altTextsData) }}; $nextTick(() => { const t = $root.querySelector('.leap-alt-modal textarea'); if (t) { t.focus(); t.select(); } }); }"
                                                         title="{{ $altTooltip ?: __('leap::filemanager.set_alt_text') }}">
                                                         @svg('fas-font', 'svg-icon')
                                                     </button>
@@ -315,6 +300,40 @@
                                             @endif
                                         @endcan
                                     </div>
+                                    @can('leap::update')
+                                        <div class="leap-alt-modal" x-show="settingAlt" style="display: none"
+                                            x-transition.opacity
+                                            x-on:keydown.escape.window="settingAlt = false"
+                                            x-on:click="settingAlt = false"
+                                            x-data="{ resizeAlt() { this.$root.querySelectorAll('.leap-alt-modal-field textarea').forEach(t => { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }); } }"
+                                            x-effect="Object.values(altTexts).join(''); if (settingAlt) $nextTick(() => resizeAlt())">
+                                            <div class="leap-alt-modal-dialog" x-on:click.stop>
+                                                <div class="leap-alt-modal-header">@lang('leap::filemanager.set_alt_text')</div>
+                                                @foreach ($altLocales as $localeKey => $localeName)
+                                                    <div class="leap-alt-modal-field">
+                                                        @if (count($altLocales) > 1)
+                                                            <label>{{ $localeName ?: strtoupper($localeKey) }}</label>
+                                                        @endif
+                                                        <textarea rows="1" x-model="altTexts['{{ $localeKey }}']"
+                                                            placeholder="@lang('leap::filemanager.alt_text_placeholder')"
+                                                            x-on:input="resizeAlt()"
+                                                            x-on:keydown.enter.prevent="$wire.saveAltTexts(altTexts); settingAlt = false;"></textarea>
+                                                    </div>
+                                                @endforeach
+                                                <div class="leap-alt-modal-actions">
+                                                    <button type="button" class="leap-alt-modal-btn leap-alt-modal-save" x-on:click="$wire.saveAltTexts(altTexts); settingAlt = false;">@lang('leap::filemanager.save')</button>
+                                                    <button type="button" class="leap-alt-modal-btn" x-on:click="settingAlt = false">@lang('leap::filemanager.crop_cancel')</button>
+                                                    <span class="leap-alt-modal-spacer"></span>
+                                                    @if ($aiAltEnabled)
+                                                        <button type="button" class="leap-alt-modal-btn leap-alt-generate-btn" :class="{ 'leap-alt-generating': generatingAlt }" :disabled="generatingAlt"
+                                                            x-on:click="generatingAlt = true; $wire.generateAltTexts('{{ $file }}').then(r => { if (r) altTexts = { ...altTexts, ...r }; }).finally(() => generatingAlt = false);">
+                                                            @svg('fas-wand-magic-sparkles', 'svg-icon') @lang('leap::filemanager.generate_alt_text')
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endcan
                                 @endif
                                 @if ($this->isVideo($file))
                                     <video controls src="{{ $this->downloadUrl($file) }}"></video>

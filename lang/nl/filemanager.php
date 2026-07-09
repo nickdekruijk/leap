@@ -43,6 +43,8 @@ return [
     'select_files' => 'Selecteer :count bestanden',
     'alt_text_placeholder' => 'Beschrijf deze afbeelding...',
     'alt_text_saved' => 'Alt-tekst opgeslagen',
+    'alt_text_ai_failed' => 'Alt-tekst genereren mislukt',
+    'generate_alt_text' => 'Alt-tekst genereren met AI',
     'set_alt_text' => 'Alt-tekst instellen',
     'set_focus_point' => 'Focuspunt instellen',
     'clear_focus_point' => 'Focuspunt wissen',
