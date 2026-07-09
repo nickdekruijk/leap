@@ -374,6 +374,9 @@ return [
         'lazy_sections' => true,
         'options' => [
             'autoresize_bottom_margin' => 50,
+            // Class on the editor iframe <body>, so a content_css scoped under
+            // .tinymce (like the template's) also styles the click-to-edit preview.
+            'body_class' => 'tinymce',
             'branding' => false,
             // 'content_css' => '/css/tinymce.css',
             // 'content_langs' => [

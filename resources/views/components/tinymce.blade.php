@@ -14,12 +14,8 @@
     // Cache-bust a local content_css stylesheet with its filemtime, the same way
     // Leap busts its own compiled admin CSS, so editors pick up style changes.
     $options = $attribute->options;
-    if (isset($options['content_css']) && is_string($options['content_css'])
-        && str_starts_with($options['content_css'], '/') && ! str_contains($options['content_css'], '?')) {
-        $contentCssPath = public_path(ltrim($options['content_css'], '/'));
-        if (is_file($contentCssPath)) {
-            $options['content_css'] .= '?v='.filemtime($contentCssPath);
-        }
+    if (isset($options['content_css']) && is_string($options['content_css'])) {
+        $options['content_css'] = \NickDeKruijk\Leap\Controllers\AssetController::cacheBust($options['content_css']);
     }
 @endphp
 
@@ -122,7 +118,7 @@
             @click="activate()"
             @keydown.enter.prevent="activate()"
             @keydown.space.prevent="activate()"
-            class="leap-richtext-preview"
+            class="leap-richtext-preview tinymce"
             data-empty-hint="{{ __('leap::resource.click_to_edit') }}"
             role="button"
             tabindex="0"></div>

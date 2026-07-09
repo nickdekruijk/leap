@@ -116,6 +116,40 @@ class AssetController extends Controller
     }
 
     /**
+     * Append the file's mtime as a cache-busting query string to a root-relative
+     * local URL (e.g. "/css/tinymce.css" → "/css/tinymce.css?v=123"). Remote URLs,
+     * URLs that already carry a query string, and missing files are returned as-is.
+     */
+    public static function cacheBust(string $url): string
+    {
+        if (str_starts_with($url, '/') && ! str_contains($url, '?')) {
+            $path = public_path(ltrim($url, '/'));
+            if (is_file($path)) {
+                return $url.'?v='.filemtime($path);
+            }
+        }
+
+        return $url;
+    }
+
+    /**
+     * Return a <link> tag for the configured TinyMCE content_css (cache-busted), so
+     * the click-to-edit rich-text preview in the admin is styled like the editor.
+     * The stylesheet must scope its rules under .tinymce (matching body_class and
+     * the preview wrapper) so it does not affect the rest of the admin. Empty when
+     * no content_css is configured.
+     */
+    public static function tinymceContentCssLink(): string
+    {
+        $css = config('leap.tinymce.options.content_css');
+        if (! is_string($css) || $css === '') {
+            return '';
+        }
+
+        return '<link rel="stylesheet" href="'.self::cacheBust($css).'">';
+    }
+
+    /**
      * Return the filemtime of the passkeys js file, used as a cache buster
      */
     public static function jsFilemtime(): int
