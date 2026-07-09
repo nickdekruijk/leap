@@ -549,14 +549,12 @@ a[role="button"],
         overflow-x: auto;
         padding-bottom: var(--space-s);
         cursor: grab;
-        // Snap to cards. The HorizontalScroller adds .is-dragged during a free
-        // mouse drag (and removes it on button navigation) so a drag doesn't yank
-        // back to a card; touch swipe and wheel keep snapping. Text selection is
-        // suppressed by the scroller itself. See scripts.js (disableSnapClass).
+        // Snap to cards. The HorizontalScroller turns this off inline during a
+        // free mouse drag and back on for button navigation; touch swipe and
+        // wheel keep snapping. It also suppresses text selection itself.
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
         &.dragging { cursor: grabbing; }
-        &.is-dragged { scroll-snap-type: none; }
 
         // Thin scrollbar drawn as a centered hairline within a taller
         // (easier to grab) track, rather than a thick bar. WebKit-only:

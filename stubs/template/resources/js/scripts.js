@@ -46,15 +46,13 @@ document.querySelectorAll('.slider').forEach(function (slider) {
     });
 });
 
-// Horizontal-scroll card sections. disableSnapClass lets the scroller drop CSS
-// scroll-snap during a free mouse drag (via .is-dragged) and restore it on
-// button navigation; touch swipe and wheel keep snapping.
+// Horizontal-scroll card sections. The scroller turns CSS scroll-snap off while
+// dragging and back on for button navigation itself (disableSnapOnDrag, default).
 new HorizontalScroller({
     selector: '.items-horizontal .items-container',
     buttonRight: true,
     buttonLeft: true,
     draggable: true,
-    disableSnapClass: 'is-dragged',
 });
 
 // Light parallax on slider media (skipped when the user prefers reduced motion)
