@@ -33,4 +33,17 @@ class SeoTest extends TestCase
 
         $this->assertSame('Acme', (new Page)->documentTitle());
     }
+
+    public function test_document_title_does_not_borrow_another_locales_html_title(): void
+    {
+        config(['app.name' => 'Acme', 'app.fallback_locale' => 'en']);
+        app()->setLocale('nl');
+
+        $page = new Page;
+        $page->setTranslations('title', ['nl' => 'Home', 'en' => 'Home']);
+        $page->setTranslations('html_title', ['en' => 'EN only title']); // nl is empty
+
+        // The empty nl html_title must fall through to the page title, not the en one.
+        $this->assertSame('Home — Acme', $page->documentTitle());
+    }
 }

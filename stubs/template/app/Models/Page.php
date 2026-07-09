@@ -56,7 +56,12 @@ class Page extends Model
      */
     public function documentTitle(): string
     {
-        return $this->html_title
+        // Read html_title without Spatie's locale fallback: an empty html_title in
+        // the active locale must fall through to the page title, not borrow another
+        // locale's html_title.
+        $htmlTitle = $this->getTranslation('html_title', app()->getLocale(), false);
+
+        return $htmlTitle
             ?: trim(($this->title ? $this->title.' — ' : '').config('app.name'));
     }
 
