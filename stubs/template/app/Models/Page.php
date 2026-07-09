@@ -49,6 +49,46 @@ class Page extends Model
         static::restored(fn () => PageController::flushPageCache());
     }
 
+    /**
+     * The document <title>: a custom html_title is used verbatim; a plain page title
+     * gets the site name appended. config('app.name') is only added when there is no
+     * html_title.
+     */
+    public function documentTitle(): string
+    {
+        return $this->html_title
+            ?: trim(($this->title ? $this->title.' — ' : '').config('app.name'));
+    }
+
+    /**
+     * The page's own meta/OG title (no site-name suffix): html_title or title.
+     */
+    public function metaTitle(): ?string
+    {
+        return $this->html_title ?: $this->title;
+    }
+
+    /**
+     * OG/Twitter image URL from the page's own image, then its first section image or
+     * background. Null when the page has none (the layout falls back to the og_image
+     * site setting).
+     */
+    public function ogImageUrl(): ?string
+    {
+        $file = $this->mediaFor('images')->first()?->file_name;
+        if (! $file) {
+            foreach ($this->sections() as $section) {
+                $file = ($section['image'] ?? null)?->first()?->file_name
+                    ?? ($section['background'] ?? null)?->first()?->file_name;
+                if ($file) {
+                    break;
+                }
+            }
+        }
+
+        return $file ? url('storage/'.$file) : null;
+    }
+
     public function scopePublished($query)
     {
         return $query->where('published_at', '<=', now())->orWhereNull('published_at');

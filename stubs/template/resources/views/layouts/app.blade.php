@@ -6,33 +6,17 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        @php
-            $metaTitle = ($page ?? null)?->html_title ?: ($page ?? null)?->title;
-            $metaDescription = ($page ?? null)?->description;
-        @endphp
-        <title>{{ $metaTitle ? $metaTitle . ' — ' . config('app.name') : config('app.name') }}</title>
-        @if ($metaDescription)
-            <meta name="description" content="{{ $metaDescription }}">
+        <title>{{ ($page ?? null)?->documentTitle() ?? config('app.name') }}</title>
+        @if (($page ?? null)?->description)
+            <meta name="description" content="{{ $page->description }}">
         @endif
         <link rel="canonical" href="{{ url()->current() }}">
         @foreach (App\Http\Controllers\PageController::localeUrls($page ?? null) as $hrefLocale => $alt)
             <link rel="alternate" hreflang="{{ $hrefLocale }}" href="{{ url($alt['url']) }}">
         @endforeach
         @php
-            // og:image priority: the page's own image, then its first section image, then the og_image setting
-            $ogFile = null;
-            if ($page ?? null) {
-                $ogFile = $page->mediaFor('images')->first()?->file_name;
-                if (! $ogFile) {
-                    foreach ($page->sections() as $ogSection) {
-                        $ogFile = ($ogSection['image'] ?? null)?->first()?->file_name ?? ($ogSection['background'] ?? null)?->first()?->file_name;
-                        if ($ogFile) {
-                            break;
-                        }
-                    }
-                }
-            }
-            $ogImage = $ogFile ? url('storage/' . $ogFile) : null;
+            // og:image priority: the page's own image/section image, then the og_image site setting
+            $ogImage = ($page ?? null)?->ogImageUrl();
             if (! $ogImage && function_exists('setting') && setting('og_image')) {
                 $ogImage = str_starts_with(setting('og_image'), 'http') ? setting('og_image') : url(setting('og_image'));
             }
@@ -40,18 +24,18 @@
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
-        <meta property="og:title" content="{{ $metaTitle ?: config('app.name') }}">
+        <meta property="og:title" content="{{ ($page ?? null)?->metaTitle() ?: config('app.name') }}">
         <meta property="og:url" content="{{ url()->current() }}">
-        @if ($metaDescription)
-            <meta property="og:description" content="{{ $metaDescription }}">
+        @if (($page ?? null)?->description)
+            <meta property="og:description" content="{{ $page->description }}">
         @endif
         @if ($ogImage)
             <meta property="og:image" content="{{ $ogImage }}">
         @endif
         <meta name="twitter:card" content="{{ $ogImage ? 'summary_large_image' : 'summary' }}">
-        <meta name="twitter:title" content="{{ $metaTitle ?: config('app.name') }}">
-        @if ($metaDescription)
-            <meta name="twitter:description" content="{{ $metaDescription }}">
+        <meta name="twitter:title" content="{{ ($page ?? null)?->metaTitle() ?: config('app.name') }}">
+        @if (($page ?? null)?->description)
+            <meta name="twitter:description" content="{{ $page->description }}">
         @endif
         @if ($ogImage)
             <meta name="twitter:image" content="{{ $ogImage }}">
