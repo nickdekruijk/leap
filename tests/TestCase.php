@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Tests;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Intervention\Image\Laravel\ServiceProvider as ImageServiceProvider;
 use Laravel\Fortify\FortifyServiceProvider;
 use Laravel\Passkeys\PasskeysServiceProvider;
 use Livewire\LivewireServiceProvider;
@@ -19,6 +20,7 @@ abstract class TestCase extends Orchestra
             LivewireServiceProvider::class,
             FortifyServiceProvider::class,
             PasskeysServiceProvider::class,
+            ImageServiceProvider::class,
             ServiceProvider::class,
         ];
     }

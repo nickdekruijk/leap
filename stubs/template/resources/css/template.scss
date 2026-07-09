@@ -495,7 +495,9 @@ a[role="button"],
 
     .article { flex: 1 1 50%; max-width: var(--content-width-small); }
     .images { flex: 1 1 50%; }
-    .images img { display: block; width: 100%; border-radius: var(--radius); }
+    // height:auto lets the width/height attributes reserve the aspect-ratio box
+    // (no layout shift) while the image still scales to the column without distortion.
+    .images img { display: block; width: 100%; height: auto; border-radius: var(--radius); }
 
     // Image position variants
     &.left > .main-width .images { order: -1; }

@@ -1,7 +1,7 @@
 @php($bg = ($section['background'] ?? null)?->first()?->file_name)
 <section
     class="default {{ $section['image_position'] ?? 'right' }} {{ $section->_name }} @if ($bg) has-background @endif @if (! empty($section['dark_background'])) dark @endif"
-    @if ($bg) style="background-image: url('{{ asset_resized('1920', $bg) }}')" @endif>
+    @if ($bg) style="background-image: url('{{ asset_resized('1600', $bg) }}'); background-image: image-set(url('{{ asset_resized('1600', $bg) }}') 1x, url('{{ asset_resized('2560', $bg) }}') 2x)" @endif>
     @if ($bg && ! empty($section['dark_background']))
         <div class="section-overlay" aria-hidden="true"></div>
     @endif
@@ -21,12 +21,14 @@
         @isset($section->image)
             <div class="images">
                 @foreach ($section->image as $image)
+                    @php($dim = $image->dimensions())
                     <img
                         srcset="{{ asset_resized('600', $image->file_name) }} 600w, {{ asset_resized('900', $image->file_name) }} 900w, {{ asset_resized('1200', $image->file_name) }} 1200w, {{ asset_resized('1600', $image->file_name) }} 1600w"
                         sizes="(max-width: 550px) 100vw, 50vw"
                         src="{{ asset_resized('900', $image->file_name) }}"
-                        alt="{{ $image->meta?->alt }}"
-                        loading="lazy">
+                        alt="{{ $image->alt() }}"
+                        @if ($dim) width="{{ $dim['width'] }}" height="{{ $dim['height'] }}" @endif
+                        loading="lazy" decoding="async">
                 @endforeach
             </div>
         @elseif (isset($section['image_position']))

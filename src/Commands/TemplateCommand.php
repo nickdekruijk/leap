@@ -123,6 +123,7 @@ class TemplateCommand extends Command
             'app/Livewire/Search.php',
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
+            'config/imageresize.php',
             'public/css/tinymce.css',
             'tests/Feature/PageRoutingTest.php',
             'tests/Feature/HasSlugTest.php',
@@ -235,6 +236,10 @@ class TemplateCommand extends Command
         $this->createDirectory('public/css');
         $this->copyOrReplace('public/css/tinymce.css', 'TinyMCE editor stylesheet');
         $this->enableTinymceContentCss();
+
+        // ImageResize width presets used by the template's srcset/backgrounds
+        // (overrides the vendor-published default, which lacks these templates)
+        $this->copyOrReplace('config/imageresize.php', 'ImageResize config (frontend resize templates)');
 
         // Starter feature tests for the copied template code (run under the host's test suite)
         $this->createDirectory('tests/Feature');
@@ -447,6 +452,7 @@ class TemplateCommand extends Command
         $this->info('Template installed. Next steps:');
         $this->line('  • No asset build needed — SCSS/JS compile on request (no npm/Vite).');
         $this->line('  • Serve with a public/-rooted server (Herd/nginx), not `php artisan serve`.');
+        $this->line('  • Run `php artisan storage:link` so resized images resolve (originals live in /storage).');
         $this->line('  • Create an admin user: php artisan leap:user you@example.com');
         $this->line('  • Visit /admin to manage pages, and / for the site.');
     }
