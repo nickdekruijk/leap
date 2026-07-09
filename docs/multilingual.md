@@ -55,6 +55,27 @@ Section::make('slide')->attributes(
 
 Media and pivots are shared across locales in this version.
 
+## Upgrading existing content
+
+Content created before a field became translatable is stored as a **plain string**,
+not the `{"nl":"…"}` JSON Spatie expects. Left alone, Spatie reads such a value as
+empty, so the field would load blank in the editor and the first save would overwrite
+the old text.
+
+Leap guards against this automatically: when a translatable field (top-level or a
+`->translatable()` section sub-field) is loaded and its stored value is a legacy plain
+string, the editor wraps it as `[defaultLocale => value]`. The old content shows up in
+the default-locale tab, and saving writes it back as proper JSON. **Opening a legacy
+record and saving it — even without editing — persists this migration** (the raw column
+changes from a string to JSON, so the record is dirty and gets saved).
+
+This is a **per-record, lazy** migration: it only runs for records you open. A record
+you never open keeps its legacy string in the database, and because Spatie reads that as
+empty, its **frontend** output stays blank until the record is opened and saved once. If
+you need every existing row converted up front, run a one-off migration that wraps each
+legacy value into `{"<defaultLocale>": "<value>"}` before enabling the translatable
+field.
+
 ## Frontend
 
 Spatie resolves translated attributes to the current app locale automatically, so

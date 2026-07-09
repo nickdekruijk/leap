@@ -20,6 +20,9 @@ The first stable release. The public fluent API (`Attribute`, `Section`, `Module
   `leap.locales`: when it is `null` (the default) behaviour is byte-for-byte
   identical to before. Mark section sub-fields with `Attribute::translatable()`;
   top-level fields derive translatability from the model's `$translatable`.
+  Legacy monolingual values (plain strings from before a field became
+  translatable) are wrapped into the default locale on load, so upgrading a
+  record preserves its content instead of overwriting it on the first save.
 - **Lazy click-to-edit rich-text.** Rich-text fields can show their rendered
   HTML as a preview and only initialize TinyMCE when clicked (torn down again on
   save), so editors with many rich-text sections open fast. Toggled by

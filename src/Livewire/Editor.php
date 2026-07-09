@@ -111,6 +111,26 @@ class Editor extends Component
     }
 
     /**
+     * Wrap a legacy monolingual value (null or a plain, non-JSON string left over
+     * from before the field was translatable) into a per-locale array keyed by the
+     * default locale, so it survives editing instead of being silently overwritten.
+     *
+     * @param  array<string, mixed>  $translations
+     * @return array<string, mixed>
+     */
+    protected function normalizeTranslations(array $translations, mixed $raw): array
+    {
+        if (! empty($translations)) {
+            return $translations;
+        }
+        if (is_string($raw) && trim($raw) !== '' && ! is_array(json_decode($raw, true))) {
+            return [$this->defaultLocale() => $raw];
+        }
+
+        return $translations;
+    }
+
+    /**
      * Return the model attributes to show in the editor
      */
     public function attributes(): Collection
@@ -222,7 +242,10 @@ class Editor extends Component
             $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
             foreach ($this->attributes() as $attribute) {
                 if ($this->parentModule()->hasTranslation($attribute)) {
-                    $this->data[$attribute->name] = $model->getTranslations($attribute->name);
+                    $this->data[$attribute->name] = $this->normalizeTranslations(
+                        $model->getTranslations($attribute->name),
+                        $model->getRawOriginal($attribute->name),
+                    );
                 }
             }
         }
@@ -303,6 +326,19 @@ class Editor extends Component
                     $tinymceAttributes = collect($sectionAttributes)->where('input', 'tinymce');
                     foreach ($tinymceAttributes as $input) {
                         $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
+                    }
+
+                    // Wrap legacy monolingual values in translatable section sub-fields
+                    // ([field] stored as a plain string before it became translatable)
+                    // into a per-locale array, so they survive editing instead of being
+                    // silently overwritten. Idempotent: already-wrapped arrays are skipped.
+                    if ($this->editorLocales()) {
+                        foreach (collect($sectionAttributes)->where('translatable', true) as $sub) {
+                            $value = $this->data[$sectionAttribute->name][$index][$sub->name] ?? null;
+                            if (is_string($value) && trim($value) !== '') {
+                                $this->data[$sectionAttribute->name][$index][$sub->name] = [$this->defaultLocale() => $value];
+                            }
+                        }
                     }
 
                     // Set section titles
