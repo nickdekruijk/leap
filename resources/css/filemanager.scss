@@ -428,8 +428,31 @@
                 .leap-input {
                     text-align: center;
                 }
+                .editFile {
+                    cursor: pointer;
+                }
                 .editFile:hover {
                     text-decoration: underline;
+                }
+                .leap-rename-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    border: none;
+                    background: none;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 6px;
+                    color: $blue-normal;
+                    opacity: 0.6;
+                    transition: opacity 0.2s;
+                    .svg-icon {
+                        width: 1.2em;
+                        height: 1.2em;
+                        vertical-align: middle;
+                    }
+                    &:hover {
+                        opacity: 1;
+                    }
                 }
             }
             .leap-buttons {

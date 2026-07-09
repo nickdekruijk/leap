@@ -350,6 +350,7 @@
                         @else
                             @can('leap::update')
                                 <span class="editFile" wire:click="editFile">{{ reset($selectedFiles) }}</span>
+                                <button type="button" class="leap-rename-btn" wire:click="editFile" title="@lang('leap::filemanager.rename_file')">@svg('fas-pen-to-square', 'svg-icon')</button>
                             @else
                                 {{ reset($selectedFiles) }}
                             @endcan
