@@ -402,7 +402,6 @@ return [
                 ['title' => 'H2', 'block' => 'h2'],
                 ['title' => 'H3', 'block' => 'h3'],
                 ['title' => 'H4', 'block' => 'h4'],
-                ['title' => 'Quote', 'block' => 'blockquote'],
             ],
             'link_class_list' => [
                 ['title' => 'Default', 'value' => ''],
