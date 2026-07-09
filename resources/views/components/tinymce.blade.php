@@ -10,6 +10,17 @@
     // A stable, unique id per field so re-initializing (a second section, or
     // reopening after save) never collides with a stale editor.
     $fieldId = 'leap-rt-'.str_replace('.', '-', $attribute->dataName);
+
+    // Cache-bust a local content_css stylesheet with its filemtime, the same way
+    // Leap busts its own compiled admin CSS, so editors pick up style changes.
+    $options = $attribute->options;
+    if (isset($options['content_css']) && is_string($options['content_css'])
+        && str_starts_with($options['content_css'], '/') && ! str_contains($options['content_css'], '?')) {
+        $contentCssPath = public_path(ltrim($options['content_css'], '/'));
+        if (is_file($contentCssPath)) {
+            $options['content_css'] .= '?v='.filemtime($contentCssPath);
+        }
+    }
 @endphp
 
 <x-leap::label>
@@ -65,7 +76,7 @@
                         if (tinymce.get(this.$refs.textarea.id)) {
                             tinymce.remove('#' + this.$refs.textarea.id);
                         }
-                        tinymce.init(Object.assign({{ json_encode($attribute->options) }}, {
+                        tinymce.init(Object.assign({{ json_encode($options) }}, {
                             target: this.$refs.textarea,
                             file_picker_callback: (callback, value, meta) => {
                                 this.$wire.$parent.tinymceBrowser();
