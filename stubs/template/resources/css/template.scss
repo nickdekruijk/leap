@@ -496,7 +496,6 @@ a[role="button"],
 
     // Image position variants
     &.left > .main-width .images { order: -1; }
-    &.round .images img { border-radius: 50%; aspect-ratio: 1; object-fit: cover; }
     &.bottom > .main-width {
         flex-direction: column;
         align-items: stretch;

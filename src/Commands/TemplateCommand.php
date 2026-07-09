@@ -123,6 +123,7 @@ class TemplateCommand extends Command
             'app/Livewire/Search.php',
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
+            'public/css/tinymce.css',
             'tests/Feature/PageRoutingTest.php',
             'tests/Feature/HasSlugTest.php',
             'tests/Feature/MultilingualTest.php',
@@ -230,6 +231,11 @@ class TemplateCommand extends Command
         $this->createDirectory('app/Livewire');
         $this->copyOrReplace('app/Livewire/Search.php', 'Search Livewire component');
 
+        // TinyMCE editor content styles, so rich-text matches the frontend in the editor
+        $this->createDirectory('public/css');
+        $this->copyOrReplace('public/css/tinymce.css', 'TinyMCE editor stylesheet');
+        $this->enableTinymceContentCss();
+
         // Starter feature tests for the copied template code (run under the host's test suite)
         $this->createDirectory('tests/Feature');
         $this->copyOrReplace('tests/Feature/PageRoutingTest.php', 'PageRouting test');
@@ -318,6 +324,27 @@ class TemplateCommand extends Command
         if ($patched && $patched !== $contents && confirm('Register PageSeeder in DatabaseSeeder?', true)) {
             file_put_contents($path, $patched);
             $this->info('Registered PageSeeder in DatabaseSeeder');
+        }
+    }
+
+    /**
+     * Point leap.tinymce.options.content_css at the copied /css/tinymce.css so the
+     * rich-text editor loads the frontend button/prose styles. No-op when the leap
+     * config isn't published, or the key is already customised.
+     */
+    protected function enableTinymceContentCss(): void
+    {
+        $config = base_path('config/leap.php');
+        if (! file_exists($config)) {
+            return;
+        }
+
+        $contents = file_get_contents($config);
+        $commented = "// 'content_css' => '/css/tinymce.css',";
+        if (str_contains($contents, $commented)) {
+            $contents = str_replace($commented, "'content_css' => '/css/tinymce.css',", $contents);
+            file_put_contents($config, $contents);
+            $this->info('Enabled leap.tinymce.content_css → /css/tinymce.css');
         }
     }
 

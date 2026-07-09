@@ -42,8 +42,6 @@ class Page extends Resource
                     Attribute::make('image_position')->default('right')->label(['nl' => 'Positie en vorm afbeelding', 'en' => 'Image position and shape'])->select()->values([
                         'left' => 'Links vierkant',
                         'right' => 'Rechts vierkant',
-                        'left round' => 'Links rond',
-                        'right round' => 'Rechts rond',
                         'bottom wide' => 'Breedbeeld (onder tekst)',
                     ]),
                     Attribute::make('body')->richtext()->label(['nl' => 'Tekst', 'en' => 'Text'])->translatable(),

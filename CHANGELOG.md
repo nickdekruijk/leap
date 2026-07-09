@@ -47,6 +47,10 @@ The first stable release. The public fluent API (`Attribute`, `Section`, `Module
   admin-editable
   footer, per-page SEO meta (Open Graph, Twitter, canonical, hreflang) and a
   `sitemap.xml`. Bilingual (nl+en) out of the box, per project switchable.
+- Template ships `public/css/tinymce.css` and `leap:template` points
+  `leap.tinymce.content_css` at it, so rich-text in the editor is styled like the
+  frontend (buttons, headings, links). The seeded homepage now demonstrates every
+  section layout (all `default` image positions, quote, cta, slider, highlights).
 - `App\Traits\HasSlug` for the template: per-locale, sibling-and-locale-unique
   slugs, with `/` reserved for the homepage.
 
