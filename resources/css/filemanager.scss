@@ -394,44 +394,6 @@
                             pointer-events: none;
                             box-sizing: border-box;
                         }
-                        .leap-crop-confirm {
-                            position: absolute;
-                            bottom: 8px;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            width: calc(100% - 16px);
-                            min-width: 200px;
-                            box-sizing: border-box;
-                            background: rgba(0, 0, 0, 0.65);
-                            border-radius: 6px;
-                            padding: 6px 8px;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 6px;
-                            align-items: center;
-                        }
-                        .leap-crop-confirm {
-                            .leap-crop-confirm-input {
-                                width: 100%;
-                                INPUT[type="text"] {
-                                    background: rgba(255, 255, 255, 0.15);
-                                    border: 1px solid rgba(255, 255, 255, 0.4);
-                                    border-radius: 4px;
-                                    color: white;
-                                    padding: 4px 8px;
-                                    font-size: 0.9em;
-                                    width: 100%;
-                                    box-sizing: border-box;
-                                    &::placeholder {
-                                        color: rgba(255, 255, 255, 0.5);
-                                    }
-                                }
-                            }
-                            .leap-crop-confirm-buttons {
-                                display: flex;
-                                gap: 4px;
-                            }
-                        }
                         @keyframes leap-alt-spin {
                             to {
                                 transform: rotate(360deg);
@@ -516,7 +478,7 @@
     }
 }
 
-.leap-alt-modal {
+.leap-modal {
     position: fixed;
     inset: 0;
     z-index: 1600;
@@ -525,7 +487,7 @@
     justify-content: center;
     padding: var(--spacing);
     background-color: rgba(black, 0.6);
-    .leap-alt-modal-dialog {
+    .leap-modal-dialog {
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -540,11 +502,11 @@
         border-radius: 8px;
         box-shadow: 0 10px 40px rgba(black, 0.4);
     }
-    .leap-alt-modal-header {
+    .leap-modal-header {
         font-size: 1.15em;
         font-weight: 600;
     }
-    .leap-alt-modal-field {
+    .leap-modal-field {
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -555,12 +517,12 @@
             text-transform: uppercase;
             opacity: 0.55;
         }
-        textarea {
+        textarea,
+        input[type="text"] {
             width: 100%;
             box-sizing: border-box;
             resize: none;
             overflow: hidden;
-            min-height: 2.6em;
             font: inherit;
             line-height: 1.4;
             padding: 8px 10px;
@@ -577,15 +539,15 @@
             }
         }
     }
-    .leap-alt-modal-actions {
+    .leap-modal-actions {
         display: flex;
         align-items: center;
         gap: 8px;
-        .leap-alt-modal-spacer {
+        .leap-modal-spacer {
             flex: 1;
         }
     }
-    .leap-alt-modal-btn {
+    .leap-modal-btn {
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -612,7 +574,7 @@
     .leap-alt-generate-btn.leap-alt-generating .svg-icon {
         animation: leap-alt-spin 0.8s linear infinite;
     }
-    .leap-alt-modal-save {
+    .leap-modal-save {
         background: $blue-light;
         border-color: $blue-light;
         color: white;
