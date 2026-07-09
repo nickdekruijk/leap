@@ -39,7 +39,7 @@ class Page extends Resource
                     Attribute::make('menuitem')->switch()->label(['nl' => 'Kop tonen in navigatie', 'en' => 'Show heading in navigation'])->default(false),
                     Attribute::make('head')->required()->label(['nl' => 'Kop', 'en' => 'Heading'])->sectionTitle()->translatable(),
                     Attribute::make('image')->media()->label(['nl' => 'Afbeelding(en)', 'en' => 'Image(s)']),
-                    Attribute::make('image_position')->default('right')->label(['nl' => 'Positie en vorm afbeelding', 'en' => 'Image position and shape'])->select()->values([
+                    Attribute::make('image_position')->default('right')->label(['nl' => 'Positie afbeelding', 'en' => 'Image position'])->select()->values([
                         'left' => 'Links vierkant',
                         'right' => 'Rechts vierkant',
                         'bottom wide' => 'Breedbeeld (onder tekst)',
