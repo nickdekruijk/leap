@@ -228,7 +228,7 @@
                                                  };
                                                  cropCurrent = { ...cropStart };
                                              }"
-                                            x-on:mousemove="if (croppingMode && cropStart && !cropConfirm) {
+                                            x-on:mousemove.window="if (croppingMode && cropStart && !cropConfirm) {
                                                  const img = $el.querySelector('img');
                                                  const rect = img.getBoundingClientRect();
                                                  cropCurrent = {
@@ -236,7 +236,7 @@
                                                      y: Math.min(100, Math.max(0, +((event.clientY - rect.top) / rect.height * 100).toFixed(2))),
                                                  };
                                              }"
-                                            x-on:mouseup="if (croppingMode && cropStart && !cropConfirm) {
+                                            x-on:mouseup.window="if (croppingMode && cropStart && !cropConfirm) {
                                                  const r = getCropRect();
                                                  if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = '{{ $cropDefaultName }}'; $nextTick(() => { const i = $root.querySelector('.leap-crop-input'); if(i){ i.select(); i.focus(); } }); }
                                                  else { cropStart = null; cropCurrent = null; }
