@@ -249,7 +249,7 @@ class Attribute
      *
      * @param  bool  $multiple  Whether multiple files can be selected
      */
-    public function media($multiple = true): Attribute
+    public function media(bool $multiple = true): Attribute
     {
         if ($this->name == 'media') {
             throw new Exception('The media attribute cannot be named "media"');
@@ -288,6 +288,8 @@ class Attribute
 
     /**
      * Return the attribute values depending on type
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function getValues(): array
     {
@@ -304,6 +306,8 @@ class Attribute
 
     /**
      * Return values from the model, this is used for foreign keys
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function valuesFromModel(): array
     {
@@ -597,6 +601,8 @@ class Attribute
      * Create a copy of the attribute with the confirmed attribute as name
      *
      * This will be used for the extra confirmation input in the editor
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function confirmedAttribute(): Attribute
     {
@@ -728,6 +734,9 @@ class Attribute
         return $this;
     }
 
+    /**
+     * @internal Leap rendering helper; not part of the public API.
+     */
     public function inputAttributes(): string
     {
         $attributes = '';
@@ -842,10 +851,8 @@ class Attribute
 
     /**
      * Make attribute hidden in index and editor but make it available for queries
-     *
-     * @param  bool  $hidden
      */
-    public function hidden($hidden = true): Attribute
+    public function hidden(bool $hidden = true): Attribute
     {
         $this->hidden = $hidden;
         $this->accessor($this->name);
@@ -877,6 +884,8 @@ class Attribute
 
     /**
      * Convert the attribute to an array
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function toArray(): array
     {

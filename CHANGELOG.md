@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The first stable release. The public fluent API (`Attribute`, `Section`, `Module`,
 `Resource`) is now frozen; from 1.0 onwards it follows semantic versioning strictly.
 
+**Stability:** semver covers the module DSL you write — the fluent builders on
+`Attribute`/`Section` and the `Module`/`Resource` classes you extend (their properties
+and overridable methods). Methods marked `@internal` are Leap's own rendering/plumbing
+that happen to be `public` (PHP has no package-private); they are **not** part of the
+supported API and may change in a minor release. Don't call them from application code.
+
 ### Added
 
 - **Multilingual content editing.** Set `leap.locales` to an associative array
