@@ -42,7 +42,9 @@ The first stable release. The public fluent API (`Attribute`, `Section`, `Module
   the current stubs without changing anything.
 - Frontend template modernised: self-contained `slide`/`default`/`highlights`/
   `cta`/`quote` sections with optional per-section background photos, a carousel,
-  a keyboard-accessible horizontal scroller, live search, an admin-editable
+  a keyboard-accessible horizontal scroller, locale-aware live search (title,
+  description and section content matched against the active locale only), an
+  admin-editable
   footer, per-page SEO meta (Open Graph, Twitter, canonical, hreflang) and a
   `sitemap.xml`. Bilingual (nl+en) out of the box, per project switchable.
 - `App\Traits\HasSlug` for the template: per-locale, sibling-and-locale-unique

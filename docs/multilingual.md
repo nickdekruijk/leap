@@ -82,6 +82,11 @@ Spatie resolves translated attributes to the current app locale automatically, s
 `$page->title` returns the active-locale value. `HasSections` does the same for
 translatable section fields.
 
+The template's live search (`<livewire:search />`) is locale-aware too: title,
+description and section content are matched against the **active locale only**, so a
+term that exists only in another language's translation does not surface the page. It
+degrades safely on non-translatable or not-yet-migrated (plain-string) columns.
+
 The `leap:template` frontend adds locale-aware routing: the default locale is
 unprefixed (`/over-ons`) and secondary locales are prefixed (`/en/about`), with a
 language switcher and `hreflang` alternates. Per-locale slugs come from
