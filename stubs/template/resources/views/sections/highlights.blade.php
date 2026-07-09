@@ -1,7 +1,7 @@
 @if ($section->_first)
     @php($bg = ($section['background'] ?? null)?->first()?->file_name)
     <section
-        class="items highlights items-horizontal @if ($bg) has-background @endif @if (! empty($section['dark_background'])) dark @endif">
+        class="items highlights items-horizontal @if (! empty($section['dark_background'])) dark @endif">
         @if ($bg)
             <img class="section-bg" src="{{ asset_resized('1600', $bg) }}" srcset="{{ asset_resized('900', $bg) }} 900w, {{ asset_resized('1200', $bg) }} 1200w, {{ asset_resized('1600', $bg) }} 1600w, {{ asset_resized('1920', $bg) }} 1920w, {{ asset_resized('2560', $bg) }} 2560w" sizes="100vw" alt="" loading="lazy" decoding="async">
         @endif

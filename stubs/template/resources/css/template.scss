@@ -502,6 +502,9 @@ a[role="button"],
         display: flex;
         gap: var(--space-xl);
         align-items: center;
+        // Above the full-bleed .section-bg image and any dark overlay
+        position: relative;
+        z-index: 1;
     }
 
     .article { flex: 1 1 50%; max-width: var(--content-width-small); }
@@ -536,19 +539,13 @@ a[role="button"],
         .images { order: -1; }
     }
 
-    // Full-bleed background photo (rendered as a lazy <img class="section-bg">, so
-    // it downloads only when near the viewport). Text colour is not forced here — a
-    // light photo keeps dark text; toggle "dark background" for white text (see &.dark).
-    &.has-background {
-        > .main-width { position: relative; z-index: 1; }
-    }
-
-    // Dark background (editor toggle): white text. Without a photo the placeholder
-    // gradient stands in; with a photo a legibility overlay darkens it.
+    // Dark background (editor toggle): white text. Without a background photo
+    // (no .section-bg image) the placeholder gradient stands in; with a photo a
+    // legibility overlay darkens it.
     &.dark {
         color: #fff;
         .article a:not(.button) { color: #fff; }
-        &:not(.has-background) { background: $placeholder-gradient; }
+        &:not(:has(> .section-bg)) { background: $placeholder-gradient; }
         .section-overlay {
             position: absolute;
             inset: 0;
@@ -562,7 +559,8 @@ a[role="button"],
     position: relative;
     padding-block: var(--space-xl);
 
-    .items-scroller { position: relative; }
+    // z-index keeps the cards above the full-bleed .section-bg image and dark overlay
+    .items-scroller { position: relative; z-index: 1; }
 
     .items-container {
         display: flex;
@@ -616,15 +614,12 @@ a[role="button"],
         p:has(.button) { margin-top: auto; }
     }
 
-    &.has-background {
-        .items-scroller { position: relative; z-index: 1; }
-    }
-
-    // Dark background (editor toggle): white text. Without a photo the placeholder
-    // gradient stands in; with a photo a legibility overlay darkens it.
+    // Dark background (editor toggle): white text. Without a background photo
+    // (no .section-bg image) the placeholder gradient stands in; with a photo a
+    // legibility overlay darkens it.
     &.dark {
         color: #fff;
-        &:not(.has-background) { background: $placeholder-gradient; }
+        &:not(:has(> .section-bg)) { background: $placeholder-gradient; }
         .section-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
     }
 }
