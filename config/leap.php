@@ -352,19 +352,24 @@ return [
     |--------------------------------------------------------------------------
     | tinymce
     |--------------------------------------------------------------------------
-    | TinyMCE options like CDN and version to use.
-    | cdn: By default the latest 7.x version.
-    | options: This will be converted to json and added to tinymce.init().
-    |          See https://www.tiny.cloud/docs/tinymce/7/ for options.
+    |
+    | Settings for the TinyMCE rich-text editor used by Attribute::richtext().
+    |
+    | cdn:     The TinyMCE build to load. Defaults to the latest 7.x version.
+    | options: Passed as JSON to tinymce.init(). See the TinyMCE 7 docs:
+    |          https://www.tiny.cloud/docs/tinymce/7/
+    |
+    | lazy / lazy_sections: "Lazy" fields show their rendered HTML as a
+    | click-to-edit preview and only start TinyMCE when clicked (and drop back
+    | to the preview on save), so an editor with many rich-text fields opens
+    | fast. 'lazy' applies to standalone top-level fields (default false = start
+    | TinyMCE immediately, as before); 'lazy_sections' applies to rich-text
+    | inside repeatable sections (default true), which is where the slowdown
+    | usually comes from.
     |
     */
     'tinymce' => [
         'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
-        // Lazy "click to edit" rich-text: show rendered HTML and only initialize
-        // TinyMCE when the field is clicked (and tear it down again on save). This
-        // keeps an editor with many rich-text sections fast to open.
-        //   lazy:          standalone (top-level) rich-text fields — off by default.
-        //   lazy_sections: rich-text fields inside repeatable sections — on by default.
         'lazy' => false,
         'lazy_sections' => true,
         'options' => [
