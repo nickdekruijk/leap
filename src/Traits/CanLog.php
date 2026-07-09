@@ -48,7 +48,10 @@ trait CanLog
                 'module' => $module,
                 'action' => $action,
                 'context' => $context,
-                'user_id' => auth()->id(),
+                // Resolve the user against the provider (null when the session points
+                // at a user that no longer exists, e.g. after a DB refresh) so a stale
+                // session can't violate the user_id foreign key.
+                'user_id' => auth()->user()?->getAuthIdentifier(),
             ]);
         } else {
             return null;
