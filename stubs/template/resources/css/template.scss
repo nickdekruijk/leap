@@ -483,6 +483,17 @@ a[role="button"],
 }
 
 // ── Sections: text + image (default / cta / quote) ────────────────────────────
+// Full-bleed section background image (behind the content + any dark overlay).
+// The section itself is position:relative, so this covers it.
+.section-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
 .default {
     position: relative;
     padding-block: var(--space-xl);
@@ -525,11 +536,10 @@ a[role="button"],
         .images { order: -1; }
     }
 
-    // Full-bleed background photo. Text colour is not forced here — a light photo
-    // keeps dark text; toggle "dark background" for white text (see &.dark).
+    // Full-bleed background photo (rendered as a lazy <img class="section-bg">, so
+    // it downloads only when near the viewport). Text colour is not forced here — a
+    // light photo keeps dark text; toggle "dark background" for white text (see &.dark).
     &.has-background {
-        background-size: cover;
-        background-position: center;
         > .main-width { position: relative; z-index: 1; }
     }
 
@@ -607,8 +617,6 @@ a[role="button"],
     }
 
     &.has-background {
-        background-size: cover;
-        background-position: center;
         .items-scroller { position: relative; z-index: 1; }
     }
 
