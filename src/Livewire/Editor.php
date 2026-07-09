@@ -754,6 +754,10 @@ class Editor extends Component
             } else {
                 $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
+
+            // Let lazy rich-text fields drop back to their rendered-HTML preview,
+            // whether or not there were changes to save
+            $this->dispatch('leap-editor-saved');
         }
     }
 

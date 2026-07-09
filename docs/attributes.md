@@ -14,7 +14,7 @@ Attribute::make('title')->index(1)->searchable()->required();
 | --- | --- |
 | *(default)* | text input |
 | `->textarea($rows = 3)` | multi-line text |
-| `->richtext()` | TinyMCE rich editor |
+| `->richtext()` | TinyMCE rich editor (see "Lazy rich-text" below) |
 | `->ace()` | Ace code editor |
 | `->switch()` | boolean toggle |
 | `->select($values)` | dropdown |
@@ -73,3 +73,20 @@ To edit a field's **value** per locale (not just its label), see
 [multilingual.md](multilingual.md). Section sub-fields use
 `Attribute::make('body')->translatable()`; top-level fields derive translatability
 from the model's Spatie `$translatable` array.
+
+## Lazy rich-text
+
+Initializing TinyMCE for every `->richtext()` field when the editor opens is slow when
+a record has many of them (e.g. lots of sections). Leap can instead show each field's
+**rendered HTML** as a click-to-edit preview and only boot TinyMCE for the field you
+click, tearing it down again on save. This is controlled by two config toggles
+([configuration.md](configuration.md)):
+
+- `leap.tinymce.lazy` — standalone (top-level) rich-text fields. Default `false`
+  (TinyMCE loads immediately, as before).
+- `leap.tinymce.lazy_sections` — rich-text fields inside repeatable sections. Default
+  `true` (click to edit).
+
+The preview looks like a field with a pencil affordance on hover, and shows a "click to
+edit" hint when empty. Set `lazy_sections` to `false` to restore immediate editors
+everywhere.

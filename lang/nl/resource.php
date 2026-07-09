@@ -5,6 +5,7 @@ return [
     'add_files' => 'Bestanden toevoegen',
     'add_section' => 'Sectie toevoegen',
     'cancel' => 'Annuleren',
+    'click_to_edit' => 'Klik om te bewerken',
     'close' => 'Sluiten',
     'columns' => 'kolommen',
     'created' => 'aangemaakt',

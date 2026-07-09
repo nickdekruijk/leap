@@ -27,7 +27,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `login_image` | | Background image on the login screen. |
 | `logging` | *(array)* | Audit logging of admin actions (enable, skip actions/modules, IP anonymisation). |
 | `filemanager` | *(array)* | File manager allowed extensions and upload limits. |
-| `ace` / `tinymce` | *(array)* | Options for the code and rich-text editors. |
+| `ace` / `tinymce` | *(array)* | Options for the code and rich-text editors. `tinymce.lazy` / `tinymce.lazy_sections` toggle click-to-edit rich-text — see [attributes.md](attributes.md#lazy-rich-text). |
 
 Read any value with `config('leap.<key>')`, or inspect it with
 `php artisan config:show leap.<key>`.

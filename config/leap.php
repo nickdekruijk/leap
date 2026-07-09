@@ -360,6 +360,13 @@ return [
     */
     'tinymce' => [
         'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
+        // Lazy "click to edit" rich-text: show rendered HTML and only initialize
+        // TinyMCE when the field is clicked (and tear it down again on save). This
+        // keeps an editor with many rich-text sections fast to open.
+        //   lazy:          standalone (top-level) rich-text fields — off by default.
+        //   lazy_sections: rich-text fields inside repeatable sections — on by default.
+        'lazy' => false,
+        'lazy_sections' => true,
         'options' => [
             'autoresize_bottom_margin' => 50,
             'branding' => false,

@@ -5,6 +5,7 @@ return [
     'add_files' => 'Add files',
     'add_section' => 'Add section',
     'cancel' => 'Cancel',
+    'click_to_edit' => 'Click to edit',
     'close' => 'Close',
     'columns' => 'columns',
     'created' => 'created',

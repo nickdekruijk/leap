@@ -20,6 +20,11 @@ The first stable release. The public fluent API (`Attribute`, `Section`, `Module
   `leap.locales`: when it is `null` (the default) behaviour is byte-for-byte
   identical to before. Mark section sub-fields with `Attribute::translatable()`;
   top-level fields derive translatability from the model's `$translatable`.
+- **Lazy click-to-edit rich-text.** Rich-text fields can show their rendered
+  HTML as a preview and only initialize TinyMCE when clicked (torn down again on
+  save), so editors with many rich-text sections open fast. Toggled by
+  `leap.tinymce.lazy` (top-level fields, default off) and
+  `leap.tinymce.lazy_sections` (section fields, default on).
 - **`Attribute::slugFrom('source')`.** Declared on the slug field, the intuitive
   inverse of `slugify()`. The source field is made live so the slug placeholder
   updates as you type. Works per locale.
