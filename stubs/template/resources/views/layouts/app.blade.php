@@ -24,7 +24,7 @@
         <meta property="og:type" content="website">
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:locale" content="{{ str_replace('_', '-', app()->getLocale()) }}">
-        <meta property="og:title" content="{{ ($page ?? null)?->metaTitle() ?: config('app.name') }}">
+        <meta property="og:title" content="{{ ($page ?? null)?->documentTitle() ?? config('app.name') }}">
         <meta property="og:url" content="{{ url()->current() }}">
         @if (($page ?? null)?->description)
             <meta property="og:description" content="{{ $page->description }}">
@@ -33,7 +33,7 @@
             <meta property="og:image" content="{{ $ogImage }}">
         @endif
         <meta name="twitter:card" content="{{ $ogImage ? 'summary_large_image' : 'summary' }}">
-        <meta name="twitter:title" content="{{ ($page ?? null)?->metaTitle() ?: config('app.name') }}">
+        <meta name="twitter:title" content="{{ ($page ?? null)?->documentTitle() ?? config('app.name') }}">
         @if (($page ?? null)?->description)
             <meta name="twitter:description" content="{{ $page->description }}">
         @endif

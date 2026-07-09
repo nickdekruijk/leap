@@ -33,16 +33,4 @@ class SeoTest extends TestCase
 
         $this->assertSame('Acme', (new Page)->documentTitle());
     }
-
-    public function test_meta_title_prefers_html_title_over_title_without_a_suffix(): void
-    {
-        $withHtmlTitle = new Page;
-        $withHtmlTitle->title = 'Over ons';
-        $withHtmlTitle->html_title = 'Custom SEO title';
-        $this->assertSame('Custom SEO title', $withHtmlTitle->metaTitle());
-
-        $plain = new Page;
-        $plain->title = 'Over ons';
-        $this->assertSame('Over ons', $plain->metaTitle());
-    }
 }

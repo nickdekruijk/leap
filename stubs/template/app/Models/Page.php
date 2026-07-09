@@ -61,14 +61,6 @@ class Page extends Model
     }
 
     /**
-     * The page's own meta/OG title (no site-name suffix): html_title or title.
-     */
-    public function metaTitle(): ?string
-    {
-        return $this->html_title ?: $this->title;
-    }
-
-    /**
      * OG/Twitter image URL from the page's own image, then its first section image or
      * background. Null when the page has none (the layout falls back to the og_image
      * site setting).
