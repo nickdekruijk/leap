@@ -1,9 +1,9 @@
 @if ($section->_first)
     @php($bg = ($section['background'] ?? null)?->first()?->file_name)
     <section
-        class="items highlights items-horizontal @if ($bg) has-background @endif"
+        class="items highlights items-horizontal @if ($bg) has-background @endif @if (! empty($section['dark_background'])) dark @endif"
         @if ($bg) style="background-image: url('{{ asset_resized('1920', $bg) }}')" @endif>
-        @if ($bg)
+        @if ($bg && ! empty($section['dark_background']))
             <div class="section-overlay" aria-hidden="true"></div>
         @endif
         <div class="items-scroller main-width">

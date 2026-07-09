@@ -1,8 +1,8 @@
 @php($bg = ($section['background'] ?? null)?->first()?->file_name)
 <section
-    class="default {{ $section['image_position'] ?? 'right' }} {{ $section->_name }} @if ($bg) has-background @endif"
+    class="default {{ $section['image_position'] ?? 'right' }} {{ $section->_name }} @if ($bg) has-background @endif @if (! empty($section['dark_background'])) dark @endif"
     @if ($bg) style="background-image: url('{{ asset_resized('1920', $bg) }}')" @endif>
-    @if ($bg)
+    @if ($bg && ! empty($section['dark_background']))
         <div class="section-overlay" aria-hidden="true"></div>
     @endif
     <div class="main-width">

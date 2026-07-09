@@ -4,6 +4,9 @@
 $bp-mobile: 768px;
 $bp-tablet: 1024px;
 
+// Reused for missing-image placeholders and for the "dark background" section variant
+$placeholder-gradient: linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, #fff), color-mix(in srgb, var(--accent) 75%, #000));
+
 // ── Base ────────────────────────────────────────────────────────────────────
 html {
     font-size: 100%;
@@ -520,18 +523,25 @@ a[role="button"],
         .images { order: -1; }
     }
 
-    // Full-bleed background photo + legibility overlay
+    // Full-bleed background photo. Text colour is not forced here — a light photo
+    // keeps dark text; toggle "dark background" for white text (see &.dark).
     &.has-background {
         background-size: cover;
         background-position: center;
+        > .main-width { position: relative; z-index: 1; }
+    }
+
+    // Dark background (editor toggle): white text. Without a photo the placeholder
+    // gradient stands in; with a photo a legibility overlay darkens it.
+    &.dark {
         color: #fff;
         .article a:not(.button) { color: #fff; }
+        &:not(.has-background) { background: $placeholder-gradient; }
         .section-overlay {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.45);
         }
-        > .main-width { position: relative; z-index: 1; }
     }
 }
 
@@ -597,9 +607,15 @@ a[role="button"],
     &.has-background {
         background-size: cover;
         background-position: center;
-        color: #fff;
-        .section-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
         .items-scroller { position: relative; z-index: 1; }
+    }
+
+    // Dark background (editor toggle): white text. Without a photo the placeholder
+    // gradient stands in; with a photo a legibility overlay darkens it.
+    &.dark {
+        color: #fff;
+        &:not(.has-background) { background: $placeholder-gradient; }
+        .section-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
     }
 }
 
@@ -641,7 +657,7 @@ a[role="button"],
     height: 100%;
     aspect-ratio: 3 / 2;
     border-radius: var(--radius);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, #fff), color-mix(in srgb, var(--accent) 75%, #000));
+    background: $placeholder-gradient;
 }
 .item-thumbnail .image-placeholder {
     aspect-ratio: auto;
