@@ -496,10 +496,12 @@ a[role="button"],
 
     // Image position variants
     &.left > .main-width .images { order: -1; }
-    // Text-only: hide the image column and centre the readable text column
+    // Text-only and quote: hide any image column and centre the readable text column
     &.none .images { display: none; }
-    &.none > .main-width { justify-content: center; }
-    &.none .article { flex-basis: 100%; }
+    &.none > .main-width,
+    &.quote > .main-width { justify-content: center; }
+    &.none .article,
+    &.quote .article { flex-basis: 100%; }
     &.bottom > .main-width {
         flex-direction: column;
         align-items: stretch;
