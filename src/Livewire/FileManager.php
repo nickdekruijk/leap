@@ -102,38 +102,56 @@ class FileManager extends Module
     {
         Leap::validatePermission('create');
 
-        if ($this->uploads[$id]['error']) {
+        $uploaded = $this->uploads[$id]['file'] ?? null;
+        if (! $uploaded) {
             return;
         }
 
-        $file = $this->uploads[$id];
+        // $this->uploads is a public (client-controllable) Livewire property, so the
+        // name/path/size/error set in uploadStart cannot be trusted here — the upload
+        // gate must be re-enforced server-side. Take the name as a bare basename (no
+        // path segments), rebuild the target directory from the open folders, and
+        // re-check the extension and size against the actual uploaded file.
+        $name = basename((string) ($this->uploads[$id]['name'] ?? ''));
+        $path = $this->storagePrefix().implode('/', $this->openFolders);
+
+        if ($name === '' || ! $this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
+            $this->dispatch('toast-error', __('leap::filemanager.upload_not_allowed', ['attribute' => $name]))->to(Toasts::class);
+
+            return;
+        }
+        if ($uploaded->getSize() > $this->maxUploadSize()) {
+            $this->dispatch('toast-error', __('leap::filemanager.upload_too_large', ['attribute' => $name]))->to(Toasts::class);
+
+            return;
+        }
 
         // Check if uploaded file already exists
-        if ($this->getStorage()->exists($file['path'].'/'.$file['name'])) {
+        if ($this->getStorage()->exists($path.'/'.$name)) {
             // Compare sha256 hash of both files
-            $hash_existing = hash('sha256', $this->getStorage()->get($file['path'].'/'.$file['name']));
-            $hash_uploaded = hash_file('sha256', $file['file']->path());
+            $hash_existing = hash('sha256', $this->getStorage()->get($path.'/'.$name));
+            $hash_uploaded = hash_file('sha256', $uploaded->path());
             if ($hash_existing === $hash_uploaded) {
-                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
 
                 return;
             }
             $n = 1;
-            $fileParts = pathinfo($file['name']);
-            while ($this->getStorage()->exists($file['path'].'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
+            $fileParts = pathinfo($name);
+            while ($this->getStorage()->exists($path.'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
                 $n++;
             }
-            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
-            $file['name'] = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
+            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
+            $name = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
         }
 
-        if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
-            Media::forFile($file['path'].'/'.$file['name']);
-            $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
-            $this->log('upload', $file['path'].'/'.$file['name']);
+        if ($uploaded->storeAs($path, $name, config('leap.filemanager.disk'))) {
+            Media::forFile($path.'/'.$name);
+            $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $name]))->to(Toasts::class);
+            $this->log('upload', $path.'/'.$name);
             unset($this->columns);
         } else {
-            $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $file['name']]))->to(Toasts::class);
+            $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $name]))->to(Toasts::class);
         }
     }
 
