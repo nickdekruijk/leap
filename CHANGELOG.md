@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Filemanager: rename and alt-text moved into the always-visible button bar.**
+  Rename was a small pencil icon next to a deceptively-clickable filename; alt-text
+  was only reachable by hovering the image. Both are now `Rename file` / `Set alt
+  text` buttons in the top bar next to Close/Delete (single file selected only).
+  Focus-point and crop stay on the image itself — they're inherently "click a point
+  on the image" actions. The filename in the stats panel is now plain text.
+- **`leap.filemanager.image_crop_enabled` / `image_focus_enabled` accept `true`** as
+  shorthand for "every bitmap format" (via the existing `isBitmap()` helper, which
+  already excludes `svg`), enabled by default. The array form still works for finer
+  control — e.g. excluding `gif` from crop (breaks animation) while keeping it for
+  focus point.
+- Added `:focus-within` alongside `:hover` on `.leap-focus-actions` so the
+  focus-point/crop overlay buttons are visible to keyboard users tabbing onto them,
+  not just mouse hover.
+
 ### Fixed
 
 - **Filemanager: selected folder/file row lost its teal highlight**, rendering as

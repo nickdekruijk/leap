@@ -170,6 +170,13 @@
                     this.cropNewName = '';
                 },
             }" x-on:file-selected.window="resetEditState()">
+                @php
+                    $singleFile = count($selectedFiles) === 1 ? reset($selectedFiles) : null;
+                    if ($singleFile !== null && $this->isImage($singleFile)) {
+                        $altTextsData = $this->altTexts($singleFile);
+                        $altTooltip = implode(' / ', array_filter($altTextsData));
+                    }
+                @endphp
                 <div class="leap-buttons" role="group" x-on:keydown.escape.window="$wire.selectFile">
                     @if ($browse && $selectedFiles)
                         <button
@@ -179,6 +186,16 @@
                         </button>
                     @endif
                     <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="leap::filemanager.close" />
+                    @can('leap::update')
+                        @if ($singleFile !== null)
+                            <x-leap::button svg-icon="fas-pen-to-square" wire:click="editFile" label="leap::filemanager.rename_file" />
+                            @if ($this->isImage($singleFile))
+                                <x-leap::button svg-icon="fas-font"
+                                    x-on:click="settingAlt = !settingAlt; settingFocus = false; cancelCrop(); if (settingAlt) { altTexts = {{ Js::from((object) $altTextsData) }}; $nextTick(() => { const t = $root.querySelector('.leap-modal textarea'); if (t) { t.focus(); t.select(); } }); }"
+                                    label="leap::filemanager.set_alt_text" />
+                            @endif
+                        @endif
+                    @endcan
                     @can('leap::delete')
                         <button
                             wire:click="deleteFiles"
@@ -202,8 +219,6 @@
                                         } else {
                                             $cropDefaultName = $cropBaseName . '-crop.' . $cropExt;
                                         }
-                                        $altTextsData = $this->altTexts($file);
-                                        $altTooltip = implode(' / ', array_filter($altTextsData));
                                         $altLocales = config('leap.locales') ?? [app()->getLocale() => ''];
                                         $aiAltEnabled = $this->aiAltEnabled() && $this->isBitmap($file);
                                     @endphp
@@ -280,13 +295,6 @@
                                                             @svg('fas-crop-alt', 'svg-icon')
                                                         </button>
                                                     @endif
-                                                    <button
-                                                        class="leap-focus-action-btn"
-                                                        :class="{ 'active': settingAlt }"
-                                                        x-on:click.stop="settingAlt = !settingAlt; settingFocus = false; cancelCrop(); if (settingAlt) { altTexts = {{ Js::from((object) $altTextsData) }}; $nextTick(() => { const t = $root.querySelector('.leap-modal textarea'); if (t) { t.focus(); t.select(); } }); }"
-                                                        title="{{ $altTooltip ?: __('leap::filemanager.set_alt_text') }}">
-                                                        @svg('fas-font', 'svg-icon')
-                                                    </button>
                                                 </div>
                                             @endif
                                         @endcan
@@ -348,12 +356,7 @@
                         @if (count($selectedFiles) > 1)
                             {{ count($selectedFiles) }} @lang('leap::filemanager.files')
                         @else
-                            @can('leap::update')
-                                <span class="editFile" wire:click="editFile">{{ reset($selectedFiles) }}</span>
-                                <button type="button" class="leap-rename-btn" wire:click="editFile" title="@lang('leap::filemanager.rename_file')">@svg('fas-pen-to-square', 'svg-icon')</button>
-                            @else
-                                {{ reset($selectedFiles) }}
-                            @endcan
+                            {{ reset($selectedFiles) }}
                         @endif
                     </h3>
                     @if (count($selectedFiles) === 1)

@@ -741,6 +741,10 @@ class FileManager extends Module
     {
         $extensions = config('leap.filemanager.image_focus_enabled');
 
+        if ($extensions === true) {
+            return $this->isBitmap($file);
+        }
+
         return $extensions && $this->hasExtension($file, $extensions);
     }
 
@@ -888,6 +892,10 @@ class FileManager extends Module
     public function imageCropEnabled(string $file): bool
     {
         $extensions = config('leap.filemanager.image_crop_enabled');
+
+        if ($extensions === true) {
+            return $this->isBitmap($file);
+        }
 
         return $extensions && $this->hasExtension($file, $extensions);
     }

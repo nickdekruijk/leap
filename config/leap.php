@@ -283,8 +283,8 @@ return [
             'zip',
         ],
         'disk' => 'public', // Must refer to a disk defined in config/filesystems.php, e.g. 'local' or 'public'
-        'image_crop_enabled' => false, // Set to an array of extensions to enable cropping, e.g. ['jpeg', 'jpg', 'png', 'webp']
-        'image_focus_enabled' => false, // Set to an array of extensions to enable focus point editing, e.g. ['jpeg', 'jpg', 'png', 'webp', 'gif']
+        'image_crop_enabled' => true, // true = all bitmap formats (svg is always excluded, it's vector). false disables. Or an array of extensions for finer control, e.g. ['jpeg', 'jpg', 'png', 'webp'] to exclude gif (cropping breaks animation)
+        'image_focus_enabled' => true, // true = all bitmap formats (svg is always excluded, it's vector). false disables. Or an array of extensions for finer control, e.g. ['jpeg', 'jpg', 'png', 'webp', 'gif']
         'upload_max_filesize' => '128G', // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
     ],
 
