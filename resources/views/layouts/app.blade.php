@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ Leap::htmlTitle() }}</title>
+        <link rel="stylesheet" href="https://fonts.bunny.net/css?family=open-sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i">
         {!! \NickDeKruijk\Leap\Controllers\AssetController::cssLink() !!}
         {!! \NickDeKruijk\Leap\Controllers\AssetController::tinymceContentCssLink() !!}
         @if (config('leap.auth_passkeys.enabled'))

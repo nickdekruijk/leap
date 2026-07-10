@@ -11,7 +11,7 @@ package itself**. For using leap in a host application, see `README.md` and `doc
 - `stubs/template/` — the frontend template copied into host projects by
   `leap:template`. **Editing files here does not affect any live site** until a project
   re-runs the command.
-- `config/leap.php`, `lang/`, `migrations/`, `resources/` (views, SCSS, Boost
+- `config/leap.php`, `lang/`, `migrations/`, `resources/` (views, CSS, Boost
   guidelines), `routes/`.
 - `tests/` — Testbench + PHPUnit.
 
@@ -30,9 +30,12 @@ package itself**. For using leap in a host application, see `README.md` and `doc
 
 ## Assets: no npm / Vite
 
-Panel and template styles are SCSS compiled on request by `nickdekruijk/minify`
-(ScssPhp); JS is served the same way. **There is no build step.** Do not add
-Vite/npm tooling. If a style change isn't visible it is HTTP/browser caching.
+Panel CSS (`resources/css/*.css`) is plain CSS, concatenated and cached on request by
+`AssetController` — no SCSS, no compiler. The template's own styles
+(`stubs/template/resources/css/*.scss`) still compile via `nickdekruijk/minify`
+(ScssPhp), a template-only dependency; JS is served the same way. **There is no build
+step anywhere.** Do not add Vite/npm tooling. If a style change isn't visible it is
+HTTP/browser caching.
 
 ## Testing
 
@@ -53,9 +56,9 @@ do not introduce Pest without discussing the dependency change first.
 
 Changes under `stubs/template/` are verified by installing them into a throwaway host
 app and exercising the frontend, because they run in the host's context (Herd/nginx
-with `public/` as docroot, which the ScssPhp import paths rely on — `php artisan serve`
-has a different CWD and breaks them). `leap:template --diff` shows drift between a
-host's copy and the current stubs.
+with `public/` as docroot, which the template's ScssPhp import paths rely on —
+`php artisan serve` has a different CWD and breaks them). `leap:template --diff` shows
+drift between a host's copy and the current stubs.
 
 ## Releasing
 

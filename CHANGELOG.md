@@ -5,6 +5,35 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Panel CSS rewritten from SCSS to plain CSS, and consolidated from 12 files to 3.**
+  `resources/css/*.scss` → `leap.css` (core admin chrome), `filemanager.css`,
+  `editor.css`. Colors are now CSS custom properties (`--leap-*`) alongside the
+  existing spacing tokens, so host apps re-theme by overriding variables instead of
+  overriding selectors — no recompile needed. Shared components like `.leap-button`
+  now carry a real default background via `--leap-button-bg`/`--leap-button-bg-hover`
+  instead of being re-styled in multiple files per context.
+- `AssetController::css()` no longer compiles with ScssPhp — it concatenates the
+  (now plain) CSS files directly. `nickdekruijk/minify` (and its transitive
+  `scssphp/scssphp`) is no longer a leap-core dependency; it moved to `suggest` and
+  is offered/installed only for the scaffolded frontend template, which still uses
+  it for its own SCSS/JS.
+- The Open Sans `@import url(...)` moved out of the compiled CSS into a `<link>` tag
+  in the admin layout `<head>` (native `@import` must precede all other rules, which
+  file concatenation no longer guarantees).
+
+### Breaking
+
+- The per-file host CSS override path (`resources/css/leap/<file>.scss`) now expects
+  the new filenames (`leap.css`, `filemanager.css`, `editor.css`) — a host overriding
+  the old per-feature `.scss` files (e.g. `nav.scss`, `forms.scss`, `login.scss`)
+  needs to migrate that override to the consolidated files.
+- If `nickdekruijk/minify` was relied upon transitively through `nickdekruijk/leap`
+  outside of the template, add it to the host's own `composer.json`.
+
 ## [0.9.4] — 2026-07-10
 
 ### Fixed

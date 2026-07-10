@@ -82,10 +82,11 @@ edited copies differ from the current stubs.
 
 ## Assets: no npm / Vite
 
-Leap and the template compile SCSS on request via `nickdekruijk/minify` (ScssPhp) and
-serve JS the same way — **there is no npm/Vite build step** for leap styles. Edit the
-`.scss`/`.js` files and reload. If a change isn't visible, it is a browser/HTTP cache,
-not a missing build.
+Leap panel CSS is plain CSS, concatenated and cached on request — no compiler. The
+template's own styles still compile SCSS on request via `nickdekruijk/minify`
+(ScssPhp); both serve JS the same way — **there is no npm/Vite build step** anywhere.
+Edit the `.css`/`.scss`/`.js` files and reload. If a change isn't visible, it is a
+browser/HTTP cache, not a missing build.
 
 ## Caching
 

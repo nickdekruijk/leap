@@ -11,14 +11,14 @@
             overflow-x: visible;
             overflow-y: auto;
             display: flex;
-            background-color: $grey-light;
+            background-color: var(--leap-grey-light);
             position: relative;
             &::after {
                 content: "";
                 position: absolute;
                 inset: 0 0 0 auto;
                 width: 1px;
-                background-color: rgba(black, 0.05);
+                background-color: rgb(0 0 0 / .05);
             }
             align-items: start;
             -webkit-user-select: none;
@@ -93,12 +93,12 @@
             height: 1em;
             width: 1.3em;
             margin-left: -0.15em;
-            color: $blue-normal;
+            color: var(--leap-blue);
             vertical-align: -1px;
         }
         &.leap-index-dropzone .leap-index-table:last-child,
         &.leap-index-dropzone .leap-index-table:last-child TR {
-            background-color: rgba($blue-light, 0.4);
+            background-color: color-mix(in srgb, var(--leap-blue-light) 40%, transparent);
         }
     }
     .leap-filemanager-uploading {
@@ -112,7 +112,7 @@
     .leap-filemanager-uploading-error {
         cursor: pointer !important;
         TD {
-            background-color: rgba($red, 0.5) !important;
+            background-color: color-mix(in srgb, var(--leap-red) 50%, transparent) !important;
         }
         PROGRESS {
             display: none;
@@ -123,12 +123,12 @@
         top: 0;
         left: 0;
         bottom: 0;
-        background-color: rgba($green, 0.4);
+        background-color: color-mix(in srgb, var(--leap-green) 40%, transparent);
     }
     .leap-filemanager-uploading-done:not(.leap-filemanager-uploading-error) {
         animation: uploadingdone 0.5s forwards 1s;
         TD {
-            background-color: rgba($green, 0.5) !important;
+            background-color: color-mix(in srgb, var(--leap-green) 50%, transparent) !important;
         }
         @keyframes uploadingdone {
             0% {
@@ -143,7 +143,6 @@
     .leap-index-table.leap-index-gridview {
         flex: 1 0 auto;
         max-width: min(500px, calc(100vw - 50px));
-        // min-width: 300px;
         .leap-index-grid-row {
             width: 100%;
             TD {
@@ -168,10 +167,10 @@
                 overflow: hidden;
                 text-align: center;
                 &:hover {
-                    background-color: rgba(black, 0.05);
+                    background-color: rgb(0 0 0 / .05);
                 }
                 &.leap-index-row-selected {
-                    background-color: rgba($blue-light, 0.25);
+                    background-color: color-mix(in srgb, var(--leap-blue-light) 25%, transparent);
                 }
                 .leap-index-grid-thumbnail {
                     width: 100%;
@@ -187,13 +186,13 @@
                         height: 100%;
                         object-fit: cover;
                         display: block;
-                        border-radius: 3px;
+                        border-radius: var(--leap-radius);
                         margin: 0;
                     }
                     .svg-icon {
                         width: 3em;
                         height: 3em;
-                        color: $blue-normal;
+                        color: var(--leap-blue);
                     }
                 }
                 SPAN {
@@ -205,7 +204,7 @@
                     display: block;
                 }
                 &.leap-index-grid-folder .leap-index-grid-thumbnail .svg-icon {
-                    color: $blue-light;
+                    color: var(--leap-blue-light);
                 }
             }
         }
@@ -265,7 +264,7 @@
                             max-height: 100%;
                             display: block;
                             padding: var(--spacing);
-                            background-color: $grey-light;
+                            background-color: var(--leap-grey-light);
                             border-radius: 8px;
                             position: absolute;
                             text-align: center;
@@ -281,7 +280,7 @@
                             }
                             &:hover {
                                 color: white;
-                                background-color: $blue-light;
+                                background-color: var(--leap-blue-light);
                                 opacity: 1 !important;
                                 .svg-icon {
                                     color: inherit;
@@ -306,7 +305,7 @@
                             justify-content: center;
                             width: 26px;
                             height: 26px;
-                            background: rgba(0, 0, 0, 0.55);
+                            background: rgb(0 0 0 / .55);
                             border: none;
                             border-radius: 4px;
                             cursor: pointer;
@@ -351,7 +350,7 @@
                             }
                             &:hover,
                             &.active {
-                                background: rgba(0, 170, 0, 0.8);
+                                background: rgb(0 170 0 / .8);
                             }
                         }
                         &:hover .leap-focus-actions {
@@ -390,7 +389,7 @@
                         .leap-crop-rect {
                             position: absolute;
                             border: 2px dashed white;
-                            outline: 1px solid rgba(0, 0, 0, 0.5);
+                            outline: 1px solid rgb(0 0 0 / .5);
                             pointer-events: none;
                             box-sizing: border-box;
                         }
@@ -408,7 +407,7 @@
                                 width: 20px;
                                 height: 20px;
                                 color: #00dd00;
-                                filter: drop-shadow(0 0 4px rgba(white, 0.6));
+                                filter: drop-shadow(0 0 4px rgb(255 255 255 / .6));
                             }
                         }
                     }
@@ -442,7 +441,7 @@
                     cursor: pointer;
                     padding: 0;
                     margin-left: 6px;
-                    color: $blue-normal;
+                    color: var(--leap-blue);
                     opacity: 0.6;
                     transition: opacity 0.2s;
                     .svg-icon {
@@ -459,11 +458,11 @@
                 background: none;
                 padding: 0;
                 justify-content: center;
+                /* On a white ambient background: give .leap-button a solid bg
+                   via token swap, same reasoning as forms.css. */
                 .leap-button {
-                    background-color: $blue-light;
-                    &:hover {
-                        background-color: $blue-normal;
-                    }
+                    --leap-button-bg: var(--leap-blue-light);
+                    --leap-button-bg-hover: var(--leap-blue);
                 }
             }
             TABLE {
@@ -486,7 +485,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(black, 0.7);
+    background-color: rgb(0 0 0 / .7);
     z-index: 1500;
     align-items: center;
     justify-content: center;
@@ -496,7 +495,7 @@
         background: red;
         .leap-main {
             min-height: 100%;
-            box-shadow: rgba(black, 0.5) 1px 0 10px;
+            box-shadow: rgb(0 0 0 / .5) 1px 0 10px;
         }
     }
 }
@@ -509,7 +508,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--spacing);
-    background-color: rgba(black, 0.6);
+    background-color: rgb(0 0 0 / .6);
     .leap-modal-dialog {
         display: flex;
         flex-direction: column;
@@ -521,9 +520,9 @@
         box-sizing: border-box;
         padding: 20px;
         background: white;
-        color: $blue-dark;
+        color: var(--leap-blue-dark);
         border-radius: 8px;
-        box-shadow: 0 10px 40px rgba(black, 0.4);
+        box-shadow: 0 10px 40px rgb(0 0 0 / .4);
     }
     .leap-modal-header {
         font-size: 1.15em;
@@ -550,15 +549,15 @@
             line-height: 1.4;
             padding: 8px 10px;
             color: inherit;
-            border: 1px solid rgba($blue-dark, 0.25);
+            border: 1px solid color-mix(in srgb, var(--leap-blue-dark) 25%, transparent);
             border-radius: 6px;
             &::placeholder {
-                color: rgba($blue-dark, 0.4);
+                color: color-mix(in srgb, var(--leap-blue-dark) 40%, transparent);
             }
             &:focus {
                 outline: none;
-                border-color: $blue-light;
-                box-shadow: 0 0 0 2px rgba($blue-light, 0.3);
+                border-color: var(--leap-blue-light);
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--leap-blue-light) 30%, transparent);
             }
         }
     }
@@ -578,12 +577,12 @@
         cursor: pointer;
         padding: 8px 14px;
         border-radius: 6px;
-        border: 1px solid rgba($blue-dark, 0.25);
+        border: 1px solid color-mix(in srgb, var(--leap-blue-dark) 25%, transparent);
         background: white;
-        color: $blue-dark;
+        color: var(--leap-blue-dark);
         transition: 0.2s;
         &:hover:not([disabled]) {
-            background: $grey-light;
+            background: var(--leap-grey-light);
         }
         &[disabled] {
             opacity: 0.6;
@@ -598,12 +597,12 @@
         animation: leap-alt-spin 0.8s linear infinite;
     }
     .leap-modal-save {
-        background: $blue-light;
-        border-color: $blue-light;
+        background: var(--leap-blue-light);
+        border-color: var(--leap-blue-light);
         color: white;
         &:hover:not([disabled]) {
-            background: $blue-normal;
-            border-color: $blue-normal;
+            background: var(--leap-blue);
+            border-color: var(--leap-blue);
         }
     }
 }

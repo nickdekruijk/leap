@@ -7,8 +7,6 @@ namespace NickDeKruijk\Leap\Controllers;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
-use ScssPhp\ScssPhp\Compiler;
-use ScssPhp\ScssPhp\OutputStyle;
 
 class AssetController extends Controller
 {
@@ -59,27 +57,20 @@ class AssetController extends Controller
     }
 
     /**
-     * Return all compiled css files as single Response
+     * Return all combined css files as single Response
      */
     public static function css(): Response
     {
-        // Get the filemtime of all sass/css files combined
+        // Get the filemtime of all css files combined
         $filemtime = self::cssFilemtime();
 
-        // Check if we need to recompile the css
+        // Check if we need to recombine the css
         if ($filemtime !== Cache::get('leap.css.filemtime') || ! Cache::get('leap.css')) {
-            $scss = new Compiler;
-            $scss->setImportPaths([__DIR__.'/../../resources/css']);
-            $scss->setOutputStyle(OutputStyle::COMPRESSED);
-
-            // Combine all sass files into a single string
-            $sass = '';
+            // Combine all css files into a single string, with a comment noting the compile time
+            $css = '/* Compiled: '.now().'*/'.PHP_EOL;
             foreach (self::cssFiles() as $file) {
-                $sass .= file_get_contents($file);
+                $css .= file_get_contents($file);
             }
-
-            // Compile the sass into css and add a comment with the compile time
-            $css = '/* Compiled: '.now().'*/'.PHP_EOL.$scss->compileString($sass)->getCss();
 
             // Cache it
             Cache::put('leap.css', $css, self::CACHE_DURATION);

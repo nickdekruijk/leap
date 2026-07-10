@@ -197,28 +197,16 @@ return [
     | css
     |--------------------------------------------------------------------------
     |
-    | An array of css/sass files to include in the head of the app layout.
-    | These will be compiled with ScssPhp into a single css file and cached.
-    | Be aware that ScssPhp does not support all sass features like @use.
-    | The package resource/css directory is added to @import paths. Be careful
-    | with @import bacause those files are not watched for cache changes.
-    | If path is ommited the file in the resources/css directory is used.
+    | An array of css files to include in the head of the app layout. These
+    | are concatenated into a single file and cached. If path is ommited the
+    | file in the resources/css directory is used.
     |
     */
     'css' => [
-        'minireset.scss',
-        'colors.scss',
-        'dashboard.scss',
-        'default.scss',
-        'editor.scss',
-        'filemanager.scss',
-        'forms.scss',
-        'index.scss',
-        'login.scss',
-        'logo.scss',
-        'nav.scss',
-        'toasts.scss',
-        // base_path('resources/css/custom.scss'),
+        'leap.css',
+        'editor.css',
+        'filemanager.css',
+        // base_path('resources/css/custom.css'),
     ],
 
     /*

@@ -15,12 +15,12 @@
 		"laravel/framework": "^12.0|^13.0",
 		"livewire/livewire": "^3.7|^4.1",
 		"owenvoke/blade-fontawesome": "^3.1",
-		"nickdekruijk/minify": "^3.0",
 		"spatie/laravel-translatable": "^6.10",
 		"laravel/fortify": "^1.31",
 		"laravel/passkeys": "^0.2.1"
 	},
 	"suggest": {
+		"nickdekruijk/minify": "SCSS/JS compilation and bundling used by the frontend template (php artisan leap:template)",
 		"nickdekruijk/settings": "Admin-editable settings and footer used by the frontend template (php artisan leap:template)",
 		"nickdekruijk/imageresize": "Responsive asset_resized() images used by the frontend template",
 		"nickdekruijk/vanilla-slider": "Carousel/slider used by the frontend template",

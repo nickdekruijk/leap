@@ -469,6 +469,7 @@ class TemplateCommand extends Command
     public function suggestFrontendPackages(): void
     {
         $packages = [
+            'nickdekruijk/minify' => 'SCSS compilation and JS bundling',
             'nickdekruijk/settings' => 'admin-editable settings + footer',
             'nickdekruijk/imageresize' => 'responsive asset_resized() images',
             'nickdekruijk/vanilla-slider' => 'carousel',
