@@ -73,7 +73,9 @@ Attribute::make('title')
 To edit a field's **value** per locale (not just its label), see
 [multilingual.md](multilingual.md). Section sub-fields use
 `Attribute::make('body')->translatable()`; top-level fields derive translatability
-from the model's Spatie `$translatable` array.
+from the model's Spatie `$translatable` array. To mark several section sub-fields at
+once, use `Section::translatableExcept()` / `translatableOnly()` — see
+[sections.md](sections.md#bulk-marking-translatable-fields).
 
 ## Lazy rich-text
 
