@@ -252,6 +252,10 @@ class TemplateCommand extends Command
         $this->deleteFile('resources/js/app.js');
         $this->deleteFile('resources/js/bootstrap.js');
         $this->deleteFile('resources/css/app.css');
+        // Laravel's stock ExampleTest asserts GET / returns 200 for the static welcome
+        // page; the homepage is now DB-driven (PageController), so it would fail. The
+        // template's PageRoutingTest covers routing properly instead.
+        $this->deleteFile('tests/Feature/ExampleTest.php');
 
         // Ask to copy scss files, views and javascript
         $this->copyDir('resources/css', 'SCSS files');
