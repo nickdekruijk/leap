@@ -5,6 +5,24 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.8] — 2026-07-10
+
+### Added
+
+- **`Media::focusPosition()`** — the crop focus point set in the file manager
+  (`meta['image_focus']`), as CSS-ready `{x, y}` percentages, or `null` when unset.
+  Mirrors `Media::alt()`. Pairs with `object-fit: cover` and inline
+  `object-position` to keep the focus point visible when an image is cropped by
+  its container's aspect ratio.
+- **`<x-responsive-image>` template component**
+  (`resources/views/components/responsive-image.blade.php`). Consolidates the
+  `srcset`/`sizes`/`alt`/dimensions/focus-point boilerplate that was duplicated
+  across the section views (`default`, `slide`, `highlights`) into one component;
+  those views now use it. Uses `Media::alt()` and the new `focusPosition()`
+  automatically — a focus point set in the admin now actually shows up on the
+  frontend, which no section view previously read. See
+  [docs/template.md](docs/template.md#x-responsive-image).
+
 ## [0.9.7] — 2026-07-10
 
 ### Changed

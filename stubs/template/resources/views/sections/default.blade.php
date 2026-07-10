@@ -1,8 +1,8 @@
-@php($bg = ($section['background'] ?? null)?->first()?->file_name)
+@php($bg = ($section['background'] ?? null)?->first())
 <section
     class="default {{ $section['image_position'] ?? 'right' }} {{ $section->_name }} @if (! empty($section['dark_background'])) dark @endif">
     @if ($bg)
-        <img class="section-bg" src="{{ asset_resized('1600', $bg) }}" srcset="{{ asset_resized('900', $bg) }} 900w, {{ asset_resized('1200', $bg) }} 1200w, {{ asset_resized('1600', $bg) }} 1600w, {{ asset_resized('1920', $bg) }} 1920w, {{ asset_resized('2560', $bg) }} 2560w" sizes="100vw" alt="" loading="lazy" decoding="async">
+        <x-responsive-image class="section-bg" :media="$bg" sizes="100vw" :widths="[900, 1200, 1600, 1920, 2560]" fallback="1600" decorative />
     @endif
     @if ($bg && ! empty($section['dark_background']))
         <div class="section-overlay" aria-hidden="true"></div>
@@ -23,14 +23,7 @@
         @isset($section->image)
             <div class="images">
                 @foreach ($section->image as $image)
-                    @php($dim = $image->dimensions())
-                    <img
-                        srcset="{{ asset_resized('600', $image->file_name) }} 600w, {{ asset_resized('900', $image->file_name) }} 900w, {{ asset_resized('1200', $image->file_name) }} 1200w, {{ asset_resized('1600', $image->file_name) }} 1600w"
-                        sizes="(max-width: 550px) 100vw, 50vw"
-                        src="{{ asset_resized('900', $image->file_name) }}"
-                        alt="{{ $image->alt() }}"
-                        @if ($dim) width="{{ $dim['width'] }}" height="{{ $dim['height'] }}" @endif
-                        loading="lazy" decoding="async">
+                    <x-responsive-image :media="$image" sizes="(max-width: 550px) 100vw, 50vw" :widths="[600, 900, 1200, 1600]" fallback="900" />
                 @endforeach
             </div>
         @elseif (isset($section['image_position']))

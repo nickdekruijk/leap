@@ -80,9 +80,9 @@ an optional dark background — white text plus a background photo or a gradient
 
 Section images and background photos are served through `nickdekruijk/imageresize`. The
 width presets in `config/imageresize.php` (600–2560) resize originals on request, and the
-Blade views emit `srcset`/`sizes` so the browser picks the right size for the viewport and
-device pixel ratio. Backgrounds are lazy `<img>` elements (`object-fit: cover`); the first
-slider image is eager for a fast LCP.
+`<x-responsive-image>` component (see below) emits `srcset`/`sizes` so the browser picks
+the right size for the viewport and device pixel ratio. Backgrounds are lazy `<img>`
+elements (`object-fit: cover`); the first slider image is eager for a fast LCP.
 
 Two setup notes:
 
@@ -94,6 +94,36 @@ Two setup notes:
 Leap caches each image's intrinsic dimensions in `media.meta` (via `Media::dimensions()`),
 so the section `<img>` carries `width`/`height` — the browser reserves the correct box
 (no layout shift) while the image keeps its natural ratio (no cropping).
+
+### `<x-responsive-image>`
+
+A shared component (`resources/views/components/responsive-image.blade.php`)
+consolidates the `srcset`/`sizes`/`alt`/dimensions/focus-point boilerplate every
+section view needs, instead of each one hand-rolling it:
+
+```blade
+<x-responsive-image :media="$image" sizes="(max-width: 550px) 100vw, 50vw" :widths="[600, 900, 1200, 1600]" fallback="900" />
+```
+
+- `media` — a `Media` instance (e.g. `$section->image->first()`).
+- `sizes` — **required**, the CSS `sizes` value for how the image is actually laid
+  out. There is no sensible universal default: `"100vw"` for a full-bleed background,
+  `"(max-width: 550px) 100vw, 50vw"` for a half-width content image, a fixed px value
+  for a small thumbnail.
+- `widths` — the `asset_resized()` breakpoints to generate (default `[600, 900, 1200,
+  1600]`); the `w` descriptor is the real pixel width of each generated file.
+- `fallback` — the width used for the plain `src` (browsers without `srcset` support);
+  defaults to the middle of `widths`.
+- `eager` — `fetchpriority="high"` instead of `loading="lazy"`, for an LCP-critical
+  image (e.g. the first slide).
+- `decorative` — forces `alt=""` for a background/decorative image instead of
+  `$media->alt()`.
+
+`width`/`height` come from `Media::dimensions()` automatically when available. When the
+media has a **crop focus point** set in the file manager (`Media::focusPosition()`), the
+component emits `object-position: {x}% {y}%` inline so it stays visible under
+`object-fit: cover` — sections that don't set a focus point keep the CSS default
+(`object-position: center`).
 
 WebP/AVIF are not generated yet (a possible future addition).
 

@@ -138,6 +138,22 @@ class Media extends Model
         return (string) ($value ?? '');
     }
 
+    /**
+     * The crop focus point set in the file manager, as CSS-ready percentages
+     * (0-100), or null when none is set. Pair with object-fit: cover and
+     * object-position: {x}% {y}% to keep the focus point visible when the image
+     * is cropped by its container's aspect ratio.
+     */
+    public function focusPosition(): ?array
+    {
+        $focus = $this->meta['image_focus'] ?? null;
+        if (! is_array($focus) || ! isset($focus['x'], $focus['y'])) {
+            return null;
+        }
+
+        return ['x' => (float) $focus['x'], 'y' => (float) $focus['y']];
+    }
+
     public function isAudio(): bool
     {
         return Str::contains($this->mime_type, ['audio/flac', 'audio/mp3', 'audio/wav', 'audio/aac']);
