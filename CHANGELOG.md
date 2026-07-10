@@ -5,6 +5,15 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] — 2026-07-10
+
+### Fixed
+
+- Test suite only: `HasLocaleRoutingTest` refreshes the router's name lookup after
+  registering routes so `route()` resolves them without a preceding request,
+  fixing a failure under `--prefer-lowest` (Laravel 12). No shipped code changed
+  from 0.9.3.
+
 ## [0.9.3] — 2026-07-10
 
 ### Added
