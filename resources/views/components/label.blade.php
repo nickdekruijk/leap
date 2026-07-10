@@ -4,10 +4,24 @@
         <span class="leap-label">
             {!! $attribute->label ?? ($label ?? $name) !!}
             @if (($attribute->translatable ?? false) && config('leap.locales'))
-                <span class="leap-translatable leap-hint" tabindex="0" role="note" aria-label="{{ __('leap::resource.translatable') }}">
-                    {{ strtoupper($attribute->currentLocale ?? array_key_first(config('leap.locales') ?? [])) }}
-                    <span class="leap-hint-tooltip">{{ __('leap::resource.translatable') }}</span>
-                </span>
+                @php($otherLocales = array_diff_key(config('leap.locales'), [$attribute->currentLocale => true]))
+                @if ($this->aiTranslateEnabled() && $otherLocales)
+                    <span class="leap-translatable leap-hint leap-translate" x-data="{ open: false }" x-on:click.outside="open = false" role="button" tabindex="0"
+                        x-on:click.stop.prevent="open = !open" wire:loading.class="leap-translating" wire:target="translateField">
+                        {{ strtoupper($attribute->currentLocale ?? array_key_first(config('leap.locales') ?? [])) }}
+                        <span class="leap-translate-menu" x-show="open" x-transition x-cloak x-on:click.stop>
+                            <span class="leap-translate-menu-title">@lang('leap::resource.translate_from')</span>
+                            @foreach ($otherLocales as $code => $name)
+                                <button type="button" wire:click="translateField('{{ $attribute->dataName }}', '{{ $code }}')" wire:loading.attr="disabled" wire:target="translateField" x-on:click="open = false">{{ $name }}</button>
+                            @endforeach
+                        </span>
+                    </span>
+                @else
+                    <span class="leap-translatable leap-hint" tabindex="0" role="note" aria-label="{{ __('leap::resource.translatable') }}">
+                        {{ strtoupper($attribute->currentLocale ?? array_key_first(config('leap.locales') ?? [])) }}
+                        <span class="leap-hint-tooltip">{{ __('leap::resource.translatable') }}</span>
+                    </span>
+                @endif
             @endif
             @if ($attribute->hint ?? false)
                 <span class="leap-hint" tabindex="0" role="note" aria-label="{{ strip_tags($attribute->hint) }}">

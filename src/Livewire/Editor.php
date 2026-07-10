@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
@@ -128,6 +129,124 @@ class Editor extends Component
         }
 
         return $translations;
+    }
+
+    /**
+     * Whether the AI translation feature is configured (provider + api key).
+     */
+    public function aiTranslateEnabled(): bool
+    {
+        return AiTask::for('translate')->enabled();
+    }
+
+    /**
+     * Translate a single field into the active locale from $from and fill the
+     * in-memory editor data for review (nothing is saved). $dataName is the
+     * field's binding incl. the active locale, e.g. "data.title.nl" or
+     * "data.blocks.2.heading.nl".
+     */
+    public function translateField(string $dataName, string $from): void
+    {
+        Leap::validatePermission('update');
+
+        $base = Str::beforeLast(Str::after($dataName, 'data.'), '.'.$this->activeLocale);
+        $source = (string) data_get($this->data, "$base.$from");
+        if (trim(strip_tags($source)) === '') {
+            return;
+        }
+
+        try {
+            $out = AiTask::for('translate')->translate([$base => $source], $this->activeLocale, $from);
+            data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $out[$base] ?? $source));
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
+        }
+    }
+
+    /**
+     * Translate every translatable field (including section sub-fields) into the
+     * active locale from $from, filling the in-memory editor data for review.
+     * When $onlyEmpty, targets that already have content are left untouched.
+     */
+    public function translateAll(string $from, bool $onlyEmpty): void
+    {
+        Leap::validatePermission('update');
+
+        $values = [];
+        foreach ($this->translatableDataPaths() as $base) {
+            $target = (string) data_get($this->data, "$base.".$this->activeLocale);
+            if ($onlyEmpty && trim(strip_tags($target)) !== '') {
+                continue;
+            }
+            $source = (string) data_get($this->data, "$base.$from");
+            if (trim(strip_tags($source)) !== '') {
+                $values[$base] = $source;
+            }
+        }
+
+        if ($values === []) {
+            return;
+        }
+
+        try {
+            foreach (AiTask::for('translate')->translate($values, $this->activeLocale, $from) as $base => $translated) {
+                data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $translated));
+            }
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
+        }
+    }
+
+    /**
+     * All translatable leaf paths relative to $this->data, without the locale
+     * segment: top-level fields plus section/repeater sub-fields per index.
+     *
+     * @return list<string>
+     */
+    protected function translatableDataPaths(): array
+    {
+        $paths = [];
+        foreach ($this->attributes() as $attribute) {
+            if ($this->parentModule()->hasTranslation($attribute)) {
+                $paths[] = $attribute->name;
+            }
+
+            if ($attribute->type === 'sections' && is_array($this->data[$attribute->name] ?? null)) {
+                foreach ($this->data[$attribute->name] as $index => $section) {
+                    if (! is_array($section) || empty($section['_name'])) {
+                        continue;
+                    }
+                    $subs = collect($attribute->sections)->where('name', $section['_name'])->first()?->attributes;
+                    foreach (collect($subs)->where('translatable', true) as $sub) {
+                        $paths[] = "$attribute->name.$index.$sub->name";
+                    }
+                }
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * Slugify a translated value when its field is a slug field, so a
+     * translated slug stays URL-safe (e.g. "Über uns" → "uber-uns") instead of
+     * being stored as prose. $base is a data path without the locale segment.
+     */
+    protected function slugifyValue(string $base, string $value): string
+    {
+        $field = Str::afterLast($base, '.');
+        try {
+            $isSlug = $this->attributes()->contains(fn ($attribute) => (
+                // The slug field declares its source with slugFrom('title')…
+                ($attribute->name === $field && $attribute->slugFrom)
+                // …or another field declares slugify('slug') targeting this field.
+                || $attribute->slugify === $field
+            ));
+        } catch (\Throwable $e) {
+            return $value;
+        }
+
+        return $isSlug ? Str::slug($value) : $value;
     }
 
     /**

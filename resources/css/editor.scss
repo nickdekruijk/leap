@@ -132,6 +132,78 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     letter-spacing: 0.02em;
     cursor: help;
 }
+.leap-translatable.leap-translate {
+    position: relative;
+    cursor: pointer;
+    &:hover,
+    &:focus-visible {
+        color: rgba(black, 0.8);
+        background: rgba(black, 0.12);
+    }
+    &.leap-translating {
+        animation: leap-translate-pulse 0.8s ease-in-out infinite;
+    }
+}
+.leap-translate-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 30;
+    min-width: 150px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-align: left;
+    background: white;
+    border: 1px solid rgba(black, 0.15);
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(black, 0.18);
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    .leap-translate-menu-title {
+        font-weight: 600;
+        opacity: 0.55;
+        padding: 4px 8px 2px;
+    }
+    button {
+        font: inherit;
+        text-align: left;
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 4px;
+        color: $blue-dark;
+        &:hover:not([disabled]) {
+            background: $grey-light;
+        }
+        &[disabled] {
+            opacity: 0.5;
+            cursor: default;
+        }
+    }
+}
+.leap-translate-all {
+    display: inline-flex;
+}
+.leap-translate-scope {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 400;
+    cursor: pointer;
+}
+@keyframes leap-translate-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
 .leap-hint {
     position: relative;
     display: inline-flex;

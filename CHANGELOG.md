@@ -21,7 +21,8 @@ supported API and may change in a minor release. Don't call them from applicatio
 - **Multilingual content editing.** Set `leap.locales` to an associative array
   (e.g. `['nl' => 'Nederlands', 'en' => 'English']`) to edit translatable fields
   per locale in the admin. The editor shows a language switcher in the button bar
-  (tabs for two locales, a dropdown for more), a per-field locale badge, and
+  (abbreviated tabs for up to three locales, a dropdown for four or more), a
+  per-field locale badge, and
   validates the default locale as required with the others optional. Gated on
   `leap.locales`: when it is `null` (the default) behaviour is byte-for-byte
   identical to before. Mark section sub-fields with `Attribute::translatable()`;
@@ -29,6 +30,14 @@ supported API and may change in a minor release. Don't call them from applicatio
   Legacy monolingual values (plain strings from before a field became
   translatable) are wrapped into the default locale on load, so upgrading a
   record preserves its content instead of overwriting it on the first save.
+- **AI content assistance.** With an AI provider configured under `leap.ai`
+  (Gemini, Claude, OpenAI, or DeepL for translation), the admin can generate
+  image **alt texts** per locale in the file manager and **translate** editor
+  content into the active locale — per field or all fields at once (including
+  section sub-fields), with an empty-only or overwrite scope. HTML markup is
+  preserved, slug fields stay slugified, and results fill the form for review
+  (nothing is saved automatically). Disabled by default; each task picks its own
+  provider and model. See [docs/ai.md](docs/ai.md).
 - **Lazy click-to-edit rich-text.** Rich-text fields can show their rendered
   HTML as a preview and only initialize TinyMCE when clicked (torn down again on
   save), so editors with many rich-text sections open fast. Toggled by

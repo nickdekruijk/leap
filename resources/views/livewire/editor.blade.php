@@ -10,7 +10,7 @@
                 @endcan
             @endif
             @if ($this->editorLocales())
-                @if (count($this->editorLocales()) > 2)
+                @if (count($this->editorLocales()) > 3)
                     <select class="leap-select leap-locale-select" wire:model.live="activeLocale" aria-label="{{ __('leap::resource.language') }}">
                         @foreach ($this->editorLocales() as $code => $name)
                             <option value="{{ $code }}">{{ $name }}</option>
@@ -19,10 +19,38 @@
                 @else
                     <div class="leap-locale-tabs" role="tablist" aria-label="{{ __('leap::resource.language') }}">
                         @foreach ($this->editorLocales() as $code => $name)
-                            <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" @class(['leap-button', 'active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ $name }}</button>
+                            <button type="button" role="tab" aria-selected="{{ $activeLocale === $code ? 'true' : 'false' }}" title="{{ $name }}" @class(['leap-button', 'active' => $activeLocale === $code]) wire:click="$set('activeLocale', '{{ $code }}')">{{ strtoupper($code) }}</button>
                         @endforeach
                     </div>
                 @endif
+            @endif
+            @if ($this->editorLocales() && $this->aiTranslateEnabled())
+                @php($translateFrom = collect(array_keys($this->editorLocales()))->first(fn ($c) => $c !== $activeLocale) ?? $this->defaultLocale())
+                <div class="leap-translate-all" x-data="{ open: false, from: '{{ $translateFrom }}', scope: 'empty', busy: false }">
+                    <x-leap::button svg-icon="fas-language" label="leap::resource.translate"
+                        x-on:click="const l = {{ Js::from(array_keys($this->editorLocales())) }}; from = l.find(c => c !== $wire.activeLocale) || l[0]; open = true" />
+                    <x-leap::modal show="open" close="open = false" title="{{ __('leap::resource.translate') }}">
+                        <div class="leap-modal-field">
+                            <label>@lang('leap::resource.translate_from')</label>
+                            <select class="leap-select" x-model="from">
+                                @foreach ($this->editorLocales() as $code => $name)
+                                    <option value="{{ $code }}" x-bind:disabled="'{{ $code }}' === '{{ $activeLocale }}'">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="leap-modal-field">
+                            <label class="leap-translate-scope"><input type="radio" value="empty" x-model="scope"> @lang('leap::resource.translate_empty')</label>
+                            <label class="leap-translate-scope"><input type="radio" value="all" x-model="scope"> @lang('leap::resource.translate_all')</label>
+                        </div>
+                        <div class="leap-modal-actions">
+                            <button type="button" class="leap-modal-btn leap-modal-save" :class="{ 'leap-alt-generating': busy }" :disabled="busy || from === '{{ $activeLocale }}'"
+                                x-on:click="busy = true; $wire.translateAll(from, scope === 'empty').then(() => open = false).finally(() => busy = false)">
+                                @svg('fas-language', 'svg-icon') @lang('leap::resource.translate')
+                            </button>
+                            <button type="button" class="leap-modal-btn" x-on:click="open = false">@lang('leap::resource.cancel')</button>
+                        </div>
+                    </x-leap::modal>
+                </div>
             @endif
             @if ($editing > 0)
                 @can('leap::delete')

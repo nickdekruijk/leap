@@ -26,5 +26,10 @@ return [
     'language' => 'Language',
     'search_placeholder' => 'Search...',
     'translatable' => 'Translatable — this field follows the active language tab',
+    'translate' => 'Translate',
+    'translate_all' => 'All fields (overwrite)',
+    'translate_empty' => 'Only empty fields',
+    'translate_failed' => 'Translation failed',
+    'translate_from' => 'Translate from',
     'updated' => 'updated',
 ];

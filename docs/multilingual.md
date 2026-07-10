@@ -18,11 +18,20 @@ The first key is the default locale.
 ## The editor
 
 When `leap.locales` is set and a resource has at least one translatable field, the
-editor shows a **language switcher** in the button bar — tabs for two locales, a
-dropdown for more. One active locale drives all translatable inputs at once (top-level
-fields and section fields), and a small locale badge marks which fields are
-translatable. Validation makes the default locale `required` and the other locales
-optional.
+editor shows a **language switcher** in the button bar — abbreviated tabs (`NL`, `EN`)
+for up to three locales, a dropdown for four or more. One active locale drives all
+translatable inputs at once (top-level fields and section fields), and a small locale
+badge marks which fields are translatable. Validation makes the default locale
+`required` and the other locales optional.
+
+## AI translation
+
+With an AI provider configured, the editor can translate content **into the active
+locale** from a chosen source locale — per field (click a field's locale badge) or all
+fields at once (the **Translate** button, with an "only empty" or "overwrite all" scope,
+covering section sub-fields too). HTML markup is preserved and slug fields stay
+slugified. Results fill the form for review; saving is unchanged. Configuration and
+details: [ai.md](ai.md).
 
 ## Making fields translatable
 

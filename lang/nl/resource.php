@@ -26,5 +26,10 @@ return [
     'language' => 'Taal',
     'search_placeholder' => 'Zoeken...',
     'translatable' => 'Vertaalbaar — dit veld volgt de actieve taal-tab',
+    'translate' => 'Vertalen',
+    'translate_all' => 'Alle velden (overschrijven)',
+    'translate_empty' => 'Alleen lege velden',
+    'translate_failed' => 'Vertalen mislukt',
+    'translate_from' => 'Vertalen uit',
     'updated' => 'bijgewerkt',
 ];
