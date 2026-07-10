@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] — 2026-07-10
+
+### Added
+
+- `leap:module` artisan command: generates a resource from an existing Eloquent model,
+  detecting field types, required/unique/sortable, foreign keys, enums, `$active` and
+  `$orderBy` from the model's schema and casts. Re-running against an existing module
+  merges in only the new columns instead of overwriting hand-written attributes.
+
+### Fixed
+
+- Template's `sitemap.xml` is now multilingual: every page gets one `<url>` entry per
+  locale it has a routable slug translation for (cascading from its parent chain), each
+  with `<xhtml:link>` hreflang alternates — matching the language-switcher already
+  rendered in the page head. Monolingual sites are unaffected.
+
 ## [0.9.1] — 2026-07-10
 
 ### Fixed
