@@ -2,10 +2,11 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
-use Illuminate\Support\Facades\Context;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\Auth2FA;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Models\Role;
@@ -19,7 +20,7 @@ class TwoFactorTest extends TestCase
     {
         $user = User::create([
             'name' => 'Test User',
-            'email' => 'test' . uniqid() . '@example.com',
+            'email' => 'test'.uniqid().'@example.com',
             'password' => bcrypt('password'),
         ]);
 
@@ -34,7 +35,7 @@ class TwoFactorTest extends TestCase
      */
     private function grantTwoFactorPermissions(): void
     {
-        Context::addHidden('leap.permissions', [
+        Leap::context()->setPermissions([
             Profile::class => ['read' => true, 'update' => true],
         ]);
     }
@@ -103,7 +104,7 @@ class TwoFactorTest extends TestCase
         $this->actingAs($user);
         $this->grantTwoFactorPermissions();
 
-        (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
+        (new EnableTwoFactorAuthentication(app(TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
         Livewire::test(Profile::class)->call('disableTwoFactor');
@@ -116,7 +117,7 @@ class TwoFactorTest extends TestCase
     public function test_user_with_confirmed_two_factor_is_challenged(): void
     {
         $user = $this->createUser();
-        (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
+        (new EnableTwoFactorAuthentication(app(TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
         $response = $this->actingAs($user)->get(route('leap.home'));
@@ -127,7 +128,7 @@ class TwoFactorTest extends TestCase
     public function test_valid_totp_passes_the_challenge(): void
     {
         $user = $this->createUser();
-        (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
+        (new EnableTwoFactorAuthentication(app(TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
         $this->actingAs($user);
 
@@ -143,7 +144,7 @@ class TwoFactorTest extends TestCase
     public function test_recovery_code_passes_the_challenge_and_is_consumed(): void
     {
         $user = $this->createUser();
-        (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
+        (new EnableTwoFactorAuthentication(app(TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
         $this->actingAs($user);
 
@@ -163,7 +164,7 @@ class TwoFactorTest extends TestCase
     public function test_invalid_challenge_code_is_rejected(): void
     {
         $user = $this->createUser();
-        (new EnableTwoFactorAuthentication(app(\Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider::class)))($user);
+        (new EnableTwoFactorAuthentication(app(TwoFactorAuthenticationProvider::class)))($user);
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
         $this->actingAs($user);
 

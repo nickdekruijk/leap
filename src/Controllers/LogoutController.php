@@ -16,6 +16,7 @@ class LogoutController extends Controller
         Auth::guard(config('leap.guard'))->logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
+
         return redirect()->route('leap.home');
     }
 }

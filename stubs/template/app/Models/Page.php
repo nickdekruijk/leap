@@ -2,22 +2,26 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\PageController;
 use App\Traits\HasSections;
+use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use NickDeKruijk\Leap\Traits\HasMedia;
 use Spatie\Translatable\HasTranslations;
 
 class Page extends Model
 {
     use HasFactory;
+    use HasMedia;
     use HasSections;
+    use HasSlug;
     use HasTranslations;
     use SoftDeletes;
 
     public $translatable = [
         'title',
-        'head',
         'html_title',
         'slug',
         'description',
@@ -30,10 +34,57 @@ class Page extends Model
         'active' => 'boolean',
         'published_at' => 'datetime',
         'menuitem' => 'boolean',
-        'home' => 'integer',
         'sections' => 'array',
         'meta' => 'array',
     ];
+
+    /**
+     * Flush the cached page tree whenever a page changes, so admin edits show up
+     * immediately (see config('leap.cache') and PageController::flushPageCache()).
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => PageController::flushPageCache());
+        static::deleted(fn () => PageController::flushPageCache());
+        static::restored(fn () => PageController::flushPageCache());
+    }
+
+    /**
+     * The document <title>: a custom html_title is used verbatim; a plain page title
+     * gets the site name appended. config('app.name') is only added when there is no
+     * html_title.
+     */
+    public function documentTitle(): string
+    {
+        // Read html_title without Spatie's locale fallback: an empty html_title in
+        // the active locale must fall through to the page title, not borrow another
+        // locale's html_title.
+        $htmlTitle = $this->getTranslation('html_title', app()->getLocale(), false);
+
+        return $htmlTitle
+            ?: trim(($this->title ? $this->title.' — ' : '').config('app.name'));
+    }
+
+    /**
+     * OG/Twitter image URL from the page's own image, then its first section image or
+     * background. Null when the page has none (the layout falls back to the og_image
+     * site setting).
+     */
+    public function ogImageUrl(): ?string
+    {
+        $file = $this->mediaFor('images')->first()?->file_name;
+        if (! $file) {
+            foreach ($this->sections() as $section) {
+                $file = ($section['image'] ?? null)?->first()?->file_name
+                    ?? ($section['background'] ?? null)?->first()?->file_name;
+                if ($file) {
+                    break;
+                }
+            }
+        }
+
+        return $file ? url('storage/'.$file) : null;
+    }
 
     public function scopePublished($query)
     {

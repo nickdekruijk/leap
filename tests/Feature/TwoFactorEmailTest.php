@@ -3,7 +3,6 @@
 namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
@@ -38,7 +37,7 @@ class TwoFactorEmailTest extends TestCase
      */
     private function grantTwoFactorPermissions(): void
     {
-        Context::addHidden('leap.permissions', [
+        Leap::context()->setPermissions([
             Profile::class => ['read' => true, 'update' => true],
         ]);
     }

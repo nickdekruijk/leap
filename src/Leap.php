@@ -6,7 +6,6 @@ use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Gate;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Classes\Section;
@@ -16,6 +15,14 @@ use NickDeKruijk\Leap\Traits\CanLog;
 class Leap
 {
     use CanLog;
+
+    /**
+     * Return the request-scoped Leap context (active module, permissions, role).
+     */
+    public static function context(): LeapContext
+    {
+        return app(LeapContext::class);
+    }
 
     /**
      * Return all modules the current user has access to
@@ -201,8 +208,8 @@ class Leap
     {
         $title = config('leap.title');
 
-        if (Context::getHidden('leap.module')) {
-            $moduleTitle = (new (Context::getHidden('leap.module')))->getTitle();
+        if ($module = static::context()->module()) {
+            $moduleTitle = (new $module)->getTitle();
             $title = str_replace('{module}', $moduleTitle, $title);
         } else {
             $title = str_replace('{module} - ', '', $title);

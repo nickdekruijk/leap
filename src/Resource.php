@@ -76,7 +76,7 @@ class Resource extends Module
     public array|false $browse = false;
 
     #[Locked]
-    public array|false $translatable;
+    public array|false $translatable = false;
 
     /**
      * Eager load model with these relationships

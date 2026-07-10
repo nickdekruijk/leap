@@ -14,7 +14,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create(config('leap.table_prefix') . 'logs', function (Blueprint $table) {
+        Schema::create(config('leap.table_prefix').'logs', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
             $table->string('ip')->nullable();
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(config('leap.table_prefix') . 'logs');
+        Schema::dropIfExists(config('leap.table_prefix').'logs');
     }
 };

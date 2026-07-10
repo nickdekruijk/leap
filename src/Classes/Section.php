@@ -9,21 +9,21 @@ class Section
     public static $_instance = null;
 
     public string $name;
-    public string|null $view;
+
+    public ?string $view;
+
     public string $label;
+
     public array $attributes = [];
 
     /**
      * Make a new Section instance and set default view based on name.
-     *
-     * @param string $name
-     * @return Section
      */
     public static function make(string $name): Section
     {
         self::$_instance = new self;
         self::$_instance->name = $name;
-        self::$_instance->view = 'sections.' . $name;
+        self::$_instance->view = 'sections.'.$name;
 
         self::$_instance->label = Str::headline($name);
 
@@ -33,10 +33,9 @@ class Section
     /**
      * Override the default view of the section
      *
-     * @param string $name
-     * @return Section
+     * @param  string  $name
      */
-    public function view(string|null $view): Section
+    public function view(?string $view): Section
     {
         $this->view = $view;
 
@@ -45,8 +44,6 @@ class Section
 
     /**
      * Don't set _view for the section
-     *
-     * @return Section
      */
     public function withoutView(): Section
     {
@@ -56,28 +53,27 @@ class Section
     /**
      * Set the label for the section
      *
-     * The label is a nice name for the attribute, it will be shown in the index and form. 
+     * The label is a nice name for the attribute, it will be shown in the index and form.
      * By default index label is the original attribute name passed thru Str::headline().
      * With this method you can change the label and index label.
-     * 
-     * @param string $label
-     * @return Section
+     *
+     * @param  string  $label
      */
-    public function label(string $label): Section
+    public function label(string|array $label): Section
     {
-        $this->label = $label;
+        // Accept a per-locale array (['nl' => '…', 'en' => '…']) and resolve to the current locale
+        $this->label = is_array($label) ? ($label[app()->getLocale()] ?? (reset($label) ?: '')) : $label;
+
         return $this;
     }
 
     /**
      * Add one or more attributes to the section
-     *
-     * @param Attribute ...$attributes
-     * @return Section
      */
     public function attributes(Attribute ...$attributes): Section
     {
         $this->attributes = $attributes;
+
         return $this;
     }
 }

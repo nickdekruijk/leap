@@ -14,7 +14,9 @@ class Login extends Component
     use WithRateLimiting;
 
     public $email;
+
     public $password;
+
     public $remember;
 
     protected function rules()
@@ -27,6 +29,7 @@ class Login extends Component
                 $rules[$column] = 'required';
             }
         }
+
         return $rules;
     }
 
@@ -48,6 +51,7 @@ class Login extends Component
                 // Require the two factor challenge to be passed again for this login
                 session()->forget('leap.auth_2fa.validated');
                 $this->log('login');
+
                 return $this->redirectIntended(route('leap.home'));
             } else {
                 $this->log('login-failed', [array_key_first($credentials) => $credentials[array_key_first($credentials)]]);

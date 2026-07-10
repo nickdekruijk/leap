@@ -15,6 +15,7 @@ class ForgotPassword extends Component
     use WithRateLimiting;
 
     public $email;
+
     public $status;
 
     protected function rules()

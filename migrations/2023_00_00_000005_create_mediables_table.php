@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(config('leap.table_prefix') . 'mediables', function (Blueprint $table) {
+        Schema::create(config('leap.table_prefix').'mediables', function (Blueprint $table) {
             $table->foreignIdFor(Media::class);
             $table->morphs('mediable');
             $table->string('mediable_attribute')->nullable();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('leap.table_prefix') . 'mediables');
+        Schema::dropIfExists(config('leap.table_prefix').'mediables');
     }
 };

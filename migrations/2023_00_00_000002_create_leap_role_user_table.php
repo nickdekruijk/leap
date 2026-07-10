@@ -15,9 +15,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create(config('leap.table_prefix') . 'role_user', function (Blueprint $table) {
+        Schema::create(config('leap.table_prefix').'role_user', function (Blueprint $table) {
             $table->boolean('accepted')->default(true);
-            $table->foreignIdFor(Role::class, 'role_id')->constrained(config('leap.table_prefix') . 'roles')->cascadeOnDelete();
+            $table->foreignIdFor(Role::class, 'role_id')->constrained(config('leap.table_prefix').'roles')->cascadeOnDelete();
             $table->foreignIdFor(Leap::userModel()::class, 'user_id')->constrained()->cascadeOnDelete();
             $table->string('accept_token')->nullable();
             $table->datetime('invited_on')->nullable();
@@ -36,9 +36,9 @@ return new class extends Migration
                 'permissions' => [
                     [
                         '_name' => 'all_modules',
-                        'all_permissions' => true
+                        'all_permissions' => true,
                     ],
-                ]
+                ],
             ],
         );
 
@@ -53,6 +53,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(config('leap.table_prefix') . 'role_user');
+        Schema::dropIfExists(config('leap.table_prefix').'role_user');
     }
 };

@@ -317,6 +317,63 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | ai
+    |--------------------------------------------------------------------------
+    |
+    | AI providers and per-task configuration. Provider credentials (API keys)
+    | are the only env vars needed; the per-task provider/model are structural
+    | project choices set as literals below.
+    |
+    | A task is enabled when its 'provider' is set AND that provider's api_key
+    | is non-empty. When 'model' is null the sensible default for the chosen
+    | provider is used (see NickDeKruijk\Leap\Classes\AiTask::defaultModel()) —
+    | only set a literal model to override it.
+    |
+    */
+    'ai' => [
+        // Shared provider credentials — the only env vars this feature needs.
+        'providers' => [
+            'gemini' => ['api_key' => env('GEMINI_API_KEY')],
+            'claude' => ['api_key' => env('ANTHROPIC_API_KEY')],
+            'openai' => ['api_key' => env('OPENAI_API_KEY')],
+            'deepl' => ['api_key' => env('DEEPL_API_KEY')], // translation only; no vision
+        ],
+
+        // Request timeout in seconds for provider calls, and a per-user rate limit
+        // (max AI actions per minute) — each call hits a paid third-party API.
+        'timeout' => 60,
+        'rate_limit' => 30,
+
+        // Generate image alt texts (per locale) in the filemanager.
+        'alt_text' => [
+            'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
+            'model' => null,    // null => gemini-2.5-flash / claude-haiku-4-5 / gpt-4o-mini
+        ],
+
+        // Translate editor content (per field or all fields) into the active locale.
+        'translate' => [
+            'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
+            'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
+            // 'max_tokens' => 8192, // chat providers: cap the reply; raise for long pages
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | cache
+    |--------------------------------------------------------------------------
+    |
+    | The frontend template caches its page tree (PageController::getPages())
+    | since pages change rarely. The cache is flushed automatically whenever a
+    | Page is saved or deleted, so keeping this on is safe in every environment.
+    | Set to false to disable persistent caching (a per-request memo still
+    | applies), or clear it manually with `php artisan cache:clear`.
+    |
+    */
+    'cache' => env('LEAP_CACHE', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | ace
     |--------------------------------------------------------------------------
     | Ace code editor options like CDN and version to use.
@@ -338,16 +395,31 @@ return [
     |--------------------------------------------------------------------------
     | tinymce
     |--------------------------------------------------------------------------
-    | TinyMCE options like CDN and version to use.
-    | cdn: By default the latest 7.x version.
-    | options: This will be converted to json and added to tinymce.init().
-    |          See https://www.tiny.cloud/docs/tinymce/7/ for options.
+    |
+    | Settings for the TinyMCE rich-text editor used by Attribute::richtext().
+    |
+    | cdn:     The TinyMCE build to load. Defaults to the latest 7.x version.
+    | options: Passed as JSON to tinymce.init(). See the TinyMCE 7 docs:
+    |          https://www.tiny.cloud/docs/tinymce/7/
+    |
+    | lazy / lazy_sections: "Lazy" fields show their rendered HTML as a
+    | click-to-edit preview and only start TinyMCE when clicked (and drop back
+    | to the preview on save), so an editor with many rich-text fields opens
+    | fast. 'lazy' applies to standalone top-level fields (default false = start
+    | TinyMCE immediately, as before); 'lazy_sections' applies to rich-text
+    | inside repeatable sections (default true), which is where the slowdown
+    | usually comes from.
     |
     */
     'tinymce' => [
         'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
+        'lazy' => false,
+        'lazy_sections' => true,
         'options' => [
             'autoresize_bottom_margin' => 50,
+            // Class on the editor iframe <body>, so a content_css scoped under
+            // .tinymce (like the template's) also styles the click-to-edit preview.
+            'body_class' => 'tinymce',
             'branding' => false,
             // 'content_css' => '/css/tinymce.css',
             // 'content_langs' => [
@@ -373,7 +445,6 @@ return [
                 ['title' => 'H2', 'block' => 'h2'],
                 ['title' => 'H3', 'block' => 'h3'],
                 ['title' => 'H4', 'block' => 'h4'],
-                ['title' => 'Quote', 'block' => 'blockquote'],
             ],
             'link_class_list' => [
                 ['title' => 'Default', 'value' => ''],

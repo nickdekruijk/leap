@@ -7,6 +7,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ Leap::htmlTitle() }}</title>
         {!! \NickDeKruijk\Leap\Controllers\AssetController::cssLink() !!}
+        {!! \NickDeKruijk\Leap\Controllers\AssetController::tinymceContentCssLink() !!}
         @if (config('leap.auth_passkeys.enabled'))
             <script src="{{ route('leap.js') }}?{{ \NickDeKruijk\Leap\Controllers\AssetController::jsFilemtime() }}" defer></script>
         @endif

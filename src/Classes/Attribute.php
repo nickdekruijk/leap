@@ -26,6 +26,22 @@ class Attribute
 
     public ?string $label;
 
+    public ?string $hint = null;
+
+    /**
+     * Marks a section sub-attribute as translatable (edited per locale, stored as
+     * ['nl' => …, 'en' => …]). Top-level attributes derive this from the model's
+     * translatable attributes instead.
+     */
+    public bool $translatable = false;
+
+    /**
+     * The locale this attribute is currently bound to in the editor, set by
+     * Editor::attributes()/sectionAttribute() for translatable fields. Used to
+     * show which language the field's value belongs to.
+     */
+    public ?string $currentLocale = null;
+
     public string $labelIndex;
 
     public string $placeholder = '';
@@ -35,6 +51,8 @@ class Attribute
     public bool $searchable = false;
 
     public ?string $slugify = null;
+
+    public ?string $slugFrom = null;
 
     public ?int $step = null;
 
@@ -231,7 +249,7 @@ class Attribute
      *
      * @param  bool  $multiple  Whether multiple files can be selected
      */
-    public function media($multiple = true): Attribute
+    public function media(bool $multiple = true): Attribute
     {
         if ($this->name == 'media') {
             throw new Exception('The media attribute cannot be named "media"');
@@ -270,6 +288,8 @@ class Attribute
 
     /**
      * Return the attribute values depending on type
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function getValues(): array
     {
@@ -286,6 +306,8 @@ class Attribute
 
     /**
      * Return values from the model, this is used for foreign keys
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function valuesFromModel(): array
     {
@@ -469,12 +491,47 @@ class Attribute
      *
      * @param  string  $label
      */
-    public function label(?string $label = null, ?string $labelIndex = null): Attribute
+    /**
+     * Resolve a value that may be a per-locale array (['nl' => '…', 'en' => '…'])
+     * to the string for the current locale, falling back to the first entry.
+     */
+    protected function localized(string|array|null $value): ?string
     {
+        if (is_array($value)) {
+            return $value[app()->getLocale()] ?? (reset($value) ?: null);
+        }
+
+        return $value;
+    }
+
+    public function label(string|array|null $label = null, string|array|null $labelIndex = null): Attribute
+    {
+        $label = $this->localized($label);
         $this->label = $label;
         if ($label) {
-            $this->labelIndex = $labelIndex ?: $label;
+            $this->labelIndex = $this->localized($labelIndex) ?: $label;
         }
+
+        return $this;
+    }
+
+    /**
+     * A short hint/explanation shown with the field in the editor.
+     * Accepts a per-locale array like label().
+     */
+    public function hint(string|array $hint): Attribute
+    {
+        $this->hint = $this->localized($hint);
+
+        return $this;
+    }
+
+    /**
+     * Mark a section sub-attribute as translatable (edited per locale).
+     */
+    public function translatable(bool $translatable = true): Attribute
+    {
+        $this->translatable = $translatable;
 
         return $this;
     }
@@ -503,9 +560,9 @@ class Attribute
     /**
      * Set the placeholder value
      */
-    public function placeholder(string $placeholder): Attribute
+    public function placeholder(string|array $placeholder): Attribute
     {
-        $this->placeholder = $placeholder;
+        $this->placeholder = $this->localized($placeholder);
 
         return $this;
     }
@@ -544,6 +601,8 @@ class Attribute
      * Create a copy of the attribute with the confirmed attribute as name
      *
      * This will be used for the extra confirmation input in the editor
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function confirmedAttribute(): Attribute
     {
@@ -595,18 +654,41 @@ class Attribute
     }
 
     /**
-     * If the target attribute is empty populate it with a slug of the current value
+     * Declared on the source field: slugify its value into a target (slug) field.
      *
-     * The slugified value will be shown as placeholder for the target input unless a value was already saved in the model.
-     * An incrementing number will be appended to the slug to make it unique if the slug already exists.
-     * Note that also setting a placeholder for the target input will have no effect.
+     * The source-field form of the slug relationship — the mirror image of slugFrom(),
+     * which declares the same thing on the slug field instead. Call it on the field
+     * whose value feeds the slug, e.g. Attribute::make('title')->slugify('slug'). The
+     * source field is made live so the slug's placeholder updates as you type; the slug
+     * shows as a placeholder unless a value was already saved, and an incrementing
+     * number is appended to keep it unique. (Setting a placeholder on the target input
+     * then has no effect.)
      *
-     * @param  string  $attribute  attribute to use for slugging
+     * @param  string  $target  the slug attribute to populate from this field's value
      */
     public function slugify(string $target): Attribute
     {
         $this->wire = 'live';
         $this->slugify = $target;
+
+        return $this;
+    }
+
+    /**
+     * Declared on the slug field: populate it with a slug of another field's value.
+     *
+     * The slug-field form of the slug relationship — the mirror image of slugify()
+     * (which declares the same thing on the source field). Call it on the slug attribute
+     * and pass the source field name, e.g. Attribute::make('slug')->slugFrom('title').
+     * The source field is made live so the placeholder updates as you type; the slug
+     * shows as a placeholder unless a value was already saved, and an incrementing number
+     * is appended to keep it unique.
+     *
+     * @param  string  $source  the attribute whose value is slugified into this field
+     */
+    public function slugFrom(string $source): Attribute
+    {
+        $this->slugFrom = $source;
 
         return $this;
     }
@@ -655,6 +737,9 @@ class Attribute
         return $this;
     }
 
+    /**
+     * @internal Leap rendering helper; not part of the public API.
+     */
     public function inputAttributes(): string
     {
         $attributes = '';
@@ -769,10 +854,8 @@ class Attribute
 
     /**
      * Make attribute hidden in index and editor but make it available for queries
-     *
-     * @param  bool  $hidden
      */
-    public function hidden($hidden = true): Attribute
+    public function hidden(bool $hidden = true): Attribute
     {
         $this->hidden = $hidden;
         $this->accessor($this->name);
@@ -804,6 +887,8 @@ class Attribute
 
     /**
      * Convert the attribute to an array
+     *
+     * @internal Leap rendering helper; not part of the public API.
      */
     public function toArray(): array
     {

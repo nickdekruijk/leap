@@ -3,6 +3,8 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,6 +13,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\WithFileUploads;
+use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Module;
@@ -19,6 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FileManager extends Module
 {
     use WithFileUploads;
+    use WithRateLimiting;
 
     public array $uploads = [];
 
@@ -101,38 +105,56 @@ class FileManager extends Module
     {
         Leap::validatePermission('create');
 
-        if ($this->uploads[$id]['error']) {
+        $uploaded = $this->uploads[$id]['file'] ?? null;
+        if (! $uploaded) {
             return;
         }
 
-        $file = $this->uploads[$id];
+        // $this->uploads is a public (client-controllable) Livewire property, so the
+        // name/path/size/error set in uploadStart cannot be trusted here — the upload
+        // gate must be re-enforced server-side. Take the name as a bare basename (no
+        // path segments), rebuild the target directory from the open folders, and
+        // re-check the extension and size against the actual uploaded file.
+        $name = basename((string) ($this->uploads[$id]['name'] ?? ''));
+        $path = $this->storagePrefix().implode('/', $this->openFolders);
+
+        if ($name === '' || ! $this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
+            $this->dispatch('toast-error', __('leap::filemanager.upload_not_allowed', ['attribute' => $name]))->to(Toasts::class);
+
+            return;
+        }
+        if ($uploaded->getSize() > $this->maxUploadSize()) {
+            $this->dispatch('toast-error', __('leap::filemanager.upload_too_large', ['attribute' => $name]))->to(Toasts::class);
+
+            return;
+        }
 
         // Check if uploaded file already exists
-        if ($this->getStorage()->exists($file['path'].'/'.$file['name'])) {
+        if ($this->getStorage()->exists($path.'/'.$name)) {
             // Compare sha256 hash of both files
-            $hash_existing = hash('sha256', $this->getStorage()->get($file['path'].'/'.$file['name']));
-            $hash_uploaded = hash_file('sha256', $file['file']->path());
+            $hash_existing = hash('sha256', $this->getStorage()->get($path.'/'.$name));
+            $hash_uploaded = hash_file('sha256', $uploaded->path());
             if ($hash_existing === $hash_uploaded) {
-                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
 
                 return;
             }
             $n = 1;
-            $fileParts = pathinfo($file['name']);
-            while ($this->getStorage()->exists($file['path'].'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
+            $fileParts = pathinfo($name);
+            while ($this->getStorage()->exists($path.'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
                 $n++;
             }
-            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $file['name']]))->to(Toasts::class);
-            $file['name'] = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
+            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
+            $name = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
         }
 
-        if ($file['file']->storeAs($file['path'], $file['name'], config('leap.filemanager.disk'))) {
-            Media::forFile($file['path'].'/'.$file['name']);
-            $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $file['name']]))->to(Toasts::class);
-            $this->log('upload', $file['path'].'/'.$file['name']);
+        if ($uploaded->storeAs($path, $name, config('leap.filemanager.disk'))) {
+            Media::forFile($path.'/'.$name);
+            $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $name]))->to(Toasts::class);
+            $this->log('upload', $path.'/'.$name);
             unset($this->columns);
         } else {
-            $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $file['name']]))->to(Toasts::class);
+            $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $name]))->to(Toasts::class);
         }
     }
 
@@ -645,10 +667,11 @@ class FileManager extends Module
             $size += $this->getStorage()->size($full);
             $time = $this->getStorage()->lastModified($full);
             if (count($this->selectedFiles) == 1 && $this->isBitmap($full)) {
-                // When only one file is selected, is not empty and it's a bitmap image get the dimensions in pixels
-                if ($fileContents = $this->getStorage()->get($full)) {
-                    $image = Image::read($fileContents);
-                    $dimensions = $image->width().' x '.$image->height();
+                // When only one file is selected and it's a bitmap, show its pixel
+                // dimensions (computed once and cached in Media.meta via dimensions()).
+                $media = Media::forFile($full);
+                if ($media && $dim = $media->dimensions()) {
+                    $dimensions = $dim['width'].' x '.$dim['height'];
                 }
             }
             if ($timeMin === null || $time < $timeMin) {
@@ -799,6 +822,66 @@ class FileManager extends Module
             }
             $media->meta = $meta ?: null;
             $media->save();
+        }
+    }
+
+    /**
+     * Whether the AI alt-text feature is configured (provider + api key).
+     */
+    public function aiAltEnabled(): bool
+    {
+        return AiTask::for('alt_text')->enabled();
+    }
+
+    /**
+     * Generate an alt text suggestion per configured locale for the given
+     * image via the configured AI provider. Returns a [locale => text] map for
+     * the frontend to fill the inputs with (review-then-save; nothing is saved
+     * here). Returns an empty array on non-images or provider errors.
+     *
+     * @return array<string, string>
+     */
+    public function generateAltTexts(string $file): array
+    {
+        Leap::validatePermission('update');
+
+        // Each call hits a paid third-party API — cap per user.
+        try {
+            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
+        } catch (TooManyRequestsException $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
+
+            return [];
+        }
+
+        $media = Media::forFile($this->full($file));
+        if (! $media || ! $media->isBitmap()) {
+            return [];
+        }
+
+        $locales = config('leap.locales') ?? [app()->getLocale() => ''];
+
+        try {
+            $data = base64_encode(Storage::disk($media->disk ?: config('leap.filemanager.disk'))->get($media->file_name));
+            $prompt = 'Write alt text for screen-reader users, one per language. Describe only the main '
+                .'subject and its purpose, in the shortest phrase that is still complete. Omit '
+                .'decorative background, colours, lighting and styling unless they are essential to the '
+                .'meaning. Most images need only a few words; add detail only when a complex image '
+                .'(chart, diagram, busy scene) truly requires it. Do not start with "image of" or '
+                .'"photo of". Return ONLY a JSON object mapping locale code to alt text. Languages: '
+                .collect($locales)->map(fn ($name, $code) => trim("$code $name"))->implode(', ');
+
+            $reply = AiTask::for('alt_text')->prompt($prompt, [['mime' => $media->mime_type, 'data' => $data]], json: true);
+
+            // Some providers (e.g. Claude) wrap the JSON in a ```json code
+            // fence despite the instruction, so extract the object first.
+            $decoded = preg_match('/\{.*\}/s', $reply, $match) ? json_decode($match[0], true) : null;
+
+            return array_map('strval', array_intersect_key(is_array($decoded) ? $decoded : [], $locales));
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.alt_text_ai_failed'))->to(Toasts::class);
+
+            return [];
         }
     }
 

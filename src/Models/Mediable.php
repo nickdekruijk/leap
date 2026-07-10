@@ -28,6 +28,6 @@ class Mediable extends Model
     {
         parent::__construct($attributes);
 
-        $this->setTable(config('leap.table_prefix') . 'mediables');
+        $this->setTable(config('leap.table_prefix').'mediables');
     }
 }

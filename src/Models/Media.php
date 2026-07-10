@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Laravel\Facades\Image;
 use NickDeKruijk\Leap\Leap;
 
 class Media extends Model
@@ -67,6 +68,38 @@ class Media extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Intrinsic pixel size of a bitmap image, computed once and cached in meta.
+     * Lets the frontend set <img width height> to reserve the aspect-ratio box
+     * (no layout shift) without cropping. Self-healing: legacy media is filled on
+     * first access. Returns null for non-images or files that can't be decoded.
+     *
+     * @return array{width: int, height: int}|null
+     */
+    public function dimensions(): ?array
+    {
+        if (isset($this->meta['width'], $this->meta['height'])) {
+            return ['width' => $this->meta['width'], 'height' => $this->meta['height']];
+        }
+
+        if (! str_starts_with((string) $this->mime_type, 'image/') || $this->mime_type === 'image/svg+xml') {
+            return null;
+        }
+
+        try {
+            $storage = Storage::disk($this->disk ?: config('leap.filemanager.disk'));
+            $image = Image::read($storage->get($this->file_name));
+            $dimensions = ['width' => $image->width(), 'height' => $image->height()];
+
+            $this->meta = array_merge($this->meta ?? [], $dimensions);
+            $this->save();
+
+            return $dimensions;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     public static function findFile(string $file_name, ?string $disk = null): ?Media

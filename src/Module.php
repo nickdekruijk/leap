@@ -3,7 +3,6 @@
 namespace NickDeKruijk\Leap;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use Livewire\Component;
 use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\NavigationItem;
@@ -46,7 +45,7 @@ class Module extends Component
     public function boot()
     {
         // Add this module to the context so we can use it during the request
-        Context::addHidden('leap.module', $this::class);
+        Leap::context()->setModule($this::class);
 
         // If mandatory 2FA enrollment is pending, only the profile module (where enrollment happens) is reachable
         if (Leap::mustEnrollTwoFactor() && $this->getSlug() !== 'profile') {

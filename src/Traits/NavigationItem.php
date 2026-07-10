@@ -2,15 +2,12 @@
 
 namespace NickDeKruijk\Leap\Traits;
 
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 
 trait NavigationItem
 {
     /**
      * Return the navigation icon of the module
-     *
-     * @return string
      */
     public function getIcon(): string
     {
@@ -20,14 +17,12 @@ trait NavigationItem
     /**
      * The navigation priority of the module
      *
-     * @var integer|null
+     * @var int|null
      */
     public $priority;
 
     /**
      * Return the navigation priority of the module
-     *
-     * @return integer
      */
     public function getPriority(): int
     {
@@ -36,8 +31,6 @@ trait NavigationItem
 
     /**
      * Return the slug of the module (slugified title by default)
-     *
-     * @return string
      */
     public function getSlug(): ?string
     {
@@ -53,8 +46,6 @@ trait NavigationItem
 
     /**
      * Return the title of the module (pluralized class name by default)
-     *
-     * @return string
      */
     public function getTitle(): string
     {
@@ -67,13 +58,12 @@ trait NavigationItem
         if (is_array($this->title)) {
             $this->title = $this->title[app()->getLocale()] ?? $plural;
         }
+
         return $this->title ?: $plural;
     }
 
     /**
      * The html output to show in the navigation menu
-     *
-     * @return string|null
      */
     public function getOutput(): ?string
     {

@@ -1,0 +1,103 @@
+/*
+ * TinyMCE editor content styles — loaded via leap.tinymce.options.content_css.
+ *
+ * Every rule is scoped under .tinymce so the SAME file works in two places
+ * without leaking into the rest of the admin:
+ *   - Inside the editor iframe, where leap.tinymce.options.body_class = 'tinymce'
+ *     puts the class on the iframe <body>.
+ *   - Behind the click-to-edit preview, where the preview wrapper carries the
+ *     .tinymce class (leap injects this stylesheet into the admin head).
+ *
+ * It deliberately mirrors the frontend .article / .button styling but is not the
+ * full template.scss (no layout/nav/footer), just prose. The design tokens below
+ * are copied from resources/css/project.scss — if you rebrand there (colours,
+ * fonts, radius, spacing), update them here too.
+ */
+
+.tinymce {
+    /* Design tokens (scoped, so they never collide with the admin's own :root) */
+    --accent: #1f7a4d;
+    --accent-hover: color-mix(in srgb, var(--accent) 80%, black);
+    --text: #191919;
+
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-heading: var(--font-body);
+    --fs-body: 1.125rem;
+    --fs-h1: clamp(2.25rem, 6vw, 4rem);
+    --fs-h2: clamp(1.75rem, 4.5vw, 3rem);
+    --fs-h3: clamp(1.375rem, 3vw, 2rem);
+    --fs-h4: 1.375rem;
+
+    --space: 1.5rem;
+    --space-xs: calc(var(--space) / 3);
+    --space-l: calc(var(--space) * 2);
+    --radius: 0.5rem;
+
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: 1.6;
+    color: var(--text);
+}
+
+.tinymce h1,
+.tinymce h2,
+.tinymce h3,
+.tinymce h4 {
+    font-family: var(--font-heading);
+    line-height: 1.15;
+}
+
+.tinymce h1 { font-size: var(--fs-h1); }
+.tinymce h2 { font-size: var(--fs-h2); }
+.tinymce h3 { font-size: var(--fs-h3); }
+.tinymce h4 { font-size: var(--fs-h4); }
+
+.tinymce h2:not(:first-child),
+.tinymce h3:not(:first-child),
+.tinymce h4:not(:first-child) {
+    margin-top: var(--space-l);
+}
+
+.tinymce ul { list-style: disc; padding-left: 1.4em; }
+.tinymce ol { list-style: decimal; padding-left: 1.4em; }
+
+.tinymce blockquote {
+    font-size: var(--fs-h2);
+    line-height: 1.2;
+}
+
+.tinymce a:not([role="button"]):not(.button) {
+    color: var(--accent);
+}
+
+.tinymce hr {
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--text) 20%, transparent);
+}
+
+/* Buttons — matches .button / a[role="button"] on the frontend */
+.tinymce .button,
+.tinymce a[role="button"] {
+    display: inline-block;
+    font: inherit;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    padding: var(--space-xs) var(--space);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: #fff;
+}
+
+.tinymce .button:hover,
+.tinymce a[role="button"]:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.tinymce .button.outline,
+.tinymce a[role="button"].outline {
+    background: transparent;
+    color: var(--accent);
+}

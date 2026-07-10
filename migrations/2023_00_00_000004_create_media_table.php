@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(config('leap.table_prefix') . 'media', function (Blueprint $table) {
+        Schema::create(config('leap.table_prefix').'media', function (Blueprint $table) {
             $table->id();
 
             $table->string('disk');
@@ -36,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('leap.table_prefix') . 'media');
+        Schema::dropIfExists(config('leap.table_prefix').'media');
     }
 };

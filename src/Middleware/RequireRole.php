@@ -6,8 +6,8 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Context;
 use NickDeKruijk\Leap\Controllers\ModuleController;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Role;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -15,10 +15,6 @@ class RequireRole
 {
     /**
      * Handle an incoming request and determine if the user has a required role for the app and abort if not authorized.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -31,10 +27,10 @@ class RequireRole
         $role = $roles->first();
 
         // Set the role as context so we can use it during the request
-        Context::addHidden('leap.role.name', $role?->name);
+        Leap::context()->setRoleName($role?->name);
 
         // If no role was found, return 403
-        abort_if(!$role, 403, 'No role found for this user');
+        abort_if(! $role, 403, 'No role found for this user');
 
         // Make permissions collection for easier access
         $permissions_collection = collect($role->permissions);
@@ -48,7 +44,7 @@ class RequireRole
         }
 
         // Set the permissions as context so we can use it during the request
-        Context::addHidden('leap.permissions', $permissions);
+        Leap::context()->setPermissions($permissions);
 
         return $next($request);
     }

@@ -2,15 +2,17 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
@@ -20,6 +22,24 @@ use NickDeKruijk\Leap\Traits\CanLog;
 class Editor extends Component
 {
     use CanLog;
+    use WithRateLimiting;
+
+    /**
+     * Rate-limit an AI action (paid third-party call) per user; toast + abort when
+     * exceeded. Returns false when the caller should stop.
+     */
+    private function aiRateLimit(): bool
+    {
+        try {
+            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
+
+            return true;
+        } catch (TooManyRequestsException $e) {
+            $this->dispatch('toast-error', __('leap::resource.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
+
+            return false;
+        }
+    }
 
     const int CREATE_NEW = -1;
 
@@ -38,6 +58,12 @@ class Editor extends Component
      * The attribute placeholders will be overruled by these and will be the default value when the input is empty
      */
     public array $placeholder = [];
+
+    /**
+     * The active locale for editing translatable fields (multilingual editor).
+     * Empty unless config('leap.locales') is set and the module has translatable attributes.
+     */
+    public string $activeLocale = '';
 
     /**
      * The name of the parent Livewire component
@@ -79,7 +105,174 @@ class Editor extends Component
      */
     private function parentModule(): Component
     {
-        return $this->parentModuleInstance ??= new (Context::getHidden('leap.module'));
+        return $this->parentModuleInstance ??= new (Leap::context()->module());
+    }
+
+    /**
+     * The locales to show as tabs in the editor, or empty when the editor is
+     * monolingual (no leap.locales configured, or the module has no translatable attributes).
+     *
+     * @return array<string, string>
+     */
+    public function editorLocales(): array
+    {
+        $module = $this->parentModule();
+        // Resource::$translatable is populated from the model in getModel(); ensure it's initialised
+        $module->getModel();
+
+        return $module->translatable ? (config('leap.locales') ?: []) : [];
+    }
+
+    /**
+     * The default (first) locale, used as the base for validation and slug generation.
+     */
+    public function defaultLocale(): string
+    {
+        return array_key_first(config('leap.locales') ?? []) ?? app()->getLocale();
+    }
+
+    /**
+     * Wrap a legacy monolingual value (null or a plain, non-JSON string left over
+     * from before the field was translatable) into a per-locale array keyed by the
+     * default locale, so it survives editing instead of being silently overwritten.
+     *
+     * @param  array<string, mixed>  $translations
+     * @return array<string, mixed>
+     */
+    protected function normalizeTranslations(array $translations, mixed $raw): array
+    {
+        if (! empty($translations)) {
+            return $translations;
+        }
+        if (is_string($raw) && trim($raw) !== '' && ! is_array(json_decode($raw, true))) {
+            return [$this->defaultLocale() => $raw];
+        }
+
+        return $translations;
+    }
+
+    /**
+     * Whether the AI translation feature is configured (provider + api key).
+     */
+    public function aiTranslateEnabled(): bool
+    {
+        return AiTask::for('translate')->enabled();
+    }
+
+    /**
+     * Translate a single field into the active locale from $from and fill the
+     * in-memory editor data for review (nothing is saved). $dataName is the
+     * field's binding incl. the active locale, e.g. "data.title.nl" or
+     * "data.blocks.2.heading.nl".
+     */
+    public function translateField(string $dataName, string $from): void
+    {
+        Leap::validatePermission('update');
+        if (! $this->aiRateLimit()) {
+            return;
+        }
+
+        $base = Str::beforeLast(Str::after($dataName, 'data.'), '.'.$this->activeLocale);
+        $source = (string) data_get($this->data, "$base.$from");
+        if (trim(strip_tags($source)) === '') {
+            return;
+        }
+
+        try {
+            $out = AiTask::for('translate')->translate([$base => $source], $this->activeLocale, $from);
+            data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $out[$base] ?? $source));
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
+        }
+    }
+
+    /**
+     * Translate every translatable field (including section sub-fields) into the
+     * active locale from $from, filling the in-memory editor data for review.
+     * When $onlyEmpty, targets that already have content are left untouched.
+     */
+    public function translateAll(string $from, bool $onlyEmpty): void
+    {
+        Leap::validatePermission('update');
+        if (! $this->aiRateLimit()) {
+            return;
+        }
+
+        $values = [];
+        foreach ($this->translatableDataPaths() as $base) {
+            $target = (string) data_get($this->data, "$base.".$this->activeLocale);
+            if ($onlyEmpty && trim(strip_tags($target)) !== '') {
+                continue;
+            }
+            $source = (string) data_get($this->data, "$base.$from");
+            if (trim(strip_tags($source)) !== '') {
+                $values[$base] = $source;
+            }
+        }
+
+        if ($values === []) {
+            return;
+        }
+
+        try {
+            foreach (AiTask::for('translate')->translate($values, $this->activeLocale, $from) as $base => $translated) {
+                data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $translated));
+            }
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
+        }
+    }
+
+    /**
+     * All translatable leaf paths relative to $this->data, without the locale
+     * segment: top-level fields plus section/repeater sub-fields per index.
+     *
+     * @return list<string>
+     */
+    protected function translatableDataPaths(): array
+    {
+        $paths = [];
+        foreach ($this->attributes() as $attribute) {
+            if ($this->parentModule()->hasTranslation($attribute)) {
+                $paths[] = $attribute->name;
+            }
+
+            if ($attribute->type === 'sections' && is_array($this->data[$attribute->name] ?? null)) {
+                foreach ($this->data[$attribute->name] as $index => $section) {
+                    if (! is_array($section) || empty($section['_name'])) {
+                        continue;
+                    }
+                    $subs = collect($attribute->sections)->where('name', $section['_name'])->first()?->attributes;
+                    foreach (collect($subs)->where('translatable', true) as $sub) {
+                        $paths[] = "$attribute->name.$index.$sub->name";
+                    }
+                }
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * Slugify a translated value when its field is a slug field, so a
+     * translated slug stays URL-safe (e.g. "Über uns" → "uber-uns") instead of
+     * being stored as prose. $base is a data path without the locale segment.
+     */
+    protected function slugifyValue(string $base, string $value): string
+    {
+        $field = Str::afterLast($base, '.');
+        try {
+            $isSlug = $this->attributes()->contains(fn ($attribute) => (
+                // The slug field declares its source with slugFrom('title')…
+                ($attribute->name === $field && $attribute->slugFrom)
+                // …or another field declares slugify('slug') targeting this field.
+                || $attribute->slugify === $field
+            ));
+        } catch (\Throwable $e) {
+            return $value;
+        }
+
+        return $isSlug ? Str::slug($value) : $value;
     }
 
     /**
@@ -91,7 +284,28 @@ class Editor extends Component
         $parentAttributes = $this->parentModule()->attributes();
 
         // Filter out the indexOnly attributes
-        return collect($parentAttributes)->where('indexOnly', false);
+        $attributes = collect($parentAttributes)->where('indexOnly', false);
+
+        // Multilingual: bind translatable fields to the active locale (data.{name}.{locale})
+        if ($this->editorLocales()) {
+            foreach ($attributes as $attribute) {
+                if ($this->parentModule()->hasTranslation($attribute)) {
+                    $attribute->dataName = 'data.'.$attribute->name.'.'.($this->activeLocale ?: $this->defaultLocale());
+                    $attribute->translatable = true;
+                    $attribute->currentLocale = $this->activeLocale ?: $this->defaultLocale();
+                }
+            }
+        }
+
+        // slugFrom() lives on the slug field; make its source field push live so
+        // the slug placeholder updates as you type (slugify() sets this itself).
+        foreach ($attributes as $attribute) {
+            if ($attribute->slugFrom && ($source = $attributes->firstWhere('name', $attribute->slugFrom))) {
+                $source->wire = 'live';
+            }
+        }
+
+        return $attributes;
     }
 
     /**
@@ -168,6 +382,19 @@ class Editor extends Component
         $model = $this->getModel($id);
         $this->data = $model->only($attributes);
 
+        // Multilingual: initialise the active locale and load translatable fields as per-locale arrays
+        if ($this->editorLocales()) {
+            $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
+            foreach ($this->attributes() as $attribute) {
+                if ($this->parentModule()->hasTranslation($attribute)) {
+                    $this->data[$attribute->name] = $this->normalizeTranslations(
+                        $model->getTranslations($attribute->name),
+                        $model->getRawOriginal($attribute->name),
+                    );
+                }
+            }
+        }
+
         // Get raw value from the model without any casting or mutators when editing
         foreach ($this->attributes()->where('raw') as $attribute) {
             $this->data[$attribute->name] = $model->getRawOriginal($attribute->name);
@@ -182,10 +409,8 @@ class Editor extends Component
             $this->data[$attribute->name] = $this->data[$attribute->name]?->isoFormat('YYYY-MM-DD HH:mm:ss');
         }
 
-        // Set the placeholders for slugify attributes
-        foreach ($this->attributes()->where('slugify') as $attribute) {
-            $this->placeholder[$attribute->slugify] = Str::slug($this->data[$attribute->name]);
-        }
+        // Set the placeholders for slug attributes (use the active locale when translatable)
+        $this->refreshSlugPlaceholders();
 
         // Obfuscate passwords
         foreach ($this->attributes()->where('type', 'password') as $attribute) {
@@ -248,11 +473,32 @@ class Editor extends Component
                         $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
                     }
 
+                    // Wrap legacy monolingual values in translatable section sub-fields
+                    // ([field] stored as a plain string before it became translatable)
+                    // into a per-locale array, so they survive editing instead of being
+                    // silently overwritten. Idempotent: already-wrapped arrays are skipped.
+                    if ($this->editorLocales()) {
+                        foreach (collect($sectionAttributes)->where('translatable', true) as $sub) {
+                            $value = $this->data[$sectionAttribute->name][$index][$sub->name] ?? null;
+                            if (is_string($value) && trim($value) !== '') {
+                                $this->data[$sectionAttribute->name][$index][$sub->name] = [$this->defaultLocale() => $value];
+                            }
+                        }
+                    }
+
                     // Set section titles
                     $sectionData = &$this->data[$sectionAttribute->name][$index];
                     $sectionData['_title'] = collect($sectionAttributes)
                         ->where('sectionTitle', true)
-                        ->map(fn ($title) => strip_tags($sectionData[$title->name] ?? ''))
+                        ->map(function ($title) use ($sectionData) {
+                            $value = $sectionData[$title->name] ?? '';
+                            // Translatable section fields are stored per locale; use the active one for the label
+                            if (is_array($value)) {
+                                $value = $value[$this->activeLocale] ?? (reset($value) ?: '');
+                            }
+
+                            return strip_tags($value);
+                        })
                         ->filter()
                         ->implode(' - ');
                 }
@@ -298,8 +544,16 @@ class Editor extends Component
                         }
                     }
                 }
-                // Add the validation rule
-                $rules['data.'.$attribute->name] = $attribute->validate;
+                // Add the validation rule — per locale for translatable fields (default required, rest optional)
+                if ($this->editorLocales() && $this->parentModule()->hasTranslation($attribute)) {
+                    foreach (array_keys($this->editorLocales()) as $locale) {
+                        $rules['data.'.$attribute->name.'.'.$locale] = $locale === $this->defaultLocale()
+                            ? $attribute->validate
+                            : array_map(fn ($rule) => $rule === 'required' ? 'nullable' : $rule, $attribute->validate);
+                    }
+                } else {
+                    $rules['data.'.$attribute->name] = $attribute->validate;
+                }
             }
         }
 
@@ -452,9 +706,13 @@ class Editor extends Component
     public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
     {
         $newAttribute = clone $sectionAttribute;
-        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name;
+        // Translatable section fields are edited per locale: data.{name}.{index}.{field}.{locale}
+        $translatable = $sectionAttribute->translatable && $this->editorLocales();
+        $locale = $this->activeLocale ?: $this->defaultLocale();
+        $newAttribute->dataName = 'data.'.$name.'.'.$index.'.'.$sectionAttribute->name.($translatable ? '.'.$locale : '');
         $newAttribute->name = $name.'.'.$index.'.'.$sectionAttribute->name;
         $newAttribute->sectionName = $sectionName;
+        $newAttribute->currentLocale = $translatable ? $locale : null;
 
         return $newAttribute;
     }
@@ -466,17 +724,73 @@ class Editor extends Component
             return $this->addSection($field, $value);
         }
 
-        $attribute = $this->attributes()->where('name', substr($field, 5))->first();
+        $name = substr($field, 5);
+        $attribute = $this->attributes()->firstWhere('name', $name)
+            // Translatable fields bind to data.{name}.{locale}; strip the locale to find the attribute
+            ?? ($this->editorLocales() ? $this->attributes()->firstWhere('name', Str::beforeLast($name, '.')) : null);
 
-        // Update slug placeholder if needed
-        if ($attribute?->slugify) {
-            $this->placeholder[$attribute->slugify] = Str::slug($value);
+        // Update slug placeholder if this field feeds a slug target (value is the
+        // active-locale value for translatable fields)
+        $slugMap = $this->slugMap();
+        if ($attribute && isset($slugMap[$attribute->name])) {
+            $this->placeholder[$slugMap[$attribute->name]] = Str::slug($value);
         }
 
         // Only validate if there are actual rules
         if ($this->rules()) {
             $this->validateOnly($field);
         }
+    }
+
+    /**
+     * Map of slug relationships as [sourceAttribute => slugTargetAttribute].
+     *
+     * Gathered from both slugify() (declared on the source field, pointing to the
+     * slug field) and slugFrom() (declared on the slug field, pointing back to the
+     * source field), so both conventions drive the same placeholder logic.
+     *
+     * @return array<string, string>
+     */
+    protected function slugMap(): array
+    {
+        $map = [];
+        foreach ($this->attributes() as $attribute) {
+            if ($attribute->slugify) {
+                $map[$attribute->name] = $attribute->slugify;
+            }
+            if ($attribute->slugFrom) {
+                $map[$attribute->slugFrom] = $attribute->name;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Recompute placeholders for all slug targets from their source values,
+     * honouring the active locale for translatable source fields.
+     */
+    protected function refreshSlugPlaceholders(): void
+    {
+        foreach ($this->slugMap() as $source => $target) {
+            $value = $this->data[$source] ?? '';
+            if (is_array($value)) {
+                $value = $value[$this->activeLocale] ?? '';
+            }
+            $this->placeholder[$target] = Str::slug($value);
+        }
+    }
+
+    /**
+     * When the active locale tab changes, refresh slug placeholders to that locale.
+     */
+    public function updatedActiveLocale()
+    {
+        $this->refreshSlugPlaceholders();
+
+        // Section titles (shown when a section is collapsed) are built from
+        // sectionTitle fields, which follow the active locale too
+        $this->checkSectionValues();
     }
 
     /**
@@ -621,6 +935,10 @@ class Editor extends Component
             } else {
                 $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
+
+            // Let lazy rich-text fields drop back to their rendered-HTML preview,
+            // whether or not there were changes to save
+            $this->dispatch('leap-editor-saved');
         }
     }
 
@@ -757,13 +1075,18 @@ class Editor extends Component
     public function hydrate()
     {
         // Add the parentModule to the context so we can use it during each request
-        Context::addHidden('leap.module', Crypt::decryptString($this->parentModuleEncrypted));
+        Leap::context()->setModule(Crypt::decryptString($this->parentModuleEncrypted));
     }
 
     public function mount()
     {
         // Encrypt the parent module class name
-        $this->parentModuleEncrypted = Crypt::encryptString(Context::getHidden('leap.module'));
+        $this->parentModuleEncrypted = Crypt::encryptString(Leap::context()->module());
+
+        // Default the active locale for the multilingual editor
+        if ($this->editorLocales()) {
+            $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
+        }
 
         $this->setRandomSortSeed();
     }
