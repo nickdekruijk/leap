@@ -27,7 +27,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `css` | *(array)* | CSS files concatenated and served for the panel UI. See [Theming](#theming) below. |
 | `login_image` | | Background image on the login screen. |
 | `logging` | *(array)* | Audit logging of admin actions (enable, skip actions/modules, IP anonymisation). |
-| `filemanager` | *(array)* | File manager allowed extensions and upload limits. |
+| `filemanager` | *(array)* | Allowed extensions, upload limits, and `image_crop_enabled`/`image_focus_enabled` (`true` = every bitmap format, an array for finer control, `false` to disable — both default to `true`). |
 | `ace` / `tinymce` | *(array)* | Options for the code and rich-text editors. `tinymce.lazy` / `tinymce.lazy_sections` toggle click-to-edit rich-text — see [attributes.md](attributes.md#lazy-rich-text). |
 | `ai` | *(array)* | AI providers + per-task config for alt-text generation and translation (disabled by default). See [ai.md](ai.md). |
 

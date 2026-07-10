@@ -39,6 +39,10 @@ for the full list; the practical notes:
   [Theming](configuration.md#theming). Prefer overriding the new `--leap-*` CSS
   custom properties instead of a whole file where you can; no recompile needed.
   `nickdekruijk/minify` is no longer a leap-core dependency.
+- **`leap.filemanager.image_crop_enabled`/`image_focus_enabled` now default to
+  `true`** (every bitmap format) instead of `false`. Only affects a freshly
+  published `config/leap.php` — existing configs with an explicit `false` or array
+  are untouched. `true` is now valid syntax alongside the existing array form.
 
 ## Pre-`getPages()` projects
 
