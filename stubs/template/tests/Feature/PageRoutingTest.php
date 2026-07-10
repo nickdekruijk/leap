@@ -41,4 +41,14 @@ class PageRoutingTest extends TestCase
     {
         $this->get('/this-page-does-not-exist')->assertNotFound();
     }
+
+    public function test_the_sitemap_has_a_single_plain_entry_per_page_when_monolingual(): void
+    {
+        config(['leap.locales' => null]);
+
+        $xml = simplexml_load_string($this->get('/sitemap.xml')->assertOk()->getContent());
+
+        $this->assertCount(Page::active()->count(), $xml->url);
+        $this->assertStringNotContainsString('xhtml:link', $this->get('/sitemap.xml')->getContent());
+    }
 }

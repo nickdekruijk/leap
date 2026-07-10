@@ -153,18 +153,52 @@ class PageController extends Controller
     }
 
     /**
-     * XML sitemap of all active pages.
+     * XML sitemap of all active pages. When multilingual, every page gets one
+     * <url> entry per locale it has a routable (non-empty) slug translation
+     * for, each carrying hreflang alternates to its sibling locale URLs.
      */
     public function sitemap(): Response
     {
         $pages = Page::active()->get(['id', 'slug', 'parent', 'updated_at']);
         $map = $pages->keyBy('id');
-        $prefix = static::localePrefix();
+        $locales = config('leap.locales');
 
-        $urls = $pages->map(fn (Page $page): array => [
-            'loc' => url($prefix.static::buildPath($page, $map)),
-            'lastmod' => $page->updated_at?->toAtomString(),
-        ]);
+        if (! $locales) {
+            $urls = $pages->map(fn (Page $page): array => [
+                'loc' => url(static::buildPath($page, $map)),
+                'lastmod' => $page->updated_at?->toAtomString(),
+                'alternates' => [],
+            ]);
+
+            return response()
+                ->view('sitemap', compact('urls'))
+                ->header('Content-Type', 'application/xml');
+        }
+
+        $default = array_key_first($locales);
+        $urls = collect();
+
+        foreach ($pages as $page) {
+            $paths = [];
+            foreach (array_keys($locales) as $locale) {
+                $path = static::buildLocalePath($page, $locale, $map);
+                if ($path !== null) {
+                    $paths[$locale] = $path;
+                }
+            }
+
+            $hrefs = collect($paths)->mapWithKeys(fn (string $path, string $locale): array => [
+                $locale => url(($locale === $default ? '' : '/'.$locale).$path),
+            ]);
+
+            foreach ($paths as $locale => $path) {
+                $urls->push([
+                    'loc' => $hrefs[$locale],
+                    'lastmod' => $page->updated_at?->toAtomString(),
+                    'alternates' => $hrefs->all(),
+                ]);
+            }
+        }
 
         return response()
             ->view('sitemap', compact('urls'))
@@ -255,5 +289,34 @@ class PageController extends Controller
         }
 
         return rtrim('/'.$slug, '/') ?: '/';
+    }
+
+    /**
+     * Build a page's path in a specific locale using a preloaded id => Page map
+     * (no N+1 queries), returning null if the page — or any ancestor in its
+     * chain — has no slug translation for the locale. Mirrors getPages()'s
+     * traverse(): once a page isn't routable in a locale, its descendants
+     * aren't either, so they're omitted from the sitemap rather than linked
+     * as a broken URL.
+     *
+     * @param  Collection<int, Page>  $map
+     */
+    protected static function buildLocalePath(Page $page, string $locale, Collection $map): ?string
+    {
+        $slug = $page->getTranslation('slug', $locale, false) ?: '';
+        if ($slug === '') {
+            return null;
+        }
+
+        if (! $page->parent) {
+            return rtrim('/'.$slug, '/') ?: '/';
+        }
+
+        $parent = $map->get($page->parent);
+        $parentPath = $parent ? static::buildLocalePath($parent, $locale, $map) : null;
+
+        return $parentPath !== null
+            ? (rtrim($parentPath.'/'.$slug, '/') ?: '/')
+            : null;
     }
 }

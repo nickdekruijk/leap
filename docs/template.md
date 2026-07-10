@@ -91,6 +91,9 @@ same way. **There is no build step.** Edit the files under `resources/css` and
 
 Per-page `<title>`, meta description, canonical, Open Graph, Twitter Card and
 `hreflang` alternates are rendered in the layout, plus a generated `sitemap.xml`.
+When multilingual, the sitemap lists one `<url>` per page per locale it has a
+routable slug translation for, each with `<xhtml:link>` hreflang alternates to
+its sibling locale URLs — mirroring the language-switcher links in the layout.
 
 ## Caching
 
