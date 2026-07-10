@@ -59,6 +59,16 @@ supported API and may change in a minor release. Don't call them from applicatio
   section layout (all `default` image positions, quote, cta, slider, highlights).
 - `App\Traits\HasSlug` for the template: per-locale, sibling-and-locale-unique
   slugs, with `/` reserved for the homepage.
+- **Responsive images (frontend template).** Section images and background photos are
+  served through `nickdekruijk/imageresize`: `config/imageresize.php` (shipped by
+  `leap:template`) defines width presets (600–2560) and the views emit `srcset`/`sizes`;
+  full-bleed backgrounds are lazy `<img>` elements. Leap caches each image's intrinsic
+  dimensions in `media.meta` via `Media::dimensions()`, so the section `<img>` carries
+  `width`/`height` and reserves the correct box (no layout shift, no cropping). Requires
+  `php artisan storage:link`.
+- **Per-section "dark background" toggle** in the template's `default`/`highlights`/`cta`/
+  `quote` sections — white text with the background photo (a legibility overlay) or a
+  gradient fallback — plus a text-only image position.
 
 ### Changed
 
@@ -72,11 +82,26 @@ supported API and may change in a minor release. Don't call them from applicatio
 
 ### Deprecated
 
-- `Attribute::slugify('target')` — use `slugFrom()` on the slug field instead.
-  Still works as an alias.
 - The `Context` hidden keys `leap.module`, `leap.permissions` and
   `leap.role.name` are mirrored for backward compatibility only and will be
   removed in 2.0. Read them through `Leap::context()` instead.
+
+### Fixed
+
+- Logging no longer writes a `user_id` for a session that points at a user who no
+  longer exists (which could hit the `leap_logs` foreign key after a
+  `migrate:refresh`). The user is resolved through the auth provider and stored as
+  `null` when gone.
+
+### Security
+
+- **File manager uploads are re-validated server-side.** `$uploads` is a public
+  (client-controllable) Livewire property, so the extension/size checks in
+  `uploadStart` and the target path could be bypassed by setting the array directly
+  (`error=false`, a forged name/path) and calling `uploadDone` — writing an
+  arbitrary-named file anywhere on the disk with only `create` permission. `uploadDone`
+  now re-checks the allow-list and size against the actual file and rebuilds the target
+  directory from the open folders.
 
 ### Notes on upgrading
 
