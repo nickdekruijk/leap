@@ -157,9 +157,12 @@ class TwoFactorEnrollmentTest extends TestCase
             ->mapWithKeys(fn ($module) => [$module::class => ['read' => true, 'all_permissions' => true]])
             ->all());
 
-        $slugs = Leap::modules()->map(fn ($module) => $module->getSlug())->all();
+        $slugs = Leap::modules()->map(fn ($module) => $module->getSlug())->values()->all();
 
-        $this->assertEqualsCanonicalizing(['profile', false], $slugs);
+        // Only Profile + Logout. Logout's $slug = false coerces to '' via getSlug()'s
+        // ?string return type. ->values() reindexes (the modules keep their original
+        // keys); PHPUnit 12's canonicalizing compare is strict on keys and values (11 == was not).
+        $this->assertEqualsCanonicalizing(['profile', ''], $slugs);
     }
 
     public function test_passkey_satisfies_requirement_but_still_needs_validating_this_session(): void

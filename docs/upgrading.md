@@ -5,7 +5,7 @@ for the full list; the practical notes:
 
 ## Non-breaking by design
 
-- **Runtimes unchanged:** PHP 8.2–8.4, Laravel 12/13, Livewire 3/4.
+- **Runtimes:** PHP 8.3–8.4, Laravel 12/13, Livewire 3/4.
 - **Multilingual is opt-in:** with `leap.locales` at its default `null`, editor and
   storage behaviour is byte-for-byte identical to before.
 - **New `Attribute` methods are additive.** `slugFrom()` adds a slug-field way to

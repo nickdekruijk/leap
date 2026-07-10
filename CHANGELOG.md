@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] — 2026-07-10
+
+### Fixed
+
+- Correct the dependency constraints: require **PHP ^8.3** (runtime deps and the typed
+  constants need it) and raise **laravel/fortify to ^1.31**, the floor that has
+  `Fortify::currentEncrypter()` used by the 2FA flow.
+- Test on Laravel 13 too: widen the dev tooling to Testbench `^10|^11` and PHPUnit
+  `^11|^12`, and run the CI matrix as PHP 8.3–8.4 × Laravel 12/13. (PHP 8.2 is dropped —
+  runtime deps require 8.3.) Fixed one enrollment test whose expected value only matched
+  under PHPUnit 11's loose comparison.
+
 ## [0.9.0] — 2026-07-10
 
 Release candidate for 1.0.0, tagged for real-world testing before the stable release. The
@@ -123,7 +135,7 @@ supported API and may change in a minor release. Don't call them from applicatio
   `leap:template --diff` first to preview drift.
 - Enabling `leap.cache` is safe everywhere because page edits invalidate it;
   disable with `LEAP_CACHE=false` or clear with `php artisan cache:clear`.
-- Supported runtimes are unchanged: PHP 8.2–8.4, Laravel 12/13, Livewire 3/4.
+- Supported runtimes: PHP 8.3–8.4, Laravel 12/13, Livewire 3/4.
 
 ## [0.3.2] and earlier
 

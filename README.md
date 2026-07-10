@@ -83,7 +83,7 @@ admin-editable footer, per-page SEO and a sitemap. See
 
 ## Requirements
 
-PHP 8.2–8.4 · Laravel 12/13 · Livewire 3/4.
+PHP 8.3–8.4 · Laravel 12/13 · Livewire 3/4.
 
 ## License
 
