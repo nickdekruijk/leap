@@ -132,6 +132,14 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     letter-spacing: 0.02em;
     cursor: help;
 }
+.leap-translatable.leap-hint:not(.leap-translate) {
+    &:hover,
+    &:focus,
+    &:focus-visible {
+        color: rgb(0 0 0 / .5); /* same as base .leap-translatable color — cancel .leap-hint's hover highlight */
+        outline: none; /* cancel the global .leap :focus blue ring — this badge isn't interactive, tooltip is the only feedback */
+    }
+}
 .leap-translatable.leap-translate {
     position: relative;
     cursor: pointer;
