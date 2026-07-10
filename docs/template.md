@@ -16,6 +16,9 @@ php artisan leap:template --diff   # preview how your files differ from the stub
 - `app/Traits/HasSections.php` and `app/Traits/HasSlug.php`.
 - The pages migration and `PageSeeder` (bilingual sample content).
 - `resources/css`, `resources/views`, `resources/js` — SCSS, Blade and JS.
+- `config/imageresize.php` — width presets for responsive images (see below).
+- `public/css/tinymce.css` — rich-text editor styles that match the frontend.
+- Starter feature tests under `tests/Feature`.
 - Two routes appended to `routes/web.php`: `sitemap.xml` and the catch-all page route.
 
 It also offers to install the frontend packages the template uses
@@ -49,8 +52,30 @@ Declare the editor relationship on the slug field with
 ## Sections
 
 The template ships self-contained section types — `slide` (carousel), `default`
-(text + image, positionable, optional background photo), `highlights` (horizontal
-scroller), `cta` and `quote`. See [sections.md](sections.md).
+(text + image; the image is positionable left/right/wide or omitted for text-only, with
+an optional dark background — white text plus a background photo or a gradient fallback),
+`highlights` (horizontal scroller), `cta` and `quote`. See [sections.md](sections.md).
+
+## Images & responsive assets
+
+Section images and background photos are served through `nickdekruijk/imageresize`. The
+width presets in `config/imageresize.php` (600–2560) resize originals on request, and the
+Blade views emit `srcset`/`sizes` so the browser picks the right size for the viewport and
+device pixel ratio. Backgrounds are lazy `<img>` elements (`object-fit: cover`); the first
+slider image is eager for a fast LCP.
+
+Two setup notes:
+
+- **Run `php artisan storage:link`.** The resize originals are read from `/storage`
+  (Leap stores uploads on the `public` disk). Without the symlink, images 404.
+- The shipped `config/imageresize.php` sets `originals => 'storage'` and the width
+  templates the views use; it overrides the package default, which doesn't define them.
+
+Leap caches each image's intrinsic dimensions in `media.meta` (via `Media::dimensions()`),
+so the section `<img>` carries `width`/`height` — the browser reserves the correct box
+(no layout shift) while the image keeps its natural ratio (no cropping).
+
+WebP/AVIF are not generated yet (a possible future addition).
 
 ## Assets: no npm / Vite
 
