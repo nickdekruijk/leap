@@ -126,6 +126,7 @@ class AiTask
         $parts[] = ['text' => $text];
 
         $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey()])
+            ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
             ->post("https://generativelanguage.googleapis.com/v1beta/models/$this->model:generateContent", [
                 'contents' => [['parts' => $parts]],
                 'generationConfig' => $json ? ['responseMimeType' => 'application/json'] : (object) [],
@@ -160,11 +161,14 @@ class AiTask
         $response = Http::withHeaders([
             'x-api-key' => $this->apiKey(),
             'anthropic-version' => '2023-06-01',
-        ])->post('https://api.anthropic.com/v1/messages', [
-            'model' => $this->model,
-            'max_tokens' => 1024,
-            'messages' => [['role' => 'user', 'content' => $content]],
-        ]);
+        ])->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
+            ->post('https://api.anthropic.com/v1/messages', [
+                'model' => $this->model,
+                // Cap the reply; the default is generous so long translations aren't
+                // silently truncated. Override per task with leap.ai.<task>.max_tokens.
+                'max_tokens' => (int) config("leap.ai.$this->task.max_tokens", 8192),
+                'messages' => [['role' => 'user', 'content' => $content]],
+            ]);
 
         if ($response->failed()) {
             throw new RuntimeException('Claude request failed: '.$response->status());
@@ -200,6 +204,7 @@ class AiTask
         }
 
         $response = Http::withToken($this->apiKey())
+            ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
             ->post('https://api.openai.com/v1/chat/completions', $body);
 
         if ($response->failed()) {
@@ -261,6 +266,7 @@ class AiTask
 
         $response = Http::asForm()
             ->withHeaders(['Authorization' => 'DeepL-Auth-Key '.$key])
+            ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
             ->post("$host/v2/translate", array_filter([
                 'text' => array_values($values),
                 // Target accepts regional variants (EN-GB); source must be the

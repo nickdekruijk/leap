@@ -37,7 +37,8 @@ supported API and may change in a minor release. Don't call them from applicatio
   section sub-fields), with an empty-only or overwrite scope. HTML markup is
   preserved, slug fields stay slugified, and results fill the form for review
   (nothing is saved automatically). Disabled by default; each task picks its own
-  provider and model. See [docs/ai.md](docs/ai.md).
+  provider and model, and calls are per-user rate-limited and time-bounded. See
+  [docs/ai.md](docs/ai.md).
 - **Lazy click-to-edit rich-text.** Rich-text fields can show their rendered
   HTML as a preview and only initialize TinyMCE when clicked (torn down again on
   save), so editors with many rich-text sections open fast. Toggled by

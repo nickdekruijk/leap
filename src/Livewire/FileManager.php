@@ -3,6 +3,8 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FileManager extends Module
 {
     use WithFileUploads;
+    use WithRateLimiting;
 
     public array $uploads = [];
 
@@ -841,6 +844,15 @@ class FileManager extends Module
     public function generateAltTexts(string $file): array
     {
         Leap::validatePermission('update');
+
+        // Each call hits a paid third-party API — cap per user.
+        try {
+            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
+        } catch (TooManyRequestsException $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
+
+            return [];
+        }
 
         $media = Media::forFile($this->full($file));
         if (! $media || ! $media->isBitmap()) {

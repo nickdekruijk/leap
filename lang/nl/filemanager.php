@@ -45,6 +45,7 @@ return [
     'alt_text_placeholder' => 'Beschrijf deze afbeelding...',
     'alt_text_saved' => 'Alt-tekst opgeslagen',
     'alt_text_ai_failed' => 'Alt-tekst genereren mislukt',
+    'ai_rate_limited' => 'Te veel AI-verzoeken — probeer over :seconds seconden opnieuw.',
     'generate_alt_text' => 'Alt-tekst genereren met AI',
     'set_alt_text' => 'Alt-tekst instellen',
     'set_focus_point' => 'Focuspunt instellen',

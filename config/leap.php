@@ -339,16 +339,22 @@ return [
             'deepl' => ['api_key' => env('DEEPL_API_KEY')], // translation only; no vision
         ],
 
+        // Request timeout in seconds for provider calls, and a per-user rate limit
+        // (max AI actions per minute) — each call hits a paid third-party API.
+        'timeout' => 60,
+        'rate_limit' => 30,
+
         // Generate image alt texts (per locale) in the filemanager.
         'alt_text' => [
             'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
             'model' => null,    // null => gemini-2.5-flash / claude-haiku-4-5 / gpt-4o-mini
         ],
 
-        // Reserved for a future AI translation feature.
+        // Translate editor content (per field or all fields) into the active locale.
         'translate' => [
             'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
             'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
+            // 'max_tokens' => 8192, // chat providers: cap the reply; raise for long pages
         ],
     ],
 

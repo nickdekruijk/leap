@@ -30,6 +30,7 @@ return [
     'translate_all' => 'Alle velden (overschrijven)',
     'translate_empty' => 'Alleen lege velden',
     'translate_failed' => 'Vertalen mislukt',
+    'ai_rate_limited' => 'Te veel AI-verzoeken — probeer over :seconds seconden opnieuw.',
     'translate_from' => 'Vertalen uit',
     'updated' => 'bijgewerkt',
 ];

@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
@@ -20,6 +22,24 @@ use NickDeKruijk\Leap\Traits\CanLog;
 class Editor extends Component
 {
     use CanLog;
+    use WithRateLimiting;
+
+    /**
+     * Rate-limit an AI action (paid third-party call) per user; toast + abort when
+     * exceeded. Returns false when the caller should stop.
+     */
+    private function aiRateLimit(): bool
+    {
+        try {
+            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
+
+            return true;
+        } catch (TooManyRequestsException $e) {
+            $this->dispatch('toast-error', __('leap::resource.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
+
+            return false;
+        }
+    }
 
     const int CREATE_NEW = -1;
 
@@ -148,6 +168,9 @@ class Editor extends Component
     public function translateField(string $dataName, string $from): void
     {
         Leap::validatePermission('update');
+        if (! $this->aiRateLimit()) {
+            return;
+        }
 
         $base = Str::beforeLast(Str::after($dataName, 'data.'), '.'.$this->activeLocale);
         $source = (string) data_get($this->data, "$base.$from");
@@ -171,6 +194,9 @@ class Editor extends Component
     public function translateAll(string $from, bool $onlyEmpty): void
     {
         Leap::validatePermission('update');
+        if (! $this->aiRateLimit()) {
+            return;
+        }
 
         $values = [];
         foreach ($this->translatableDataPaths() as $base) {

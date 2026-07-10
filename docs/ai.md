@@ -44,6 +44,11 @@ A task is **enabled** when its `provider` is set **and** that provider's `api_ke
 Because the default model is keyed to the chosen provider, leaving `model` as `null` always
 resolves to a working default — set a literal only to force a specific model.
 
+**Limits.** `leap.ai.timeout` (default `60` seconds) bounds each provider request so a slow API
+can't hang the admin, and `leap.ai.rate_limit` (default `30`) caps AI actions per user per minute
+— every call is a paid request. For the chat providers you can raise a task's reply cap with
+`leap.ai.<task>.max_tokens` (default `8192`) if a long page gets truncated.
+
 ### Providers
 
 | Provider | Kind | Alt text (vision) | Translation | Default model |

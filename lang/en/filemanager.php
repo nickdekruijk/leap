@@ -45,6 +45,7 @@ return [
     'alt_text_placeholder' => 'Describe this image...',
     'alt_text_saved' => 'Alt text saved',
     'alt_text_ai_failed' => 'Could not generate alt text',
+    'ai_rate_limited' => 'Too many AI requests — try again in :seconds seconds.',
     'generate_alt_text' => 'Generate alt text with AI',
     'set_alt_text' => 'Set alt text',
     'set_focus_point' => 'Set focus point',

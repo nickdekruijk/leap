@@ -30,6 +30,7 @@ return [
     'translate_all' => 'All fields (overwrite)',
     'translate_empty' => 'Only empty fields',
     'translate_failed' => 'Translation failed',
+    'ai_rate_limited' => 'Too many AI requests — try again in :seconds seconds.',
     'translate_from' => 'Translate from',
     'updated' => 'updated',
 ];
