@@ -62,7 +62,9 @@ Section::make('slide')->attributes(
 );
 ```
 
-Media and pivots are shared across locales in this version.
+Media and pivots are shared across locales in this version. To mark many section
+fields at once, use `Section::translatableExcept()` / `translatableOnly()` instead of
+per-field `->translatable()` — see [sections.md](sections.md#bulk-marking-translatable-fields).
 
 ## Upgrading existing content
 
@@ -101,3 +103,100 @@ unprefixed (`/over-ons`) and secondary locales are prefixed (`/en/about`), with 
 language switcher and `hreflang` alternates. Per-locale slugs come from
 [`HasSlug`](template.md); a missing translated slug falls back to the default locale so
 a page is never unreachable.
+
+## Routing & URLs
+
+The routing primitives live in the package, so projects can build locale-aware URLs
+without copying template code — for the page tree and for content types on their own
+routes.
+
+### The prefix rule
+
+The default (first configured) locale is served **unprefixed**; every other locale is
+prefixed with `/<locale>`. One helper is the single source of truth, used by the
+template's routing, the language switcher and the sitemap:
+
+```php
+use NickDeKruijk\Leap\Leap;
+
+Leap::localeDefault();      // 'nl'  (null when monolingual)
+Leap::localePrefix('en');   // '/en'
+Leap::localePrefix('nl');   // ''    (default locale)
+Leap::localePrefix();       // prefix for the active locale
+```
+
+`Leap::detectLocale($segments)` strips a leading locale segment from a URL's path
+segments (by reference) and applies it with `app()->setLocale()` — a no-op for the
+default locale and when monolingual. The template's `PageController::route()` calls it
+before matching the page tree.
+
+### Content types outside the page tree
+
+For a translatable model with its own routes — services, stories, blog posts — register
+one route per locale with the `Route::leapLocalized()` macro. The URL **segment can
+differ per locale** and each group gets the right prefix plus the `SetLeapLocale`
+middleware (which sets the request locale) automatically:
+
+```php
+use App\Http\Controllers\ServiceController;
+use Illuminate\Support\Facades\Route;
+
+// nl: /diensten/{slug}   en: /en/services/{slug}
+Route::leapLocalized(['nl' => 'diensten', 'en' => 'services'], function (string $locale, string $segment) {
+    Route::get($segment.'/{slug}', [ServiceController::class, 'show'])->name('service.'.$locale);
+});
+```
+
+Name the routes `<name>.<locale>` — that is the convention `HasLocaleRouting` expects.
+The controller resolves the record by the active-locale slug:
+
+```php
+Service::whereJsonContains('slug->'.app()->getLocale(), $slug)->firstOrFail();
+```
+
+### `HasLocaleRouting`
+
+Add the trait to such a model (it needs Spatie `HasTranslations` with a translatable
+`slug`) to get per-locale URLs for the language switcher and `hreflang`, without writing
+them by hand:
+
+```php
+use NickDeKruijk\Leap\Traits\HasLocaleRouting;
+
+class Service extends Model
+{
+    use HasTranslations, HasLocaleRouting;
+    public $translatable = ['title', 'slug', 'description'];
+}
+```
+
+```php
+$service->localeUrls();
+// ['nl' => ['name' => 'Nederlands', 'url' => '/diensten/onderhoud', 'active' => true],
+//  'en' => ['name' => 'English',    'url' => '/en/services/maintenance', 'active' => false]]
+
+$service->localeUrl();        // active-locale URL
+$service->localeUrl('en');    // a specific locale, or null when not routable there
+```
+
+A locale with no slug translation is omitted (not routable there). The URLs are already
+prefixed — the named route carries the prefix, so nothing is added twice.
+`localeRouteName()` defaults to the singular snake_case class basename (`service`);
+override it if your route names differ.
+
+### hreflang and the language switcher
+
+Both come from the same per-locale URL map. For the page tree use
+`PageController::localeUrls($page)`; for a `HasLocaleRouting` model use
+`$model->localeUrls()`. In the layout `<head>`:
+
+```blade
+@foreach ($localeUrls as $code => $alt)
+    <link rel="alternate" hreflang="{{ $code }}" href="{{ url($alt['url']) }}">
+@endforeach
+```
+
+Document `<title>` and Open Graph image come from
+[`HasDocumentMeta`](template.md#hasdocumentmeta) (`documentTitle()` / `ogImageUrl()`),
+and the sitemap lists every routable locale per record — see
+[template.md](template.md#seo).

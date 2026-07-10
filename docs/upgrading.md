@@ -11,6 +11,12 @@ for the full list; the practical notes:
 - **New `Attribute` methods are additive.** `slugFrom()` adds a slug-field way to
   declare the slug relationship; `slugify()` (on the source field) keeps working as the
   equivalent from the other end.
+- **Multilingual routing/SEO building blocks are additive and opt-in.** The
+  `Route::leapLocalized()` macro, `HasLocaleRouting`, `Sitemapable` +
+  `leap.sitemap.models`, `Section::translatableExcept()`/`translatableOnly()`,
+  `HasDocumentMeta` and the package `HasSlug` (behind the existing `App\Traits\HasSlug`
+  wrapper) are all new; nothing changes until you use them. See
+  [multilingual.md](multilingual.md#routing--urls) and [template.md](template.md).
 - **Template/stub changes only apply when you re-run `php artisan leap:template`.** Your
   live site is untouched by `composer update` alone. Run `leap:template --diff` first to
   see what changed.
@@ -26,6 +32,13 @@ for the full list; the practical notes:
   or clear with `php artisan cache:clear`.
 - **Mandatory 2FA enrollment** has an explicit default in config — review
   `leap.auth_2fa` if you rely on a specific setting.
+- **Panel CSS is now plain CSS, not SCSS, and consolidated from 12 files to 3**
+  (`leap.css`, `filemanager.css`, `editor.css`). If you overrode one of the old
+  per-feature files under `resources/css/leap/` (e.g. `nav.scss`, `forms.scss`,
+  `login.scss`), migrate that override to the new files — see
+  [Theming](configuration.md#theming). Prefer overriding the new `--leap-*` CSS
+  custom properties instead of a whole file where you can; no recompile needed.
+  `nickdekruijk/minify` is no longer a leap-core dependency.
 
 ## Pre-`getPages()` projects
 

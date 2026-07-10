@@ -36,6 +36,8 @@ Attribute::make('sections')->sections(
 - `->label($label)` — a display label (string or per-locale array).
 - `->view('sections.other')` — render a different Blade partial.
 - `->withoutView()` — data-only block with no frontend partial.
+- `->translatableOnly(...$names)` / `->translatableExcept(...$names)` — mark sub-fields
+  translatable in bulk (see below).
 
 ## The HasSections trait
 
@@ -67,3 +69,28 @@ Each partial reads the block's fields (`$section->head`, `$section->body`, …) 
 Mark a section sub-field with `->translatable()` and it is edited per locale when
 `leap.locales` is set, stored as `['nl' => …, 'en' => …]`. `HasSections` resolves it to
 the current locale on the frontend. See [multilingual.md](multilingual.md).
+
+### Bulk marking translatable fields
+
+Marking each field by hand is easy to forget. Two `Section` methods do it in bulk,
+chained after `->attributes()`:
+
+- **`->translatableOnly('head', 'body')`** — mark exactly the named fields. Explicit and
+  safe.
+- **`->translatableExcept('button_link')`** — mark every **textual** field
+  (plain text, textarea, rich-text) except the named ones. Structural fields — switches,
+  media/file pickers, selects, dates, numbers — are skipped automatically, so you rarely
+  need to name anything; pass a field only to keep a translatable-looking one shared.
+
+```php
+Section::make('default')->attributes(
+    Attribute::make('active')->switch(),           // skipped (not textual)
+    Attribute::make('image')->media(),             // skipped
+    Attribute::make('image_position')->select()->values([...]), // skipped
+    Attribute::make('head'),                        // → translatable
+    Attribute::make('body')->richtext(),            // → translatable
+)->translatableExcept();
+```
+
+Both call `Attribute::translatable()` under the hood, so individual `->translatable()`
+calls keep working and can be mixed in.

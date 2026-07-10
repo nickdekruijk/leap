@@ -15,7 +15,8 @@ Built with Livewire; styling is compiled on request (no npm/Vite build step).
   section blocks, TinyMCE and Ace editors.
 - **Roles & permissions**, **two factor authentication**, **passkeys** and
   **password reset** out of the box.
-- **Multilingual editing** — edit and store content per locale, fully opt-in.
+- **Multilingual editing** — edit and store content per locale, fully opt-in, with
+  locale-aware routing, `hreflang`/sitemap and language switching for the frontend.
 - **Frontend template** — an accessible, SEO-ready public website scaffolded with one
   command.
 

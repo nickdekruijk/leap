@@ -18,12 +18,13 @@ All keys live in `config/leap.php`. The most-used ones:
 | `migrations` | `true` | Run the package migrations automatically. |
 | `table_prefix` | `leap_` | Prefix for the package's own tables. |
 | `locales` | `null` | `null` = monolingual; an assoc array enables per-locale editing. See [multilingual.md](multilingual.md). |
+| `sitemap` | `['models' => []]` | Models that contribute to `sitemap.xml` (each `Sitemapable`). Empty = page-tree-only fallback. See [template.md](template.md#pluggable-sitemap). |
 | `cache` | `true` | Cache the frontend page tree. See [caching.md](caching.md). |
 | `auth_2fa` | *(array)* | Two factor authentication settings. See [permissions-and-auth.md](permissions-and-auth.md). |
 | `auth_passkeys` | *(array)* | Passkey settings. |
 | `password_reset` | `true` | Enable the forgot/reset password flow. |
 | `credentials` | `['email', 'password']` | Login fields. |
-| `css` | *(array)* | SCSS files compiled and served for the panel UI. |
+| `css` | *(array)* | CSS files concatenated and served for the panel UI. See [Theming](#theming) below. |
 | `login_image` | | Background image on the login screen. |
 | `logging` | *(array)* | Audit logging of admin actions (enable, skip actions/modules, IP anonymisation). |
 | `filemanager` | *(array)* | File manager allowed extensions and upload limits. |
@@ -32,3 +33,23 @@ All keys live in `config/leap.php`. The most-used ones:
 
 Read any value with `config('leap.<key>')`, or inspect it with
 `php artisan config:show leap.<key>`.
+
+## Theming
+
+The panel's CSS (`leap.css`, `filemanager.css`, `editor.css`) is plain CSS — no build
+step, no SCSS. Colors, spacing and other repeated values are CSS custom properties
+declared once in `:root` (`--leap-blue`, `--leap-header-background`,
+`--leap-button-bg`, `--spacing`, …). To re-theme, override the variables you need in
+your own stylesheet loaded after `AssetController::cssLink()`:
+
+```css
+:root {
+    --leap-header-background: #1a1a2e;
+    --leap-button-bg: #444;
+}
+```
+
+No recompile needed — this is plain CSS cascade. For structural overrides you can
+still replace an entire file: drop a same-named file in `resources/css/leap/` (e.g.
+`resources/css/leap/leap.css`) and it takes priority over the package's own copy, per
+the `css` array above.

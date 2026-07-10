@@ -49,6 +49,26 @@ Key conventions:
 Declare the editor relationship on the slug field with
 `Attribute::make('slug')->slugFrom('title')`.
 
+The behaviour lives in the package (`NickDeKruijk\Leap\Traits\HasSlug`) so fixes arrive
+via `composer update`; `leap:template` ships a thin `App\Traits\HasSlug` wrapper around
+it, keeping the application namespace stable and giving you a place for project
+overrides. Use it on any translatable model with a `slug` field, not just `Page`.
+
+## HasDocumentMeta
+
+`NickDeKruijk\Leap\Traits\HasDocumentMeta` supplies the two `<head>` values the layout
+renders, so they are consistent (and fixable) across every routable model:
+
+- `documentTitle()` — a custom `html_title` verbatim, otherwise the page title with the
+  app name appended. It reads `html_title` **without** translation fallback, so an empty
+  value in the active locale falls through to the page title rather than borrowing
+  another locale's.
+- `ogImageUrl()` — the model's own image, then its first section image/background, else
+  `null` (the layout can fall back to a site-wide `og_image` setting).
+
+It degrades gracefully: it works on any model, uses `HasTranslations` when present, and
+only inspects media/sections when the model uses `HasMedia` / `HasSections`.
+
 ## Sections
 
 The template ships self-contained section types — `slide` (carousel), `default`
@@ -90,10 +110,32 @@ same way. **There is no build step.** Edit the files under `resources/css` and
 ## SEO
 
 Per-page `<title>`, meta description, canonical, Open Graph, Twitter Card and
-`hreflang` alternates are rendered in the layout, plus a generated `sitemap.xml`.
-When multilingual, the sitemap lists one `<url>` per page per locale it has a
+`hreflang` alternates are rendered in the layout (`<title>` and OG image via
+[`HasDocumentMeta`](#hasdocumentmeta), hreflang via the per-locale URL map — see
+[multilingual.md](multilingual.md#routing--urls)), plus a generated `sitemap.xml`.
+When multilingual, the sitemap lists one `<url>` per record per locale it has a
 routable slug translation for, each with `<xhtml:link>` hreflang alternates to
 its sibling locale URLs — mirroring the language-switcher links in the layout.
+
+### Pluggable sitemap
+
+The sitemap is not limited to the page tree. Any model that implements
+`NickDeKruijk\Leap\Contracts\Sitemapable` can contribute entries; list the models in
+`config('leap.sitemap.models')` and the `Sitemap` helper merges them:
+
+```php
+// config/leap.php
+'sitemap' => ['models' => [
+    App\Models\Page::class,
+    App\Models\Service::class,
+]],
+```
+
+`Page` implements `Sitemapable` out of the box. A model that uses
+[`HasLocaleRouting`](multilingual.md#haslocalerouting) gets a default implementation for
+free — just add `implements Sitemapable`. Missing or non-`Sitemapable` classes in the
+config are skipped. When the config is empty the sitemap route falls back to a
+page-tree-only sitemap, so existing sites are unaffected.
 
 ## Caching
 
