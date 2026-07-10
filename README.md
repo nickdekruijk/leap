@@ -31,6 +31,9 @@ Add the required traits to your user model (see
 
 ### Your first module
 
+Write it by hand, or generate it from an existing model with
+`php artisan leap:module Page` (see [modules-and-resources.md](docs/modules-and-resources.md#generating-a-resource-leapmodule)):
+
 ```php
 namespace App\Leap;
 

@@ -13,6 +13,12 @@ package's `docs/` directory.
 - A `Resource` sets `$model`, an optional `$title`/`$icon`, and an `attributes()`
   method returning an array of `Attribute`s that defines the index columns and the
   editor form.
+- Prefer `php artisan leap:module <Model>` over writing a resource by hand — it
+  inspects the model's schema/casts and generates the `attributes()` array (types,
+  required, unique, sortable, labels, icon) as a starting point. Safe to re-run after
+  a migration adds a column: it merges in only the new `Attribute::make()` lines and
+  leaves the rest of the file untouched (use `--force` to regenerate from scratch,
+  `--dry-run` to preview, `--no-interaction` to skip the confirm/override prompts).
 
 ```php
 use NickDeKruijk\Leap\Resource;

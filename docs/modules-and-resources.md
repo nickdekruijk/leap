@@ -48,6 +48,69 @@ class PageResource extends Resource
 - The index shows search, sort, filter, pagination and CSV import/export based on the
   attribute flags.
 
+## Generating a resource: `leap:module`
+
+`php artisan leap:module <Model>` generates the `App\Leap\<Model>` class above for you
+by inspecting the model's table and casts, so you start from a working resource
+instead of a blank file.
+
+```bash
+php artisan leap:module Event              # bare name, resolves to App\Models\Event
+php artisan leap:module App\Models\Event   # or a full FQCN
+```
+
+Options:
+
+- `--name=` — the generated class name (defaults to the model's basename)
+- `--icon=` — override the guessed blade-icon
+- `--force` — fully regenerate the file instead of merging (see below)
+- `--dry-run` — print the generated/merged code, write nothing
+
+### What it detects
+
+Per column, from the schema and the model's `$casts`:
+
+- **type** — boolean/`tinyint(1)` → `->switch()`; a foreign key or a `*_id` column with
+  a matching model → `->foreign()`; a backed enum cast → `->select()->values()`; date/
+  datetime/time columns; `text`/`longtext` → `->richtext()` for `body`/`content`/`intro`,
+  `->textarea()` otherwise; `email`/`password`/`slug` get their dedicated methods.
+- **required** — `NOT NULL` with no default.
+- **unique** — a single-column unique index → `->unique()`.
+- **sortable** — an int column named `sort`/`position`/`order` → `->sortable()` plus the
+  module's `$orderBy`.
+- **default sort order** — when there's no sort column, a single, confidently-named date
+  column becomes `$orderBy`/`$orderDesc`: `created_at`/`published_at`/`posted_at` sorts
+  newest-first, `event_date`/`start_date`/`starts_at`/`date` sorts soonest-first.
+  Ambiguous (multiple candidates) or no match at all → left alone, no guess made.
+- **`$active`** — a boolean column named (or containing) `active`, `published`,
+  `enabled` or `visible` — e.g. `is_active` matches too.
+- **icon** — guessed from the model name (`Event` → `fas-calendar-days`, `User` →
+  `fas-users`, `News`/`NewsItem` → `fas-newspaper`, …), falling back to `fas-table`.
+- **labels** — humanized from the column name, duplicated across every locale in
+  `config('leap.locales')`.
+
+Nothing here is final — every detected value is a starting point you can edit
+afterward, in the file or via the interactive prompts below.
+
+### Interactive mode
+
+By default the command asks you to confirm or override each detected value (field
+type, required, label) — always pre-filled with the detected value, never asked
+blind. Pass `--no-interaction` to skip every prompt and accept all detected defaults.
+
+If the app is running in a non-English locale and `leap.locales` is configured, the
+label prompt asks for the label **in that locale** specifically, and keeps the
+humanized text as the `en` entry — instead of storing an English guess under your own
+locale's key.
+
+### Updating an existing module
+
+If `app/Leap/<Name>.php` already exists, `leap:module` does **not** overwrite it. It
+scans the file for `Attribute::make('column')` calls already present and appends only
+the columns that are missing — typically after a column was added to the model's
+migration. Your hand-written lines (custom labels, hints, ordering) are left
+untouched. Pass `--force` to discard the file and regenerate it from scratch instead.
+
 ## Permissions
 
 Each module is subject to the current user's role permissions (`read`, `create`,
