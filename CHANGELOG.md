@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.9] — 2026-07-10
+
+### Fixed
+
+- **Disabled translate badge no longer hints at an interaction it doesn't have.**
+  When AI translate has no provider/key configured, the per-field locale badge
+  (e.g. `NL`) correctly went non-clickable, but still showed the `.leap-hint`
+  hover color and the global `.leap :focus` blue outline ring — both borrowed
+  from the enabled/clickable variant. Now only the tooltip reacts to
+  hover/focus, matching the badge's actual (non-interactive) state.
+
 ## [0.9.8] — 2026-07-10
 
 ### Added
