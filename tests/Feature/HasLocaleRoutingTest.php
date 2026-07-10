@@ -29,6 +29,13 @@ class HasLocaleRoutingTest extends TestCase
         Route::leapLocalized(['nl' => 'diensten', 'en' => 'services'], function (string $locale, string $segment): void {
             Route::get($segment.'/{slug}', fn (string $slug): string => $slug)->name('article.'.$locale);
         });
+
+        // The name is set fluently after the route is added, so the collection's
+        // name lookup can be stale until a request refreshes it. These tests call
+        // route() directly (via localeUrls()) without a request first, so refresh
+        // it now. A real app resolves localeUrls() during a request, where the
+        // router has already refreshed the lookup.
+        Route::getRoutes()->refreshNameLookups();
     }
 
     private function makeArticle(array $slugs): Article
