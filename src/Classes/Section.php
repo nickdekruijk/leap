@@ -76,4 +76,55 @@ class Section
 
         return $this;
     }
+
+    /**
+     * The textual inputs whose content is worth translating. A field is only
+     * auto-marked translatable by translatableExcept() when it is one of these
+     * AND its type is 'text' -- so plain text, textarea and rich-text are covered,
+     * while selects, file/media pickers, switches, dates, numbers, etc. are not.
+     */
+    private const TRANSLATABLE_INPUTS = ['input', 'textarea', 'tinymce'];
+
+    /**
+     * Mark only the named sub-attributes as translatable (edited per locale).
+     *
+     * The safe, explicit counterpart to calling ->translatable() on each field:
+     * list exactly the fields that hold translatable content. Must be chained
+     * after attributes().
+     */
+    public function translatableOnly(string ...$names): Section
+    {
+        foreach ($this->attributes as $attribute) {
+            if (in_array($attribute->name, $names, true)) {
+                $attribute->translatable();
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Mark every textual sub-attribute translatable except the named ones.
+     *
+     * Convenient when most of a section is translatable copy and only a few
+     * structural fields (a switch, an image, a layout select) are not. Only
+     * text/textarea/rich-text fields are ever auto-marked (see TRANSLATABLE_INPUTS);
+     * selects, media, switches, dates and the like are skipped automatically, so
+     * you usually only need to name a translatable-looking field you want to keep
+     * shared. Must be chained after attributes(). For full control use
+     * translatableOnly().
+     */
+    public function translatableExcept(string ...$names): Section
+    {
+        foreach ($this->attributes as $attribute) {
+            if (in_array($attribute->name, $names, true)) {
+                continue;
+            }
+            if ($attribute->type === 'text' && in_array($attribute->input, self::TRANSLATABLE_INPUTS, true)) {
+                $attribute->translatable();
+            }
+        }
+
+        return $this;
+    }
 }

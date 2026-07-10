@@ -317,6 +317,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | sitemap
+    |--------------------------------------------------------------------------
+    |
+    | Models that contribute entries to the frontend sitemap.xml. Each must
+    | implement NickDeKruijk\Leap\Contracts\Sitemapable (models using the
+    | HasLocaleRouting trait get a default implementation for free). The Sitemap
+    | helper (NickDeKruijk\Leap\Classes\Sitemap) merges the entries of every
+    | listed model. Non-existent or non-Sitemapable entries are skipped. When
+    | empty, the frontend template falls back to a page-tree-only sitemap.
+    | Example:
+    | 'models' => [App\Models\Page::class, App\Models\Service::class],
+    |
+    */
+    'sitemap' => [
+        'models' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ai
     |--------------------------------------------------------------------------
     |

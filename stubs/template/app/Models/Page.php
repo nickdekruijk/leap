@@ -8,11 +8,15 @@ use App\Traits\HasSlug;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Contracts\Sitemapable;
+use NickDeKruijk\Leap\Traits\HasDocumentMeta;
 use NickDeKruijk\Leap\Traits\HasMedia;
 use Spatie\Translatable\HasTranslations;
 
-class Page extends Model
+class Page extends Model implements Sitemapable
 {
+    use HasDocumentMeta;
     use HasFactory;
     use HasMedia;
     use HasSections;
@@ -50,40 +54,18 @@ class Page extends Model
     }
 
     /**
-     * The document <title>: a custom html_title is used verbatim; a plain page title
-     * gets the site name appended. config('app.name') is only added when there is no
-     * html_title.
+     * documentTitle() and ogImageUrl() come from NickDeKruijk\Leap\Traits\HasDocumentMeta.
      */
-    public function documentTitle(): string
-    {
-        // Read html_title without Spatie's locale fallback: an empty html_title in
-        // the active locale must fall through to the page title, not borrow another
-        // locale's html_title.
-        $htmlTitle = $this->getTranslation('html_title', app()->getLocale(), false);
-
-        return $htmlTitle
-            ?: trim(($this->title ? $this->title.' — ' : '').config('app.name'));
-    }
 
     /**
-     * OG/Twitter image URL from the page's own image, then its first section image or
-     * background. Null when the page has none (the layout falls back to the og_image
-     * site setting).
+     * Sitemapable: the page tree's entries. The tree-walking path logic lives in
+     * PageController (which also builds the navigation), so this delegates there.
+     *
+     * @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}>
      */
-    public function ogImageUrl(): ?string
+    public static function sitemapEntries(): Collection
     {
-        $file = $this->mediaFor('images')->first()?->file_name;
-        if (! $file) {
-            foreach ($this->sections() as $section) {
-                $file = ($section['image'] ?? null)?->first()?->file_name
-                    ?? ($section['background'] ?? null)?->first()?->file_name;
-                if ($file) {
-                    break;
-                }
-            }
-        }
-
-        return $file ? url('storage/'.$file) : null;
+        return PageController::sitemapEntries();
     }
 
     public function scopePublished($query)

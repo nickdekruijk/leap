@@ -94,6 +94,58 @@ class Leap
     }
 
     /**
+     * The default (first) configured locale, or null when the site is monolingual
+     * (leap.locales is null/empty). This is the locale served without a URL prefix.
+     */
+    public static function localeDefault(): ?string
+    {
+        $locales = config('leap.locales');
+
+        return $locales ? array_key_first($locales) : null;
+    }
+
+    /**
+     * The URL prefix for the given locale (defaults to the active locale): an empty
+     * string for the default/only locale, "/xx" otherwise. Shared by the frontend
+     * template's routing, language switcher, sitemap and the leapLocalized() macro
+     * so every locale-aware URL is built from one rule.
+     */
+    public static function localePrefix(?string $locale = null): string
+    {
+        if (! config('leap.locales')) {
+            return '';
+        }
+
+        $locale ??= app()->getLocale();
+
+        return $locale === self::localeDefault() ? '' : '/'.$locale;
+    }
+
+    /**
+     * Detect a leading locale segment and apply it with app()->setLocale().
+     *
+     * No-op unless leap.locales defines locales. The default locale stays
+     * unprefixed, so only a non-default, known locale segment is consumed
+     * (shifted off $segments by reference). This is the segment-based counterpart
+     * to the SetLeapLocale middleware (which works on a route prefix parameter);
+     * both read the same leap.locales source so their locale rules never diverge.
+     *
+     * @param  array<int, string>  $segments  URL path segments; a matched locale is removed
+     */
+    public static function detectLocale(array &$segments): void
+    {
+        $locales = config('leap.locales');
+        if (! $locales) {
+            return;
+        }
+
+        $default = self::localeDefault();
+        if (isset($segments[0]) && $segments[0] !== '' && $segments[0] !== $default && array_key_exists($segments[0], $locales)) {
+            app()->setLocale(array_shift($segments));
+        }
+    }
+
+    /**
      * Check if the user has permission for the ability, if not raise HtmlException and Log
      *
      * @param  string  $ability  The permission to check

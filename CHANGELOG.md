@@ -5,6 +5,45 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] — 2026-07-10
+
+### Added
+
+- **Reusable multilingual routing/SEO building blocks.** The locale-aware
+  frontend logic that used to live only in the template stub is now part of the
+  package, so projects with content types outside the page tree (e.g. services,
+  stories, blogs on their own routes) get the same behaviour without copying it:
+  - `Leap::localeDefault()`, `Leap::localePrefix()` and `Leap::detectLocale()` —
+    one source of truth for the default locale, the `/xx` URL prefix rule and
+    stripping a leading locale segment. The template `PageController` now uses
+    these instead of its own private copies (behaviour unchanged).
+  - `Middleware\SetLeapLocale` and the `Route::leapLocalized()` macro — register
+    a frontend route once and get one group per configured locale, each with the
+    right prefix (default locale unprefixed) and the request locale applied per
+    request (never at route-registration time). The URL segment can differ per
+    locale (e.g. `diensten` in nl, `services` in en).
+  - `Traits\HasLocaleRouting` — per-locale URLs (`localeUrls()` / `localeUrl()`)
+    and a default `Sitemapable` implementation for a flat translatable model
+    whose routes follow the macro's `<name>.<locale>` naming.
+- **Pluggable sitemap.** `Contracts\Sitemapable` plus `Classes\Sitemap` and the
+  new `leap.sitemap.models` config let any model contribute entries to
+  `sitemap.xml`; the helper merges them (skipping missing/non-Sitemapable
+  classes). The template's `Page` implements it and the sitemap route falls back
+  to a page-tree-only sitemap when no models are configured, so existing sites
+  are unaffected.
+- **`Section::translatableOnly()` / `translatableExcept()`.** Mark section
+  sub-fields translatable in bulk. `translatableOnly('head', 'body')` is the
+  explicit, safe form; `translatableExcept()` auto-marks only textual fields
+  (text/textarea/rich-text) and skips switches, media, selects, dates, etc.,
+  reducing the chance of forgetting a field. Individual `Attribute::translatable()`
+  calls are unchanged.
+- **`Traits\HasSlug` and `Traits\HasDocumentMeta` moved into the package.** The
+  per-locale slug generation and the `documentTitle()` / `ogImageUrl()` head
+  metadata are now package traits (fixable via `composer update`). The template
+  ships a thin `App\Traits\HasSlug` wrapper so the application namespace is
+  stable, and `HasDocumentMeta` degrades gracefully on models without
+  media/sections.
+
 ## [0.9.2] — 2026-07-10
 
 ### Added

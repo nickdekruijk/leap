@@ -8,6 +8,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use NickDeKruijk\Leap\Classes\Sitemap;
+use NickDeKruijk\Leap\Leap;
 
 class PageController extends Controller
 {
@@ -79,7 +81,7 @@ class PageController extends Controller
             $pages['current'] = null;
 
             // URL prefix for the active locale (empty for the default/only locale)
-            $prefix = static::localePrefix();
+            $prefix = Leap::localePrefix();
 
             // Traverse the pages to find the active page and build the menu
             $traverse = function (array &$pages, array $segments = [], int $parent = 0, int $depth = 0, bool $activeParent = true, string $path = '') use (&$traverse, $prefix) {
@@ -136,7 +138,7 @@ class PageController extends Controller
         $segments = explode('/', $uri ?: '');
 
         // When multilingual, strip and apply a leading locale prefix (gated on leap.locales)
-        static::detectLocale($segments);
+        Leap::detectLocale($segments);
 
         // A bare locale prefix ("/en") leaves no segments; the homepage matches an empty one
         if (empty($segments)) {
@@ -153,29 +155,43 @@ class PageController extends Controller
     }
 
     /**
-     * XML sitemap of all active pages. When multilingual, every page gets one
-     * <url> entry per locale it has a routable (non-empty) slug translation
-     * for, each carrying hreflang alternates to its sibling locale URLs.
+     * XML sitemap. When config('leap.sitemap.models') lists models it merges the
+     * entries of every one (via the Sitemap helper); otherwise it falls back to a
+     * page-tree-only sitemap so the route works out of the box.
      */
     public function sitemap(): Response
+    {
+        $urls = config('leap.sitemap.models')
+            ? Sitemap::entries()
+            : static::sitemapEntries();
+
+        return response()
+            ->view('sitemap', compact('urls'))
+            ->header('Content-Type', 'application/xml');
+    }
+
+    /**
+     * Sitemap entries for the page tree (Page's Sitemapable implementation delegates
+     * here). When multilingual, every page gets one entry per locale it has a
+     * routable (non-empty) slug translation for, each carrying hreflang alternates
+     * to its sibling locale URLs.
+     *
+     * @return Collection<int, array{loc: string, lastmod: ?string, alternates: array<string, string>}>
+     */
+    public static function sitemapEntries(): Collection
     {
         $pages = Page::active()->get(['id', 'slug', 'parent', 'updated_at']);
         $map = $pages->keyBy('id');
         $locales = config('leap.locales');
 
         if (! $locales) {
-            $urls = $pages->map(fn (Page $page): array => [
+            return $pages->map(fn (Page $page): array => [
                 'loc' => url(static::buildPath($page, $map)),
                 'lastmod' => $page->updated_at?->toAtomString(),
                 'alternates' => [],
-            ]);
-
-            return response()
-                ->view('sitemap', compact('urls'))
-                ->header('Content-Type', 'application/xml');
+            ])->values();
         }
 
-        $default = array_key_first($locales);
         $urls = collect();
 
         foreach ($pages as $page) {
@@ -188,7 +204,7 @@ class PageController extends Controller
             }
 
             $hrefs = collect($paths)->mapWithKeys(fn (string $path, string $locale): array => [
-                $locale => url(($locale === $default ? '' : '/'.$locale).$path),
+                $locale => url(Leap::localePrefix($locale).$path),
             ]);
 
             foreach ($paths as $locale => $path) {
@@ -200,49 +216,14 @@ class PageController extends Controller
             }
         }
 
-        return response()
-            ->view('sitemap', compact('urls'))
-            ->header('Content-Type', 'application/xml');
+        return $urls;
     }
 
-    /**
-     * Detect a leading locale segment and apply it. No-op unless leap.locales
-     * defines more than the default locale. The default locale stays unprefixed.
-     */
-    protected static function detectLocale(array &$segments): void
-    {
-        $locales = config('leap.locales');
-        if (! $locales) {
-            return;
-        }
-
-        $default = array_key_first($locales);
-        if (isset($segments[0]) && $segments[0] !== '' && $segments[0] !== $default && array_key_exists($segments[0], $locales)) {
-            app()->setLocale(array_shift($segments));
-        }
-    }
-
-    /**
-     * URL prefix for the active locale: empty for the default/only locale, "/xx" otherwise.
-     */
-    protected static function localePrefix(): string
-    {
-        $locales = config('leap.locales');
-        if (! $locales) {
-            return '';
-        }
-
-        return app()->getLocale() === array_key_first($locales) ? '' : '/'.app()->getLocale();
-    }
-
-    /**
-     * Build the full path for a page by walking its parent chain.
-     *
-     * @param  Collection<int, Page>  $map
-     */
     /**
      * URLs for the given page in each configured locale, for a language switcher.
-     * Empty unless multilingual.
+     * Empty unless multilingual. Locale detection and the URL prefix rule live in
+     * Leap (Leap::detectLocale() / Leap::localePrefix()) so the frontend routing,
+     * this switcher and the sitemap all follow the same leap.locales source.
      *
      * @return array<string, array{name: string, url: string, active: bool}>
      */
@@ -253,13 +234,11 @@ class PageController extends Controller
             return [];
         }
 
-        $default = array_key_first($locales);
         $urls = [];
         foreach ($locales as $locale => $name) {
-            $prefix = $locale === $default ? '' : '/'.$locale;
             $urls[$locale] = [
                 'name' => $name,
-                'url' => $prefix.static::localePath($page, $locale),
+                'url' => Leap::localePrefix($locale).static::localePath($page, $locale),
                 'active' => $locale === app()->getLocale(),
             ];
         }

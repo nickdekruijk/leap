@@ -2,9 +2,11 @@
 
 namespace NickDeKruijk\Leap;
 
+use Closure;
 use Composer\InstalledVersions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Laravel\Passkeys\Events\PasskeyVerified;
@@ -17,6 +19,7 @@ use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
+use NickDeKruijk\Leap\Middleware\SetLeapLocale;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -121,6 +124,52 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         });
         Gate::define('leap::delete', function ($user, ?Module $module = null) {
             return $this->can('delete', $module);
+        });
+
+        $this->registerLocalizedRouteMacro();
+    }
+
+    /**
+     * Register the Route::leapLocalized() macro for frontend routes whose URL
+     * segment differs per locale (e.g. 'diensten' in nl, 'services' in en) and
+     * that live outside the page tree.
+     *
+     * Usage in a project's routes/web.php:
+     *
+     *     Route::leapLocalized(['nl' => 'diensten', 'en' => 'services'], function (string $locale, string $segment) {
+     *         Route::get($segment.'/{slug}', [PageController::class, 'service'])->name('service.'.$locale);
+     *     });
+     *
+     * One route group is registered per configured locale that has a segment.
+     * The default locale is served unprefixed; every other locale is prefixed
+     * with "/xx" (Leap::localePrefix()). The request locale is set per group by
+     * SetLeapLocale middleware -- never here at registration time, which would
+     * be too early for a per-request locale. When the site is monolingual
+     * (leap.locales is null) a single unprefixed group is registered using the
+     * current app locale's segment (falling back to the first).
+     */
+    protected function registerLocalizedRouteMacro(): void
+    {
+        Route::macro('leapLocalized', function (array $segments, Closure $callback): void {
+            $locales = config('leap.locales');
+
+            if (! $locales) {
+                $locale = app()->getLocale();
+                $callback($locale, $segments[$locale] ?? reset($segments));
+
+                return;
+            }
+
+            foreach ($locales as $locale => $name) {
+                $segment = $segments[$locale] ?? null;
+                if ($segment === null) {
+                    continue;
+                }
+
+                Route::prefix(Leap::localePrefix($locale))
+                    ->middleware(SetLeapLocale::class.':'.$locale)
+                    ->group(fn () => $callback($locale, $segment));
+            }
         });
     }
 
