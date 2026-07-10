@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **`HasSlug` now works on flat (non-tree) models.** Slug uniqueness was always
+  scoped to a `parent` column, which threw on models without one. It is now scoped
+  to siblings only when a sibling column exists — auto-detected as `parent` via the
+  new `slugSiblingColumn()` (override to use a different column, or return `null`
+  for global uniqueness). Page trees are unchanged; standalone models (services,
+  stories, blog posts) can now use `HasSlug` for per-locale slug generation too.
+
 ## [0.9.5] — 2026-07-10
 
 ### Changed

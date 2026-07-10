@@ -2,12 +2,17 @@
 
 namespace NickDeKruijk\Leap\Traits;
 
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
  * Generates stored, queryable slugs — per locale when the model's slug is
  * translatable. Runs on every save (so it also covers "save as copy"/clone and
- * seeders), keeping slugs unique among siblings (same parent) per locale.
+ * seeders), keeping slugs unique per locale.
+ *
+ * Uniqueness is scoped to siblings for a tree (a model with a "parent" column) and
+ * global for a flat model, auto-detected via slugSiblingColumn(). So it works on
+ * both the page tree and standalone models (services, stories, blog posts).
  *
  * Conventions:
  * - An empty slug is generated from the title of that locale (falling back to
@@ -80,8 +85,14 @@ trait HasSlug
     protected function slugExists(string $slug, ?string $locale): bool
     {
         $query = static::query()
-            ->where('parent', $this->parent)
             ->when($this->exists, fn ($q) => $q->whereKeyNot($this->getKey()));
+
+        // Scope uniqueness to siblings for a tree (same parent); a flat model with
+        // no sibling column gets global uniqueness.
+        $sibling = $this->slugSiblingColumn();
+        if ($sibling !== null) {
+            $query->where($sibling, $this->{$sibling});
+        }
 
         if ($locale) {
             $query->whereJsonContains('slug->'.$locale, $slug);
@@ -90,5 +101,19 @@ trait HasSlug
         }
 
         return $query->exists();
+    }
+
+    /**
+     * The column that scopes slug uniqueness to siblings (a page tree's "parent"),
+     * or null for a flat model where slugs are globally unique. Defaults to "parent"
+     * when the table has that column — so page trees keep sibling scoping and flat
+     * models need no configuration. Override to scope by a different column.
+     */
+    protected function slugSiblingColumn(): ?string
+    {
+        static $cache = [];
+        $table = $this->getTable();
+
+        return $cache[$table] ??= (Schema::hasColumn($table, 'parent') ? 'parent' : null);
     }
 }
