@@ -5,10 +5,12 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — 1.0.0
+## [0.9.0] — 2026-07-10
 
-The first stable release. The public fluent API (`Attribute`, `Section`, `Module`,
-`Resource`) is now frozen; from 1.0 onwards it follows semantic versioning strictly.
+Release candidate for 1.0.0, tagged for real-world testing before the stable release. The
+public fluent API (`Attribute`, `Section`, `Module`, `Resource`) is stabilising and treated
+as frozen; the 1.0.0 tag will make that guarantee binding under semver. As a 0.x release,
+semver still allows adjustments if testing surfaces something.
 
 **Stability:** semver covers the module DSL you write — the fluent builders on
 `Attribute`/`Section` and the `Module`/`Resource` classes you extend (their properties
