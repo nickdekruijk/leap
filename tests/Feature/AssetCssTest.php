@@ -41,4 +41,20 @@ class AssetCssTest extends TestCase
         $this->assertNotNull(Cache::get('leap.css'));
         $this->assertSame(AssetController::cssFilemtime(), Cache::get('leap.css.filemtime'));
     }
+
+    public function test_filemanager_row_background_override_excludes_selected_rows(): void
+    {
+        // filemanager.css blanks a row's TD background so the table's own bg shows
+        // through, but must exclude .leap-index-row-selected — otherwise it ties in
+        // specificity with leap.css's ".leap-index-row-selected TD" rule and (since
+        // filemanager.css loads last) wins on source order, cancelling the selected
+        // row's teal background while its "color: white" still applies, leaving
+        // near-invisible white-on-transparent text.
+        $css = $this->get(route('leap.css'))->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '/\.leap-index-row:not\(\.leap-index-row-selected\)\s*\{\s*TD\s*\{\s*background-color:\s*transparent;/',
+            $css
+        );
+    }
 }

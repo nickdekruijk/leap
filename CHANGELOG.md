@@ -5,6 +5,19 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Filemanager: selected folder/file row lost its teal highlight**, rendering as
+  near-invisible white-on-white text instead. Regression from the 0.9.5 CSS
+  consolidation: `filemanager.css` (loaded last) unconditionally set
+  `.leap-index-row TD { background-color: transparent }`, which tied in specificity
+  with `leap.css`'s `.leap-index-row-selected TD` rule and won on source order,
+  cancelling the selected-row background while `color: white` still applied.
+  Scoped the transparent override to `.leap-index-row:not(.leap-index-row-selected)`
+  so the two rules no longer compete regardless of file load order.
+
 ## [0.9.6] — 2026-07-10
 
 ### Changed

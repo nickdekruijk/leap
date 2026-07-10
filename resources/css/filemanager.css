@@ -47,7 +47,7 @@
             .leap-filemanager-parent {
                 display: none;
             }
-            .leap-index-row {
+            .leap-index-row:not(.leap-index-row-selected) {
                 TD {
                     background-color: transparent;
                 }
