@@ -10,6 +10,7 @@ use Laravel\Fortify\Fortify;
 use Laravel\Passkeys\Events\PasskeyVerified;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\TemplateCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
@@ -103,6 +104,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ModuleCommand::class,
                 TemplateCommand::class,
                 UserCommand::class,
             ]);
