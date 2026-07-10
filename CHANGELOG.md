@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hover color and the global `.leap :focus` blue outline ring — both borrowed
   from the enabled/clickable variant. Now only the tooltip reacts to
   hover/focus, matching the badge's actual (non-interactive) state.
+- **`<x-responsive-image>` crashed on SVG media.** `asset_resized()` has no
+  decode path for SVG (only bitmap formats); the component now serves SVGs as
+  a plain `<img src>` (they're already infinitely scalable, no responsive
+  breakpoints needed), branching on `Media::isBitmap()`.
 
 ## [0.9.8] — 2026-07-10
 
