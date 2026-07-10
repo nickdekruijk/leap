@@ -8,8 +8,9 @@ for the full list; the practical notes:
 - **Runtimes unchanged:** PHP 8.2–8.4, Laravel 12/13, Livewire 3/4.
 - **Multilingual is opt-in:** with `leap.locales` at its default `null`, editor and
   storage behaviour is byte-for-byte identical to before.
-- **New `Attribute` methods are additive.** `slugify()` still works but is deprecated in
-  favour of `slugFrom()`.
+- **New `Attribute` methods are additive.** `slugFrom()` adds a slug-field way to
+  declare the slug relationship; `slugify()` (on the source field) keeps working as the
+  equivalent from the other end.
 - **Template/stub changes only apply when you re-run `php artisan leap:template`.** Your
   live site is untouched by `composer update` alone. Run `leap:template --diff` first to
   see what changed.

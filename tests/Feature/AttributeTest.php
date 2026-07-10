@@ -16,7 +16,7 @@ class AttributeTest extends TestCase
         $this->assertNull($attribute->slugify);
     }
 
-    public function test_slugify_is_the_deprecated_inverse_and_makes_the_source_live(): void
+    public function test_slugify_declares_the_relationship_on_the_source_and_makes_it_live(): void
     {
         $attribute = Attribute::make('title')->slugify('slug');
 

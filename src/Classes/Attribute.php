@@ -654,15 +654,17 @@ class Attribute
     }
 
     /**
-     * If the target attribute is empty populate it with a slug of the current value
+     * Declared on the source field: slugify its value into a target (slug) field.
      *
-     * The slugified value will be shown as placeholder for the target input unless a value was already saved in the model.
-     * An incrementing number will be appended to the slug to make it unique if the slug already exists.
-     * Note that also setting a placeholder for the target input will have no effect.
+     * The source-field form of the slug relationship — the mirror image of slugFrom(),
+     * which declares the same thing on the slug field instead. Call it on the field
+     * whose value feeds the slug, e.g. Attribute::make('title')->slugify('slug'). The
+     * source field is made live so the slug's placeholder updates as you type; the slug
+     * shows as a placeholder unless a value was already saved, and an incrementing
+     * number is appended to keep it unique. (Setting a placeholder on the target input
+     * then has no effect.)
      *
      * @param  string  $target  the slug attribute to populate from this field's value
-     *
-     * @deprecated Declare the relationship on the slug field with slugFrom() instead; this remains as an alias.
      */
     public function slugify(string $target): Attribute
     {
@@ -675,11 +677,12 @@ class Attribute
     /**
      * Declared on the slug field: populate it with a slug of another field's value.
      *
-     * This is the inverse, more intuitive form of slugify(): call it on the slug
-     * attribute and pass the source field name, e.g. Attribute::make('slug')->slugFrom('title').
-     * The source field is made live so the placeholder updates as you type. The
-     * slug shows as a placeholder unless a value was already saved, and an
-     * incrementing number is appended to keep it unique.
+     * The slug-field form of the slug relationship — the mirror image of slugify()
+     * (which declares the same thing on the source field). Call it on the slug attribute
+     * and pass the source field name, e.g. Attribute::make('slug')->slugFrom('title').
+     * The source field is made live so the placeholder updates as you type; the slug
+     * shows as a placeholder unless a value was already saved, and an incrementing number
+     * is appended to keep it unique.
      *
      * @param  string  $source  the attribute whose value is slugified into this field
      */

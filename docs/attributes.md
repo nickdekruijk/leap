@@ -50,8 +50,9 @@ Attribute::make('slug')->unique()->slugFrom('title');
 ```
 
 `slugFrom('title')` makes the `title` field live so the slug placeholder updates as
-you type, and per locale when multilingual. The older `->slugify('slug')` (declared on
-the *source* field, pointing forward) is the deprecated inverse — prefer `slugFrom()`.
+you type, and per locale when multilingual. `->slugify('slug')` (declared on the
+*source* field, pointing forward) is the equivalent form from the other end — use
+whichever reads better for your module.
 
 The template's `HasSlug` trait does the actual persistence and uniqueness on save; see
 [template.md](template.md).

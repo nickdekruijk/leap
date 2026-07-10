@@ -34,9 +34,10 @@ supported API and may change in a minor release. Don't call them from applicatio
   save), so editors with many rich-text sections open fast. Toggled by
   `leap.tinymce.lazy` (top-level fields, default off) and
   `leap.tinymce.lazy_sections` (section fields, default on).
-- **`Attribute::slugFrom('source')`.** Declared on the slug field, the intuitive
-  inverse of `slugify()`. The source field is made live so the slug placeholder
-  updates as you type. Works per locale.
+- **`Attribute::slugFrom('source')`.** Declared on the slug field — the slug-field
+  form of the slug relationship, mirroring `slugify()` (which declares the same thing
+  on the source field). The source field is made live so the slug placeholder updates
+  as you type. Works per locale.
 - **`Attribute::label()`, `placeholder()` and `hint()` accept a per-locale array**
   (e.g. `->label(['nl' => 'Titel', 'en' => 'Title'])`), resolved to the current
   locale. `hint()` renders as an `(i)` tooltip next to the field label.
