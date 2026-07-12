@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.10] — 2026-07-12
+
+### Fixed
+
+- **`composer require nickdekruijk/leap` failed without `-W`.** `brick/math`
+  wasn't a direct dependency, so on projects where it was already locked to a
+  version newer than `spomky-labs/cbor-php` (pulled in via
+  `laravel/passkeys` → `web-auth/webauthn-lib`) supports, Composer's partial
+  update refused to touch it and the install failed. Declaring `brick/math`
+  directly, capped to the range `cbor-php` accepts, puts it in the update
+  whitelist so a plain `composer require` resolves it correctly.
+
 ## [0.9.9] — 2026-07-10
 
 ### Fixed
