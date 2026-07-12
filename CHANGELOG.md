@@ -5,6 +5,16 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.11] — 2026-07-12
+
+### Added
+
+- **`leap-development` Boost skill** (`resources/boost/skills/leap-development/SKILL.md`)
+  — on-demand agent guidance covering resources/modules, the `Attribute` API, roles
+  and permissions, multilingual editing, sections, the frontend template and AI
+  features, with pointers into the package's `docs/` directory. Complements the
+  existing always-on `resources/boost/guidelines/leap.blade.php`.
+
 ## [0.9.10] — 2026-07-12
 
 ### Fixed
