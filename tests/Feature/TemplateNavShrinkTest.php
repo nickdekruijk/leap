@@ -56,4 +56,21 @@ class TemplateNavShrinkTest extends TestCase
         $this->assertStringContainsString('.nav .nav-container {', $mobile);
         $this->assertStringNotContainsString('--nav-height: var(--nav-height-compact', $mobile);
     }
+
+    public function test_the_logo_stays_visible_above_the_open_mobile_menu(): void
+    {
+        $template = $this->stub('resources/css/template.scss');
+        $mobile = substr($template, strpos($template, '@media (max-width: $bp-mobile)'));
+
+        // .nav-main-container is a fixed panel pinned to the top of the viewport,
+        // so it covers the bar. The toggle lifts itself above it; without the same
+        // treatment the logo disappears behind the open menu.
+        $this->assertStringContainsString('z-index: 1100', $mobile);
+
+        $logoRule = substr($mobile, strpos($mobile, '.nav .nav-logo {'));
+        $logoRule = substr($logoRule, 0, strpos($logoRule, "\n    }"));
+
+        $this->assertStringContainsString('position: relative', $logoRule);
+        $this->assertStringContainsString('z-index: 1100', $logoRule);
+    }
 }

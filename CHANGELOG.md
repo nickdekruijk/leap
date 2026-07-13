@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **In-page anchors no longer land under the navigation bar** in the frontend template:
   `scroll-margin-top` now uses the compact height, since a jump to an anchor always
   happens with the bar already shrunk.
+- **The logo no longer disappears behind the open mobile menu.** `.nav-main-container`
+  is a fixed panel pinned to the top of the viewport, so it covered the whole bar; the
+  hamburger lifted itself above it but the logo did not. Longstanding, unrelated to the
+  shrinking bar.
 
 ## [0.9.11] — 2026-07-12
 

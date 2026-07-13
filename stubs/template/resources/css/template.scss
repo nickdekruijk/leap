@@ -327,6 +327,12 @@ a[role="button"],
     .nav .nav-logo {
         font-size: var(--logo-font-size-compact, var(--logo-font-size, var(--fs-h4)));
 
+        // The open menu is a fixed panel covering the top of the viewport, so
+        // the logo has to sit above it (as the toggle already does) to stay
+        // visible while the menu is open.
+        position: relative;
+        z-index: 1100;
+
         img {
             height: var(--logo-height-compact, var(--logo-height, auto));
         }
