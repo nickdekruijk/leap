@@ -32,6 +32,10 @@ class TemplateInstallTest extends TestCase
         file_put_contents($this->temp.'/app/Models/User.php', "<?php\n\nnamespace App\\Models;\n\nclass User {}\n");
         file_put_contents($this->temp.'/.env', "APP_LOCALE=en\nAPP_FALLBACK_LOCALE=en\n");
 
+        // One of the two compiled-asset rules is already here, so a re-run has to
+        // add the missing one without duplicating the other
+        file_put_contents($this->temp.'/.gitignore', "/vendor\n/public/css/builds\n");
+
         $this->app->setBasePath($this->temp);
         chdir($this->temp);
     }
@@ -103,6 +107,12 @@ class TemplateInstallTest extends TestCase
         ] as $file) {
             $this->assertFileExists($this->temp.'/'.$file, "Expected {$file} to be copied.");
         }
+
+        // The compiled CSS/JS is build output, written on request by minify, so it
+        // is kept out of version control rather than committed as a stale artifact
+        $gitignore = file_get_contents($this->temp.'/.gitignore');
+        $this->assertStringContainsString('/public/js/builds', $gitignore);
+        $this->assertSame(1, substr_count($gitignore, '/public/css/builds'), 'The rule was already there and must not be added twice.');
 
         // Route + config patches applied
         $routes = file_get_contents($this->temp.'/routes/web.php');

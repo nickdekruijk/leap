@@ -106,6 +106,35 @@ class TemplateCommand extends Command
     }
 
     /**
+     * Keep the compiled CSS/JS out of version control.
+     *
+     * nickdekruijk/minify writes public/css/builds and public/js/builds on request,
+     * from the sources under resources/. Committing them means every branch carries
+     * a rebuilt artifact that conflicts on merge, and a stale copy can mask a broken
+     * source. They regenerate on the first request, directories and all.
+     */
+    protected function ignoreCompiledAssets(): void
+    {
+        $file = base_path('.gitignore');
+        if (! file_exists($file)) {
+            return;
+        }
+
+        $contents = file_get_contents($file);
+        $missing = array_values(array_filter(
+            ['/public/css/builds', '/public/js/builds'],
+            fn (string $rule): bool => ! preg_match('#^\s*'.preg_quote($rule, '#').'/?\s*$#m', $contents),
+        ));
+
+        if (! $missing) {
+            return;
+        }
+
+        file_put_contents($file, rtrim($contents, "\n")."\n".implode("\n", $missing)."\n");
+        $this->info('Added '.implode(' and ', $missing).' to .gitignore (compiled on request, not source)');
+    }
+
+    /**
      * The template files copied by this command, as paths relative to the project
      * root (and to the stubs/template folder). Individual files plus everything in
      * the copied directories. Used by both the installer and --diff.
@@ -236,6 +265,9 @@ class TemplateCommand extends Command
         $this->createDirectory('public/css');
         $this->copyOrReplace('public/css/tinymce.css', 'TinyMCE editor stylesheet');
         $this->enableTinymceContentCss();
+
+        // The compiled CSS/JS is build output, not source
+        $this->ignoreCompiledAssets();
 
         // ImageResize width presets used by the template's srcset/backgrounds
         // (overrides the vendor-published default, which lacks these templates)

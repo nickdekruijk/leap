@@ -137,6 +137,11 @@ same way. **There is no build step.** Edit the files under `resources/css` and
 - `project.scss` — your design tokens (`--accent`, fonts, spacing) and overrides. The
   only file most projects change.
 
+The compiled result lands in `public/css/builds` and `public/js/builds`. That is build
+output, not source: `leap:template` adds both to `.gitignore`, and they regenerate on the
+first request, directories and all. Committing them means every branch carries a rebuilt
+artifact that conflicts on merge, and a stale copy can mask a broken source.
+
 ## Navigation
 
 The bar is sticky. Alpine adds `.scrolling` to it as soon as the page leaves the top,

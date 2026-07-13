@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`leap:template` keeps the compiled CSS/JS out of version control.** `public/css/builds`
+  and `public/js/builds` are written on request by `nickdekruijk/minify` from the sources
+  under `resources/`, but nothing stopped a project from committing them — every branch
+  then carries a rebuilt artifact that conflicts on merge, and a stale copy can mask a
+  broken source. The command now adds both to `.gitignore` (skipping rules that are
+  already there). They regenerate on the first request, directories and all.
+
 ## [0.9.14] — 2026-07-13
 
 ### Changed
