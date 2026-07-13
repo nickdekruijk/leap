@@ -68,7 +68,7 @@ class ModuleCommandTest extends TestCase
 
         $source = file_get_contents($this->temp.'/app/Leap/TestModel.php');
 
-        $this->assertStringContainsString('public $model = '.TestModel::class.'::class;', $source);
+        $this->assertStringContainsString('public $model = \\'.TestModel::class.'::class;', $source);
         $this->assertStringContainsString("public \$active = 'active';", $source);
         $this->assertStringContainsString("public \$orderBy = 'sort';", $source);
         $this->assertStringContainsString("Attribute::make('active')->switch()", $source);
@@ -79,6 +79,34 @@ class ModuleCommandTest extends TestCase
         $this->assertStringContainsString("Attribute::make('body')->richtext()", $source);
         $this->assertStringContainsString("Attribute::make('summary')->textarea()", $source);
         $this->assertStringContainsString("'nl' => 'Title', 'en' => 'Title'", $source);
+    }
+
+    /**
+     * The generated file has to be code PHP can actually load. A resource normally
+     * carries its model's basename (App\Leap\Project for App\Models\Project), so
+     * importing the model would collide with the class being declared — a fatal
+     * "cannot redeclare class ... previously declared as local import" that only
+     * surfaces once something loads the file. Asserting on the source text alone
+     * never caught it.
+     */
+    public function test_the_generated_module_is_loadable_php(): void
+    {
+        $this->artisan('leap:module', [
+            'model' => TestModel::class,
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $file = $this->temp.'/app/Leap/TestModel.php';
+
+        // The name clash is a compile-time fatal, so linting the file catches it
+        exec('php -l '.escapeshellarg($file).' 2>&1', $output, $status);
+        $this->assertSame(0, $status, "Generated module is not valid PHP:\n".implode("\n", $output));
+
+        require $file;
+
+        $resource = new \App\Leap\TestModel;
+        $this->assertSame(TestModel::class, $resource->model);
+        $this->assertNotEmpty($resource->attributes());
     }
 
     public function test_dry_run_does_not_write_anything(): void

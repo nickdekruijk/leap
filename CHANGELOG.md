@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`leap:module` generated a module PHP could not load.** The resource normally
+  carries its model's basename (`App\Leap\Project` for `App\Models\Project`), and the
+  generated file imported the model — colliding with the class it was declaring:
+  *"Cannot redeclare class App\Leap\Project (previously declared as local import)"*.
+  It also emitted `public $model = App\Models\Project::class` without a leading
+  backslash, which resolves relative to `App\Leap`. The model is now referenced fully
+  qualified and never imported. The command was effectively unusable for any model
+  whose name is used as-is, i.e. the default. The existing test only asserted on the
+  generated *source text*, so it never noticed; it now lints and loads the file.
 - **In-page anchors no longer land under the navigation bar** in the frontend template:
   `scroll-margin-top` now uses the compact height, since a jump to an anchor always
   happens with the bar already shrunk.

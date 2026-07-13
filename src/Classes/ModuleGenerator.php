@@ -535,7 +535,12 @@ class ModuleGenerator
         $lines = array_map(fn ($plan) => '            '.$this->renderAttributeLine($plan, $locales), $columnPlans);
 
         $header = [];
-        $header[] = "    public \$model = {$this->modelClass}::class;";
+
+        // Fully qualified, and never imported: the resource usually carries the
+        // model's own basename (App\Leap\Project for App\Models\Project), so an
+        // import would collide with the class being declared — a fatal "cannot
+        // redeclare class ... previously declared as local import".
+        $header[] = '    public $model = \\'.ltrim($this->modelClass, '\\').'::class;';
         $header[] = '    public $icon = '.var_export($modulePlan['icon'], true).';';
         $header[] = "    public \$priority = {$modulePlan['priority']};";
 
@@ -560,7 +565,6 @@ class ModuleGenerator
 
         namespace App\Leap;
 
-        use {$this->modelClass};
         use NickDeKruijk\Leap\Classes\Attribute;
         use NickDeKruijk\Leap\Resource;
 
