@@ -186,18 +186,32 @@ a[role="button"],
         transition: min-height var(--nav-shrink-duration, 0.25s) ease;
     }
 
+    // The logo is the only thing that gives way when the bar runs out of room, so
+    // a long menu never has to wrap. --logo-min-width stops it shrinking into
+    // illegibility; below that, use the mobile breakpoint and the hamburger.
     .nav-logo {
         text-decoration: none;
         font-size: var(--logo-font-size, var(--fs-h4));
         transition: font-size var(--nav-shrink-duration, 0.25s) ease;
+        flex: 0 1 auto;
+        min-width: min(100%, var(--logo-min-width, 0px));
 
-        // An image logo (if any) shrinks along with the bar
+        // An image logo (if any) shrinks along with the bar. Capped with max-*
+        // rather than a fixed height, so a squeeze scales it down proportionally
+        // instead of squashing it.
         img {
             display: block;
             width: auto;
-            height: var(--logo-height, auto);
-            transition: height var(--nav-shrink-duration, 0.25s) ease;
+            height: auto;
+            max-width: 100%;
+            max-height: var(--logo-height, none);
+            transition: max-height var(--nav-shrink-duration, 0.25s) ease;
         }
+    }
+
+    // The menu keeps its size; the logo is what yields
+    .nav-main-container {
+        flex-shrink: 0;
     }
 
     // Alpine adds .scrolling as soon as the page leaves the top. A tall bar is
@@ -214,7 +228,7 @@ a[role="button"],
             font-size: var(--logo-font-size-compact, var(--logo-font-size, var(--fs-h4)));
 
             img {
-                height: var(--logo-height-compact, var(--logo-height, auto));
+                max-height: var(--logo-height-compact, var(--logo-height, none));
             }
         }
     }
@@ -238,6 +252,8 @@ a[role="button"],
         margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-s));
         border-radius: var(--radius);
         text-decoration: none;
+        // A cramped bar must shrink the logo, never break a menu item in half
+        white-space: nowrap;
 
         &:hover { color: var(--accent); text-decoration: underline; }
         &[aria-current="page"] { color: var(--accent); }

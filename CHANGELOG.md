@@ -5,6 +5,16 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A cramped navigation bar broke menu items in half** instead of giving way. With a
+  wide logo and a long menu, items like "Over ons" wrapped onto two lines. Menu links are
+  now `nowrap`, and the logo is what yields: it shrinks (capped with `max-height`, so it
+  scales down proportionally rather than squashing) while the menu keeps its size. The new
+  `--logo-min-width` token sets how small it may get before the hamburger should take over.
+
 ## [0.9.12] — 2026-07-13
 
 ### Added

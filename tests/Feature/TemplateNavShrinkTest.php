@@ -57,6 +57,22 @@ class TemplateNavShrinkTest extends TestCase
         $this->assertStringNotContainsString('--nav-height: var(--nav-height-compact', $mobile);
     }
 
+    public function test_a_cramped_bar_shrinks_the_logo_instead_of_wrapping_the_menu(): void
+    {
+        $template = $this->stub('resources/css/template.scss');
+
+        // Menu items must never break in half...
+        $this->assertStringContainsString('white-space: nowrap', $template);
+
+        // ...so the logo is what gives way: it may shrink (flex 0 1 auto) while the
+        // menu keeps its size, and it is capped with max-height rather than a fixed
+        // height, so a squeeze scales it down proportionally instead of squashing.
+        $this->assertStringContainsString('flex: 0 1 auto', $template);
+        $this->assertStringContainsString('min-width: min(100%, var(--logo-min-width, 0px))', $template);
+        $this->assertStringContainsString('max-height: var(--logo-height, none)', $template);
+        $this->assertStringContainsString('flex-shrink: 0', $template);
+    }
+
     public function test_the_logo_stays_visible_above_the_open_mobile_menu(): void
     {
         $template = $this->stub('resources/css/template.scss');

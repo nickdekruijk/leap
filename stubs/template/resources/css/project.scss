@@ -41,12 +41,16 @@
     // the page scrolls, and starts out compact on mobile. Give a tall bar a
     // bigger --nav-height; unset the *-compact tokens to keep a fixed height.
     // --logo-height sizes an <img> logo, --logo-font-size a text one.
+    // When the bar runs out of room the logo shrinks rather than the menu
+    // wrapping; --logo-min-width is how small it may get before you should reach
+    // for the hamburger instead.
     --nav-height: 4.5rem;
     --nav-height-compact: 3.5rem;
     --logo-font-size: var(--fs-h4);
     --logo-font-size-compact: 1.125rem;
     // --logo-height: 4rem;
     // --logo-height-compact: 2.25rem;
+    // --logo-min-width: 12rem;
     --nav-shrink-duration: 0.25s;
 }
 
