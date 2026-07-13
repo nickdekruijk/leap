@@ -74,6 +74,27 @@ class UserCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
+    public function test_it_fails_clearly_when_run_without_an_email_and_without_a_prompt(): void
+    {
+        // Prompts throws NonInteractiveValidationException on a required question it
+        // cannot ask. Say what is missing instead of dumping a stack trace.
+        $this->artisan('leap:user', ['--no-interaction' => true])
+            ->expectsOutputToContain('No e-mail address given')
+            ->assertExitCode(1);
+
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_the_name_defaults_to_the_email_when_not_prompted(): void
+    {
+        $this->artisan('leap:user', [
+            'email' => 'nick@example.com',
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame('Nick', User::where('email', 'nick@example.com')->firstOrFail()->name);
+    }
+
     public function test_updating_an_existing_user_leaves_the_password_alone(): void
     {
         $user = User::create([

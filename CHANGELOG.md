@@ -20,14 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **`leap:user` created unreachable accounts.** Run non-interactively (`--no-interaction`,
-  CI, a provisioning script) the password prompt was answered blank, so the command fell
-  back to a random password — and never printed it. The account existed but nobody could
-  log in. The generated password is now always shown, and the command no longer prompts
-  at all when it is not running interactively. It also warns when the new user ends up
-  without a role (the role prompt defaults to "no", leaving an account that sees nothing
-  in the admin panel), and no longer crashes when no roles exist yet. The command had no
-  tests; it has five now.
+- **`leap:user` did not work non-interactively at all** (`--no-interaction`, CI, a
+  provisioning script). It leaned on prompts that cannot be asked:
+  - Without an e-mail argument it crashed with Prompts'
+    `NonInteractiveValidationException` instead of saying what was missing.
+  - With one, the password prompt came back blank, so it fell back to a randomly
+    generated password — and never printed it. The account was created and immediately
+    unreachable, since nothing stores that password in the clear.
+
+  The command now prompts only when it is actually running interactively, always shows a
+  generated password, and falls back to the e-mail's name part when no name is given. It
+  also warns when the new user ends up without a role (the role prompt defaults to "no",
+  leaving an account that sees nothing in the admin panel), and no longer crashes when no
+  roles exist yet. The command had no tests; it has seven now.
 - **`leap:module` generated a module PHP could not load.** The resource normally
   carries its model's basename (`App\Leap\Project` for `App\Models\Project`), and the
   generated file imported the model — colliding with the class it was declaring:

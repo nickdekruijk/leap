@@ -64,14 +64,31 @@ class UserCommand extends Command
      */
     public function handle()
     {
-        // Get username/emailaddress from arguments or ask for it
-        $username = $this->arguments()[$this->getUsernameColumn()] ?: text(label: 'What '.($this->getUsernameColumn() == 'email' ? 'e-mail address' : $this->getUsernameColumn()).'?', required: true);
+        $column = $this->getUsernameColumn();
+        $label = $column == 'email' ? 'e-mail address' : $column;
+
+        // Get username/emailaddress from arguments or ask for it. Without a prompt
+        // to fall back on there is nothing to create a user from, so say what is
+        // missing instead of throwing Prompts' NonInteractiveValidationException.
+        $username = $this->arguments()[$column];
+        if (! $username) {
+            if (! $this->input->isInteractive()) {
+                $this->error('No '.$label.' given. Pass one as an argument, e.g. php artisan leap:user you@example.com');
+
+                return self::FAILURE;
+            }
+
+            $username = text(label: 'What '.$label.'?', required: true);
+        }
 
         // Check if user already exists
-        $user = Leap::userModel()->where($this->getUsernameColumn(), $username)->first();
+        $user = Leap::userModel()->where($column, $username)->first();
 
         // Get name from arguments or ask for it using the name part of the e-mail address as default
-        $name = $this->arguments()['name'] ?: text(label: 'What is the name of this user?', default: $user?->name ?: ucfirst(explode('@', $username)[0]));
+        $default = $user?->name ?: ucfirst(explode('@', $username)[0]);
+        $name = $this->arguments()['name'] ?: ($this->input->isInteractive()
+            ? text(label: 'What is the name of this user?', default: $default)
+            : $default);
 
         // Update or create user
         if ($user) {
