@@ -137,6 +137,28 @@ same way. **There is no build step.** Edit the files under `resources/css` and
 - `project.scss` — your design tokens (`--accent`, fonts, spacing) and overrides. The
   only file most projects change.
 
+## Navigation
+
+The bar is sticky. Alpine adds `.scrolling` to it as soon as the page leaves the top,
+which draws a shadow and **shrinks the bar** — a tall header is welcome on arrival but
+wastes vertical space while reading. On mobile the bar starts out compact instead,
+since there is no room for the tall state. Menu items stay vertically centred
+throughout, and in-page anchors offset by the compact height (a jump to an anchor
+always happens with the bar already shrunk).
+
+All of it is driven by tokens in `project.scss`:
+
+| Token | Purpose |
+|---|---|
+| `--nav-height` | Height at the top of the page |
+| `--nav-height-compact` | Height once scrolled, and the height on mobile |
+| `--logo-font-size` / `--logo-font-size-compact` | Sizes a **text** logo |
+| `--logo-height` / `--logo-height-compact` | Sizes an `<img>` logo |
+| `--nav-shrink-duration` | Animation duration (default `0.25s`) |
+
+Leave the `*-compact` tokens unset for a bar of fixed height. The animation is
+suppressed under `prefers-reduced-motion`.
+
 ## SEO
 
 Per-page `<title>`, meta description, canonical, Open Graph, Twitter Card and

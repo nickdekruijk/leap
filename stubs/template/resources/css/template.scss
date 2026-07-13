@@ -25,7 +25,8 @@ body {
 
     > main {
         flex: 1;
-        scroll-margin-top: var(--nav-height, 4.5rem);
+        // Jumping to an anchor always happens with the bar already compact
+        scroll-margin-top: var(--nav-height-compact, var(--nav-height, 4.5rem));
     }
 }
 
@@ -176,21 +177,46 @@ a[role="button"],
     background: var(--nav-bg);
     transition: box-shadow 0.3s, background 0.3s;
 
-    &.scrolling {
-        box-shadow: var(--shadow);
-    }
-
     .nav-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: var(--space);
         min-height: var(--nav-height);
+        transition: min-height var(--nav-shrink-duration, 0.25s) ease;
     }
 
     .nav-logo {
         text-decoration: none;
-        font-size: var(--fs-h4);
+        font-size: var(--logo-font-size, var(--fs-h4));
+        transition: font-size var(--nav-shrink-duration, 0.25s) ease;
+
+        // An image logo (if any) shrinks along with the bar
+        img {
+            display: block;
+            width: auto;
+            height: var(--logo-height, auto);
+            transition: height var(--nav-shrink-duration, 0.25s) ease;
+        }
+    }
+
+    // Alpine adds .scrolling as soon as the page leaves the top. A tall bar is
+    // welcome on arrival but wastes vertical space while reading, so it shrinks.
+    // Sites that want a fixed height simply leave the *-compact tokens unset.
+    &.scrolling {
+        box-shadow: var(--shadow);
+
+        .nav-container {
+            min-height: var(--nav-height-compact, var(--nav-height));
+        }
+
+        .nav-logo {
+            font-size: var(--logo-font-size-compact, var(--logo-font-size, var(--fs-h4)));
+
+            img {
+                height: var(--logo-height-compact, var(--logo-height, auto));
+            }
+        }
     }
 
     ul {
@@ -290,6 +316,14 @@ a[role="button"],
 
 // Hamburger below the breakpoint
 @media (max-width: $bp-mobile) {
+    // No room for a tall bar on a phone: it starts out compact instead of
+    // shrinking. Falls back to the regular height when no compact size is set.
+    :root {
+        --nav-height: var(--nav-height-compact, 4.5rem);
+        --logo-height: var(--logo-height-compact, auto);
+        --logo-font-size: var(--logo-font-size-compact, var(--fs-h4));
+    }
+
     .nav .nav-toggle {
         display: flex;
         flex-direction: column;

@@ -5,6 +5,25 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Shrinking navigation bar in the frontend template** — the sticky bar now animates
+  from `--nav-height` down to `--nav-height-compact` as soon as the page scrolls, and
+  starts out compact on mobile, where there is no room for the tall state. A tall
+  header reads well on arrival but wastes vertical space while reading. It reuses the
+  `.scrolling` class Alpine already sets, so no new JavaScript. Both a text logo
+  (`--logo-font-size` / `--logo-font-size-compact`) and an `<img>` logo
+  (`--logo-height` / `--logo-height-compact`) shrink along with it; duration is
+  `--nav-shrink-duration`. Unset the `*-compact` tokens for a bar of fixed height.
+
+### Fixed
+
+- **In-page anchors no longer land under the navigation bar** in the frontend template:
+  `scroll-margin-top` now uses the compact height, since a jump to an anchor always
+  happens with the bar already shrunk.
+
 ## [0.9.11] — 2026-07-12
 
 ### Added

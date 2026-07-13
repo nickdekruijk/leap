@@ -36,7 +36,18 @@
     --content-width-small: 760px;
     --radius: 0.5rem;
     --shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+
+    // Navigation. The bar shrinks from --nav-height to --nav-height-compact once
+    // the page scrolls, and starts out compact on mobile. Give a tall bar a
+    // bigger --nav-height; unset the *-compact tokens to keep a fixed height.
+    // --logo-height sizes an <img> logo, --logo-font-size a text one.
     --nav-height: 4.5rem;
+    --nav-height-compact: 3.5rem;
+    --logo-font-size: var(--fs-h4);
+    --logo-font-size-compact: 1.125rem;
+    // --logo-height: 4rem;
+    // --logo-height-compact: 2.25rem;
+    --nav-shrink-duration: 0.25s;
 }
 
 // Self-hosted brand fonts: drop the woff2 files in public/fonts, uncomment,
