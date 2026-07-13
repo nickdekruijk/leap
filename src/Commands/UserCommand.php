@@ -45,6 +45,19 @@ class UserCommand extends Command
     }
 
     /**
+     * Ask for a password, unless the command is running non-interactively — then
+     * there is nobody to answer and the caller falls back to a generated one.
+     */
+    private function askPassword(string $label): ?string
+    {
+        if (! $this->input->isInteractive()) {
+            return null;
+        }
+
+        return password($label) ?: null;
+    }
+
+    /**
      * Execute the console command.
      *
      * @return mixed
@@ -66,7 +79,7 @@ class UserCommand extends Command
             $user->name = $name;
 
             // Ask for password
-            $password = password('Update password for '.$username.' ('.$name.') (blank to leave unchanged)');
+            $password = $this->askPassword('Update password for '.$username.' ('.$name.') (blank to leave unchanged)');
             if ($password) {
                 $user->password = Hash::make($password);
             }
@@ -88,22 +101,49 @@ class UserCommand extends Command
             $random_password = Str::password(symbols: false);
 
             // Ask for password
-            $password = password('Password for '.$username.' ('.$name.') (blank for '.$random_password.')');
+            $password = $this->askPassword('Password for '.$username.' ('.$name.') (blank for '.$random_password.')');
             $user->password = Hash::make($password ?: $random_password);
 
             // Save the new user
             $user->save();
             $status = 'created';
+
+            // Show the generated password. Without this the account is unreachable
+            // when the prompt was skipped (--no-interaction answers it blank), since
+            // the random password is never stored anywhere in the clear.
+            if (! $password) {
+                $generated = $random_password;
+            }
         }
         $this->info('User '.$user[$this->getUsernameColumn()].' "'.$user->name.'" '.$status);
 
+        if (isset($generated)) {
+            $this->warn('Generated password: '.$generated);
+            $this->line('Note it down now — it is only shown here.');
+        }
+
         // If user has no roles suggest to give it the first role available
         $roles = $user->belongsToMany(Role::class, config('leap.table_prefix').'role_user')->withTimestamps();
-        if (! $roles->count()) {
-            $role = Role::first();
-            if (strtolower($this->ask('Do you want to give this user the "'.$role->name.'" role? (y/n)', 'n'))[0] == 'y') {
-                $roles->attach($role, ['accepted' => true]);
-            }
+        if ($roles->count()) {
+            return;
         }
+
+        $role = Role::first();
+        if (! $role) {
+            $this->warn('This user has no role, and no roles exist yet. Create one in the admin panel first.');
+
+            return;
+        }
+
+        if ($this->input->isInteractive()
+            && str_starts_with(strtolower((string) $this->ask('Do you want to give this user the "'.$role->name.'" role? (y/n)', 'n')), 'y')) {
+            $roles->attach($role, ['accepted' => true]);
+
+            return;
+        }
+
+        // Without a role the admin panel shows this user nothing at all, so say so
+        // rather than leaving a silently useless account behind.
+        $this->warn('This user has no role yet and cannot use the admin panel. Run this command again to assign the "'.$role->name.'" role.');
     }
 }
