@@ -401,6 +401,24 @@ a[role="button"],
         visibility: hidden;
         transform: translateY(-100%);
     }
+
+    // The panel has room to simply list a submenu under its parent, so it does not
+    // fold: no caret, no dropdown, just a step down in size. Its visibility comes
+    // from Alpine's isMobile (a hidden submenu carries an inline display:none that
+    // CSS cannot override), so this only has to lay it out.
+    .nav li[x-data] {
+        flex-direction: column;
+        align-items: stretch;
+
+        > ul {
+            position: static;
+            padding: var(--space-xs) 0 0;
+            background: transparent;
+            box-shadow: none;
+            font-size: 0.875em;
+            gap: var(--space-xs);
+        }
+    }
 }
 
 // ── Search overlay ────────────────────────────────────────────────────────────

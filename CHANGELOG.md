@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Submenus no longer fold inside the hamburger panel.** On a phone there is room to
+  simply list a submenu under its parent, one step smaller — a dropdown inside an
+  already-open panel is a tap for nothing. Desktop keeps the caret and the fold. Alpine
+  writes `display:none` inline on a hidden submenu, which no stylesheet can override, so
+  `navigation()` gained a reactive `isMobile` (via `matchMedia`, so it also survives a
+  window resize) and the submenu shows on `subOpen || isMobile`.
+
 ### Fixed
 
 - **A cramped navigation bar broke menu items in half** instead of giving way. With a

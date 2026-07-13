@@ -62,11 +62,12 @@
                         <ul id="nav-main">
                             @foreach (App\Http\Controllers\PageController::getMenu() as $item)
                                 @php $children = App\Http\Controllers\PageController::getMenu($item['id'] ?? 0); @endphp
-                                <li @if ($children) x-data="{ subOpen: false }" x-on:mouseover="subOpen = true" x-on:mouseleave="subOpen = false" x-on:click.outside="subOpen = false" @endif>
+                                {{-- Submenus fold open on desktop; inside the hamburger panel they are just listed under their parent --}}
+                                <li @if ($children) x-data="{ subOpen: false }" x-on:mouseover="!isMobile && (subOpen = true)" x-on:mouseleave="subOpen = false" x-on:click.outside="subOpen = false" @endif>
                                     <a href="{{ $item['url'] }}" aria-current="{{ url($item['url']) == url()->current() ? 'page' : 'false' }}">{{ $item['title'] }}</a>
                                     @if ($children)
-                                        <button type="button" class="nav-submenu-caret" :aria-expanded="subOpen.toString()" aria-haspopup="true" aria-controls="submenu-{{ $item['id'] }}" x-on:click="subOpen = !subOpen" x-on:mouseover="subOpen = true" aria-label="{{ __('Submenu :name openen/sluiten', ['name' => $item['title']]) }}"></button>
-                                        <ul id="submenu-{{ $item['id'] }}" x-cloak x-show="subOpen" x-transition>
+                                        <button type="button" class="nav-submenu-caret" x-show="!isMobile" :aria-expanded="subOpen.toString()" aria-haspopup="true" aria-controls="submenu-{{ $item['id'] }}" x-on:click="subOpen = !subOpen" x-on:mouseover="subOpen = true" aria-label="{{ __('Submenu :name openen/sluiten', ['name' => $item['title']]) }}"></button>
+                                        <ul id="submenu-{{ $item['id'] }}" x-cloak x-show="subOpen || isMobile" x-transition>
                                             @foreach ($children as $child)
                                                 <li><a href="{{ $child['url'] }}" aria-current="{{ url($child['url']) == url()->current() ? 'page' : 'false' }}">{{ $child['title'] }}</a></li>
                                             @endforeach

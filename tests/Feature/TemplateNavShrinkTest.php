@@ -73,6 +73,25 @@ class TemplateNavShrinkTest extends TestCase
         $this->assertStringContainsString('flex-shrink: 0', $template);
     }
 
+    public function test_submenus_are_listed_open_inside_the_hamburger_panel(): void
+    {
+        $layout = $this->stub('resources/views/layouts/app.blade.php');
+        $scripts = $this->stub('resources/js/scripts.js');
+        $template = $this->stub('resources/css/template.scss');
+
+        // Alpine puts display:none inline on a hidden submenu, which no stylesheet
+        // can override, so the visibility has to come from the state.
+        $this->assertStringContainsString('x-show="subOpen || isMobile"', $layout);
+        $this->assertStringContainsString('class="nav-submenu-caret" x-show="!isMobile"', $layout);
+        $this->assertStringContainsString('isMobile: mobile.matches', $scripts);
+        $this->assertStringContainsString("matchMedia('(max-width: 768px)')", $scripts);
+
+        // ...and the stylesheet only lays it out: in the flow, a step smaller
+        $mobile = substr($template, strpos($template, '@media (max-width: $bp-mobile)'));
+        $this->assertStringContainsString('position: static', $mobile);
+        $this->assertStringContainsString('font-size: 0.875em', $mobile);
+    }
+
     public function test_the_logo_stays_visible_above_the_open_mobile_menu(): void
     {
         $template = $this->stub('resources/css/template.scss');

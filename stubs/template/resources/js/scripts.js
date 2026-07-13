@@ -2,13 +2,24 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 
 // Navigation + search state (Alpine)
 document.addEventListener('alpine:init', function () {
+    const mobile = window.matchMedia('(max-width: 768px)');
+
     Alpine.data('navigation', function () {
         return {
             navExpanded: false,
             scrolling: false,
             searchOpen: false,
 
+            // Submenus fold open and shut on desktop, but inside the hamburger panel
+            // they are simply listed under their parent. Alpine sets display:none
+            // inline on a hidden submenu, which CSS cannot override, so the panel has
+            // to know it is on a phone rather than fight it with !important.
+            // Kept in sync with $bp-mobile in template.scss.
+            isMobile: mobile.matches,
+
             init() {
+                mobile.addEventListener('change', (e) => (this.isMobile = e.matches));
+
                 this.$watch('searchOpen', (value) => {
                     if (value) {
                         this.$nextTick(() => document.getElementById('search-input')?.focus());
