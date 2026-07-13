@@ -317,11 +317,19 @@ a[role="button"],
 // Hamburger below the breakpoint
 @media (max-width: $bp-mobile) {
     // No room for a tall bar on a phone: it starts out compact instead of
-    // shrinking. Falls back to the regular height when no compact size is set.
-    :root {
-        --nav-height: var(--nav-height-compact, 4.5rem);
-        --logo-height: var(--logo-height-compact, auto);
-        --logo-font-size: var(--logo-font-size-compact, var(--fs-h4));
+    // shrinking. Set on the elements rather than by redefining the tokens on
+    // :root — project.scss loads after this file, so its own :root would win
+    // (a media query adds no specificity).
+    .nav .nav-container {
+        min-height: var(--nav-height-compact, var(--nav-height));
+    }
+
+    .nav .nav-logo {
+        font-size: var(--logo-font-size-compact, var(--logo-font-size, var(--fs-h4)));
+
+        img {
+            height: var(--logo-height-compact, var(--logo-height, auto));
+        }
     }
 
     .nav .nav-toggle {

@@ -45,7 +45,15 @@ class TemplateNavShrinkTest extends TestCase
     {
         $template = $this->stub('resources/css/template.scss');
 
-        $this->assertStringContainsString('--nav-height: var(--nav-height-compact', $template);
         $this->assertStringContainsString('scroll-margin-top: var(--nav-height-compact', $template);
+
+        // The compact sizes must be set on the elements, not by redefining the
+        // tokens on :root — project.scss is concatenated after this file, so its
+        // own :root would win (a media query adds no specificity, and the mobile
+        // bar would silently stay tall).
+        $mobile = substr($template, strpos($template, '@media (max-width: $bp-mobile)'));
+
+        $this->assertStringContainsString('.nav .nav-container {', $mobile);
+        $this->assertStringNotContainsString('--nav-height: var(--nav-height-compact', $mobile);
     }
 }
