@@ -9,12 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`leap:template` keeps the compiled CSS/JS out of version control.** `public/css/builds`
+- **`leap:template` links `public/storage`.** Leap stores media on the `public` disk and
+  the template serves it from `/storage`. Without the link nothing an editor uploads
+  renders, and the failure points the wrong way: the file is plainly there on disk, but
+  `asset_resized()` reports the *original* as missing. It was only mentioned in the
+  closing notes, which is not enough for something every image depends on.
+- **`leap:template` keeps generated assets out of version control.** `public/css/builds`
   and `public/js/builds` are written on request by `nickdekruijk/minify` from the sources
-  under `resources/`, but nothing stopped a project from committing them — every branch
-  then carries a rebuilt artifact that conflicts on merge, and a stale copy can mask a
-  broken source. The command now adds both to `.gitignore` (skipping rules that are
-  already there). They regenerate on the first request, directories and all.
+  under `resources/`, and the resize cache is filled by `nickdekruijk/imageresize` — but
+  nothing stopped a project from committing any of it. Every branch then carries rebuilt
+  artifacts that conflict on merge, and a stale copy can mask a broken source. The command
+  now adds them to `.gitignore` (skipping rules that are already there). They regenerate
+  on the first request, directories and all.
+
+### Changed
+
+- **The template's resize route is now `resized`, not `media/resized`.** Nothing else ever
+  lived under `media/`, so it was an empty wrapper — a leftover from an older admin system.
+  Only the template's own `config/imageresize.php` changes; the `nickdekruijk/imageresize`
+  default is untouched, so no existing project moves.
 
 ## [0.9.14] — 2026-07-13
 

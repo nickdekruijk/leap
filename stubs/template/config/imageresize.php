@@ -31,7 +31,11 @@ foreach ($widths as $width) {
 }
 
 return [
-    'route' => 'media/resized',
+    // The route doubles as the cache directory (public/resized). Flat rather than
+    // the package default of media/resized: nothing else lives under media/, so it
+    // was an empty wrapper. A URL should say what is there, not which package made
+    // it, so "resized" rather than "imageresize".
+    'route' => 'resized',
     'originals' => 'storage',
     'templates' => $templates,
     'quality_jpeg' => 80,

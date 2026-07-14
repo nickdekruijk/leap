@@ -106,12 +106,36 @@ class TemplateCommand extends Command
     }
 
     /**
-     * Keep the compiled CSS/JS out of version control.
+     * Link public/storage, so uploaded media resolves.
      *
-     * nickdekruijk/minify writes public/css/builds and public/js/builds on request,
-     * from the sources under resources/. Committing them means every branch carries
-     * a rebuilt artifact that conflicts on merge, and a stale copy can mask a broken
-     * source. They regenerate on the first request, directories and all.
+     * Leap stores media on the `public` disk (storage/app/public) and the template
+     * serves it from /storage — both the originals and, through them, every resized
+     * variant. Without the link nothing an editor uploads renders, and the failure
+     * is opaque: the file is plainly there on disk, but asset_resized() reports the
+     * original as missing. Mentioning it in the closing notes was not enough.
+     */
+    protected function linkStorage(): void
+    {
+        if (file_exists(public_path('storage'))) {
+            return;
+        }
+
+        if (confirm('Link public/storage to storage/app/public? (uploaded images do not resolve without it)', true)) {
+            $this->call('storage:link');
+        }
+    }
+
+    /**
+     * Keep generated assets out of version control.
+     *
+     * minify writes public/css/builds and public/js/builds on request from the
+     * sources under resources/; imageresize caches a resized copy of every image at
+     * every width under the imageresize route. All of it is derived, all of it
+     * regenerates on request, and committing it means every branch carries rebuilt
+     * artifacts that conflict on merge — while a stale copy can mask a broken source.
+     *
+     * Only the resize cache is ignored, not the whole public/media directory: that
+     * may well hold assets that are not generated.
      */
     protected function ignoreCompiledAssets(): void
     {
@@ -120,9 +144,22 @@ class TemplateCommand extends Command
             return;
         }
 
+        // Read the route from the config file on disk, not from config(): this runs
+        // after the template drops its own config/imageresize.php in, and the booted
+        // config still holds whatever was loaded at startup — the package default on
+        // a fresh install. Ignoring the wrong directory means the cache lands in git
+        // and nobody notices.
+        $route = 'media/resized';
+        $config = base_path('config/imageresize.php');
+        if (file_exists($config)) {
+            $route = (include $config)['route'] ?? $route;
+        }
+
+        $cache = '/'.trim($route, '/');
+
         $contents = file_get_contents($file);
         $missing = array_values(array_filter(
-            ['/public/css/builds', '/public/js/builds'],
+            ['/public/css/builds', '/public/js/builds', '/public'.$cache],
             fn (string $rule): bool => ! preg_match('#^\s*'.preg_quote($rule, '#').'/?\s*$#m', $contents),
         ));
 
@@ -266,12 +303,16 @@ class TemplateCommand extends Command
         $this->copyOrReplace('public/css/tinymce.css', 'TinyMCE editor stylesheet');
         $this->enableTinymceContentCss();
 
-        // The compiled CSS/JS is build output, not source
-        $this->ignoreCompiledAssets();
+        // Uploaded media lives on the public disk and is served from /storage
+        $this->linkStorage();
 
         // ImageResize width presets used by the template's srcset/backgrounds
         // (overrides the vendor-published default, which lacks these templates)
         $this->copyOrReplace('config/imageresize.php', 'ImageResize config (frontend resize templates)');
+
+        // Generated assets are not source. After the config above, because that is
+        // what decides where the resize cache lands.
+        $this->ignoreCompiledAssets();
 
         // Starter feature tests for the copied template code (run under the host's test suite)
         $this->createDirectory('tests/Feature');
@@ -488,7 +529,11 @@ class TemplateCommand extends Command
         $this->info('Template installed. Next steps:');
         $this->line('  • No asset build needed — SCSS/JS compile on request (no npm/Vite).');
         $this->line('  • Serve with a public/-rooted server (Herd/nginx), not `php artisan serve`.');
-        $this->line('  • Run `php artisan storage:link` so resized images resolve (originals live in /storage).');
+
+        if (! file_exists(public_path('storage'))) {
+            $this->line('  • Run `php artisan storage:link` — without it no uploaded image resolves.');
+        }
+
         $this->line('  • Create an admin user: php artisan leap:user you@example.com');
         $this->line('  • Visit /admin to manage pages, and / for the site.');
     }

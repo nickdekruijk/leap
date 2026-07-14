@@ -38,6 +38,13 @@ class TemplateInstallTest extends TestCase
 
         $this->app->setBasePath($this->temp);
         chdir($this->temp);
+
+        // storage:link reads filesystems.links, which was resolved against the real
+        // application path before the base path moved here
+        mkdir($this->temp.'/storage/app/public', 0777, true);
+        config(['filesystems.links' => [
+            $this->temp.'/public/storage' => $this->temp.'/storage/app/public',
+        ]]);
     }
 
     protected function tearDown(): void
@@ -76,6 +83,7 @@ class TemplateInstallTest extends TestCase
             ->expectsConfirmation('Copy Search Livewire component?', 'yes')
             ->expectsConfirmation('Create public/css directory?', 'yes')
             ->expectsConfirmation('Copy TinyMCE editor stylesheet?', 'yes')
+            ->expectsConfirmation('Link public/storage to storage/app/public? (uploaded images do not resolve without it)', 'yes')
             ->expectsConfirmation('Copy ImageResize config (frontend resize templates)?', 'yes')
             ->expectsConfirmation('Create tests/Feature directory?', 'yes')
             ->expectsConfirmation('Copy PageRouting test?', 'yes')
@@ -108,10 +116,25 @@ class TemplateInstallTest extends TestCase
             $this->assertFileExists($this->temp.'/'.$file, "Expected {$file} to be copied.");
         }
 
+        // Media lives on the public disk and is served from /storage. Without the
+        // link nothing an editor uploads renders, and the failure is opaque: the
+        // file is plainly on disk, but asset_resized() calls the original missing.
+        $this->assertTrue(
+            is_link($this->temp.'/public/storage'),
+            'leap:template must link public/storage, or no uploaded image resolves.',
+        );
+
         // The compiled CSS/JS is build output, written on request by minify, so it
         // is kept out of version control rather than committed as a stale artifact
         $gitignore = file_get_contents($this->temp.'/.gitignore');
         $this->assertStringContainsString('/public/js/builds', $gitignore);
+        // The ignored directory has to be the one the config it just installed writes
+        // to — not the package default that was loaded at boot. Get that wrong and the
+        // resize cache quietly lands in git.
+        $route = (include $this->temp.'/config/imageresize.php')['route'];
+        $this->assertSame('resized', $route);
+        $this->assertStringContainsString('/public/'.$route, $gitignore);
+        $this->assertStringNotContainsString('/public/media', $gitignore);
         $this->assertSame(1, substr_count($gitignore, '/public/css/builds'), 'The rule was already there and must not be added twice.');
 
         // Route + config patches applied
