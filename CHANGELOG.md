@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **The template's test suite could not run on CI.** Minify's import paths are relative
+  (`../resources/css/`), which only resolve when the working directory is `public/` — true
+  for a web request, false for anything run through artisan — and `testing` sat in its
+  `skip_environment`, so during tests it did not compile at all but pointed at
+  `public/css/builds/app.css` and hoped it was there. Together that left the suite
+  depending on a build left behind by an earlier browser request: green on a developer's
+  machine, five hundred errors on a fresh checkout. Worse, tests that read the compiled
+  CSS were checking whatever a dev build had produced rather than the sources in the
+  repository. `leap:template` now installs a `config/minify.php` with absolute import
+  paths that compiles during tests, and the layout refers to vendor assets by absolute
+  path.
+
 ## [0.9.15] — 2026-07-14
 
 ### Added

@@ -43,7 +43,10 @@
         <style>
             [x-cloak] { display: none !important; }
         </style>
-        {!! Minify::stylesheet(['minireset.css', '../vendor/nickdekruijk/leap/resources/css/consent.css', 'template.scss', 'project.scss']) !!}
+        {{-- Vendor assets by absolute path: a relative one only resolves when the working
+             directory is public/, which is true for a web request and false for anything
+             run through artisan — so the stylesheet would not compile under test. --}}
+        {!! Minify::stylesheet(['minireset.css', base_path('vendor/nickdekruijk/leap/resources/css/consent.css'), 'template.scss', 'project.scss']) !!}
 
         {{--
             Matomo, when leap.consent.matomo is configured. requireCookieConsent means it
@@ -218,7 +221,12 @@
 
         @include('leap::consent-banner')
 
-        {!! Minify::javascript(['../vendor/nickdekruijk/leap/resources/js/consent.js', '../vendor/nickdekruijk/vanilla-slider/slider.js', '../vendor/nickdekruijk/horizontal-scroller/horizontal-scroller.js', 'scripts.js']) !!}
+        {!! Minify::javascript([
+            base_path('vendor/nickdekruijk/leap/resources/js/consent.js'),
+            base_path('vendor/nickdekruijk/vanilla-slider/slider.js'),
+            base_path('vendor/nickdekruijk/horizontal-scroller/horizontal-scroller.js'),
+            'scripts.js',
+        ]) !!}
         @livewireScripts
     </body>
 

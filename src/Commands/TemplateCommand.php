@@ -191,6 +191,7 @@ class TemplateCommand extends Command
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
             'config/imageresize.php',
+            'config/minify.php',
             'public/css/tinymce.css',
             'tests/Feature/PageRoutingTest.php',
             'tests/Feature/HasSlugTest.php',
@@ -315,6 +316,12 @@ class TemplateCommand extends Command
         // ImageResize width presets used by the template's srcset/backgrounds
         // (overrides the vendor-published default, which lacks these templates)
         $this->copyOrReplace('config/imageresize.php', 'ImageResize config (frontend resize templates)');
+
+        // Minify with absolute import paths, and compiling during tests. The defaults do
+        // neither, which leaves the test suite depending on a build left behind by an
+        // earlier browser request — green locally, five hundred errors on a fresh CI
+        // checkout.
+        $this->copyOrReplace('config/minify.php', 'Minify config (absolute import paths)');
 
         // Generated assets are not source. After the config above, because that is
         // what decides where the resize cache lands.
