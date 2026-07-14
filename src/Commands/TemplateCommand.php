@@ -172,6 +172,40 @@ class TemplateCommand extends Command
     }
 
     /**
+     * Is this route already in routes/web.php?
+     *
+     * Matched on the controller reference rather than the whole line, so it also
+     * recognises the fully qualified form this command used to write. Otherwise a
+     * project that re-runs the installer would be told the route is missing and end up
+     * with it twice.
+     */
+    protected function routeExists(string $needle): bool
+    {
+        return str_contains(file_get_contents(base_path('routes/web.php')), $needle);
+    }
+
+    /**
+     * Import PageController in routes/web.php, so the routes below can name it plainly.
+     *
+     * Writing it fully qualified inline is what the command used to do, and Pint rejects
+     * it (fully_qualified_strict_types) — which left every scaffolded project failing its
+     * own style check on a file it never wrote.
+     */
+    protected function importPageController(): void
+    {
+        $import = "use App\Http\Controllers\PageController;\n";
+
+        if ($this->routeExists($import)) {
+            return;
+        }
+
+        self::updateFile(base_path('routes/web.php'), function (string $file) use ($import): string {
+            // After the opening tag, ahead of any other import, and let Pint sort them
+            return preg_replace('/^<\?php\s*\n/', "<?php\n\n".$import, $file, 1);
+        });
+    }
+
+    /**
      * The template files copied by this command, as paths relative to the project
      * root (and to the stubs/template folder). Individual files plus everything in
      * the copied directories. Used by both the installer and --diff.
@@ -360,19 +394,17 @@ class TemplateCommand extends Command
         }
 
         // Ask to add the sitemap route (before the catch-all so it isn't swallowed)
-        $sitemap = "Route::get('sitemap.xml', [App\Http\Controllers\PageController::class, 'sitemap'])->name('sitemap');\n";
-        if (! str_contains(file_get_contents('routes/web.php'), $sitemap) && confirm('Add sitemap.xml route?', true)) {
-            self::updateFile(base_path('routes/web.php'), function ($file) use ($sitemap) {
-                return $file .= $sitemap;
-            });
+        $sitemap = "Route::get('sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');\n";
+        if (! $this->routeExists("PageController::class, 'sitemap'") && confirm('Add sitemap.xml route?', true)) {
+            $this->importPageController();
+            self::updateFile(base_path('routes/web.php'), fn (string $file): string => $file.$sitemap);
         }
 
         // Ask to add PageController route
-        $route = "Route::get('{any}', [App\Http\Controllers\PageController::class, 'route'])->where('any', '(.*)');\n";
-        if (! str_contains(file_get_contents('routes/web.php'), $route) && confirm('Add PageController route?', true)) {
-            self::updateFile(base_path('routes/web.php'), function ($file) use ($route) {
-                return $file .= $route;
-            });
+        $route = "Route::get('{any}', [PageController::class, 'route'])->where('any', '(.*)');\n";
+        if (! $this->routeExists("PageController::class, 'route'") && confirm('Add PageController route?', true)) {
+            $this->importPageController();
+            self::updateFile(base_path('routes/web.php'), fn (string $file): string => $file.$route);
         }
 
         // Register the PageSeeder so `php artisan db:seed` seeds sample pages

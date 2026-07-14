@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`leap:template` wrote routes that fail Pint.** It added the catch-all and the sitemap
+  route with the controller fully qualified inline, which `fully_qualified_strict_types`
+  rejects — so every scaffolded project started out failing its own style check, on a file
+  it never wrote. The controller is now imported and named plainly. Projects that already
+  have the old form are recognised (the check matches the controller reference, not the
+  whole line), so re-running the installer does not end up adding the routes twice.
+
 ## [0.9.16] — 2026-07-14
 
 ### Fixed

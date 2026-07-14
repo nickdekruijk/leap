@@ -146,6 +146,13 @@ class TemplateInstallTest extends TestCase
         // Route + config patches applied
         $routes = file_get_contents($this->temp.'/routes/web.php');
         $this->assertStringContainsString('PageController::class', $routes);
+
+        // Imported, not written out fully qualified inline: Pint rejects the latter, which
+        // left every scaffolded project failing its own style check on a file it never
+        // wrote itself.
+        $this->assertStringContainsString('use App\Http\Controllers\PageController;', $routes);
+        $this->assertStringNotContainsString('[App\Http\Controllers\PageController::class', $routes);
+        $this->assertSame(1, substr_count($routes, 'use App\Http\Controllers\PageController;'));
         $this->assertStringNotContainsString("return view('welcome');", $routes);
 
         $leapConfig = file_get_contents($this->temp.'/config/leap.php');
