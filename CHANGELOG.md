@@ -5,9 +5,61 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.9.15] — 2026-07-14
 
 ### Added
+
+- **Cookie consent** (`leap.consent`). Banner, cookie table, CSS and JS ship with the
+  package rather than as template stubs: a fix to something that has to hold up legally
+  should reach every site through `composer update`, not leave each one on its own frozen
+  copy.
+
+  - **Nothing loads before it is allowed.** Pages are cached, so the HTML is identical for
+    everyone and never contains a tracker or an `<iframe>`. Anything needing permission
+    sits in a `<template data-consent="…">`, which the browser parses but does not run —
+    no script executes, no request goes out, not even for an external `src`. It is cloned
+    into the page only once that category is granted. So an editor pastes GA4, Meta or
+    Hotjar's own snippet into a `scripts_<category>` setting and it works unchanged; the
+    template knows nothing about any of them.
+  - **The registry is a manifest, not decoration.** Purpose and retention are declared by
+    hand, because no scanner can tell you what a cookie is *for* — and that is exactly
+    what a privacy statement must state. `leap::cookie-table` renders it on the privacy
+    page, and a browser test measures the real site against it: **a cookie that turns up
+    without being declared fails the build.** Adding a service changes the registry's
+    fingerprint, which expires consent already given — it covered what was on the table at
+    the time, and no longer does.
+  - **Matomo** is supported directly, because its cookieless mode is worth having: with
+    `requireCookieConsent` it measures every visitor without setting a cookie, so the
+    cookie law is never triggered and the people who refuse still show up in the figures.
+    Consent only switches its cookies on. Nothing else can do this.
+  - **The banner is a bar, never a wall**: no backdrop, no focus trap, no scroll lock. A
+    visitor who ignores it can use the whole site. Refusing is one click, exactly like
+    accepting, and nothing is pre-ticked — a banner that holds the content hostage is a
+    cookie wall, and consent given to be rid of a barrier is not freely given, which makes
+    it worthless.
+  - Switchable per project: `enabled`, `default` (`denied`/`granted`) and `granular`
+    (per-category screen, or plain accept/refuse). `window.consent.has()` answers in every
+    configuration, so gated code stays on one path whether a banner exists or not.
+
+  The banner's markup, class names and `window.consent` are **public API** — projects
+  style it from their own stylesheet, so renaming a class breaks their overrides.
+
+- **Video section** in the frontend template. YouTube or Vimeo, told apart by the id —
+  Vimeo's are numeric. Nothing third-party sits in the page: the player is built in the
+  click handler, and the poster is fetched from the provider once and stored locally,
+  because hotlinking it would call on YouTube on every page view — the very thing a
+  click-to-load player exists to avoid. Behind the "embeds" consent category, with a
+  two-click way out so refusing embeds site-wide does not mean never watching anything.
+
+  The logic lives in `NickDeKruijk\Leap\Classes\Video`, with a thin `App\Support\Video`
+  stub around it (the `HasSlug` pattern), because it carries a fair amount of hard-won
+  knowledge: YouTube only has a maxresdefault poster for HD uploads, Vimeo will only tell
+  you where its poster is through oEmbed, and Safari refuses to autoplay a cross-origin
+  YouTube frame with sound no matter what — youtube.com instead of youtube-nocookie.com,
+  playsinline and the IFrame API were all tried and all blocked. None of that is worth
+  rediscovering per project.
+
+- **Cookie overview section** for the privacy page, rendering `leap::cookie-table`.
 
 - **`leap:template` links `public/storage`.** Leap stores media on the `public` disk and
   the template serves it from `/storage`. Without the link nothing an editor uploads

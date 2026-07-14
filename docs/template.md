@@ -194,6 +194,93 @@ free — just add `implements Sitemapable`. Missing or non-`Sitemapable` classes
 config are skipped. When the config is empty the sitemap route falls back to a
 page-tree-only sitemap, so existing sites are unaffected.
 
+## Cookie consent
+
+Configured under `leap.consent`. The banner, the cookie table, the CSS and the JS all
+ship **with the package**, not as template stubs — a fix to something that has to hold up
+legally should reach every site through `composer update`, not leave each one on its own
+frozen copy.
+
+### The registry is a manifest, not decoration
+
+`leap.consent.categories` declares, per category, which services the site uses and which
+cookies each one sets — with **purpose, retention and provider**. That has to be written
+by hand: a scanner can see that a cookie exists, but never what it is *for* or how long
+it is kept, and those are precisely the things a privacy statement must state.
+
+Two things then keep it honest:
+
+- `@include('leap::cookie-table')` renders the registry on the privacy page, so the page
+  cannot drift away from the code.
+- A browser test measures the real site against it. **A cookie that turns up without
+  being declared fails the build** — an integration cannot quietly start setting cookies
+  and turn the privacy page into a lie. (Cookies set by the server are httpOnly and
+  invisible to script, so they are checked from their `Set-Cookie` headers; cookies set
+  by JavaScript appear in no header at all, so those need a real browser. Both halves are
+  needed.)
+
+Add a service and the registry's fingerprint changes, which **expires the consent already
+given**: it covered what was on the table at the time, and no longer does.
+
+### Nothing loads before it is allowed
+
+Pages are cached server-side, so the HTML is identical for every visitor and can never
+contain a tracker or an `<iframe>`. Anything that needs permission is parked in a
+`<template data-consent="analytics">`, which the browser parses but does not run — no
+script executes, no request goes out, not even for an external `src`. `consent.js` clones
+it into the page once that category is granted, recreating the `<script>` elements so
+they actually run.
+
+That is why the template needs to know nothing about GA4, Meta or Hotjar: an editor pastes
+the vendor's own snippet into the `scripts_<category>` setting and it works unchanged.
+`html_head` renders before `</head>` and is for code that needs **no** consent — a tracker
+in there runs outside the consent system entirely.
+
+> ⚠️ `html_head` and `scripts_*` are executed unescaped. That is an XSS hole for anyone
+> who can reach the settings module; restrict it to the superuser role.
+
+### Matomo
+
+Supported directly (`leap.consent.matomo`) because its cookieless mode is genuinely worth
+having: with `requireCookieConsent` it measures **every** visitor without setting a cookie,
+so the cookie law is never triggered and the people who refuse still show up in the
+figures. Consent only switches its cookies on, for better numbers. Nothing else can do
+this — GA4 and the rest belong behind consent in a `scripts_*` slot.
+
+This is not a free pass: cookieless Matomo also needs IP anonymisation on, no sharing with
+third parties, and a processing agreement. Those are settings in Matomo and paperwork, not
+code.
+
+### The banner is a bar, never a wall
+
+No backdrop, no focus trap, no scroll lock: a visitor who ignores it can read and use the
+entire site, and nothing optional loads until they say so. Refusing is one click, exactly
+like accepting, and nothing is pre-ticked.
+
+This is not politeness. A banner that holds the content hostage until someone chooses is a
+cookie wall, and consent given to be rid of a barrier is not freely given — which makes it
+worthless, and the site no better off than with no banner at all.
+
+### Switches
+
+| Key | |
+|---|---|
+| `enabled` | `false` = no banner at all. Every category falls back to `default`. |
+| `default` | What a category is worth when nobody was asked: `denied`, or `granted` to knowingly skip the question (not GDPR-proof — a deliberate choice). |
+| `granular` | `true` = a preferences screen per category. `false` = accept all / refuse. All-or-nothing is fine with **one** optional category — a screen with a single switch is theatre — but with several distinct purposes a visitor is entitled to refuse the marketing and keep the analytics. |
+
+`window.consent.has('embeds')` answers in every configuration, banner or no banner, so
+gated code stays on a single path and never has to ask whether consent exists at all.
+
+### Public API
+
+The banner's markup and class names, and `window.consent` (`has`, `grant`, `revoke`,
+`open`, plus the `consent:change` event), are public. Projects style the banner from their
+own stylesheet — the package CSS is structural and reads the template's design tokens
+(`--accent`, `--font-body`, …) for the rest — so **renaming a class breaks their
+overrides**. Treat it as breaking and say so in the changelog. To replace the markup
+outright: `php artisan vendor:publish --tag=leap-views`.
+
 ## Caching
 
 The page tree is cached per locale and invalidated automatically on page save/delete.
