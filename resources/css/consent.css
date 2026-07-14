@@ -1,0 +1,184 @@
+/*
+ * Cookie consent — structure only.
+ *
+ * This positions the banner, spaces it and keeps it usable; it does not decide what the
+ * site looks like. Every colour, font and radius comes from the design tokens the
+ * template already defines in project.scss (--accent, --text, --font-body, --radius,
+ * --space), so the banner adopts the brand without this file knowing anything about it.
+ *
+ * Deliberately low specificity and no !important: a project overrides any of this from
+ * its own stylesheet, which loads after this one. The class names are public API.
+ */
+
+/*
+ * A bar along the bottom — never a wall.
+ *
+ * No backdrop over the page, no focus trap, no scroll lock: a visitor who ignores this
+ * can still read and use the whole site, and nothing optional loads until they say so.
+ * Blocking the content until someone chooses is a cookie wall, and consent given to get
+ * rid of a barrier is not freely given — which makes it worthless anyway.
+ *
+ * pointer-events are handed back outside the dialog itself, so the strip cannot swallow
+ * clicks on the page behind it.
+ */
+.consent {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    padding: var(--space, 1.5rem);
+    pointer-events: none;
+}
+
+.consent-dialog {
+    pointer-events: auto;
+}
+
+.consent-dialog {
+    width: 100%;
+    max-width: 40rem;
+    padding: var(--space, 1.5rem);
+    border-radius: var(--radius, 0.5rem);
+    background: var(--bg, #fff);
+    color: var(--text, #191919);
+    font-family: var(--font-body, sans-serif);
+    box-shadow: var(--shadow, 0 2px 12px rgba(0, 0, 0, 0.25));
+}
+
+.consent-title {
+    margin: 0 0 var(--space-s, 0.75rem);
+}
+
+.consent-body {
+    margin: 0 0 var(--space, 1.5rem);
+}
+
+.consent-categories {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs, 0.5rem);
+    margin-bottom: var(--space, 1.5rem);
+}
+
+.consent-category {
+    display: flex;
+    gap: var(--space-s, 0.75rem);
+    align-items: flex-start;
+    padding: var(--space-s, 0.75rem);
+    border-radius: var(--radius, 0.5rem);
+    cursor: pointer;
+}
+
+.consent-category:hover {
+    background: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.consent-category:has(input:disabled) {
+    cursor: default;
+    opacity: 0.7;
+}
+
+/*
+ * The real checkbox stays — it is only moved out of sight, never replaced. Hiding it with
+ * display:none would take the keyboard and the screen reader with it; this way the switch
+ * below is decoration and the input remains the thing that is focused, toggled and read
+ * out.
+ */
+.consent-category input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.consent-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 1.4rem;
+    margin-top: 0.1rem;
+    border-radius: 1rem;
+    background: color-mix(in srgb, currentColor 25%, transparent);
+    transition: background 0.2s;
+}
+
+.consent-switch::after {
+    content: "";
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--bg, #fff);
+    transition: transform 0.2s;
+}
+
+.consent-category input:checked + .consent-switch {
+    background: var(--accent, #1f7a4d);
+}
+
+.consent-category input:checked + .consent-switch::after {
+    transform: translateX(1.1rem);
+}
+
+/* The focus ring has to follow the switch, since the input it belongs to is invisible */
+.consent-category input:focus-visible + .consent-switch {
+    outline: 2px solid var(--accent, #1f7a4d);
+    outline-offset: 2px;
+}
+
+.consent-category-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+}
+
+.consent-category-body {
+    font-size: 0.875em;
+    color: var(--muted, inherit);
+}
+
+/*
+ * Refusing must be as easy as accepting — same size, same prominence, side by side. A
+ * banner that hides "no" behind a link or greys it out is not collecting consent, it is
+ * collecting a click, and that consent is worthless.
+ */
+.consent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-s, 0.75rem);
+}
+
+.consent-button {
+    flex: 1 1 auto;
+    padding: var(--space-xs, 0.5rem) var(--space, 1.5rem);
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--accent, #1f7a4d);
+    border-radius: var(--radius, 0.5rem);
+    background: transparent;
+    color: inherit;
+}
+
+.consent-accept {
+    background: var(--accent, #1f7a4d);
+    color: #fff;
+}
+
+/* ── Cookie table (privacy page) ─────────────────────────────────────────────── */
+
+.cookie-table table {
+    width: 100%;
+    margin-bottom: var(--space-l, 3rem);
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.cookie-table th,
+.cookie-table td {
+    padding: var(--space-xs, 0.5rem);
+    border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+    vertical-align: top;
+}

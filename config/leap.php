@@ -381,6 +381,111 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | consent
+    |--------------------------------------------------------------------------
+    |
+    | Cookie consent for the frontend template: which categories a visitor is asked
+    | about, and which cookies each one actually sets.
+    |
+    | The cookie list is a manifest, not decoration. A scanner can see that a cookie
+    | exists, but never what it is for or how long it is kept — and that is exactly
+    | what a privacy statement has to state. So it is declared here, the cookie table
+    | on the privacy page renders it, and a browser test holds it to the truth: any
+    | cookie that turns up without being declared fails the build.
+    |
+    | enabled  false = no banner at all. Every category then falls back to `default`.
+    | default  What a category is worth when nobody was asked: 'denied' (a site with
+    |          no trackers) or 'granted' (knowingly skipping the question — not
+    |          GDPR-proof, but sometimes the deliberate choice).
+    | granular true = a preferences screen per category. false = accept all / refuse.
+    |          All-or-nothing is fine with a single optional category — a screen with
+    |          one switch is theatre — but with several distinct purposes a visitor is
+    |          entitled to refuse the marketing and keep the analytics.
+    |
+    | Add a service and the registry's fingerprint changes, which expires the consent
+    | already given: it covered what was on the table at the time, and no longer does.
+    |
+    */
+    'consent' => [
+        'enabled' => env('LEAP_CONSENT', true),
+        'default' => 'denied',
+        'granular' => true,
+
+        'categories' => [
+
+            'necessary' => [
+                'necessary' => true,
+                'services' => [
+                    [
+                        'name' => 'Website',
+                        'provider' => null, // first party
+                        'cookies' => [
+                            ['name' => 'XSRF-TOKEN', 'retention' => '2 hours'],
+                            ['name' => '*-session', 'retention' => '2 hours'],
+                            ['name' => 'consent', 'retention' => '6 months'],
+                        ],
+                    ],
+                ],
+            ],
+
+            // Loaded from the "scripts_analytics" setting, and by the Matomo
+            // integration when leap.consent.matomo is configured.
+            'analytics' => [
+                'services' => [
+                    [
+                        'name' => 'Matomo',
+                        'provider' => 'Matomo (self-hosted)',
+                        'cookies' => [
+                            ['name' => '_pk_id*', 'retention' => '13 months'],
+                            ['name' => '_pk_ses*', 'retention' => '30 minutes'],
+                            // Matomo's own record that consent was given. Found by the
+                            // browser test, not by reading the docs — which is the whole
+                            // point of holding the registry to the truth.
+                            ['name' => 'mtm_cookie_consent', 'retention' => '30 years'],
+                        ],
+                    ],
+                ],
+            ],
+
+            // Embedded video. Nothing is requested until a visitor presses play, so
+            // no cookie is set on this site — the point is the data that reaches the
+            // provider once they do.
+            'embeds' => [
+                'services' => [
+                    [
+                        'name' => 'YouTube',
+                        'provider' => 'Google Ireland Ltd.',
+                        'cookies' => [],
+                    ],
+                    [
+                        'name' => 'Vimeo',
+                        'provider' => 'Vimeo Inc. (VS)',
+                        'cookies' => [],
+                    ],
+                ],
+            ],
+
+        ],
+
+        /*
+         | Matomo, if you use it. Its cookieless mode is worth supporting properly:
+         | with requireCookieConsent it measures every visitor without setting a
+         | cookie, so the cookie law is never triggered and the people who refuse are
+         | still counted. On consent it switches its cookies on for better figures.
+         |
+         | Anything else — GA4, Meta, Hotjar — goes in the "scripts_<category>"
+         | setting instead. Those cannot run cookieless and belong behind consent.
+         |
+         | Leave url empty to render nothing.
+         */
+        'matomo' => [
+            'url' => env('MATOMO_URL'),
+            'site_id' => env('MATOMO_SITE_ID'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ace
     |--------------------------------------------------------------------------
     | Ace code editor options like CDN and version to use.

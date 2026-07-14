@@ -39,6 +39,17 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'leap');
 
+        // The consent banner and cookie table ship with the package rather than as
+        // template stubs, so a fix reaches every site through composer instead of
+        // leaving each one on its own frozen copy of something that has to hold up
+        // legally. Publish them only to replace the markup outright — styling is meant
+        // to happen from the project's own stylesheet, since the CSS carries structure
+        // and reads the template's design tokens for everything else.
+        $this->publishes([
+            __DIR__.'/../resources/views/consent-banner.blade.php' => resource_path('views/vendor/leap/consent-banner.blade.php'),
+            __DIR__.'/../resources/views/cookie-table.blade.php' => resource_path('views/vendor/leap/cookie-table.blade.php'),
+        ], 'leap-views');
+
         // Register all leap livewire components.
         foreach (glob(__DIR__.'/Livewire/*.php') as $file) {
             // convert PascalCase to kebab-case
