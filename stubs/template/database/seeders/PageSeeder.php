@@ -194,6 +194,9 @@ class PageSeeder extends Seeder
             'sort' => 4,
             'sections' => [
                 ['_name' => 'default', '_sort' => 0, 'active' => true, 'head' => ['nl' => 'Privacybeleid', 'en' => 'Privacy policy'], 'body' => ['nl' => '<p>Beschrijf hier hoe je met persoonsgegevens omgaat.</p>', 'en' => '<p>Describe how you handle personal data here.</p>']],
+                // The cookie table renders config('leap.consent'), so the privacy page
+                // cannot drift away from the cookies the site actually sets.
+                ['_name' => 'cookies', '_sort' => 1, 'active' => true, 'head' => ['nl' => 'Cookies', 'en' => 'Cookies'], 'body' => ['nl' => '<p>Hieronder staat welke cookies deze website gebruikt, waarvoor, en hoe lang ze bewaard worden.</p>', 'en' => '<p>Below is every cookie this website uses, what for, and how long it is kept.</p>']],
             ],
         ]);
 
@@ -211,6 +214,18 @@ class PageSeeder extends Seeder
         // socials and footer_links use "label:url" per line (the ':' key separator of setting_array()).
         if (class_exists(Setting::class)) {
             Setting::set([
+                'html_head' => [
+                    'value' => '',
+                    'description' => 'Code direct vóór </head>. Alleen voor code die GÉÉN toestemming vereist — trackers horen in de scripts_-instellingen, anders draaien ze buiten het cookiesysteem om.',
+                ],
+                'scripts_analytics' => [
+                    'value' => '',
+                    'description' => 'Statistiek-scripts (bijv. Google Analytics): plak hier de code van de leverancier. Draait pas nadat de bezoeker statistieken heeft toegestaan.',
+                ],
+                'scripts_embeds' => [
+                    'value' => '',
+                    'description' => 'Scripts voor ingesloten inhoud. Draait pas nadat de bezoeker die inhoud toestaat.',
+                ],
                 'footer_contact' => [
                     'value' => "Voorbeeldstraat 1\n1234 AB Amsterdam\ninfo@example.com",
                     'description' => 'Adres/contactgegevens in de footer',

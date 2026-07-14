@@ -81,6 +81,8 @@ class TemplateInstallTest extends TestCase
             ->expectsConfirmation('Copy HasSlug trait?', 'yes')
             ->expectsConfirmation('Create app/Livewire directory?', 'yes')
             ->expectsConfirmation('Copy Search Livewire component?', 'yes')
+            ->expectsConfirmation('Create app/Support directory?', 'yes')
+            ->expectsConfirmation('Copy Video support class?', 'yes')
             ->expectsConfirmation('Create public/css directory?', 'yes')
             ->expectsConfirmation('Copy TinyMCE editor stylesheet?', 'yes')
             ->expectsConfirmation('Link public/storage to storage/app/public? (uploaded images do not resolve without it)', 'yes')
@@ -111,6 +113,9 @@ class TemplateInstallTest extends TestCase
             'config/imageresize.php',
             'public/css/tinymce.css',
             'resources/views/sections/default.blade.php',
+            'resources/views/sections/video.blade.php',
+            'resources/views/sections/cookies.blade.php',
+            'app/Support/Video.php',
             'resources/css/template.scss',
         ] as $file) {
             $this->assertFileExists($this->temp.'/'.$file, "Expected {$file} to be copied.");

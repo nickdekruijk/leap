@@ -57,6 +57,58 @@ document.querySelectorAll('.slider').forEach(function (slider) {
     });
 });
 
+// Video sections: swap the poster for the player when it is clicked.
+//
+// The iframe is built here, inside the click handler, rather than by Alpine. A browser
+// only lets a video start with sound if it can tie the play to a user gesture, and an
+// iframe conjured up a tick later — as x-if does — no longer counts. Vimeo quietly falls
+// back to starting muted, so it looked fine; YouTube just sat on its first frame.
+document.querySelectorAll('.video-poster').forEach(function (poster) {
+    const section = poster.closest('.video');
+    const notice = section.querySelector('.video-consent');
+
+    const play = function () {
+        const iframe = document.createElement('iframe');
+
+        iframe.src = poster.dataset.video;
+        iframe.title = poster.dataset.videoTitle || '';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+
+        if (notice) {
+            notice.hidden = true;
+        }
+
+        poster.replaceWith(iframe);
+    };
+
+    poster.addEventListener('click', function () {
+        // Loading the player sends the visitor's data to Google or Vimeo, so it waits for
+        // permission. With consent switched off, has() answers with the configured
+        // default and this is simply never in the way.
+        if (!notice || window.consent.has('embeds')) {
+            play();
+
+            return;
+        }
+
+        notice.hidden = false;
+    });
+
+    if (!notice) {
+        return;
+    }
+
+    // Consent for this one video: an informed click on a button that says what it does.
+    // Refusing embeds in general should not mean never watching anything.
+    notice.querySelector('.video-consent-once')?.addEventListener('click', play);
+
+    notice.querySelector('.video-consent-always')?.addEventListener('click', function () {
+        window.consent.grant('embeds');
+        play();
+    });
+});
+
 // Horizontal-scroll card sections. The scroller turns CSS scroll-snap off while
 // dragging and back on for button navigation itself (disableSnapOnDrag, default).
 new HorizontalScroller({

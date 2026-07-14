@@ -73,6 +73,29 @@ class Page extends Resource
                     Attribute::make('dark_background')->switch()->label(['nl' => 'Donkere achtergrond (witte tekst)', 'en' => 'Dark background (white text)'])->default(false),
                     Attribute::make('background')->media(multiple: false)->label(['nl' => 'Achtergrondfoto (optioneel)', 'en' => 'Background photo (optional)']),
                 ),
+                Section::make('video')->label(['nl' => 'Video (breedbeeld)', 'en' => 'Video (full width)'])->attributes(
+                    Attribute::make('active')->switch()->label(['nl' => 'Actief', 'en' => 'Active'])->default(true),
+                    Attribute::make('head')->label(['nl' => 'Kop (voor schermlezers)', 'en' => 'Heading (for screen readers)'])->sectionTitle()->translatable(),
+                    Attribute::make('video_id')->required()
+                        ->label(['nl' => 'Video-ID (YouTube of Vimeo)', 'en' => 'Video ID (YouTube or Vimeo)'])
+                        ->hint([
+                            'nl' => 'YouTube: het deel na "?v=" in de URL, bijv. dQw4w9WgXcQ. Vimeo: het nummer in de URL, bijv. 1084537.',
+                            'en' => 'YouTube: the part after "?v=" in the URL, e.g. dQw4w9WgXcQ. Vimeo: the number in the URL, e.g. 1084537.',
+                        ]),
+                    Attribute::make('image')->media(multiple: false)
+                        ->label(['nl' => 'Poster-afbeelding (optioneel)', 'en' => 'Poster image (optional)'])
+                        ->hint([
+                            'nl' => 'Leeg = de poster wordt automatisch bij YouTube/Vimeo opgehaald en lokaal opgeslagen. Wordt getoond tot er op play wordt geklikt; de video zelf laadt pas daarna.',
+                            'en' => 'Empty = the poster is fetched from YouTube/Vimeo and stored locally. Shown until play is clicked; the video itself only loads after that.',
+                        ]),
+                ),
+                // Renders the cookie registry from config('leap.consent') on the privacy
+                // page, so it cannot drift away from the cookies the site actually sets.
+                Section::make('cookies')->label(['nl' => 'Cookie-overzicht', 'en' => 'Cookie overview'])->attributes(
+                    Attribute::make('active')->switch()->label(['nl' => 'Actief', 'en' => 'Active'])->default(true),
+                    Attribute::make('head')->label(['nl' => 'Kop', 'en' => 'Heading'])->sectionTitle()->translatable(),
+                    Attribute::make('body')->richtext()->label(['nl' => 'Inleidende tekst', 'en' => 'Introduction'])->translatable(),
+                ),
             ),
         ];
     }

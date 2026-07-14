@@ -187,6 +187,7 @@ class TemplateCommand extends Command
             'app/Models/Page.php',
             'app/Leap/Page.php',
             'app/Livewire/Search.php',
+            'app/Support/Video.php',
             'app/Traits/HasSections.php',
             'app/Traits/HasSlug.php',
             'config/imageresize.php',
@@ -297,6 +298,11 @@ class TemplateCommand extends Command
         // Live search (a plain Livewire class component so it works on Livewire 3 and 4)
         $this->createDirectory('app/Livewire');
         $this->copyOrReplace('app/Livewire/Search.php', 'Search Livewire component');
+
+        // Video sections. A thin wrapper around the package class, so bugfixes to the
+        // poster fetching and the provider quirks arrive via composer update.
+        $this->createDirectory('app/Support');
+        $this->copyOrReplace('app/Support/Video.php', 'Video support class');
 
         // TinyMCE editor content styles, so rich-text matches the frontend in the editor
         $this->createDirectory('public/css');

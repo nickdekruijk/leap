@@ -763,6 +763,78 @@ a[role="button"],
     background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 22%, #fff), color-mix(in srgb, var(--accent) 68%, #000));
 }
 
+// ── Video ─────────────────────────────────────────────────────────────────────
+// As wide as the content column, like every other section — full-bleed reads far too
+// wide on a large screen. And it carries its own vertical space: every other section
+// gets that from its padding-block, so without it the video sits flush against whatever
+// comes before and after it, the footer included.
+.video {
+    position: relative;
+    width: 100%;
+    max-width: var(--content-width);
+    margin-block: var(--space-xl);
+    margin-inline: auto;
+    aspect-ratio: 16 / 9;
+    background: #000;
+
+    iframe,
+    .video-poster {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    .video-poster {
+        padding: 0;
+        background: transparent;
+        cursor: pointer;
+
+        img,
+        .image-placeholder {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    // The play triangle, drawn rather than shipped as an image
+    .video-play {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-style: solid;
+        border-width: 1.75rem 0 1.75rem 3rem;
+        border-color: transparent transparent transparent #fff;
+        transition: opacity 0.2s;
+    }
+
+    .video-poster:hover .video-play { opacity: 0.75; }
+
+    // Shown over the poster when the visitor has not allowed embeds. It has to sit above
+    // it: the poster fills the whole section, so anything behind it is unclickable.
+    .video-consent {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space);
+        padding: var(--space);
+        text-align: center;
+        color: #fff;
+        background: rgba(0, 0, 0, 0.75);
+
+        &[hidden] { display: none; }
+
+        p { max-width: 34rem; margin: 0; }
+    }
+}
+
 // ── Footer ────────────────────────────────────────────────────────────────────
 .footer {
     padding-block: var(--space-xl);

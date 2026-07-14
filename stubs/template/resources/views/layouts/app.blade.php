@@ -43,7 +43,51 @@
         <style>
             [x-cloak] { display: none !important; }
         </style>
-        {!! Minify::stylesheet(['minireset.css', 'template.scss', 'project.scss']) !!}
+        {!! Minify::stylesheet(['minireset.css', '../vendor/nickdekruijk/leap/resources/css/consent.css', 'template.scss', 'project.scss']) !!}
+
+        {{--
+            Matomo, when leap.consent.matomo is configured. requireCookieConsent means it
+            measures every visitor but sets no cookie, so the cookie law is never
+            triggered and the people who refuse are still counted; consent.js switches
+            its cookies on once the analytics category is granted.
+
+            Anything that cannot run cookieless — GA4, Meta, Hotjar — belongs in the
+            "scripts_<category>" setting below, not here.
+        --}}
+        @if (config('leap.consent.matomo.url') && config('leap.consent.matomo.site_id'))
+            <script>
+                var _paq = window._paq = window._paq || [];
+                _paq.push(['requireCookieConsent']);
+                _paq.push(['enableHeartBeatTimer']);
+                _paq.push(['trackPageView']);
+                _paq.push(['enableLinkTracking']);
+                (function () {
+                    var u = @json(rtrim(config('leap.consent.matomo.url'), '/') . '/');
+                    _paq.push(['setTrackerUrl', u + 'matomo.php']);
+                    _paq.push(['setSiteId', @json((string) config('leap.consent.matomo.site_id'))]);
+                    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+                    g.async = true; g.src = u + 'matomo.js'; s.parentNode.insertBefore(g, s);
+                })();
+
+                // Consent only turns Matomo's cookies on or off — it keeps measuring
+                // either way. The hook lives here rather than in consent.js, so that
+                // stays free of any knowledge of a particular vendor.
+                document.addEventListener('consent:change', function (e) {
+                    _paq.push([e.detail.analytics ? 'rememberCookieConsentGiven' : 'forgetCookieConsentGiven']);
+                });
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.consent && window.consent.has('analytics')) {
+                        _paq.push(['rememberCookieConsentGiven']);
+                    }
+                });
+            </script>
+        @endif
+
+        {{-- Code that needs NO consent. Trackers belong in scripts_<category>, below. --}}
+        @if (function_exists('setting') && setting('html_head'))
+            {!! setting('html_head') !!}
+        @endif
     </head>
 
     <body x-data="navigation()" x-on:scroll.window="scrolling = window.pageYOffset > 0" :class="{ 'nav-expanded': navExpanded, 'search-open': searchOpen }">
@@ -156,7 +200,25 @@
             </div>
         </footer>
 
-        {!! Minify::javascript(['../vendor/nickdekruijk/vanilla-slider/slider.js', '../vendor/nickdekruijk/horizontal-scroller/horizontal-scroller.js', 'scripts.js']) !!}
+        {{--
+            Consent-gated scripts, one slot per optional category. An editor pastes the
+            vendor's own snippet into the "scripts_analytics" (or _marketing, …) setting;
+            it sits in a <template>, which the browser parses but never runs — no script
+            executes, no request goes out, not even for an external src. consent.js clones
+            it into the page only once that category is granted.
+
+            This is why the template needs to know nothing about GA4, Meta or Hotjar: any
+            vendor snippet works, unchanged.
+        --}}
+        @foreach (NickDeKruijk\Leap\Classes\Consent::optionalCategories() as $consentCategory => $consentDetails)
+            @if (function_exists('setting') && setting('scripts_'.$consentCategory))
+                <template data-consent="{{ $consentCategory }}">{!! setting('scripts_'.$consentCategory) !!}</template>
+            @endif
+        @endforeach
+
+        @include('leap::consent-banner')
+
+        {!! Minify::javascript(['../vendor/nickdekruijk/leap/resources/js/consent.js', '../vendor/nickdekruijk/vanilla-slider/slider.js', '../vendor/nickdekruijk/horizontal-scroller/horizontal-scroller.js', 'scripts.js']) !!}
         @livewireScripts
     </body>
 
