@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] — 2026-07-15
+
+### Added
+
+- **Console warning when leap is installed as a dev-only dependency.** leap is the
+  runtime admin panel, so it must be a normal (non-dev) requirement; if it is only a
+  dev requirement, `composer install --no-dev` removes it and `/admin` vanishes in
+  production. Detected via `Composer\InstalledVersions::isDevRequirement()` (adds a
+  `composer-runtime-api: ^2.0` requirement); shown on the console only, and never while
+  developing leap itself.
+
 ## [0.10.0] — 2026-07-15
 
 A breaking release. See [docs/upgrading.md](docs/upgrading.md) for the migration steps.
