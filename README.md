@@ -23,26 +23,19 @@ Built with Livewire; styling is compiled on request (no npm/Vite build step).
 ## Quick start
 
 ```bash
-composer require nickdekruijk/leap
+composer require nickdekruijk/leap -W
 php artisan migrate
 ```
 
-> **Adding Leap to an existing project?** If `composer require` fails to
-> resolve with an error about `brick/math` being "fixed" to a locked
-> version, run instead:
-> ```bash
-> composer require nickdekruijk/leap "brick/math:^0.17"
-> ```
-> or add `-W`/`--with-all-dependencies`. This happens because Leap pulls in
-> `laravel/passkeys` → `web-auth/webauthn-lib` → `spomky-labs/cbor-php`,
-> and `cbor-php` doesn't support `brick/math` beyond `^0.17` yet — while
-> `laravel/framework` alone is happy to lock it to a newer version.
-> Composer's default (non-`-W`) `require` only lets you update packages you
-> name explicitly on the command line, not the dependencies of a package
-> you're adding, so an already-locked `brick/math` needs to be named
-> directly to be resolved down. This isn't needed on a brand-new project
-> where Leap is added to `composer.json` before the first `composer
-> install` — remove this workaround once `cbor-php` supports newer
+> **Why `-W`?** Leap pulls in `laravel/passkeys` → `web-auth/webauthn-lib` →
+> `spomky-labs/cbor-php`, and `cbor-php` doesn't support `brick/math` beyond
+> `^0.17` yet — while a fresh Laravel already locks `brick/math` to `0.18`
+> through `laravel/framework`. A plain `composer require` only updates the
+> package you name, not another package's locked dependency, so it can't
+> downgrade `brick/math` and **silently installs an ancient Leap that predates
+> the passkey dependency instead** (no error). `-W`
+> (`--with-all-dependencies`) lets Composer downgrade `brick/math` to `0.17`
+> and install the current Leap. Remove `-W` once `cbor-php` supports newer
 > `brick/math` releases.
 
 Add the required traits to your user model (see

@@ -9,8 +9,14 @@
 ## Install
 
 ```bash
-composer require nickdekruijk/leap
+composer require nickdekruijk/leap -W
 ```
+
+The `-W` (`--with-all-dependencies`) is currently required: Leap's passkey chain
+(`spomky-labs/cbor-php`) caps `brick/math` at `^0.17`, but a fresh Laravel locks it
+to `0.18` via `laravel/framework`. Without `-W`, Composer won't downgrade the locked
+`brick/math` and silently installs an ancient Leap release instead of erroring. Drop
+`-W` once `cbor-php` supports newer `brick/math`.
 
 Publish the config if you want to change the defaults:
 
