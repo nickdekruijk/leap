@@ -8,7 +8,6 @@ use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
@@ -917,7 +916,7 @@ class FileManager extends Module
             return;
         }
 
-        $image = Image::read($fileContents);
+        $image = Media::imageManager()->read($fileContents);
         $imgW = $image->width();
         $imgH = $image->height();
 

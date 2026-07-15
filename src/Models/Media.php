@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\DriverInterface;
 use NickDeKruijk\Leap\Leap;
 
 class Media extends Model
@@ -71,6 +72,23 @@ class Media extends Model
     }
 
     /**
+     * An Intervention ImageManager, built directly rather than through the
+     * Intervention\Image\Laravel facade. Laravel 13 ships its own `Illuminate\Image`
+     * feature bound to the same `image` container key, so that facade now resolves to
+     * Laravel's manager (whose Intervention bridge calls a method the installed
+     * intervention/image version does not have). Resolving the manager here avoids the
+     * collision. Uses the configured Intervention driver when set, else GD.
+     */
+    public static function imageManager(): ImageManager
+    {
+        $driver = config('image.driver');
+
+        return is_string($driver) && is_a($driver, DriverInterface::class, true)
+            ? ImageManager::withDriver($driver)
+            : ImageManager::gd();
+    }
+
+    /**
      * Intrinsic pixel size of a bitmap image, computed once and cached in meta.
      * Lets the frontend set <img width height> to reserve the aspect-ratio box
      * (no layout shift) without cropping. Self-healing: legacy media is filled on
@@ -90,7 +108,7 @@ class Media extends Model
 
         try {
             $storage = Storage::disk($this->disk ?: config('leap.filemanager.disk'));
-            $image = Image::read($storage->get($this->file_name));
+            $image = static::imageManager()->read($storage->get($this->file_name));
             $dimensions = ['width' => $image->width(), 'height' => $image->height()];
 
             $this->meta = array_merge($this->meta ?? [], $dimensions);
