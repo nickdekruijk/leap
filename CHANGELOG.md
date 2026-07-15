@@ -5,6 +5,27 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] — 2026-07-15
+
+### Removed
+
+- **The "installed as a dev-only dependency" console warning** (added in 0.10.1). It
+  called `Composer\InstalledVersions::isDevRequirement()`, which only exists on Composer
+  2.2+, so on older Composer it threw "Call to undefined method" on every console command.
+  A package policing how it was required is scope creep — the two-package install is
+  documented in the README instead. The `composer-runtime-api` requirement stays (used by
+  `InstalledVersions::getInstallPath()` for the passkey routes).
+
+## [0.10.2] — 2026-07-15
+
+### Fixed
+
+- **`Media::dimensions()` on Laravel 13.** Laravel 13 ships a native `Illuminate\Image`
+  bound to the same `image` container key that intervention/image-laravel's facade uses,
+  so `Image::read()` resolved to Laravel's manager — whose Intervention bridge calls a
+  method absent in intervention/image 3.x — and dimension detection returned null. Build
+  the Intervention `ImageManager` directly (`Media::imageManager()`), bypassing the facade.
+
 ## [0.10.1] — 2026-07-15
 
 ### Added
@@ -14,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dev requirement, `composer install --no-dev` removes it and `/admin` vanishes in
   production. Detected via `Composer\InstalledVersions::isDevRequirement()` (adds a
   `composer-runtime-api: ^2.0` requirement); shown on the console only, and never while
-  developing leap itself.
+  developing leap itself. *(Removed again in 0.10.3.)*
 
 ## [0.10.0] — 2026-07-15
 

@@ -19,7 +19,6 @@ use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
-use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -121,8 +120,6 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 ModuleCommand::class,
                 UserCommand::class,
             ]);
-
-            $this->warnIfDevOnly();
         }
 
         Gate::define('leap::create', function ($user, ?Module $module = null) {
@@ -160,28 +157,6 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      * (leap.locales is null) a single unprefixed group is registered using the
      * current app locale's segment (falling back to the first).
      */
-    /**
-     * The admin panel is a runtime dependency, so leap must be a normal (non-dev)
-     * requirement of the host. If it is only a dev requirement — e.g. pulled in solely
-     * through a --dev package — `composer install --no-dev` drops it and /admin vanishes
-     * in production. Nudge about that on the console. Skipped while developing leap
-     * itself.
-     */
-    protected function warnIfDevOnly(): void
-    {
-        $self = 'nickdekruijk/leap';
-
-        if (! class_exists(InstalledVersions::class) || InstalledVersions::getRootPackage()['name'] === $self) {
-            return;
-        }
-
-        if (InstalledVersions::isDevRequirement($self)) {
-            (new ConsoleOutput)->getErrorOutput()->writeln(
-                '<comment>nickdekruijk/leap (the /admin panel) is installed as a dev dependency; `composer install --no-dev` will remove it in production. Require it non-dev: `composer require nickdekruijk/leap`.</comment>'
-            );
-        }
-    }
-
     protected function registerLocalizedRouteMacro(): void
     {
         Route::macro('leapLocalized', function (array $segments, Closure $callback): void {
