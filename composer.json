@@ -21,11 +21,7 @@
 		"brick/math": "^0.9|^0.10|^0.11|^0.12|^0.13|^0.14|^0.15|^0.16|^0.17"
 	},
 	"suggest": {
-		"nickdekruijk/minify": "SCSS/JS compilation and bundling used by the frontend template (php artisan leap:template)",
-		"nickdekruijk/settings": "Admin-editable settings and footer used by the frontend template (php artisan leap:template)",
-		"nickdekruijk/imageresize": "Responsive asset_resized() images used by the frontend template",
-		"nickdekruijk/vanilla-slider": "Carousel/slider used by the frontend template",
-		"nickdekruijk/horizontal-scroller": "Horizontal-scroll sections used by the frontend template"
+		"nickdekruijk/leap-template": "Frontend website template scaffolding (leap:template, leap:content) — install with composer require --dev"
 	},
 	"autoload": {
 		"psr-4": {
@@ -49,6 +45,9 @@
 			"aliases": {
 				"Leap": "NickDeKruijk\\Leap\\Facade"
 			}
+		},
+		"branch-alias": {
+			"dev-master": "0.10.x-dev"
 		}
 	},
 	"require-dev": {

@@ -1,31 +1,15 @@
 # Caching
 
-The frontend template caches its page tree, because pages change rarely but
-`PageController::getPages()` runs on every request (it builds the navigation and
-resolves the current page).
+`PageController::getPages()` runs on every request (it builds the navigation and resolves
+the current page), so it is **memoized per request** with `once()` — it runs once no
+matter how many times the navigation, the current page and the language switcher ask for
+it.
 
-## Configuration
+There is **no persistent cross-request cache**. Pages are few and the query is a small
+indexed one, so caching it saved a negligible amount against a real risk of stale data
+(an edit not showing up, a cache not cleared on deploy). Removing it keeps the template
+correct with no `config('leap.cache')`, no model events and no `cache:clear` to remember.
 
-```php
-// config/leap.php
-'cache' => env('LEAP_CACHE', true),
-```
-
-- **on** (default) — the segment-independent page data (the database query plus
-  per-locale slug/title resolution) is cached with `Cache::rememberForever`. The cache
-  key includes the active locale, because translated slugs/titles resolve at build
-  time.
-- **off** (`LEAP_CACHE=false`) — no persistent cache; a per-request `once()` memo still
-  avoids duplicate work within a single request.
-
-## Invalidation
-
-The `Page` model flushes the cache for every configured locale on `saved`, `deleted`
-and `restored`. Because admin edits go through Eloquent, changes appear immediately —
-so leaving the cache on is safe in every environment, including local development.
-
-For mutations that bypass Eloquent (raw queries, imports), clear it manually:
-
-```bash
-php artisan cache:clear
-```
+If a project ever grows a genuinely large page tree and profiling shows `loadPages()` is
+hot, wrap it in `Cache::rememberForever(...)` in your copy of `PageController` and flush
+it from the `Page` model on `saved`/`deleted`/`restored`.

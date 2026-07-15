@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Console\ConfirmableTrait;
 use Illuminate\Database\Eloquent\Model;
 use NickDeKruijk\Leap\Classes\ModuleGenerator;
 
@@ -12,6 +13,8 @@ use function Laravel\Prompts\text;
 
 class ModuleCommand extends Command
 {
+    use ConfirmableTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -36,6 +39,11 @@ class ModuleCommand extends Command
      */
     public function handle(): int
     {
+        // A scaffolding command — never on production without --force.
+        if (! $this->confirmToProceed()) {
+            return 1;
+        }
+
         $modelClass = $this->resolveModelClass();
         if (! $modelClass) {
             return 1;

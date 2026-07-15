@@ -54,6 +54,12 @@ class PageResource extends Resource
 by inspecting the model's table and casts, so you start from a working resource
 instead of a blank file.
 
+`leap:module` is part of the core leap package — it is how you add an admin panel to an
+existing app, so it stays available with a plain `composer require nickdekruijk/leap`.
+(The frontend-website commands `leap:template`/`leap:content` are the ones that live in
+the separate dev package [`nickdekruijk/leap-template`](https://github.com/nickdekruijk/leap-template).)
+It refuses to run on `APP_ENV=production` without `--force`.
+
 ```bash
 php artisan leap:module Event              # bare name, resolves to App\Models\Event
 php artisan leap:module App\Models\Event   # or a full FQCN

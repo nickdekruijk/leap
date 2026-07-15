@@ -49,3 +49,36 @@ for the full list; the practical notes:
 Very old projects scaffolded before the current template (without
 `PageController::getPages()`) are not covered by the stub drift mechanism and need to be
 re-scaffolded with `php artisan leap:template` (then reconcile with `--diff`).
+
+## Template scaffolding moved to `nickdekruijk/leap-template`
+
+**`leap:template` and `leap:content` now ship in a separate dev-only package.** After
+upgrading, those commands are gone from a plain `nickdekruijk/leap` install; add the
+package to get them back:
+
+```bash
+composer require --dev nickdekruijk/leap-template
+```
+
+`leap:module` and `leap:user` stay in the core package. On production
+(`composer install --no-dev`) `leap-template` is absent, so the scaffolding leaves no
+footprint. Both `leap:content` and `leap:module` now also refuse to run on
+`APP_ENV=production` without `--force`. See
+[nickdekruijk/leap-template](https://github.com/nickdekruijk/leap-template).
+
+## Template: content types (news/events/…)
+
+The frontend template gained model-backed [content types](content-types.md) and dropped
+a few things. Re-run `php artisan leap:template` (use `--diff` first) and reconcile:
+
+- **`highlights` section removed.** It was demo-only. Its card row is replaced by the
+  registered content types. A project still using a `highlights` section on a page should
+  move that content into a real content type, or keep its own `sections/highlights.blade.php`.
+- **Page-tree cache removed.** `config('leap.cache')`, `PageController::flushPageCache()`
+  and the `Page` model's cache-flush events are gone — `getPages()` is memoized per
+  request with `once()`. Remove `LEAP_CACHE` from your `.env` (it is a no-op now).
+- **`leap.content` is the new registry.** `sitemap.xml` and live search read it; you no
+  longer list content models in `leap.sitemap.models` (kept only for models outside the
+  registry). `leap:content` maintains it.
+- **New shared files:** `app/Traits/HasTags.php` and `app/Leap/Concerns/ContentSections.php`
+  (the Page resource now uses the concern instead of inlining its section blocks).

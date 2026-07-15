@@ -5,6 +5,41 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] — 2026-07-15
+
+A breaking release. See [docs/upgrading.md](docs/upgrading.md) for the migration steps.
+
+### Added
+
+- **Frontend content types (news / events / generic).** Models rendered as a card row: a
+  teaser on a page, a filterable overview of their own, and a section-based detail page
+  each. Registered in the new `config('leap.content')`, which drives routing, the Page
+  editor's card-row sections, live search and `sitemap.xml`. Generate one with the new
+  `php artisan leap:content <Name>` (three archetypes — news is chronological with a
+  required `published_at`, event has date/time + `future()`/`past()` and a scheduled
+  `published_at`, generic is hand-ordered). See [docs/content-types.md](docs/content-types.md).
+- **Shared tag filter** (`app/Traits/HasTags.php` + a polymorphic, translatable `Tag`),
+  opt-out with `leap:template --no-tags`. Cards fill their row's height, are one clickable
+  link, and have hover/keyboard-focus states; detail pages carry JSON-LD.
+- **`app/Leap/Concerns/ContentSections.php`** — the Page resource's section blocks,
+  shared with every content type.
+
+### Changed
+
+- **`leap:template`/`leap:content` moved to the dev-only package
+  `nickdekruijk/leap-template`** (`composer require --dev`). `leap:module` and `leap:user`
+  stay in core. `leap:module` and `leap:content` now refuse to run on production without
+  `--force`.
+- **`sitemap.xml` and live search read `config('leap.content')`**; `leap.sitemap.models`
+  is kept only for models outside that registry.
+
+### Removed
+
+- **The `highlights` section** (demo-only) — replaced by model-backed content types.
+- **The page-tree cache** (`config('leap.cache')`, `PageController::flushPageCache()` and
+  the `Page` cache-flush events). `getPages()` is memoized per request with `once()`;
+  remove `LEAP_CACHE` from `.env`.
+
 ## [0.9.17] — 2026-07-14
 
 ### Fixed

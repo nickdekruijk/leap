@@ -1,13 +1,36 @@
 # Frontend template
 
+> **`leap:template` and `leap:content` live in a separate dev-only package.** Install it
+> alongside leap: `composer require --dev nickdekruijk/leap-template` (leap itself stays a
+> normal, non-dev requirement). On production (`--no-dev`) the scaffolding is absent — see
+> [nickdekruijk/leap-template](https://github.com/nickdekruijk/leap-template).
+
 `php artisan leap:template` scaffolds a complete, semantic-HTML public website into
 your project. It is opt-in: nothing is copied until you run the command, and it uses a
 sha1 comparison to ask before overwriting files you have changed.
 
 ```bash
-php artisan leap:template          # install / update the template
-php artisan leap:template --diff   # preview how your files differ from the stubs
+php artisan leap:template          # install / update the template (interactive)
+php artisan leap:template --diff    # preview how your files differ from the stubs
+php artisan leap:template --fresh   # complete, unattended install (implies --force)
 ```
+
+On install it asks which **content types** to scaffold (default `News,Event`) and which
+**languages** to enable (default Dutch only). Steer both non-interactively:
+
+```bash
+php artisan leap:template --fresh --models=News,Project,Product --locales=nl,en
+php artisan leap:template --fresh --no-events --no-tags   # skip events and the tag filter
+```
+
+- `--models=` — comma list, `Name`, `Name:archetype` or `Name:archetype:plural`; empty =
+  no content types. Each is generated with [`leap:content`](content-types.md).
+- `--locales=` — comma list of locale codes; one = monolingual. Omitted under `--fresh` =
+  Dutch only.
+- `--tags` / `--no-tags` — the shared tag filter on content types (default on).
+
+See [content-types.md](content-types.md) for News/Event/generic archetypes, the
+`leap.content` registry, overviews, tags and events.
 
 ## What it installs
 
@@ -74,7 +97,8 @@ only inspects media/sections when the model uses `HasMedia` / `HasSections`.
 The template ships self-contained section types — `slide` (carousel), `default`
 (text + image; the image is positionable left/right/wide or omitted for text-only, with
 an optional dark background — white text plus a background photo or a gradient fallback),
-`highlights` (horizontal scroller), `cta` and `quote`. See [sections.md](sections.md).
+`cta`, `quote` and `video`. Each registered [content type](content-types.md) also adds a
+card-row section (a teaser or a full overview). See [sections.md](sections.md).
 
 ## Images & responsive assets
 
@@ -176,9 +200,12 @@ its sibling locale URLs — mirroring the language-switcher links in the layout.
 
 ### Pluggable sitemap
 
-The sitemap is not limited to the page tree. Any model that implements
-`NickDeKruijk\Leap\Contracts\Sitemapable` can contribute entries; list the models in
-`config('leap.sitemap.models')` and the `Sitemap` helper merges them:
+The template's `sitemap.xml` covers the page tree **and every registered
+[content type](content-types.md)** automatically (each item under its overview page,
+one URL per locale). Nothing to configure — `config('leap.content')` is the source.
+
+For models outside that registry, `config('leap.sitemap.models')` still merges any
+`NickDeKruijk\Leap\Contracts\Sitemapable` model via the `Sitemap` helper:
 
 ```php
 // config/leap.php
@@ -283,5 +310,5 @@ outright: `php artisan vendor:publish --tag=leap-views`.
 
 ## Caching
 
-The page tree is cached per locale and invalidated automatically on page save/delete.
-See [caching.md](caching.md).
+The page tree is memoized per request (`once()`); there is no persistent cache to
+invalidate. See [caching.md](caching.md).

@@ -58,6 +58,18 @@ module, or use `php artisan leap:user` (below) to create one from the command li
 |---|---|
 | `php artisan leap:user {username?} {name?}` | Create or update a user. Prompts for whatever isn't passed as an argument (the username column defaults to `email`, per `leap.credentials`). Leave the password prompt blank to get a random one printed to the console. Updating an existing user only touches the name/password you provide. If the user has no role yet, it offers to attach the first available one. |
 | `php artisan leap:module <Model>` | Generate (or update) an `App\Leap\<Model>` resource from an Eloquent model's schema — field types, required/unique, labels, icon and more, auto-detected. See [modules-and-resources.md](modules-and-resources.md#generating-a-resource-leapmodule). |
-| `php artisan leap:template` | Scaffold a ready-made public website (pages, navigation, sections, search, footer, SEO, sitemap) into your project. See [template.md](template.md). |
 
 Run any command with `--help` for its full list of arguments and options.
+
+### Frontend template scaffolding (separate dev package)
+
+The `leap:template` and `leap:content` commands — which scaffold a ready-made public
+website and its listed content types — ship in the **dev-only**
+[`nickdekruijk/leap-template`](https://github.com/nickdekruijk/leap-template) package, so
+they leave no footprint on production:
+
+```bash
+composer require --dev nickdekruijk/leap-template
+```
+
+See [template.md](template.md) and [content-types.md](content-types.md).

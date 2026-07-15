@@ -324,6 +324,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | content
+    |--------------------------------------------------------------------------
+    |
+    | The frontend template's listed content types: models rendered as a row of
+    | cards (a teaser on a page, a filterable overview of their own, and a detail
+    | page each). The key is the route/section slug; array order is the section
+    | order in the Page editor and the menu. This registry is the single source
+    | of truth — PageController, the Page resource, live search and sitemap.xml
+    | all read it. Add a type with `php artisan leap:content <Name>` (it appends
+    | a line here), or by hand. Non-existent classes are skipped. Example:
+    | 'content' => [
+    |     'news' => App\Models\News::class,
+    |     'events' => App\Models\Event::class,
+    | ],
+    |
+    */
+    'content' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | ai
     |--------------------------------------------------------------------------
     |
@@ -364,20 +384,6 @@ return [
             // 'max_tokens' => 8192, // chat providers: cap the reply; raise for long pages
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | cache
-    |--------------------------------------------------------------------------
-    |
-    | The frontend template caches its page tree (PageController::getPages())
-    | since pages change rarely. The cache is flushed automatically whenever a
-    | Page is saved or deleted, so keeping this on is safe in every environment.
-    | Set to false to disable persistent caching (a per-request memo still
-    | applies), or clear it manually with `php artisan cache:clear`.
-    |
-    */
-    'cache' => env('LEAP_CACHE', true),
 
     /*
     |--------------------------------------------------------------------------
