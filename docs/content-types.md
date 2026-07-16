@@ -31,8 +31,8 @@ by `class_exists`). Add a type with `php artisan leap:content`, or by hand.
 ```bash
 php artisan leap:content News                 # archetype guessed from the name
 php artisan leap:content Product              # generic (sortable) type
-php artisan leap:content Beurs --archetype=event --plural=beurzen
-php artisan leap:content Bericht --no-tags
+php artisan leap:content Fair --archetype=event
+php artisan leap:content Story --no-tags
 ```
 
 It writes a model, a Leap resource, a migration, a factory and a seeder, and appends the
@@ -55,9 +55,17 @@ All three are taggable through the shared `Tag` (unless installed with `--no-tag
 the page section blocks, and get a per-locale slug via `HasSlug`.
 
 The name is free, so `leap:content Newsitem` gives a news-shaped model called `Newsitem`,
-and `leap:content Beurs:event` an event-shaped `Beurs`. `Str::plural()` is English, so
-give a Dutch plural with `--plural=` (or the third segment `Naam:archetype:meervoud` in
-the installer's `--models=` list).
+and `leap:content Fair:event` an event-shaped `Fair`.
+
+**Name content types in English, whatever language the site speaks.** The name is code: it
+becomes the class, the table (`Str::plural()`, which is English), the `leap.content` key and
+the section name. It is never a URL — an overview lives at the slug of the page whose section
+lists that type, and detail pages at `{that slug}/{item slug}`. Both are per locale and both
+are the editor's to change, so a Dutch site is `/berichten` and its English twin `/news`,
+from one `News` model. A Dutch class name buys nothing a visitor can see and costs
+`Str::plural()` its accuracy — `Bericht` becomes the table `berichts`.
+
+`--plural=` is there for the exception (`--plural=people`), not for translating.
 
 ## Events: `ends_at`, `future()` and `past()`
 
