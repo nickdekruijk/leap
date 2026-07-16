@@ -62,7 +62,11 @@ permissions included.
 
 ### The frontend template (optional)
 
+`leap:template` lives in [nickdekruijk/leap-template](https://github.com/nickdekruijk/leap-template),
+a separate dev-only package — leap itself stays a normal, non-dev requirement:
+
 ```bash
+composer require --dev nickdekruijk/leap-template
 php artisan leap:template
 ```
 
