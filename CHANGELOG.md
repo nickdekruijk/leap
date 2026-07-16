@@ -5,6 +5,25 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.10] — 2026-07-16
+
+### Added
+
+- **`HasDocumentMeta::metaDescription()`** — the `description`, falling back to the `intro` a
+  listed content item already carries as its card text, else `''`. Both fields are nullable, so
+  an item with only an intro used to emit no meta/OG description at all, while its JSON-LD used
+  the intro and ignored the description. One method now answers "the descriptive text of this
+  record" for the layout, the structured data and the search excerpt alike.
+  See [docs/template.md](docs/template.md#hasdocumentmeta).
+
+### Fixed
+
+- **`HasDocumentMeta` no longer throws on a partly translatable model.** It checked only whether
+  a model had `getTranslation()`, then called it for every meta attribute — but a translatable
+  model asked for an attribute outside its `$translatable` throws `AttributeIsNotTranslatable`.
+  Attributes are now checked against the model's translatable set and read as plain attributes
+  otherwise, making good on the trait's promise to work on any model.
+
 ## [0.10.9] — 2026-07-16
 
 ### Changed

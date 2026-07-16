@@ -27,7 +27,7 @@ class Article extends Model implements Sitemapable
         'active' => 'boolean',
     ];
 
-    public array $translatable = ['title', 'slug', 'html_title'];
+    public array $translatable = ['title', 'slug', 'html_title', 'description', 'intro'];
 
     public function scopeActive($query)
     {

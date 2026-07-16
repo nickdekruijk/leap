@@ -3,8 +3,8 @@
 namespace NickDeKruijk\Leap\Traits;
 
 /**
- * Head/document metadata for a routable content model: the <title> and the
- * Open Graph / Twitter image URL.
+ * Head/document metadata for a routable content model: the <title>, the meta
+ * description and the Open Graph / Twitter image URL.
  *
  * Lives in the package so the frontend template's <head> logic is shared and
  * fixable via composer update. Designed to degrade gracefully: it works on any
@@ -61,12 +61,30 @@ trait HasDocumentMeta
     }
 
     /**
+     * The meta/OG description: the model's own description, falling back to the
+     * intro that a listed content item already carries as its card text. Empty
+     * when there is neither, so the layout can skip the tag. A page has no intro
+     * and simply gets its description.
+     */
+    public function metaDescription(): string
+    {
+        $description = $this->documentMetaValue('description');
+
+        return $description !== '' ? $description : $this->documentMetaValue('intro');
+    }
+
+    /**
      * Read a meta attribute in the active locale without translation fallback,
-     * or the plain attribute value when the model is not translatable.
+     * or the plain attribute value when the attribute is not translatable.
+     *
+     * The attribute is checked against the model's translatable set rather than
+     * only for the presence of getTranslation(): a translatable model asked for an
+     * attribute it does not translate throws AttributeIsNotTranslatable, and a
+     * model is free to translate some of its meta attributes and not others.
      */
     protected function documentMetaValue(string $attribute): string
     {
-        if (method_exists($this, 'getTranslation')) {
+        if (method_exists($this, 'isTranslatableAttribute') && $this->isTranslatableAttribute($attribute)) {
             return (string) $this->getTranslation($attribute, app()->getLocale(), false);
         }
 

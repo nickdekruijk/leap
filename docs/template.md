@@ -80,18 +80,25 @@ your own and use that instead.
 
 ## HasDocumentMeta
 
-`NickDeKruijk\Leap\Traits\HasDocumentMeta` supplies the two `<head>` values the layout
+`NickDeKruijk\Leap\Traits\HasDocumentMeta` supplies the `<head>` values the layout
 renders, so they are consistent (and fixable) across every routable model:
 
 - `documentTitle()` — a custom `html_title` verbatim, otherwise the page title with the
   app name appended. It reads `html_title` **without** translation fallback, so an empty
   value in the active locale falls through to the page title rather than borrowing
   another locale's.
+- `metaDescription()` — the model's `description`, falling back to the `intro` that a
+  listed content item already carries as its card text, else `''` (the layout can then
+  skip the tag). Read without translation fallback, like `documentTitle()`. A page has
+  no intro and simply gets its description.
 - `ogImageUrl()` — the model's own image, then its first section image/background, else
   `null` (the layout can fall back to a site-wide `og_image` setting).
 
 It degrades gracefully: it works on any model, uses `HasTranslations` when present, and
-only inspects media/sections when the model uses `HasMedia` / `HasSections`.
+only inspects media/sections when the model uses `HasMedia` / `HasSections`. An
+attribute a translatable model does not list in `$translatable` is read as a plain
+attribute rather than throwing — which is what lets `metaDescription()` reach for an
+`intro` on models that have none.
 
 ## Sections
 

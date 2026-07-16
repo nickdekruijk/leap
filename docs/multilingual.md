@@ -221,6 +221,6 @@ Both come from the same per-locale URL map. For the page tree use
 ```
 
 Document `<title>` and Open Graph image come from
-[`HasDocumentMeta`](template.md#hasdocumentmeta) (`documentTitle()` / `ogImageUrl()`),
+[`HasDocumentMeta`](template.md#hasdocumentmeta) (`documentTitle()` / `metaDescription()` / `ogImageUrl()`),
 and the sitemap lists every routable locale per record — see
 [template.md](template.md#seo).
