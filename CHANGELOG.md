@@ -5,18 +5,6 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.4] — 2026-07-16
-
-### Changed
-
-- **`brick/math` now accepts `^0.18`.** `spomky-labs/cbor-php` 3.3.0 lifted its `^0.17`
-  cap, so the mirrored constraint here follows. Leap does not use brick/math in code —
-  this require exists only so `composer require nickdekruijk/leap` resolves without `-W`
-  (see 0.9.x). Note that 0.18 still won't install in most projects: `web-auth/cose-lib`
-  and `spomky-labs/pki-framework` both still cap at `^0.17`. Once they lift it, **delete
-  the `brick/math` require entirely** rather than appending another version — the whole
-  line is obsolete the moment the ecosystem cap is gone.
-
 ## [0.10.3] — 2026-07-15
 
 ### Removed
