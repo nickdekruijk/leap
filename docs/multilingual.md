@@ -126,9 +126,33 @@ Leap::localePrefix();       // prefix for the active locale
 ```
 
 `Leap::detectLocale($segments)` strips a leading locale segment from a URL's path
-segments (by reference) and applies it with `app()->setLocale()` — a no-op for the
-default locale and when monolingual. The template's `PageController::route()` calls it
-before matching the page tree.
+segments (by reference) and applies it with `app()->setLocale()`. With no locale segment
+it applies the default locale explicitly; it is a no-op only when monolingual. The
+template's `PageController::route()` calls it before matching the page tree.
+
+### `leap.locales` vs `APP_LOCALE`
+
+They answer different questions, and on a multilingual site they are allowed to disagree.
+
+**`leap.locales` decides the site.** Its first key is the locale served unprefixed, so it
+decides every frontend URL. It lives in `config/leap.php`, which is deployed with the code
+— a routing decision has to be, or the same commit serves different URLs per environment.
+
+**`APP_LOCALE` decides everything else**: the admin panel, the console, queues and mail. It
+lives in `.env`, which is not in version control.
+
+So an English admin on a Dutch site is a normal thing to want:
+
+```
+leap.locales = ['nl' => 'Nederlands', 'en' => 'English']   # / is Dutch, /en is English
+APP_LOCALE=en                                              # /admin and the console in English
+```
+
+`leap:template` writes both to match when it configures the languages, but leaves both
+alone once `leap.locales` has been set by hand — so a re-run cannot undo the setup above.
+
+On a **monolingual** site (`leap.locales` is `null`) there is nothing to prefix and
+`detectLocale()` does nothing, so `APP_LOCALE` alone decides the site's language.
 
 ### Content types outside the page tree
 

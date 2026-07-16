@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The `Route::leapLocalized()` macro was never affected: it attaches `SetLeapLocale` to every
   locale group, the default one included.
 
+  This also makes the two settings mean separate things, and lets them disagree on purpose:
+  `leap.locales` decides the site's URLs, `APP_LOCALE` decides the admin, console, queues and
+  mail. An English admin on a Dutch site is now a supported setup rather than a broken one.
+  See [docs/multilingual.md](docs/multilingual.md#leaplocales-vs-app_locale). (On a
+  monolingual site nothing is prefixed, so `APP_LOCALE` still decides the language outright.)
+
 ## [0.10.7] — 2026-07-16
 
 ### Added
