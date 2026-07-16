@@ -103,7 +103,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 }
             });
 
-            // laravel/fortify (^1.19) bundles its own passkeys integration
+            // laravel/fortify (^1.37) bundles its own passkeys integration
             // and unconditionally calls Passkeys::ignoreRoutes() as soon as
             // it registers, whether or not Fortify's passkeys feature is
             // enabled. Combined with Fortify::ignoreRoutes() above (needed
