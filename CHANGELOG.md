@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.9] — 2026-07-16
+
+### Changed
+
+- **Documented that content types are named in English**, whatever language the site speaks.
+  The name is code — the class, the table, the `leap.content` key, the section name — and
+  never a URL: an overview lives at the slug of the page whose section lists that type, and
+  detail pages at `{that slug}/{item slug}`. Both are per locale and the editor's to change,
+  so a Dutch site is `/berichten` and its English twin `/news` from one `News` model. A Dutch
+  class name buys nothing a visitor can see, and costs `Str::plural()` its accuracy.
+  See [docs/content-types.md](docs/content-types.md).
+
 ## [0.10.8] — 2026-07-16
 
 ### Fixed
@@ -29,18 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mail. An English admin on a Dutch site is now a supported setup rather than a broken one.
   See [docs/multilingual.md](docs/multilingual.md#leaplocales-vs-app_locale). (On a
   monolingual site nothing is prefixed, so `APP_LOCALE` still decides the language outright.)
-
-## [0.10.9] — 2026-07-16
-
-### Changed
-
-- **Documented that content types are named in English**, whatever language the site speaks.
-  The name is code — the class, the table, the `leap.content` key, the section name — and
-  never a URL: an overview lives at the slug of the page whose section lists that type, and
-  detail pages at `{that slug}/{item slug}`. Both are per locale and the editor's to change,
-  so a Dutch site is `/berichten` and its English twin `/news` from one `News` model. A Dutch
-  class name buys nothing a visitor can see, and costs `Str::plural()` its accuracy.
-  See [docs/content-types.md](docs/content-types.md).
 
 ## [0.10.7] — 2026-07-16
 
