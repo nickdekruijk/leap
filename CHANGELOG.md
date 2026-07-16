@@ -21,6 +21,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one indexed `EXISTS` per login render. `leap.auth_passkeys.enabled` still switches
   passkeys off entirely, login *and* Profile.
 
+### Removed
+
+- **The `brick/math` requirement, and the `-W` it existed for.** Install with a plain
+  `composer require nickdekruijk/leap` again. The require was never about using
+  brick/math — Leap has no such code. It was there to pull brick/math into Composer's
+  update whitelist so that a partial `composer require` was allowed to *downgrade* it to
+  the `^0.17` the WebAuthn chain accepted; without that, Composer silently installed an
+  ancient Leap instead of erroring (0.9.10), and `-W` was the documented workaround.
+
+  That whole chain now accepts `brick/math` `^0.18`: `spomky-labs/cbor-php` 3.3.0,
+  `web-auth/cose-lib` 4.6.0 and `spomky-labs/pki-framework` 1.5.0. Nothing caps it below
+  what a fresh Laravel already locks, so no downgrade is ever needed and the require has
+  nothing left to do. Verified against a fresh `laravel/framework` install: a plain
+  `composer require` pulls in the current Leap with `brick/math` staying at 0.18.0.
+
+## [0.10.4] — 2026-07-16
+
+### Changed
+
+- **`brick/math` now accepts `^0.18`.** `spomky-labs/cbor-php` 3.3.0 lifted its `^0.17`
+  cap, so the mirrored constraint here follows. Leap does not use brick/math in code: the
+  require exists only to pull it into Composer's update whitelist, so that
+  `composer require nickdekruijk/leap` is allowed to downgrade it to whatever the WebAuthn
+  chain still accepts (see 0.9.10). The constraint's *value* barely matters while
+  something downstream caps it lower — its presence is the point — but it must not be the
+  thing capping everyone once nothing else does.
+
+  Once no package in that chain caps `brick/math` any more, **drop the require entirely**
+  rather than widening it again: it exists to permit a downgrade that would no longer
+  happen. `composer why-not brick/math 0.18` says whether that day has come.
+
 ## [0.10.3] — 2026-07-15
 
 ### Removed
