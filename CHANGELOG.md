@@ -5,7 +5,7 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.6] — 2026-07-16
 
 ### Changed
 
@@ -35,6 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   what a fresh Laravel already locks, so no downgrade is ever needed and the require has
   nothing left to do. Verified against a fresh `laravel/framework` install: a plain
   `composer require` pulls in the current Leap with `brick/math` staying at 0.18.0.
+
+## [0.10.5] — 2026-07-16
+
+### Changed
+
+- **Reverted 0.10.4's `brick/math` widening**, back to `^0.17`. It made no practical
+  difference at the time — the WebAuthn chain still capped `brick/math` at `^0.17`
+  regardless of what this package allowed. Superseded by 0.10.6, which drops the require
+  altogether.
 
 ## [0.10.4] — 2026-07-16
 
