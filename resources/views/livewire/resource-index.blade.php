@@ -29,7 +29,7 @@
         </div>
     @endif
     @foreach ($indexRows ?? $this->indexRows() as $row)
-        @if ($this->showIndexGroups && !$this->treeview() && $this->orderBy && $this->getAttribute($this->orderBy)->type != 'number' && ($char = $this->indexGroupChar($row, $attribute)) && (empty($last) || $last !== $char))
+        @if ($this->showIndexGroups && !$this->treeview() && $this->indexGroupable() && ($char = $this->indexGroupChar($row)) && (empty($last) || $last !== $char))
             <div class="leap-index-row leap-index-group">
                 @foreach ($this->indexAttributes() as $attribute)
                     <span class="leap-index-column">{{ $attribute->name == $this->orderBy ? ($last = $char) : '' }}</span>

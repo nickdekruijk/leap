@@ -5,6 +5,27 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.11] — 2026-07-16
+
+### Fixed
+
+- **An index only groups into letters when it is ordered by text.** The group header is the
+  first character of the ordered value, which says something for a title and nothing for
+  anything else: ordering by a date put one "2" over every row of this century, an id grouped
+  by its leading digit, and a select column headed "1" and "2" over rows reading "Active" and
+  "Inactive" — the index renders a select's label, not the value it would group by.
+
+  The guard was a single exception, `type != 'number'`, which could never have covered the
+  first two: `Attribute::$type` defaults to `'text'`, so an id — never given a type — was
+  indistinguishable from a title. `Resource::indexGroupable()` now asks three things instead:
+  what the attribute says it is, what it renders, and what the model casts the column to.
+  `getCasts()` always carries the primary key, so an id is caught for being an int rather than
+  for being called "id". A column that declares nothing and is cast to nothing still groups.
+
+  `indexGroupChar()`'s `$attribute` parameter is now optional and no longer passed: the index
+  handed it whatever the header loop had left in scope, never the ordered column, and the
+  method reads that from `$this` anyway.
+
 ## [0.10.10] — 2026-07-16
 
 ### Added

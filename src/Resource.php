@@ -125,9 +125,66 @@ class Resource extends Module
     public $showIndexGroups = true;
 
     /**
-     * Return the first letter of a value to use as the index group
+     * Memoised indexGroupable() answer, keyed by the column ordered on. Protected, so
+     * Livewire neither persists nor restores it: the ordering can change between
+     * requests, and the answer with it.
+     *
+     * @var array<string, bool>
      */
-    public function indexGroupChar(Model $row, Attribute $attribute): string
+    protected array $indexGroupableCache = [];
+
+    /**
+     * Whether the current ordering groups into letters at all.
+     *
+     * A group header is the first character of the ordered value, which only says
+     * something when that value is text: a date puts every row of this century under
+     * "2", an id and a counter group by their leading digit, and a select shows a
+     * label while grouping by the key behind it.
+     */
+    public function indexGroupable(): bool
+    {
+        if (! $this->orderBy || ! $this->model) {
+            return false;
+        }
+
+        return $this->indexGroupableCache[$this->orderBy] ??= $this->columnGroupable($this->orderBy);
+    }
+
+    /**
+     * The three things that have to agree before a column groups: what the attribute
+     * says it is, what it shows, and what the model holds in it.
+     */
+    protected function columnGroupable(string $column): bool
+    {
+        $attribute = $this->getAttribute($column);
+
+        if (! $attribute || ! in_array($attribute->type, ['text', 'email'], true)) {
+            return false;
+        }
+
+        // The index renders a select's label ($attribute->values[...]), not the value
+        // it would group by, so the headers would spell out the keys behind it.
+        if (in_array($attribute->input, ['select', 'radio'], true)) {
+            return false;
+        }
+
+        // 'text' is also the default of an attribute that never said what it holds --
+        // an id, a foreign key, a counter -- so the model's casts have the last word.
+        // getCasts() always carries the primary key, so an id is caught for being an
+        // int rather than for being called "id".
+        $cast = (new $this->model)->getCasts()[$column] ?? null;
+
+        // A translatable column is json and casts to none of these or to array; the
+        // json-shaped types that are not text (sections, meta) already left above.
+        return $cast === null || in_array($cast, ['string', 'array', 'json', 'object', 'collection'], true);
+    }
+
+    /**
+     * Return the first letter of a value to use as the index group
+     *
+     * @param  Attribute|null  $attribute  Unused; the ordered column is read from $this. Kept for backwards compatibility.
+     */
+    public function indexGroupChar(Model $row, ?Attribute $attribute = null): string
     {
         $orderByValue = $row[$this->orderBy];
         $value = $this->hasTranslation($this->getAttribute($this->orderBy)) ? ($orderByValue[app()->getLocale()] ?? (is_array($orderByValue) ? reset($orderByValue) : $orderByValue)) : ($orderByValue ?? '');
