@@ -36,7 +36,7 @@ See [content-types.md](content-types.md) for News/Event/generic archetypes, the
 
 - `app/Http/Controllers/PageController.php` — frontend routing and navigation.
 - `app/Models/Page.php` + `app/Leap/Page.php` — the page model and its admin module.
-- `app/Traits/HasSections.php` and `app/Traits/HasSlug.php`.
+- `app/Traits/HasTags.php` — the shared Tag relation (omitted with `--no-tags`).
 - The pages migration and `PageSeeder` (bilingual sample content).
 - `resources/css`, `resources/views`, `resources/js` — SCSS, Blade and JS.
 - `config/imageresize.php` — width presets for responsive images (see below).
@@ -72,10 +72,11 @@ Key conventions:
 Declare the editor relationship on the slug field with
 `Attribute::make('slug')->slugFrom('title')`.
 
-The behaviour lives in the package (`NickDeKruijk\Leap\Traits\HasSlug`) so fixes arrive
-via `composer update`; `leap:template` ships a thin `App\Traits\HasSlug` wrapper around
-it, keeping the application namespace stable and giving you a place for project
-overrides. Use it on any translatable model with a `slug` field, not just `Page`.
+The trait lives in this package (`NickDeKruijk\Leap\Traits\HasSlug`), and the scaffolded
+models use it straight from there, so fixes arrive via `composer update`. Use it on any
+translatable model with a `slug` field, not just `Page`. To change its behaviour for one
+model, define the method on that model; to change it everywhere, wrap it in a trait of
+your own and use that instead.
 
 ## HasDocumentMeta
 

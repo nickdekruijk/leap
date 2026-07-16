@@ -5,6 +5,25 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.7] — 2026-07-16
+
+### Added
+
+- **`NickDeKruijk\Leap\Traits\HasSections`.** The read side of the sections editor — media
+  merged in, per-locale fields resolved to the current locale, sorted, `_first`/`_last`
+  flags — now lives here instead of being copied into every project by `leap:template`.
+
+  Everything it knows is this package's own: the shape `Attribute::sections()` stores, the
+  `Mediable` rows uploads land in, the `_sort`/`_name` keys the editor adds, and
+  `leap.locales`. Change the editor and this has to change with it, so keeping them apart
+  meant a fix could not travel. It already cost something: the monolingual crash fixed in
+  leap-template 0.10.4 never reached any site installed before it, because their copy was
+  frozen. Sites only escaped by being multilingual, where the broken branch happened to be
+  the right one.
+
+  `leap-template` 0.10.8 stops shipping its stub; the models use this trait directly, as they
+  already could have for `HasSlug` and `Classes\Video`.
+
 ## [0.10.6] — 2026-07-16
 
 ### Changed

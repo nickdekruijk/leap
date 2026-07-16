@@ -41,8 +41,7 @@ Attribute::make('sections')->sections(
 
 ## The HasSections trait
 
-Add `App\Traits\HasSections` (shipped by `leap:template`) to the model whose column
-holds the blocks. It:
+Add `NickDeKruijk\Leap\Traits\HasSections` to the model whose column holds the blocks. It:
 
 - casts the JSON column to iterable section objects;
 - merges uploaded media onto `sections.{key}.{field}` so a block's `->media()` field

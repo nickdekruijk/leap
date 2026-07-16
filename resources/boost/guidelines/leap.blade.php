@@ -57,9 +57,9 @@ class Page extends Resource
 `Attribute::make('sections')->sections(Section $a, Section $b, ...)` stores an array
 of blocks in a JSON column. Build each with
 `Section::make('name')->view('sections.name')->attributes(Attribute::make(...), ...)`.
-Add the `App\Traits\HasSections` trait to the model; it merges uploaded media onto
-`sections.{key}.{field}` and adds `_first`/`_last`/`_view` helpers used by the
-frontend partials.
+Add the `NickDeKruijk\Leap\Traits\HasSections` trait to the model; it merges uploaded
+media onto `sections.{key}.{field}` and adds `_first`/`_last`/`_view` helpers used by
+the frontend partials.
 
 ## Multilingual editing
 
@@ -75,7 +75,7 @@ sync.
 
 `php artisan leap:template` scaffolds a semantic-HTML frontend into the host project:
 `PageController` (routing via `getPages()`/`getMenu()`, homepage is the page whose
-slug is `/`, optional locale prefixes), the `Page` model with `App\Traits\HasSlug`
+slug is `/`, optional locale prefixes), the `Page` model with the package's `HasSlug`
 (per-locale, sibling-and-locale-unique slugs), self-contained sections, live search,
 an admin-editable footer and `sitemap.xml`. Run `leap:template --diff` to preview how
 edited copies differ from the current stubs.
