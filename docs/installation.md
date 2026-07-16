@@ -12,11 +12,14 @@
 composer require nickdekruijk/leap -W
 ```
 
-The `-W` (`--with-all-dependencies`) is currently required: Leap's passkey chain
-(`spomky-labs/cbor-php`) caps `brick/math` at `^0.17`, but a fresh Laravel locks it
-to `0.18` via `laravel/framework`. Without `-W`, Composer won't downgrade the locked
-`brick/math` and silently installs an ancient Leap release instead of erroring. Drop
-`-W` once `cbor-php` supports newer `brick/math`.
+The `-W` (`--with-all-dependencies`) is currently required: several packages in Leap's
+passkey chain still cap `brick/math` at `^0.17`, but a fresh Laravel locks it to `0.18`
+via `laravel/framework`. Without `-W`, Composer won't downgrade the locked `brick/math`
+and silently installs an ancient Leap release instead of erroring.
+
+Run `composer why-not brick/math 0.18` to see what still caps it; once that returns
+nothing, `-W` can go. Tracking:
+[pki-framework#86](https://github.com/Spomky-Labs/pki-framework/issues/86).
 
 Publish the config if you want to change the defaults:
 

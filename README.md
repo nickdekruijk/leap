@@ -27,16 +27,19 @@ composer require nickdekruijk/leap -W
 php artisan migrate
 ```
 
-> **Why `-W`?** Leap pulls in `laravel/passkeys` → `web-auth/webauthn-lib` →
-> `spomky-labs/cbor-php`, and `cbor-php` doesn't support `brick/math` beyond
-> `^0.17` yet — while a fresh Laravel already locks `brick/math` to `0.18`
-> through `laravel/framework`. A plain `composer require` only updates the
-> package you name, not another package's locked dependency, so it can't
-> downgrade `brick/math` and **silently installs an ancient Leap that predates
-> the passkey dependency instead** (no error). `-W`
-> (`--with-all-dependencies`) lets Composer downgrade `brick/math` to `0.17`
-> and install the current Leap. Remove `-W` once `cbor-php` supports newer
-> `brick/math` releases.
+> **Why `-W`?** Leap pulls in `laravel/passkeys` → `web-auth/webauthn-lib` → the
+> WebAuthn stack, and several packages in that chain still cap `brick/math` at
+> `^0.17` — while a fresh Laravel already locks `brick/math` to `0.18` through
+> `laravel/framework`. A plain `composer require` only updates the package you
+> name, not another package's locked dependency, so it can't downgrade
+> `brick/math` and **silently installs an ancient Leap that predates the passkey
+> dependency instead** (no error). `-W` (`--with-all-dependencies`) lets Composer
+> downgrade `brick/math` to `0.17` and install the current Leap.
+>
+> To check whether the cap is still there, run `composer why-not brick/math 0.18`
+> in your project — it names whatever is still holding the line. Once that comes
+> back empty, `-W` is no longer needed. Tracking:
+> [pki-framework#86](https://github.com/Spomky-Labs/pki-framework/issues/86).
 
 Add the required traits to your user model (see
 [docs/installation.md](docs/installation.md)), then visit `/admin`.
