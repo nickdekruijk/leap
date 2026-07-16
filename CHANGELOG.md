@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **The passkey login button only shows once a passkey exists.** On a fresh install the
+  button could not work for anyone, and said so to no one: with an empty `passkeys` table
+  the browser opens an empty picker, and the `NotAllowedError` from dismissing it is
+  swallowed by `passkeys.js` — so the click did nothing at all. Registration lives behind
+  the login (Profile), so hiding the button until the first passkey is registered locks
+  nobody out; it appears by itself once someone has one.
+
+  The check is deliberately global rather than per-account: keying it on the typed email
+  would let anyone probe which accounts exist and which of them have a passkey. It costs
+  one indexed `EXISTS` per login render. `leap.auth_passkeys.enabled` still switches
+  passkeys off entirely, login *and* Profile.
+
 ## [0.10.3] — 2026-07-15
 
 ### Removed

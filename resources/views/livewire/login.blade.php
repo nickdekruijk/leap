@@ -25,7 +25,7 @@
                 </fieldset>
                 <fieldset class="leap-fieldset leap-fieldset-buttons">
                     <x-leap::button type="submit" svg-icon="fas-sign-in-alt" class="primary" label="{{ __('leap::auth.login') }}" />
-                    @if (config('leap.auth_passkeys.enabled'))
+                    @if ($this->offerPasskeyLogin)
                         <x-leap::button type="button" svg-icon="fas-key" onclick="leapPasskeyLogin(document.getElementById('remember').checked)" label="{{ __('leap::auth.passkey_login') }}" />
                     @endif
                     @if (config('leap.auth_routes') && config('leap.password_reset'))

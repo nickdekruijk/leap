@@ -5,6 +5,8 @@ namespace NickDeKruijk\Leap\Livewire;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Passkeys\Passkey;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use NickDeKruijk\Leap\Traits\CanLog;
 
@@ -18,6 +20,25 @@ class Login extends Component
     public $password;
 
     public $remember;
+
+    /**
+     * Whether to offer passkey login at all.
+     *
+     * With no passkeys registered the button cannot work for anyone: the
+     * browser opens an empty picker and the resulting NotAllowedError is
+     * swallowed by passkeys.js, so the click does nothing and says nothing.
+     * Registration lives behind the login (Profile), so hiding the button
+     * until the first passkey exists locks nobody out.
+     *
+     * Deliberately global rather than per-account: keying this on the typed
+     * email would let anyone probe which accounts exist and which have a
+     * passkey.
+     */
+    #[Computed]
+    public function offerPasskeyLogin(): bool
+    {
+        return config('leap.auth_passkeys.enabled') && Passkey::exists();
+    }
 
     protected function rules()
     {

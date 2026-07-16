@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Livewire\Login;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
@@ -86,5 +87,34 @@ class PasskeyTest extends TestCase
         $names = Livewire::test(Profile::class)->instance()->passkeys()->pluck('name')->all();
 
         $this->assertSame(['Test device'], $names);
+    }
+
+    private function registerPasskey(): void
+    {
+        $this->createUser()->passkeys()->create([
+            'name' => 'Test device',
+            'credential_id' => 'fake-credential-id-'.uniqid(),
+            'credential' => ['type' => 'public-key'],
+        ]);
+    }
+
+    public function test_login_hides_passkey_button_until_a_passkey_exists(): void
+    {
+        Livewire::test(Login::class)->assertDontSee(__('leap::auth.passkey_login'));
+    }
+
+    public function test_login_shows_passkey_button_once_any_passkey_exists(): void
+    {
+        $this->registerPasskey();
+
+        Livewire::test(Login::class)->assertSee(__('leap::auth.passkey_login'));
+    }
+
+    public function test_login_hides_passkey_button_when_passkeys_are_disabled(): void
+    {
+        $this->registerPasskey();
+        config(['leap.auth_passkeys.enabled' => false]);
+
+        Livewire::test(Login::class)->assertDontSee(__('leap::auth.passkey_login'));
     }
 }
