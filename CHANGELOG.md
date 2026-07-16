@@ -5,6 +5,25 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.8] — 2026-07-16
+
+### Fixed
+
+- **An unprefixed URL now renders the locale that claims it.** `Leap::detectLocale()` only
+  ever set a locale for a *prefixed* URL, so `/` was left at whatever `APP_LOCALE` said. On a
+  site whose first `leap.locales` entry was `nl`, an `.env` carrying `APP_LOCALE=en` rendered
+  `/` in English while every URL rule still treated `/` as the Dutch page: English answered
+  on both `/` and `/en`, Dutch on nothing at all, and the language switcher, canonicals and
+  sitemap all pointed at the wrong one. One line in an untracked file, and the whole URL
+  structure was wrong — silently, and differently per environment.
+
+  Which locale is unprefixed is declared by `leap.locales` in `config/leap.php`, which is
+  deployed with the code; `detectLocale()` now applies it explicitly. `APP_LOCALE` is left to
+  what it is for — the console, queues and mail — and can no longer reach the frontend's URLs.
+
+  The `Route::leapLocalized()` macro was never affected: it attaches `SetLeapLocale` to every
+  locale group, the default one included.
+
 ## [0.10.7] — 2026-07-16
 
 ### Added

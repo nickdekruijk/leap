@@ -86,6 +86,39 @@ class LocaleHelpersTest extends TestCase
         $this->assertSame('nl', $this->app->getLocale());
     }
 
+    /**
+     * The URL structure is declared by leap.locales, which is in version control;
+     * APP_LOCALE is in .env, which is not, and differs per environment. Left implicit,
+     * one line in an untracked file silently rewrote the site: / rendered English while
+     * every URL rule still treated / as the Dutch page, so English answered on both /
+     * and /en and Dutch on nothing at all.
+     */
+    public function test_detect_locale_applies_the_default_locale_when_there_is_no_prefix(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English']]);
+
+        // As if .env carried APP_LOCALE=en on a site whose default locale is nl.
+        $this->app->setLocale('en');
+
+        $segments = ['about'];
+        Leap::detectLocale($segments);
+
+        $this->assertSame(['about'], $segments, 'Nothing to strip: / is the default locale.');
+        $this->assertSame('nl', $this->app->getLocale(), 'The unprefixed URL must render the locale that claims it.');
+        $this->assertSame('', Leap::localePrefix('nl'), 'And that is the locale whose prefix is empty.');
+    }
+
+    public function test_detect_locale_applies_the_default_locale_on_the_bare_root(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English']]);
+        $this->app->setLocale('en');
+
+        $segments = [];
+        Leap::detectLocale($segments);
+
+        $this->assertSame('nl', $this->app->getLocale());
+    }
+
     public function test_detect_locale_ignores_an_unknown_leading_segment(): void
     {
         config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English']]);

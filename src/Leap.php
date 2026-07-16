@@ -130,6 +130,15 @@ class Leap
      * to the SetLeapLocale middleware (which works on a route prefix parameter);
      * both read the same leap.locales source so their locale rules never diverge.
      *
+     * With no locale segment the default locale is applied explicitly rather than
+     * left at whatever APP_LOCALE happens to be. Which locale is unprefixed is
+     * declared by leap.locales, in config/leap.php and so in version control;
+     * APP_LOCALE lives in .env, which is not, and differs per environment. Left
+     * implicit, APP_LOCALE=en on a site whose first locale is nl rendered / in
+     * English while every URL rule still treated / as the Dutch page -- English on
+     * both / and /en, Dutch on nothing, and a language switcher pointing at neither.
+     * The routing decision belongs to the file that is deployed with the code.
+     *
      * @param  array<int, string>  $segments  URL path segments; a matched locale is removed
      */
     public static function detectLocale(array &$segments): void
@@ -142,7 +151,11 @@ class Leap
         $default = self::localeDefault();
         if (isset($segments[0]) && $segments[0] !== '' && $segments[0] !== $default && array_key_exists($segments[0], $locales)) {
             app()->setLocale(array_shift($segments));
+
+            return;
         }
+
+        app()->setLocale($default);
     }
 
     /**
