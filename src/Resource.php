@@ -666,6 +666,37 @@ class Resource extends Module
     }
 
     /**
+     * How a query has to address an attribute's column.
+     *
+     * A translatable attribute is stored as json ({"nl": "Aap", "en": "Ape"}), so a
+     * query naming the column plainly gets the whole object rather than the text in
+     * it: ordering compares json objects, so every row sorts equal and descending
+     * reads exactly the same as ascending.
+     *
+     * The json path is what the query builder turns into the driver's own accessor --
+     * json_unquote(json_extract(..)) on MySQL, json_extract(..) on SQLite -- so this
+     * stays out of writing SQL by hand.
+     *
+     * A row with nothing in the active locale orders as null, wherever the database
+     * puts those.
+     *
+     * @param  string|null  $locale  Which language to address; the active one by default
+     */
+    protected function localeColumn(string $column, ?string $locale = null): string
+    {
+        // Already addresses a json key of its own (an attribute named "meta->author")
+        if (str_contains($column, '->')) {
+            return $column;
+        }
+
+        $attribute = $this->getAttribute($column);
+
+        return $attribute && $this->hasTranslation($attribute)
+            ? $column.'->'.($locale ?: app()->getLocale())
+            : $column;
+    }
+
+    /**
      * Return an array of all rows with the id and the index attributes
      *
      * @param  int|null  $parent_id  The parent id for the treeview
@@ -705,10 +736,10 @@ class Resource extends Module
         if ($this->orderBy && ! $sortForeign) {
             if (is_array($this->orderBy)) {
                 foreach ($this->orderBy as $orderBy => $desc) {
-                    $data = $data->orderBy($orderBy ?: $desc, $desc == 'desc' ? 'desc' : ($this->orderDesc ? 'desc' : 'asc'));
+                    $data = $data->orderBy($this->localeColumn($orderBy ?: $desc), $desc == 'desc' ? 'desc' : ($this->orderDesc ? 'desc' : 'asc'));
                 }
             } else {
-                $data = $data->orderBy($this->orderBy, $this->orderDesc ? 'desc' : 'asc');
+                $data = $data->orderBy($this->localeColumn($this->orderBy), $this->orderDesc ? 'desc' : 'asc');
             }
         }
 

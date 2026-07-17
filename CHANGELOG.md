@@ -5,6 +5,26 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.12] — 2026-07-16
+
+### Fixed
+
+- **An index ordered by a translatable column now sorts by the text, not the json.** A
+  translatable attribute is stored as `{"nl": "Aap", "en": "Ape"}`, and the index ordered by
+  the column itself — so MySQL compared json objects rather than the text in them. Every row
+  sorted equal: ordering by a title did nothing, and descending read exactly the same as
+  ascending. Ordering now addresses the json path of the active locale, which the query
+  builder turns into the driver's own accessor.
+
+  Reported as descending being broken on text columns, which it looked like from the outside:
+  a plain column (a name, an email) was never affected, and ascending on a translatable one
+  was just as broken — only less obviously, since there was no order to be wrong about.
+
+  It hid behind SQLite, which has no json type: the column is text, so ordering it compares
+  the raw json string, which sorts by whichever locale spatie writes first — right by
+  accident, as long as that is the locale you are reading. The suite says so where it can:
+  only the active-locale case can fail on SQLite, and it does against the old code.
+
 ## [0.10.11] — 2026-07-16
 
 ### Fixed
