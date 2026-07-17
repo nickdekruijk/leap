@@ -519,6 +519,38 @@ class Editor extends Component
     }
 
     /**
+     * Point a unique rule at the language it is validating.
+     *
+     * A translatable attribute is validated once per locale, but the rule names the
+     * column plainly: "unique:pages,slug" asks the database where slug = 'over-ons',
+     * and slug holds {"nl": "over-ons", "en": "about-us"}. A json object never equals
+     * a string, so the rule matched nothing and every duplicate passed. Worse than a
+     * missing check: HasSlug then quietly appended a -2 on save, so the editor was
+     * neither warned nor given the slug they typed.
+     *
+     * Only the column is rewritten; the table, the ignored id and the id column all
+     * keep their place.
+     */
+    private function localeUniqueRule(mixed $rule, string $locale): mixed
+    {
+        if (! is_string($rule) || ! str_starts_with($rule, 'unique:')) {
+            return $rule;
+        }
+
+        $parts = explode(',', substr($rule, strlen('unique:')));
+
+        // unique:<table>,<column>,... -- leave a rule that never named a column, and
+        // one already addressing a json key, alone.
+        if (($parts[1] ?? '') === '' || str_contains($parts[1], '->')) {
+            return $rule;
+        }
+
+        $parts[1] .= '->'.$locale;
+
+        return 'unique:'.implode(',', $parts);
+    }
+
+    /**
      * Return the validation rules from the attributes
      *
      * @param  int|null  $id  the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
@@ -547,9 +579,11 @@ class Editor extends Component
                 // Add the validation rule — per locale for translatable fields (default required, rest optional)
                 if ($this->editorLocales() && $this->parentModule()->hasTranslation($attribute)) {
                     foreach (array_keys($this->editorLocales()) as $locale) {
+                        $localeRules = array_map(fn ($rule) => $this->localeUniqueRule($rule, $locale), $attribute->validate);
+
                         $rules['data.'.$attribute->name.'.'.$locale] = $locale === $this->defaultLocale()
-                            ? $attribute->validate
-                            : array_map(fn ($rule) => $rule === 'required' ? 'nullable' : $rule, $attribute->validate);
+                            ? $localeRules
+                            : array_map(fn ($rule) => $rule === 'required' ? 'nullable' : $rule, $localeRules);
                     }
                 } else {
                     $rules['data.'.$attribute->name] = $attribute->validate;

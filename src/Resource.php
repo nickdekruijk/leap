@@ -678,8 +678,6 @@ class Resource extends Module
      * json_unquote(json_extract(..)) on MySQL, json_extract(..) on SQLite -- so this
      * stays out of writing SQL by hand.
      *
-     * A row with nothing in the addressed locale reads as null.
-     *
      * @param  string|null  $locale  Which language to address; the active one by default
      */
     protected function localeColumn(string $column, ?string $locale = null): string
@@ -700,7 +698,7 @@ class Resource extends Module
      * Every language a translatable attribute has to be searched in, and the one
      * language a plain column has.
      *
-     * The panel is the one place where a site's languages sit side by side, so a title
+     * The panel is one place where the site's languages sit side by side, so a title
      * is worth finding by whatever language it is written in -- being in the Dutch
      * panel is no reason to be unable to find a page by its English title.
      *

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.12] — 2026-07-16
 
+A translatable attribute is stored as json, and three things asked the database for it by
+column name — getting `{"nl": "Aap", "en": "Ape"}` where they meant the text in it. Ordering
+was reported; the other two turned up looking for more of the same.
+
 ### Fixed
 
 - **An index search no longer matches the json.** `title LIKE '%nl%'` searched the raw
@@ -16,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   It searches all of them, not just the active one: the panel is the one place a site's
   languages sit side by side, and being in the Dutch panel is no reason to be unable to find a
   page by its English title.
+
+- **`unique` validates translatable attributes again.** The rule named the column plainly, so
+  it asked where `slug = 'over-ons'` while slug held `{"nl": "over-ons", ..}` — a json object
+  never equals a string, so it matched nothing and every duplicate passed. Worse than a missing
+  check: `HasSlug` then quietly appended a `-2` on save, leaving the editor neither warned nor
+  given the slug they typed. Each language is unique in its own right; the rule now says so.
 
 - **An index ordered by a translatable column now sorts by the text, not the json.** A
   translatable attribute is stored as `{"nl": "Aap", "en": "Ape"}`, and the index ordered by
