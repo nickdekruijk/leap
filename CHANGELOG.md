@@ -1,17 +1,41 @@
-# Changelog
+o# Changelog
 
 All notable changes to `nickdekruijk/leap` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.10.12] — 2026-07-16
+## [0.10.12] — 2026-07-17
 
 A translatable attribute is stored as json, and three things asked the database for it by
 column name — getting `{"nl": "Aap", "en": "Ape"}` where they meant the text in it. Ordering
-was reported; the other two turned up looking for more of the same.
+was reported; the other two turned up looking for more of the same. An index filter had a
+fault of the same shape: it read what the index had rendered instead of asking the database.
 
 ### Fixed
+
+- **An index filters a foreign or pivot column by id, not by the text it renders.** A pivot
+  column renders as the values of the row joined into one string, and the filter was built
+  from that string: an article tagged both Update and Announcement offered "Update,
+  Announcement" as a filter option of its own, and picking Update alone returned nothing — the
+  filter was an exact match in PHP on the rendered value, so a single tag could never equal a
+  joined pair.
+
+  Both ends now speak ids, and the options come from `Attribute::getValues()`, so the `scope`,
+  `orderBy` and `index` columns of the attribute keep deciding what an option reads like and
+  in which order. Only values that are in use are offered, so no option can return an empty
+  index. A pivot on a `MorphToMany` reads its options with the morph constraint: the pivot
+  table is shared, and without it a vocabulary tagging several content types would offer the
+  tags of one resource in the filter of another.
+
+  The id-keyed filters are applied to the query — a pivot through `whereHas`, a foreign
+  through a plain `where` — rather than to the fetched rows. Every other type keeps filtering
+  on its rendered value, because a json key, an accessor or a checkbox only exists once the
+  row is rendered.
+
+  The option list does not look at `$active` or the treeview branch, so a value attached only
+  to an inactive row is still offered. One query for the whole column is worth that: the old
+  option list read the entire table again for every filterable column.
 
 - **An index search no longer matches the json.** `title LIKE '%nl%'` searched the raw
   `{"nl": .., "en": ..}`, so searching an index for "nl" or "en" returned every row — they are
