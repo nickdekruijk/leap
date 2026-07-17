@@ -20,7 +20,7 @@
                         <select class="leap-index-filter" wire:change="filterBy('{{ $attribute->name }}', $event.target.value)">
                             <option value="NULL">&bullet;&bullet;&bullet;</option>
                             @foreach ($this->filterData($attribute) as $value => $display)
-                                <option value="{{ $value }}" @selected(($filters[$attribute->name] ?? null) === $value)>{{ $display }}</option>
+                                <option value="{{ $value }}" @selected(isset($filters[$attribute->name]) && (string) $filters[$attribute->name] === (string) $value)>{{ $display }}</option>
                             @endforeach
                         </select>
                     @endif

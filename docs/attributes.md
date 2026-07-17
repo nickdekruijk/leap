@@ -32,7 +32,7 @@ Attribute::make('title')->index(1)->searchable()->required();
 | `->indexOnly()` | list column only, not in the editor |
 | `->searchable()` | include in the index search |
 | `->sortable()` | user-sortable column |
-| `->filterable()` | add a column filter |
+| `->filterable()` | add a column filter, on a `foreign` or `pivot` by the id of the related record and only offering values that are in use |
 | `->required()` | validation `required` |
 | `->unique()` | validation `unique` on the table |
 | `->default($value)` | default value for new records |

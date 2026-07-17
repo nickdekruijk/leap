@@ -3,8 +3,10 @@
 namespace NickDeKruijk\Leap;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -102,6 +104,12 @@ class Resource extends Module
 
     /**
      * Return all unique values for the attribute
+     *
+     * A foreign or pivot filter is keyed by the id of the related record, not by the
+     * text the index renders for it: a row with two pivot values renders as one joined
+     * string ("Update, Announcement"), which as a filter option can never be matched by
+     * a single value. Only the ids actually in use are offered, so no option can return
+     * an empty index.
      */
     #[Computed()]
     public function filterData(Attribute $attribute): array
@@ -113,7 +121,47 @@ class Resource extends Module
             ];
         }
 
+        if (in_array($attribute->type, ['foreign', 'pivot'])) {
+            $used = $attribute->type == 'pivot' ? $this->pivotFilterIds($attribute) : $this->foreignFilterIds($attribute);
+
+            return array_filter($attribute->getValues(), fn ($id) => in_array($id, $used), ARRAY_FILTER_USE_KEY);
+        }
+
         return $this->rows(index: true, filtered: false)->pluck($attribute->name, $attribute->name)->unique()->toArray();
+    }
+
+    /**
+     * Return the ids of the related records that are attached to at least one row
+     *
+     * The pivot table of a MorphToMany is shared with the other models using it, so
+     * without the morph constraint the filter would offer values from other resources.
+     * Whether the row itself is active or in the current treeview branch is not taken
+     * into account, one query for the whole column is worth that.
+     *
+     * @return array<int, mixed>
+     */
+    private function pivotFilterIds(Attribute $attribute): array
+    {
+        $model = $this->getModel();
+        $relation = $model->{$attribute->name}();
+
+        $query = DB::table($relation->getTable())->distinct();
+
+        if ($relation instanceof MorphToMany) {
+            $query->where($relation->getMorphType(), $model->getMorphClass());
+        }
+
+        return $query->pluck($relation->getRelatedPivotKeyName())->all();
+    }
+
+    /**
+     * Return the foreign key values that are in use by at least one row
+     *
+     * @return array<int, mixed>
+     */
+    private function foreignFilterIds(Attribute $attribute): array
+    {
+        return $this->getModel()->distinct()->whereNotNull($attribute->name)->pluck($attribute->name)->all();
     }
 
     /**
@@ -751,6 +799,27 @@ class Resource extends Module
             $data = $data->withCount($this->withCount);
         }
 
+        // Apply the filters that are keyed by an id on the query, the rest is applied on
+        // the rendered values after they are fetched below
+        $postFilters = [];
+        if ($filtered) {
+            foreach ($this->filters as $key => $value) {
+                if (! $this->filterIsActive($value)) {
+                    continue;
+                }
+                $attribute = $this->allAttributes($index)->where('name', $key)->first();
+                if ($attribute?->type == 'pivot') {
+                    $data = $data->whereHas($key, function ($query) use ($attribute, $value) {
+                        $query->where($query->getModel()->getTable().'.'.$attribute->options['id_column'], $value);
+                    });
+                } elseif ($attribute?->type == 'foreign') {
+                    $data = $data->where($key, $value);
+                } else {
+                    $postFilters[$key] = $value;
+                }
+            }
+        }
+
         // Check if data needs to be sorted by a foreign or pivot attribute, in that case we can't use orderBy on the model but manually sort the array later
         $sortForeign = $this->orderBy && in_array($this->allAttributes($index)->where('name', $this->orderBy)->first()?->type, ['foreign', 'pivot']);
 
@@ -827,15 +896,19 @@ class Resource extends Module
             }
         }
 
-        if ($filtered) {
-            foreach ($this->filters as $key => $value) {
-                if ($value != 'NULL' && ($value || $value === '0' || $value === '')) {
-                    $data = $data->where($key, $value);
-                }
-            }
+        foreach ($postFilters as $key => $value) {
+            $data = $data->where($key, $value);
         }
 
         return $data;
+    }
+
+    /**
+     * Whether the filter value stands for an actual filter, 'NULL' is the empty option
+     */
+    private function filterIsActive(mixed $value): bool
+    {
+        return $value != 'NULL' && ($value || $value === '0' || $value === '');
     }
 
     /**
