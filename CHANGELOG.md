@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **An index search no longer matches the json.** `title LIKE '%nl%'` searched the raw
+  `{"nl": .., "en": ..}`, so searching an index for "nl" or "en" returned every row — they are
+  keys of every value. A translatable attribute is now searched per language, values only.
+
+  It searches all of them, not just the active one: the panel is the one place a site's
+  languages sit side by side, and being in the Dutch panel is no reason to be unable to find a
+  page by its English title.
+
 - **An index ordered by a translatable column now sorts by the text, not the json.** A
   translatable attribute is stored as `{"nl": "Aap", "en": "Ape"}`, and the index ordered by
   the column itself — so MySQL compared json objects rather than the text in them. Every row

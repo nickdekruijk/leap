@@ -670,15 +670,15 @@ class Resource extends Module
      *
      * A translatable attribute is stored as json ({"nl": "Aap", "en": "Ape"}), so a
      * query naming the column plainly gets the whole object rather than the text in
-     * it: ordering compares json objects, so every row sorts equal and descending
-     * reads exactly the same as ascending.
+     * it: ordering compares json objects (every row sorts equal, and descending reads
+     * the same as ascending) and a LIKE matches the raw json, keys included -- which
+     * is why searching an index for "nl" returned every row.
      *
      * The json path is what the query builder turns into the driver's own accessor --
      * json_unquote(json_extract(..)) on MySQL, json_extract(..) on SQLite -- so this
      * stays out of writing SQL by hand.
      *
-     * A row with nothing in the active locale orders as null, wherever the database
-     * puts those.
+     * A row with nothing in the addressed locale reads as null.
      *
      * @param  string|null  $locale  Which language to address; the active one by default
      */
@@ -694,6 +694,29 @@ class Resource extends Module
         return $attribute && $this->hasTranslation($attribute)
             ? $column.'->'.($locale ?: app()->getLocale())
             : $column;
+    }
+
+    /**
+     * Every language a translatable attribute has to be searched in, and the one
+     * language a plain column has.
+     *
+     * The panel is the one place where a site's languages sit side by side, so a title
+     * is worth finding by whatever language it is written in -- being in the Dutch
+     * panel is no reason to be unable to find a page by its English title.
+     *
+     * @return array<int, string>
+     */
+    protected function searchColumns(string $column): array
+    {
+        $attribute = $this->getAttribute($column);
+
+        if (! $attribute || ! $this->hasTranslation($attribute) || str_contains($column, '->')) {
+            return [$column];
+        }
+
+        $locales = array_keys(config('leap.locales') ?: []) ?: [app()->getLocale()];
+
+        return array_map(fn (string $locale): string => $this->localeColumn($column, $locale), $locales);
     }
 
     /**
@@ -747,7 +770,11 @@ class Resource extends Module
         if ($this->search && $this->canSearch() && $index) {
             $data = $data->where(function ($query) use ($index) {
                 foreach ($this->allAttributes($index)->where('searchable') as $attribute) {
-                    $query->orWhere($attribute->name, 'like', '%'.$this->search.'%');
+                    // A translatable attribute is searched per language: naming the json
+                    // column plainly matches its keys, so "nl" found every row.
+                    foreach ($this->searchColumns($attribute->name) as $column) {
+                        $query->orWhere($column, 'like', '%'.$this->search.'%');
+                    }
                 }
             });
         }

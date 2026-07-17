@@ -10,10 +10,12 @@ use NickDeKruijk\Leap\Tests\Fixtures\Article;
 use NickDeKruijk\Leap\Tests\TestCase;
 
 /**
- * A translatable attribute is stored as json, so ordering the index by the column
- * itself compared json objects rather than the text in them: every row sorted equal,
- * and descending read exactly the same as ascending. Ordering by a plain column was
- * never affected, which is what made it look like a text-only, descending-only fault.
+ * A translatable attribute is stored as json, so a query naming its column plainly
+ * gets the whole object rather than the text in it. Ordering compared json objects:
+ * every row sorted equal, and descending read exactly the same as ascending. A search
+ * matched the raw json, keys and all, so looking for "nl" found every row. Neither
+ * touched a plain column, which is what made the first look like a text-only,
+ * descending-only fault.
  *
  * Mind what this suite can and cannot show. It runs on SQLite, which has no json type:
  * the column is text, "ORDER BY title" compares the raw json string, and since spatie
@@ -45,7 +47,8 @@ class ResourceTranslatableQueryTest extends TestCase
 
         // Insertion order is deliberately neither ascending nor descending, so a failing
         // sort cannot pass by accident. The two languages of a row say different words,
-        // so an assertion can pin down which of them was ordered by.
+        // so ordering and searching can be pinned to one of them -- and no word contains
+        // "nl" or "en", which the search tests look for as the json keys they are.
         foreach ([
             ['nl' => 'Beta', 'en' => 'Bravo', 'author' => 'Carol'],
             ['nl' => 'Delta', 'en' => 'Dodo', 'author' => 'Alice'],
@@ -68,8 +71,8 @@ class ResourceTranslatableQueryTest extends TestCase
             {
                 return [
                     Attribute::make('id')->indexOnly(),
-                    Attribute::make('title')->index(1),
-                    Attribute::make('author')->index(2),
+                    Attribute::make('title')->index(1)->searchable(),
+                    Attribute::make('author')->index(2)->searchable(),
                 ];
             }
         };
@@ -78,6 +81,19 @@ class ResourceTranslatableQueryTest extends TestCase
         $resource->orderDesc = $desc;
 
         return $resource;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function search(string $term): array
+    {
+        $resource = $this->resource('id', false);
+        $resource->search = $term;
+
+        return $resource->indexRows()
+            ->map(fn ($row): string => $row->getTranslation('title', 'nl', false))
+            ->all();
     }
 
     /**
@@ -136,5 +152,38 @@ class ResourceTranslatableQueryTest extends TestCase
 
         $this->assertSame(['Alice', 'Bob', 'Carol'], $authors(false));
         $this->assertSame(['Carol', 'Bob', 'Alice'], $authors(true));
+    }
+
+    /**
+     * The reported half of this: "nl" is a key of every {"nl": .., "en": ..}, so a
+     * search for it matched the raw json of every row. So did "en", and so would any
+     * term that happened to appear in the punctuation around the values.
+     */
+    public function test_searching_for_a_locale_key_finds_nothing(): void
+    {
+        $this->assertSame([], $this->search('nl'));
+        $this->assertSame([], $this->search('en'));
+    }
+
+    public function test_searching_a_translatable_column_finds_by_its_text(): void
+    {
+        $this->assertSame(['Alpha'], $this->search('Alph'));
+    }
+
+    /**
+     * The panel is the one place the site's languages sit side by side, so a title is
+     * worth finding by whatever language it is written in.
+     */
+    public function test_searching_finds_a_value_in_a_language_other_than_the_active_one(): void
+    {
+        app()->setLocale('nl');
+
+        // "Aloha" is only what this row's English says; its Dutch is "Alpha".
+        $this->assertSame(['Alpha'], $this->search('Aloha'));
+    }
+
+    public function test_searching_a_plain_column_is_unaffected(): void
+    {
+        $this->assertSame(['Delta'], $this->search('Alice'));
     }
 }
