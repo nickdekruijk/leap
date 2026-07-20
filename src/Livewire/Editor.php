@@ -738,9 +738,21 @@ class Editor extends Component
         $this->data[substr($field, 5).':add'] = null;
     }
 
-    public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName): Attribute
+    /**
+     * @param  Section|null  $section  The section this field belongs to, needed to resolve
+     *                                 a showIf() trigger to a sibling field
+     */
+    public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName, ?Section $section = null): Attribute
     {
         $newAttribute = clone $sectionAttribute;
+
+        // Carried on the clone so the label can hide itself. The wrapper this replaces
+        // sat between the fieldset and its fields, which is where the form's own layout
+        // expects them — a hidden field left a gap where its row used to be.
+        if ($section && $sectionAttribute->showIf) {
+            $newAttribute->showIfExpression = $this->showIf($section, $sectionAttribute, $name, $index);
+        }
+
         // Translatable section fields are edited per locale: data.{name}.{index}.{field}.{locale}
         $translatable = $sectionAttribute->translatable && $this->editorLocales();
         $locale = $this->activeLocale ?: $this->defaultLocale();

@@ -1,5 +1,7 @@
 @aware(['attribute', 'name', 'label'])
-<label class="leap-label">
+{{-- showIf() hides the field itself, not a wrapper around it: the fieldset lays out its
+     own children, so anything in between put a hidden field's row back in the flow. --}}
+<label class="leap-label" @if ($attribute->showIfExpression ?? false) x-show="{{ $attribute->showIfExpression }}" @endif>
     @if ($attribute->label ?? ($label ?? $name))
         <span class="leap-label">
             {!! $attribute->label ?? ($label ?? $name) !!}

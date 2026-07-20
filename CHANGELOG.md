@@ -5,7 +5,7 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.14] — 2026-07-20
 
 ### Fixed
 
@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   chaining because the key does not exist until the field is first written to. A plain trigger is
   read exactly as before, and a trigger naming a field that is not in the section falls back to the
   old path rather than raising.
+
+- **A hidden field no longer leaves a gap where its row was.** The `x-show` went on a `<div>`
+  wrapped around the field, which put an element between the fieldset and its children — and the
+  fieldset lays those out itself, so a hidden field still took up its row. It sits on the field's
+  own `<label>` now, which is the root every input component renders, so one place covers all
+  eleven of them and the wrapper is gone.
 
 ### Changed
 

@@ -79,6 +79,33 @@ class SectionShowIfTest extends TestCase
     }
 
     /**
+     * The expression has to reach the field itself: it is put on the clone that renders,
+     * so the <label> can hide, rather than on a wrapper the fieldset would still lay out.
+     */
+    public function test_the_expression_is_carried_on_the_rendered_field(): void
+    {
+        $section = $this->section(translatableTrigger: true);
+        $link = $section->attributes[1];
+
+        $rendered = $this->editor()->sectionAttribute($link, 'sections', 2, 'news', $section);
+
+        $this->assertSame("\$wire.data['sections'][2]['link_label']?.['nl']", $rendered->showIfExpression);
+    }
+
+    /**
+     * A field with no showIf carries none, so the label renders without an x-show at all.
+     */
+    public function test_a_field_without_show_if_carries_no_expression(): void
+    {
+        $section = $this->section(translatableTrigger: true);
+        $label = $section->attributes[0];
+
+        $rendered = $this->editor()->sectionAttribute($label, 'sections', 2, 'news', $section);
+
+        $this->assertNull($rendered->showIfExpression);
+    }
+
+    /**
      * showWhenTrue() is what this was called before, and projects are using it. It has to
      * keep setting the same thing, or their fields quietly become always-visible.
      */
