@@ -14,6 +14,7 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Classes\Section;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
@@ -749,6 +750,32 @@ class Editor extends Component
         $newAttribute->currentLocale = $translatable ? $locale : null;
 
         return $newAttribute;
+    }
+
+    /**
+     * The x-show expression for a section attribute that only appears while another field
+     * of the same section is filled (showIf).
+     *
+     * The trigger has to be read at the locale the editor is showing when it happens to
+     * be translatable. Such a field is stored per locale — {"nl": "", "en": ""} — and in
+     * JavaScript an object is always truthy, so pointing at the field itself made the
+     * dependent one appear the moment the trigger was touched in any language and never
+     * go away again, not even after clearing it.
+     *
+     * @param  Section  $section  The section the trigger lives in, to find it by name
+     */
+    public function showIf(Section $section, Attribute $sectionAttribute, string $name, int $index): string
+    {
+        $path = "\$wire.data['{$name}'][{$index}]['{$sectionAttribute->showIf}']";
+
+        $trigger = collect($section->attributes)->firstWhere('name', $sectionAttribute->showIf);
+
+        if (! ($trigger?->translatable) || ! $this->editorLocales()) {
+            return $path;
+        }
+
+        // Optional chaining: the key is absent until the field is first written to.
+        return $path."?.['".($this->activeLocale ?: $this->defaultLocale())."']";
     }
 
     public function updated($field, $value)

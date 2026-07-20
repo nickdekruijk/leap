@@ -1,9 +1,31 @@
-o# Changelog
+# Changelog
 
 All notable changes to `nickdekruijk/leap` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Fixed
+
+- **`showIf()` reads a translatable trigger at the locale being edited.** The `x-show` it
+  produced pointed at the trigger field itself, which is right for a plain one — but a translatable
+  section field is stored per locale, `{"nl": "", "en": ""}`, and in JavaScript an object is always
+  truthy. So the dependent field appeared the moment the trigger was touched in any language, and
+  stayed once it was cleared again: the one thing the option exists to prevent.
+
+  The path now reaches into the active locale when the trigger is translatable, with optional
+  chaining because the key does not exist until the field is first written to. A plain trigger is
+  read exactly as before, and a trigger naming a field that is not in the section falls back to the
+  old path rather than raising.
+
+### Changed
+
+- **`showWhenTrue()` is now `showIf()`.** The old name promised a boolean, while any truthy value
+  has always shown the field — a text field with something in it counts, which is the whole point
+  of the fix above. `showWhenTrue()` stays as a deprecated alias and sets the same thing, so
+  projects using it keep working untouched.
 
 ## [0.10.13] — 2026-07-20
 

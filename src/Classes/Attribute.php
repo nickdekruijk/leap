@@ -86,7 +86,7 @@ class Attribute
 
     public bool $raw = false;
 
-    public ?string $showWhenTrue = null;
+    public ?string $showIf = null;
 
     /**
      * Make a new Attribute instance and set default label based on name.
@@ -864,13 +864,26 @@ class Attribute
     }
 
     /**
-     * Only show this attribute in sections when another boolean field is true
+     * Only show this attribute in a section while another field of that section is
+     * filled. Any truthy value counts — a switch that is on, but a text field with
+     * something in it just as much.
+     *
+     * @param  string  $fieldName  A sibling field in the same section
+     */
+    public function showIf(string $fieldName): Attribute
+    {
+        $this->showIf = $fieldName;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use showIf(). The name promised a boolean, while any truthy value has
+     *             always shown the field.
      */
     public function showWhenTrue(string $fieldName): Attribute
     {
-        $this->showWhenTrue = $fieldName;
-
-        return $this;
+        return $this->showIf($fieldName);
     }
 
     /**
