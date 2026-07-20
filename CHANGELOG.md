@@ -5,6 +5,24 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.13] — 2026-07-20
+
+A user without a role sees nothing in the panel — `RequireRole` 403s them — and `leap:user`
+could only fix that by asking a question, which a scripted install has nobody to answer.
+
+### Added
+
+- **`leap:user --role` attaches a role without a prompt.** Bare (`--role`) takes the first
+  role, `--role=superuser` or `--role=1` names one. An unknown name fails with a message
+  instead of leaving an account that cannot log into anything.
+
+### Fixed
+
+- **A pending invitation no longer counts as a role.** The "does this user already have a
+  role" check ignored the pivot's `accepted` column, so a user whose only role was still
+  unaccepted was left alone — and then 403'd by `RequireRole`, which only looks at accepted
+  ones. Such a row is now accepted rather than duplicated.
+
 ## [0.10.12] — 2026-07-17
 
 A translatable attribute is stored as json, and three things asked the database for it by

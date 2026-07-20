@@ -56,7 +56,7 @@ module, or use `php artisan leap:user` (below) to create one from the command li
 
 | Command | What it does |
 |---|---|
-| `php artisan leap:user {username?} {name?}` | Create or update a user. Prompts for whatever isn't passed as an argument (the username column defaults to `email`, per `leap.credentials`). Leave the password prompt blank to get a random one printed to the console. Updating an existing user only touches the name/password you provide. If the user has no role yet, it offers to attach the first available one. |
+| `php artisan leap:user {username?} {name?} {--role[=NAME]}` | Create or update a user. Prompts for whatever isn't passed as an argument (the username column defaults to `email`, per `leap.credentials`). Leave the password prompt blank to get a random one printed to the console. Updating an existing user only touches the name/password you provide. If the user has no role yet, it offers to attach the first available one; `--role` attaches one without asking (bare for the first role, or `--role=superuser` / `--role=1` by name or id), which is what a scripted or `--no-interaction` run needs — without a role the panel 403s. |
 | `php artisan leap:module <Model>` | Generate (or update) an `App\Leap\<Model>` resource from an Eloquent model's schema — field types, required/unique, labels, icon and more, auto-detected. See [modules-and-resources.md](modules-and-resources.md#generating-a-resource-leapmodule). |
 
 Run any command with `--help` for its full list of arguments and options.

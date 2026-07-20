@@ -74,6 +74,65 @@ class UserCommandTest extends TestCase
             ->assertExitCode(0);
     }
 
+    public function test_the_role_option_assigns_a_role_without_a_prompt(): void
+    {
+        // The whole point of --role: an installer or a script has nobody to answer the
+        // y/n question, and a user without a role cannot open the admin panel at all.
+        $this->artisan('leap:user', [
+            'email' => 'nick@example.com',
+            '--role' => null,
+            '--no-interaction' => true,
+        ])
+            ->expectsOutputToContain('the "superuser" role')
+            ->assertExitCode(0);
+
+        $user = User::where('email', 'nick@example.com')->firstOrFail();
+
+        $this->assertSame(1, $user->roles()->wherePivot('accepted', true)->count());
+    }
+
+    public function test_the_role_option_accepts_a_name_and_an_id(): void
+    {
+        $this->artisan('leap:user', ['email' => 'byname@example.com', '--role' => 'superuser', '--no-interaction' => true])
+            ->assertExitCode(0);
+        $this->artisan('leap:user', ['email' => 'byid@example.com', '--role' => '1', '--no-interaction' => true])
+            ->assertExitCode(0);
+
+        foreach (['byname@example.com', 'byid@example.com'] as $email) {
+            $this->assertSame(1, User::where('email', $email)->firstOrFail()->roles()->wherePivot('accepted', true)->count());
+        }
+    }
+
+    public function test_an_unknown_role_fails_instead_of_leaving_a_useless_account(): void
+    {
+        $this->artisan('leap:user', [
+            'email' => 'nick@example.com',
+            '--role' => 'editors',
+            '--no-interaction' => true,
+        ])
+            ->expectsOutputToContain('No role "editors" found')
+            ->assertExitCode(1);
+
+        $this->assertSame(0, User::where('email', 'nick@example.com')->firstOrFail()->roles()->count());
+    }
+
+    public function test_the_role_option_accepts_a_pending_invitation(): void
+    {
+        // A pivot row with accepted = false is invisible to RequireRole, so the user is
+        // still locked out — and it already holds the composite primary key, so a plain
+        // attach would collide.
+        $user = User::create(['name' => 'Nick', 'email' => 'nick@example.com', 'password' => Hash::make('secret')]);
+        $user->roles()->attach(Role::findOrFail(1), ['accepted' => false]);
+
+        $this->artisan('leap:user', [
+            'email' => 'nick@example.com',
+            '--role' => null,
+            '--no-interaction' => true,
+        ])->assertExitCode(0);
+
+        $this->assertSame(1, $user->roles()->wherePivot('accepted', true)->count());
+    }
+
     public function test_it_fails_clearly_when_run_without_an_email_and_without_a_prompt(): void
     {
         // Prompts throws NonInteractiveValidationException on a required question it

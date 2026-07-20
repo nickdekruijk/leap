@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Role;
+use Symfony\Component\Console\Input\InputOption;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
@@ -37,6 +38,11 @@ class UserCommand extends Command
         $this->signature = 'leap:user {'.$this->getUsernameColumn().'? : A valid '.($this->getUsernameColumn() == 'email' ? 'e-mail address' : $this->getUsernameColumn()).'} {name? : The fullname of the user, if ommited the name part of the e-mail address is used}';
 
         parent::__construct();
+
+        // Not part of the signature: its DSL can only express an option whose value is
+        // required, and `--role` on its own — "whichever role you have" — is the form an
+        // installer or a one-user project reaches for first.
+        $this->addOption('role', null, InputOption::VALUE_OPTIONAL, 'Name or id of the role to give this user. Pass --role without a value for the first role.');
     }
 
     private function getUsernameColumn()
@@ -139,22 +145,46 @@ class UserCommand extends Command
             $this->line('Note it down now — it is only shown here.');
         }
 
-        // If user has no roles suggest to give it the first role available
+        // If user has no roles suggest to give it the first role available. Only an
+        // accepted one counts: RequireRole ignores the rest, so a pending invitation
+        // is a user who still cannot open the admin panel.
         $roles = $user->belongsToMany(Role::class, config('leap.table_prefix').'role_user')->withTimestamps();
-        if ($roles->count()) {
+        if ($user->belongsToMany(Role::class, config('leap.table_prefix').'role_user')->wherePivot('accepted', true)->count()) {
             return;
         }
 
-        $role = Role::first();
+        // --role names the role to attach, or asks for the first one when passed bare.
+        $asked = $this->option('role');
+        $wants = $this->input->hasParameterOption('--role') || $asked !== null;
+
+        $role = match (true) {
+            ! $wants => Role::first(),
+            blank($asked) => Role::first(),
+            is_numeric($asked) => Role::find($asked),
+            default => Role::where('name', $asked)->first(),
+        };
+
         if (! $role) {
+            // A named role that does not exist is a typo, not a missing setup step: the
+            // user is already saved, so fail loudly rather than leaving them role-less.
+            if ($wants && filled($asked)) {
+                $this->error('No role "'.$asked.'" found. The user was '.$status.' without a role.');
+
+                return self::FAILURE;
+            }
+
             $this->warn('This user has no role, and no roles exist yet. Create one in the admin panel first.');
 
             return;
         }
 
-        if ($this->input->isInteractive()
-            && str_starts_with(strtolower((string) $this->ask('Do you want to give this user the "'.$role->name.'" role? (y/n)', 'n')), 'y')) {
-            $roles->attach($role, ['accepted' => true]);
+        if ($wants
+            || ($this->input->isInteractive()
+                && str_starts_with(strtolower((string) $this->ask('Do you want to give this user the "'.$role->name.'" role? (y/n)', 'n')), 'y'))) {
+            // Not attach(): a pending invitation already holds the composite primary key,
+            // and this is the moment it becomes a working role rather than a duplicate.
+            $roles->syncWithoutDetaching([$role->id => ['accepted' => true]]);
+            $this->info('Gave '.$user[$this->getUsernameColumn()].' the "'.$role->name.'" role');
 
             return;
         }
