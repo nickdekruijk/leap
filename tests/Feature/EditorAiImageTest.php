@@ -123,6 +123,28 @@ class EditorAiImageTest extends TestCase
         $this->assertSame(0, Media::count());
     }
 
+    /**
+     * A cache store is not a binary-safe place to park bytes. The database driver keeps
+     * its value in a utf8mb4 text column and rejects raw JPEG outright — "Incorrect
+     * string value" on insert — so generating worked on a file cache and blew up on a
+     * database one. What goes in has to survive a round trip through text.
+     */
+    public function test_the_parked_image_is_text_safe_for_any_cache_store(): void
+    {
+        $this->fakeGemini();
+
+        $token = $this->editor()->generateImage('A red bicycle', '16:9')['token'];
+        $parked = Cache::get('leap-ai-image:'.$token);
+
+        $this->assertTrue(
+            mb_check_encoding(serialize($parked), 'UTF-8'),
+            'The cached payload holds raw bytes; a database cache driver would reject it.',
+        );
+
+        // And it still comes back as the bytes that went in.
+        $this->assertStringStartsWith("\xFF\xD8\xFF", ImageGenerator::unpark($token)['data']);
+    }
+
     public function test_the_cost_shown_is_computed_from_the_reported_token_usage(): void
     {
         $this->fakeGemini(promptTokens: 10, imageTokens: 1290);

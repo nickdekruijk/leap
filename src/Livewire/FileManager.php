@@ -7,9 +7,7 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
@@ -918,11 +916,8 @@ class FileManager extends Module
             return [];
         }
 
-        $token = (string) Str::uuid();
-        Cache::put('leap-ai-image:'.$token, $image + ['prompt' => $prompt], now()->addMinutes(15));
-
         return [
-            'token' => $token,
+            'token' => ImageGenerator::park($image, $prompt),
             'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
             'cost' => $image['cost'],
         ];
@@ -936,9 +931,9 @@ class FileManager extends Module
     {
         Leap::validatePermission('create');
 
-        $image = Cache::pull('leap-ai-image:'.$token);
+        $image = ImageGenerator::unpark($token);
 
-        if (! is_array($image)) {
+        if (! $image) {
             $this->dispatch('toast-error', __('leap::filemanager.image_expired'))->to(Toasts::class);
 
             return;

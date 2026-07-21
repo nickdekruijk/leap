@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Classes;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Models\Media;
@@ -88,6 +89,48 @@ class ImageGenerator
         [$width, $height] = array_pad(array_map('floatval', explode(':', $aspect)), 2, 0);
 
         return $width > 0 && $height > 0 ? [$width, $height] : [1, 1];
+    }
+
+    /**
+     * Park a generated image until the editor accepts it, and return the token that
+     * fetches it back. Nothing is written to the disk in between, so a result that is
+     * rejected leaves no file behind.
+     *
+     * The bytes are base64-encoded on the way in. A cache store is not a binary-safe
+     * place: the database driver keeps its value in a utf8mb4 text column, which
+     * rejects raw JPEG outright ("Incorrect string value" on insert). Encoding costs
+     * a third in size and makes the payload safe on every driver.
+     *
+     * @param  array{data: string, extension: string, cost: float|null, model: string|null}  $image
+     */
+    public static function park(array $image, string $prompt): string
+    {
+        $token = (string) Str::uuid();
+
+        Cache::put('leap-ai-image:'.$token, [
+            ...$image,
+            'data' => base64_encode($image['data']),
+            'prompt' => $prompt,
+        ], now()->addMinutes(15));
+
+        return $token;
+    }
+
+    /**
+     * Fetch a parked image back for accepting, or null when the token is unknown or
+     * its 15 minutes are up. Single use: the entry is removed as it is read.
+     *
+     * @return array{data: string, extension: string, cost: float|null, model: string|null, prompt: string}|null
+     */
+    public static function unpark(string $token): ?array
+    {
+        $image = Cache::pull('leap-ai-image:'.$token);
+
+        if (! is_array($image)) {
+            return null;
+        }
+
+        return [...$image, 'data' => (string) base64_decode($image['data'], true)];
     }
 
     /**

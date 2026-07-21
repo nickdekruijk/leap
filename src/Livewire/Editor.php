@@ -6,7 +6,6 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -1200,11 +1199,8 @@ class Editor extends Component
             return [];
         }
 
-        $token = (string) Str::uuid();
-        Cache::put('leap-ai-image:'.$token, $image + ['prompt' => $prompt], now()->addMinutes(15));
-
         return [
-            'token' => $token,
+            'token' => ImageGenerator::park($image, $prompt),
             'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
             'cost' => $image['cost'],
         ];
@@ -1219,9 +1215,9 @@ class Editor extends Component
     {
         Leap::validatePermission('update');
 
-        $image = Cache::pull('leap-ai-image:'.$token);
+        $image = ImageGenerator::unpark($token);
 
-        if (! is_array($image)) {
+        if (! $image) {
             $this->dispatch('toast-error', __('leap::resource.image_expired'))->to(Toasts::class);
 
             return;
