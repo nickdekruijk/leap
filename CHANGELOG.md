@@ -5,6 +5,24 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.15] — 2026-07-21
+
+### Fixed
+
+- **A section switched off no longer takes a wrapper's opening or closing tag with it.**
+  `sections()` marked `_first` and `_last` across every section it read, active or not, and left
+  the filtering to the template — which then dropped whichever section carried the mark. A
+  carousel is a run of slide sections: the first opens `<section class="slider">` and the last
+  closes it. Deactivate the last slide and the closing tag went with it, so the sections below
+  rendered *inside* the carousel — fixed height, `overflow: hidden` — and drew over it. With two
+  slides, switching off either one broke it.
+
+  `sections()` drops inactive sections itself now, before the run is marked, so a template can no
+  longer get the order wrong. A section with no `active` key at all is kept, as before.
+
+  Templates filtering with `->where('active', true)` keep working; the filter is simply redundant
+  now. The stub views in leap-template have had theirs removed.
+
 ## [0.10.14] — 2026-07-20
 
 ### Fixed

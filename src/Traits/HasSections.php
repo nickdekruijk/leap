@@ -60,8 +60,13 @@ trait HasSections
             $sections[$key]->setFlags(ArrayObject::STD_PROP_LIST | ArrayObject::ARRAY_AS_PROPS);
         }
 
-        // Sort sections as collection
-        $sections = collect($sections)->sortBy('_sort');
+        // Sort sections as collection, dropping the ones switched off in the editor.
+        // They have to go before _first/_last are determined: a template filtering them
+        // out afterwards loses the opening or closing tag of a wrapper whenever the
+        // edge of a run is the inactive one — the sections below then end up inside it.
+        $sections = collect($sections)
+            ->filter(fn ($section) => ! isset($section['active']) || $section['active'])
+            ->sortBy('_sort');
 
         // Determine _first and _last values
         $previousName = null;

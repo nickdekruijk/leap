@@ -117,6 +117,37 @@ class HasSectionsTest extends TestCase
         $this->assertTrue($sections[2]['_last']);
     }
 
+    /**
+     * A section switched off in the editor is gone before _first/_last are determined.
+     * Filtering it out in the template instead used to drop the tag that opens or closes
+     * the wrapper around a run — deactivating the last slide of a carousel left the
+     * <section> open and the sections below it rendered inside the carousel.
+     */
+    public function test_it_drops_inactive_sections_before_marking_a_run(): void
+    {
+        $model = $this->model([
+            ['_name' => 'card', '_sort' => 1, 'active' => true],
+            ['_name' => 'card', '_sort' => 2, 'active' => false],
+            ['_name' => 'text', '_sort' => 3, 'active' => true],
+        ]);
+
+        $sections = $model->sections()->values();
+
+        $this->assertCount(2, $sections);
+        $this->assertTrue($sections[0]['_first'], 'The single remaining card opens the run.');
+        $this->assertTrue($sections[0]['_last'], 'And closes it, now that the inactive card is gone.');
+    }
+
+    public function test_it_keeps_a_section_without_an_active_key(): void
+    {
+        $model = $this->model([
+            ['_name' => 'text', '_sort' => 1],
+            ['_name' => 'text', '_sort' => 2, 'active' => null],
+        ]);
+
+        $this->assertCount(2, $model->sections());
+    }
+
     public function test_it_returns_an_empty_collection_when_there_are_no_sections(): void
     {
         $this->assertTrue($this->model([])->sections()->isEmpty());
