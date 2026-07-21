@@ -6,6 +6,7 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -14,6 +15,7 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Classes\ImageGenerator;
 use NickDeKruijk\Leap\Classes\Section;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
@@ -1085,6 +1087,164 @@ class Editor extends Component
     public function selectBrowsedFiles(string $attribute, array $files)
     {
         $this->data[$attribute] = trim($this->data[$attribute].PHP_EOL.implode(PHP_EOL, $files));
+    }
+
+    /**
+     * Whether the AI image generation feature is configured (provider + api key).
+     */
+    public function aiImageEnabled(): bool
+    {
+        return AiTask::for('image')->enabled();
+    }
+
+    /**
+     * The indicative price of one generation, shown before the user commits to it.
+     * Null when the configured model has no known rate — better nothing than a wrong
+     * amount. See leap.ai.pricing.
+     */
+    public function aiImageEstimate(): ?float
+    {
+        return AiTask::for('image')->estimatedCost();
+    }
+
+    /**
+     * A prompt suggestion for a media attribute, built from what the editor is
+     * looking at: the record's title plus the text of the section the field belongs
+     * to. Fills the generate dialog, where it can be edited before anything is sent.
+     */
+    public function imagePrompt(string $attribute): string
+    {
+        $content = array_filter([$this->recordTitle(), ...$this->sectionText($attribute)]);
+
+        if ($content === []) {
+            return '';
+        }
+
+        return __('leap::resource.image_prompt_prefix').' '.Str::limit(implode('. ', $content), 600);
+    }
+
+    /**
+     * The record's own title, as the first index attribute holds it.
+     */
+    private function recordTitle(): string
+    {
+        $title = $this->parentModule()->indexAttributes()->first()?->name;
+
+        return $title ? trim(strip_tags($this->localizedValue($this->data[$title] ?? null))) : '';
+    }
+
+    /**
+     * The readable text of the section a section attribute belongs to. A section field
+     * is named {field}.{index}.{name} and its data lives under the flat {field} key, so
+     * the index points straight at the section's own values. Structural keys (_name,
+     * _sort, …) and non-text values (media id lists, switches) drop out.
+     *
+     * @return list<string>
+     */
+    private function sectionText(string $attribute): array
+    {
+        $parts = explode('.', $attribute);
+
+        if (count($parts) < 3) {
+            return [];
+        }
+
+        $text = [];
+        foreach ($this->data[$parts[0]][$parts[1]] ?? [] as $key => $value) {
+            if (str_starts_with((string) $key, '_')) {
+                continue;
+            }
+            if ($value = trim(strip_tags($this->localizedValue($value)))) {
+                $text[] = $value;
+            }
+        }
+
+        return $text;
+    }
+
+    /**
+     * A field value as plain text, resolving a translatable field to the locale the
+     * editor is showing. Anything that is not text (a media id list, a switch) yields
+     * an empty string.
+     */
+    private function localizedValue(mixed $value): string
+    {
+        if (is_array($value)) {
+            $value = $value[$this->activeLocale] ?? $value[$this->defaultLocale()] ?? null;
+        }
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * Generate an image for review. Nothing is stored yet: the bytes are parked in the
+     * cache under a one-off token and returned as a data URI for the preview, so an
+     * image the editor rejects never leaves a file behind. Returns the token, the
+     * preview and what the call cost (null when the model has no configured rate).
+     *
+     * @return array{token?: string, preview?: string, cost?: float|null}
+     */
+    public function generateImage(string $prompt, string $aspect): array
+    {
+        Leap::validatePermission('update');
+
+        if (trim($prompt) === '' || ! $this->aiRateLimit()) {
+            return [];
+        }
+
+        try {
+            $image = ImageGenerator::generate($prompt, $aspect);
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::resource.image_failed'))->to(Toasts::class);
+
+            return [];
+        }
+
+        $token = (string) Str::uuid();
+        Cache::put('leap-ai-image:'.$token, $image + ['prompt' => $prompt], now()->addMinutes(15));
+
+        return [
+            'token' => $token,
+            'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
+            'cost' => $image['cost'],
+        ];
+    }
+
+    /**
+     * Accept a generated image: store it in the module's folder, describe it, and
+     * attach it to the attribute the same way picking a file from the browser does.
+     * Saving stays the editor's own Save button.
+     */
+    public function useGeneratedImage(string $attribute, string $token): void
+    {
+        Leap::validatePermission('update');
+
+        $image = Cache::pull('leap-ai-image:'.$token);
+
+        if (! is_array($image)) {
+            $this->dispatch('toast-error', __('leap::resource.image_expired'))->to(Toasts::class);
+
+            return;
+        }
+
+        $media = ImageGenerator::store(
+            $image['data'],
+            $image['extension'],
+            ImageGenerator::folderFor(Leap::context()->module()),
+            $image['prompt'],
+            $image,
+        );
+
+        if (! $media) {
+            $this->dispatch('toast-error', __('leap::resource.image_failed'))->to(Toasts::class);
+
+            return;
+        }
+
+        ImageGenerator::describeAndStore($media);
+
+        $this->mediaUpdated[$attribute] = $attribute;
+        $this->data[$attribute] = [...(array) ($this->data[$attribute] ?? []), $media->id];
     }
 
     /**

@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Generate an image with AI, next to the button that browses for one.** A media field had one way
+  in: pick a file that already exists. Filling a fresh page section therefore stalled on finding
+  stock photography before the section could be finished. A wand button beside the browse button
+  now opens a dialog whose prompt is **prefilled from the section's own content** — the record
+  title plus that section's text, at the language tab being edited, markup stripped — so the image
+  is about the copy it sits next to. The file manager's header has the same button for a free-form
+  prompt.
+
+  Off by default, like the other AI features: set `leap.ai.image.provider` to `gemini` or `openai`
+  (Anthropic has no image API). Generating only produces a preview — the bytes wait in the cache
+  and *Use image* is what stores the file, so a result you reject leaves nothing behind. The result
+  is always a JPEG at the aspect ratio you picked, cropped by Leap rather than left to whichever
+  canvas sizes the provider happens to offer, and alt text is generated for it in the same pass
+  when the `alt_text` task is configured.
+
+  Images are stored **per module**: `leap.ai.image.folder` defaults to `{module}`, so a Page's
+  images land in `pages/` and a News item's in `news/`. The folder name comes from the module
+  class, not its translated title — it does not move when the admin language changes.
+
+  The dialog shows what a generation costs: an estimate before, the actual amount after. Both are
+  computed from the new `leap.ai.pricing` config rather than reported by the provider, which
+  returns token counts only — so the amounts exclude VAT, ignore free tiers, and go stale when
+  provider prices change and the config is not updated. A model with no configured rate shows no
+  price rather than a wrong zero. Every generated image records its model, prompt and cost in the
+  media row's `meta['ai']`.
+
+  See [docs/ai.md](docs/ai.md).
+
 - **Live demo site.** [leap.nickdekruijk.nl](https://leap.nickdekruijk.nl) runs a stock
   `leap:template` install; log in on [/admin](https://leap.nickdekruijk.nl/admin) with
   `info@example.com` / `leapdemo`. The site resets itself to its seeded state 15 minutes

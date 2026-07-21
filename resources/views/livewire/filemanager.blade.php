@@ -19,10 +19,21 @@
 }">
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
+        @can('leap::create')
+            @if ($this->aiImageEnabled())
+                <x-leap::button svg-icon="fas-wand-magic-sparkles" label="leap::resource.generate_image"
+                    x-on:click="$dispatch('leap-generate-image', { scope: 'filemanager' })" />
+            @endif
+        @endcan
         @if ($browse)
             <x-leap::button svg-icon="fas-times" wire:click="$parent.fileBrowser" label="leap::resource.cancel" />
         @endif
     </header>
+    @can('leap::create')
+        @if ($this->aiImageEnabled())
+            <x-leap::ai-image scope="filemanager" />
+        @endif
+    @endcan
     @can('leap::create')
         <form>
             <input type="file" tabindex="-1" multiple id="leap-filemanager-upload" x-on:change="uploadFiles($el);$el.parentNode.reset()">

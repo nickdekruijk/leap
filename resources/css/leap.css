@@ -717,7 +717,9 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
             font-weight: 300;
         }
 
-        LABEL.leap-label {
+        /* :is(LABEL, DIV) — a field whose slot holds only buttons renders as a DIV,
+           because a <label> forwards its hover to its first labelable descendant. */
+        :is(LABEL, DIV).leap-label {
             display: block;
 
             &:not(:first-child) {
@@ -873,6 +875,24 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
         + .leap-button-add {
             margin-left: -2px;
             padding-left: 0px;
+        }
+    }
+    /* Two independent actions side by side (browse / generate). The rule above pulls
+       adjacent buttons together with a negative margin so a pair reads as one control
+       — right for the sections toggle, wrong for two unrelated actions. This spaces
+       them on gap alone, with no collapsing whitespace in between. */
+    .leap-button-add-group {
+        display: inline-flex;
+        align-items: center;
+        gap: calc(var(--spacing) / 4);
+        vertical-align: middle;
+        .leap-button-add {
+            padding-inline: 2px;
+            &:has(+ .leap-button-add),
+            + .leap-button-add {
+                margin-left: 0;
+                padding-inline: 2px;
+            }
         }
     }
     .leap-files-sortable {
@@ -1349,7 +1369,7 @@ BODY:not(.sorting) .leap-files LI {
         }
     }
 
-    .leap-fieldset LABEL.leap-label SPAN.leap-label {
+    .leap-fieldset :is(LABEL, DIV).leap-label SPAN.leap-label {
         color: white;
     }
 

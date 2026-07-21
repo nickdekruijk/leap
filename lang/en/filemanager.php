@@ -47,6 +47,8 @@ return [
     'alt_text_ai_failed' => 'Could not generate alt text',
     'ai_rate_limited' => 'Too many AI requests — try again in :seconds seconds.',
     'generate_alt_text' => 'Generate alt text with AI',
+    'image_expired' => 'The generated image has expired, please generate it again',
+    'image_failed' => 'Could not generate an image',
     'set_alt_text' => 'Set alt text',
     'set_focus_point' => 'Set focus point',
     'clear_focus_point' => 'Clear focus point',

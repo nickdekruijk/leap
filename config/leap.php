@@ -368,6 +368,10 @@ return [
 
         // Request timeout in seconds for provider calls, and a per-user rate limit
         // (max AI actions per minute) — each call hits a paid third-party API.
+        // Image generation takes tens of seconds, so it raises PHP's own execution
+        // limit to this value plus 30. Note that a web server usually gives up before
+        // PHP does (nginx defaults to 60 seconds), so raising this far above a minute
+        // needs the server's proxy timeout raised with it.
         'timeout' => 60,
         'rate_limit' => 30,
 
@@ -382,6 +386,39 @@ return [
             'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
             'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
             // 'max_tokens' => 8192, // chat providers: cap the reply; raise for long pages
+        ],
+
+        // Generate an image from a prompt: in the editor next to a media field's browse
+        // button (prefilled from the section's own content) and in the file manager.
+        'image' => [
+            'provider' => null, // 'gemini' | 'openai' (Claude and DeepL cannot generate images)
+            'model' => null,    // null => gemini-2.5-flash-image / gpt-image-1-mini
+            // Where generated images are stored on the filemanager disk. {module} is the
+            // module's folder name, so a Page lands in pages/ and a News item in news/.
+            // Set a literal ('ai') to collect them in one folder, or combine: 'ai/{module}'.
+            'folder' => '{module}',
+            'aspect_ratios' => ['16:9', '4:3', '1:1', '3:4'], // offered in the generate dialog; the result is cropped to the chosen one
+            'quality' => null,       // openai only: 'low' | 'medium' | 'high' | 'auto' (null = provider default)
+            'max_width' => 1600,     // generated images are scaled down to this width
+            'jpeg_quality' => 82,    // encoding quality of the stored JPEG
+            'alt_text' => true,      // also generate alt text for the new image when the alt_text task is configured
+            'style' => null,         // optional house-style sentence appended to every prompt
+        ],
+
+        // What a call costs, in US dollars per million tokens, used to show an estimate
+        // before generating and the actual amount after. These are NOT billed amounts:
+        // they are computed here, exclude VAT and ignore any free tier, and they go stale
+        // when providers change their prices — check them against the provider's pricing
+        // page. 'estimate' is the indicative price of a single image, shown up front.
+        // A model without an entry simply shows no price. Checked 2026-07-21.
+        'pricing' => [
+            'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+            'gemini-3.1-flash-lite-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+            'gemini-3.1-flash-image' => ['input' => 0.30, 'output' => 60.00, 'estimate' => 0.078],
+            'gemini-3-pro-image' => ['input' => 0.30, 'output' => 120.00, 'estimate' => 0.156],
+            'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => 0.011],
+            'gpt-image-1.5' => ['input' => 5.00, 'output' => 32.00, 'estimate' => 0.042],
+            'gpt-image-2' => ['estimate' => 0.053], // per-image pricing published; no token rates
         ],
     ],
 

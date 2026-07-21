@@ -4,8 +4,10 @@ Leap can call an AI provider to help fill content:
 
 - **Alt texts** — generate a per-locale `alt` for an image in the file manager.
 - **Translation** — translate editor content into the active locale, per field or all at once.
+- **Image generation** — generate an image from a prompt, prefilled with the content of the
+  section the field belongs to.
 
-Both are **opt-in and disabled by default**, share one provider/credential configuration, and
+All three are **opt-in and disabled by default**, share one provider/credential configuration, and
 never write to the database on their own — they fill the form for review and you save as usual.
 
 Everything is driven by the reusable [`AiTask`](../src/Classes/AiTask.php) class, so adding a new
@@ -37,6 +39,11 @@ literals.
         'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
         'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
     ],
+    'image' => [
+        'provider' => null, // 'gemini' | 'openai' (Claude and DeepL cannot generate images)
+        'model' => null,    // null => gemini-2.5-flash-image / gpt-image-1-mini
+        'folder' => '{module}', // where generated images are stored, see below
+    ],
 ],
 ```
 
@@ -46,21 +53,30 @@ resolves to a working default — set a literal only to force a specific model.
 
 **Limits.** `leap.ai.timeout` (default `60` seconds) bounds each provider request so a slow API
 can't hang the admin, and `leap.ai.rate_limit` (default `30`) caps AI actions per user per minute
+— note that image generation takes tens of seconds, so it raises PHP's own execution limit
+(default 30 seconds for web requests) to `timeout` + 30; without that the PHP worker is killed
+mid-request and the browser gets a bare 502 with nothing in the log. A web server usually gives up
+before PHP does — nginx's `fastcgi_read_timeout` defaults to 60 seconds — so raising `timeout` far
+above a minute means raising the proxy timeout as well
 — every call is a paid request. For the chat providers you can raise a task's reply cap with
 `leap.ai.<task>.max_tokens` (default `8192`) if a long page gets truncated.
 
 ### Providers
 
-| Provider | Kind | Alt text (vision) | Translation | Default model |
-| --- | --- | --- | --- | --- |
-| `gemini` | Google Gemini (free tier available) | ✅ | ✅ | `gemini-2.5-flash` |
-| `claude` | Anthropic Claude | ✅ | ✅ | `claude-haiku-4-5` |
-| `openai` | OpenAI | ✅ | ✅ | `gpt-4o-mini` |
-| `deepl` | DeepL | — (text only) | ✅ | — (DeepL has no model choice) |
+| Provider | Kind | Alt text (vision) | Translation | Images | Default model (chat / image) |
+| --- | --- | --- | --- | --- | --- |
+| `gemini` | Google Gemini (free tier available) | ✅ | ✅ | ✅ | `gemini-2.5-flash` / `gemini-2.5-flash-image` |
+| `claude` | Anthropic Claude | ✅ | ✅ | — | `claude-haiku-4-5` |
+| `openai` | OpenAI | ✅ | ✅ | ✅ | `gpt-4o-mini` / `gpt-image-1-mini` |
+| `deepl` | DeepL | — (text only) | ✅ | — | — (DeepL has no model choice) |
 
 Each task picks its own provider **and** model, so you can run cheap alt texts on one model and
 better translation prose on another (e.g. `claude-sonnet-5`). Alt text requires a vision-capable
-provider; DeepL is translation-only.
+provider; DeepL is translation-only. Anthropic has no image-generation API, so `claude` cannot
+back the `image` task.
+
+Because the default model is keyed to the **task** as well as the provider, `image` never falls
+back to a chat model: `gemini` resolves to `gemini-2.5-flash-image`, `openai` to `gpt-image-1-mini`.
 
 > AI calls hit a paid third-party API (Gemini has a free tier; DeepL has a free key). Image and
 > text content is sent to the configured provider — review the provider's terms before enabling.
@@ -98,6 +114,66 @@ Details:
   `slugFrom()` or a `slugify()` target.
 - **Rich-text updates live.** TinyMCE fields reflect the filled value immediately.
 
+## Image generation (editor and file manager)
+
+When `image` is configured, a wand button (✨) appears next to a media field's browse button in the
+editor, and in the file manager's header. It opens a dialog with a prompt, an aspect ratio and a
+preview.
+
+- **The prompt is prefilled from the section.** For a media field inside a section, the suggestion
+  is built from the record's title and that section's own text, at the language tab you are on,
+  with markup stripped — so the image is about the copy next to it. It is a starting point: edit it
+  before generating. The file manager's button starts from an empty prompt.
+- **Nothing is stored until you accept.** Generating produces a preview only; the bytes wait in the
+  cache for 15 minutes. *Use image* stores the file and attaches it to the field — a result you
+  reject leaves nothing behind. Saving the record is still the editor's own **Save**.
+- **The result is always a JPEG at the ratio you picked.** Providers offer a handful of canvas
+  sizes, so Leap crops and scales the result itself (`leap.ai.image.max_width`,
+  `jpeg_quality`). The aspect ratios offered are `leap.ai.image.aspect_ratios`.
+- **Alt text follows automatically** when `leap.ai.image.alt_text` is on and the `alt_text` task is
+  configured — the new image is described in the same pass. A failing alt text never loses the
+  image you just paid for.
+- **Where it is stored:** `leap.ai.image.folder`, where `{module}` is the module's own folder name.
+  A Page's images land in `pages/`, a News item's in `news/`, so generated art sorts itself the way
+  the admin is organised. Set a literal (`'ai'`) to collect them in one folder, or combine them:
+  `'ai/{module}'`. The name comes from the module class, not its translated title, so it does not
+  move when the admin language changes. The file manager stores into the folder that is open.
+- **Every generated image records what made it** in the media row's `meta['ai']`: model, prompt,
+  cost and who generated it when.
+
+Both providers additionally stamp provenance metadata on their output (SynthID for Gemini, C2PA for
+OpenAI). Commercial use is allowed; the images stay identifiable as AI-generated.
+
+### Costs
+
+The dialog shows an estimate before generating and the actual amount after. **These are computed
+from `leap.ai.pricing`, not reported by the provider** — neither API returns a price, only token
+counts, which Leap multiplies by the rates in config. That means:
+
+- the figures are ex VAT, in US dollars, and ignore any free tier;
+- **they go stale.** The shipped rates carry the date they were checked; when a provider changes
+  its prices the config is what has to be updated, not the code;
+- a model with no entry in `leap.ai.pricing` simply shows no price, rather than a wrong `$0.00`;
+- when a provider returns no usage at all, the estimate is shown instead.
+
+```php
+'pricing' => [
+    'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+    'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => 0.011],
+],
+```
+
+`input` and `output` are US dollars per million tokens and produce the amount shown afterwards;
+`estimate` is the indicative price of a single image, shown up front.
+
+### Other image providers
+
+Gemini and OpenAI cover photographic content. `AiTask::image()` is one `match` arm per provider, so
+adding another is a small change — the one worth knowing about is **Recraft**, which produces real
+SVG/vector output and brand style presets, something neither shipped provider can do. `image()`
+returns the bytes with their mime type for exactly that reason: vector output skips the JPEG
+normalisation instead of being squashed into a bitmap.
+
 ## Extending — the `AiTask` class
 
 [`AiTask`](../src/Classes/AiTask.php) is a small, provider-agnostic value object. Build one for a
@@ -115,6 +191,10 @@ if ($task->enabled()) {
     // Translation (all providers incl. DeepL), keys preserved, HTML kept:
     $map = $task->translate(['title' => 'Hallo', 'body' => '<p>…</p>'], to: 'en', from: 'nl');
 }
+
+// Image generation (gemini/openai): bytes, their mime type and the token usage.
+$image = AiTask::for('image')->image('A red bicycle in the rain', '16:9');
+$cost = AiTask::for('image')->cost($image['usage']);
 ```
 
 To add a new AI-assisted action, add a task key under `leap.ai` (`{provider, model}`), then call
@@ -134,7 +214,10 @@ To add a new AI-assisted action, add a task key under `leap.ai` (`{provider, mod
 ## Verification
 
 Provider calls are covered by tests using `Http::fake()` — see
-[`tests/Feature/FileManagerAiAltTest.php`](../tests/Feature/FileManagerAiAltTest.php) and
-[`tests/Feature/EditorAiTranslateTest.php`](../tests/Feature/EditorAiTranslateTest.php) — so the
-prompt-building, JSON decoding (including code-fence-wrapped replies), DeepL request shape, and
-per-locale filling are exercised without spending tokens.
+[`tests/Feature/FileManagerAiAltTest.php`](../tests/Feature/FileManagerAiAltTest.php),
+[`tests/Feature/EditorAiTranslateTest.php`](../tests/Feature/EditorAiTranslateTest.php),
+[`tests/Feature/EditorAiImageTest.php`](../tests/Feature/EditorAiImageTest.php) and
+[`tests/Feature/FileManagerAiImageTest.php`](../tests/Feature/FileManagerAiImageTest.php) — so the
+prompt-building, JSON decoding (including code-fence-wrapped replies), DeepL request shape,
+per-locale filling, the cropping to the requested aspect ratio and the cost calculation are all
+exercised without spending tokens.

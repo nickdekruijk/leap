@@ -47,6 +47,8 @@ return [
     'alt_text_ai_failed' => 'Alt-tekst genereren mislukt',
     'ai_rate_limited' => 'Te veel AI-verzoeken — probeer over :seconds seconden opnieuw.',
     'generate_alt_text' => 'Alt-tekst genereren met AI',
+    'image_expired' => 'De gegenereerde afbeelding is verlopen, genereer opnieuw',
+    'image_failed' => 'Afbeelding genereren mislukt',
     'set_alt_text' => 'Alt-tekst instellen',
     'set_focus_point' => 'Focuspunt instellen',
     'clear_focus_point' => 'Focuspunt wissen',

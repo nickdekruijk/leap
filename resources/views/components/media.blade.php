@@ -1,7 +1,18 @@
 @props(['attribute', 'name', 'label', 'placeholder', 'browse'])
-<x-leap::label>
+{{-- tag="div": the slot holds action buttons, not a form control to label. --}}
+<x-leap::label tag="div">
     @if ($attribute->options['multiple'] || !($this->data[$attribute->name] ?? false))
-        <button class="leap-button-add" wire:click="$parent.fileBrowser('{{ $attribute->name }}', null, '{{ $attribute->sectionName }}')" type="button" aria-label="@lang($attribute->options['multiple'] ? 'leap::resource.add_files' : 'leap::resource.add_file')">@svg('fas-file-circle-plus', 'svg-icon')</button>
+        {{-- Browsing and generating are two separate actions, not two halves of one
+             control, so they get their own spacing rather than the tight pairing
+             .leap-button-add gives adjacent siblings. --}}
+        <span class="leap-button-add-group">
+            <button class="leap-button-add" wire:click="$parent.fileBrowser('{{ $attribute->name }}', null, '{{ $attribute->sectionName }}')" type="button" aria-label="@lang($attribute->options['multiple'] ? 'leap::resource.add_files' : 'leap::resource.add_file')">@svg('fas-file-circle-plus', 'svg-icon')</button>
+            @if ($this->aiImageEnabled())
+                {{-- The dialog itself lives once at the bottom of the editor; this only opens it. --}}
+                <button class="leap-button-add" type="button" aria-label="@lang('leap::resource.generate_image')"
+                    x-on:click.prevent="$dispatch('leap-generate-image', { scope: 'editor', attribute: '{{ $attribute->name }}' })">@svg('fas-wand-magic-sparkles', 'svg-icon')</button>
+            @endif
+        </span>
     @endif
 </x-leap::label>
 

@@ -7,12 +7,15 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\AiTask;
+use NickDeKruijk\Leap\Classes\ImageGenerator;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Module;
@@ -857,35 +860,110 @@ class FileManager extends Module
             return [];
         }
 
-        $media = Media::forFile($this->full($file));
-        if (! $media || ! $media->isBitmap()) {
-            return [];
-        }
-
-        $locales = config('leap.locales') ?? [app()->getLocale() => ''];
-
         try {
-            $data = base64_encode(Storage::disk($media->disk ?: config('leap.filemanager.disk'))->get($media->file_name));
-            $prompt = 'Write alt text for screen-reader users, one per language. Describe only the main '
-                .'subject and its purpose, in the shortest phrase that is still complete. Omit '
-                .'decorative background, colours, lighting and styling unless they are essential to the '
-                .'meaning. Most images need only a few words; add detail only when a complex image '
-                .'(chart, diagram, busy scene) truly requires it. Do not start with "image of" or '
-                .'"photo of". Return ONLY a JSON object mapping locale code to alt text. Languages: '
-                .collect($locales)->map(fn ($name, $code) => trim("$code $name"))->implode(', ');
-
-            $reply = AiTask::for('alt_text')->prompt($prompt, [['mime' => $media->mime_type, 'data' => $data]], json: true);
-
-            // Some providers (e.g. Claude) wrap the JSON in a ```json code
-            // fence despite the instruction, so extract the object first.
-            $decoded = preg_match('/\{.*\}/s', $reply, $match) ? json_decode($match[0], true) : null;
-
-            return array_map('strval', array_intersect_key(is_array($decoded) ? $decoded : [], $locales));
+            return ImageGenerator::describe(Media::forFile($this->full($file)));
         } catch (\Throwable $e) {
             $this->dispatch('toast-error', __('leap::filemanager.alt_text_ai_failed'))->to(Toasts::class);
 
             return [];
         }
+    }
+
+    /**
+     * Whether the AI image generation feature is configured (provider + api key).
+     */
+    public function aiImageEnabled(): bool
+    {
+        return AiTask::for('image')->enabled();
+    }
+
+    /**
+     * The indicative price of one generation, or null when the configured model has
+     * no known rate. See leap.ai.pricing.
+     */
+    public function aiImageEstimate(): ?float
+    {
+        return AiTask::for('image')->estimatedCost();
+    }
+
+    /**
+     * Generate an image for review. Nothing is written to the disk yet: the bytes wait
+     * in the cache under a one-off token, so an image that is not accepted leaves no
+     * file behind. Returns the token, a data URI to preview and what the call cost.
+     *
+     * @return array{token?: string, preview?: string, cost?: float|null}
+     */
+    public function generateImage(string $prompt, string $aspect): array
+    {
+        Leap::validatePermission('create');
+
+        if (trim($prompt) === '') {
+            return [];
+        }
+
+        // Each call hits a paid third-party API — cap per user.
+        try {
+            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
+        } catch (TooManyRequestsException $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
+
+            return [];
+        }
+
+        try {
+            $image = ImageGenerator::generate($prompt, $aspect);
+        } catch (\Throwable $e) {
+            $this->dispatch('toast-error', __('leap::filemanager.image_failed'))->to(Toasts::class);
+
+            return [];
+        }
+
+        $token = (string) Str::uuid();
+        Cache::put('leap-ai-image:'.$token, $image + ['prompt' => $prompt], now()->addMinutes(15));
+
+        return [
+            'token' => $token,
+            'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
+            'cost' => $image['cost'],
+        ];
+    }
+
+    /**
+     * Accept a generated image: store it in the folder currently open in the browser
+     * and select it, so it can be used straight away.
+     */
+    public function useGeneratedImage(string $token): void
+    {
+        Leap::validatePermission('create');
+
+        $image = Cache::pull('leap-ai-image:'.$token);
+
+        if (! is_array($image)) {
+            $this->dispatch('toast-error', __('leap::filemanager.image_expired'))->to(Toasts::class);
+
+            return;
+        }
+
+        $media = ImageGenerator::store(
+            $image['data'],
+            $image['extension'],
+            $this->storagePrefix().implode('/', $this->openFolders),
+            $image['prompt'],
+            $image,
+        );
+
+        if (! $media) {
+            $this->dispatch('toast-error', __('leap::filemanager.image_failed'))->to(Toasts::class);
+
+            return;
+        }
+
+        ImageGenerator::describeAndStore($media);
+
+        $this->selectedFiles = [basename($media->file_name)];
+        unset($this->columns);
+
+        $this->log('create', 'Generated '.$media->file_name);
     }
 
     public function imageCropEnabled(string $file): bool

@@ -29,7 +29,7 @@ class AiTask
         return new self(
             $task,
             $provider,
-            config("leap.ai.$task.model") ?: self::defaultModel($provider),
+            config("leap.ai.$task.model") ?: self::defaultModel($provider, $task),
         );
     }
 
@@ -97,10 +97,81 @@ class AiTask
     }
 
     /**
-     * The sensible default model per provider, used when a task omits 'model'.
+     * Generate an image from a text prompt.
+     *
+     * Returns the bytes together with their mime type rather than bare bytes, so a
+     * vector-capable provider can be added later without changing the signature, and
+     * the token usage the provider reported so the caller can price the call.
+     *
+     * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
      */
-    private static function defaultModel(?string $provider): ?string
+    public function image(string $prompt, string $aspect = '16:9'): array
     {
+        return match ($this->provider) {
+            'gemini' => $this->imageGemini($prompt, $aspect),
+            'openai' => $this->imageOpenai($prompt, $aspect),
+            default => throw new RuntimeException("Provider '$this->provider' cannot generate images"),
+        };
+    }
+
+    /**
+     * What a call actually cost in US dollars, from the per-million-token rates in
+     * leap.ai.pricing. Null when the model has no configured rates or the provider
+     * reported no usage — the caller then shows nothing rather than a wrong zero.
+     *
+     * @param  array{input: int, output: int}|null  $usage
+     */
+    public function cost(?array $usage): ?float
+    {
+        $rates = $this->rates();
+
+        if (! $usage || ! isset($rates['input']) && ! isset($rates['output'])) {
+            return null;
+        }
+
+        return ($usage['input'] ?? 0) / 1000000 * ($rates['input'] ?? 0)
+            + ($usage['output'] ?? 0) / 1000000 * ($rates['output'] ?? 0);
+    }
+
+    /**
+     * The indicative price of one call, shown before the user commits to it.
+     * A flat per-call figure from config: output size is deterministic per model,
+     * and quoting it directly avoids inventing a token count to multiply.
+     */
+    public function estimatedCost(): ?float
+    {
+        $estimate = $this->rates()['estimate'] ?? null;
+
+        return $estimate === null ? null : (float) $estimate;
+    }
+
+    /**
+     * The configured rates for this task's model. Read from the array rather than
+     * with a config() dot-path because model names contain dots themselves
+     * ('gemini-2.5-flash-image'), which dot notation would read as nesting.
+     *
+     * @return array<string, float>
+     */
+    private function rates(): array
+    {
+        return (array) ((config('leap.ai.pricing') ?? [])[$this->model] ?? []);
+    }
+
+    /**
+     * The sensible default model per provider, used when a task omits 'model'.
+     * Image generation runs on wholly different models than the chat tasks, so
+     * the task decides which family the default comes from.
+     */
+    private static function defaultModel(?string $provider, string $task): ?string
+    {
+        if ($task === 'image') {
+            return match ($provider) {
+                'gemini' => 'gemini-2.5-flash-image',
+                'openai' => 'gpt-image-1-mini',
+                default => null,
+            };
+        }
+
         return match ($provider) {
             'gemini' => 'gemini-2.5-flash',
             'claude' => 'claude-haiku-4-5',
@@ -217,6 +288,109 @@ class AiTask
         }
 
         return $text;
+    }
+
+    /**
+     * Gemini image generation over generateContent. The aspect ratio is passed along
+     * as a hint; the caller crops to the exact ratio anyway, so a model that ignores
+     * imageConfig still produces a correctly framed image.
+     *
+     * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
+     */
+    private function imageGemini(string $prompt, string $aspect): array
+    {
+        $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey()])
+            ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/$this->model:generateContent", [
+                'contents' => [['parts' => [['text' => $prompt]]]],
+                'generationConfig' => [
+                    'responseModalities' => ['IMAGE'],
+                    'imageConfig' => ['aspectRatio' => $aspect],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException('Gemini request failed: '.$response->status());
+        }
+
+        foreach ($response->json('candidates.0.content.parts') ?? [] as $part) {
+            // Both spellings occur depending on the API version answering.
+            $inline = $part['inlineData'] ?? $part['inline_data'] ?? null;
+            if (! empty($inline['data'])) {
+                return [
+                    'mime' => $inline['mimeType'] ?? $inline['mime_type'] ?? 'image/png',
+                    'data' => (string) base64_decode($inline['data'], true),
+                    'usage' => $this->usage(
+                        $response->json('usageMetadata.promptTokenCount'),
+                        $response->json('usageMetadata.candidatesTokenCount'),
+                    ),
+                ];
+            }
+        }
+
+        throw new RuntimeException('Gemini returned no image');
+    }
+
+    /**
+     * OpenAI image generation. Only three canvas sizes exist, so the aspect ratio
+     * picks the closest one and the caller crops it to the exact ratio.
+     *
+     * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
+     */
+    private function imageOpenai(string $prompt, string $aspect): array
+    {
+        $response = Http::withToken($this->apiKey())
+            ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
+            ->post('https://api.openai.com/v1/images/generations', array_filter([
+                'model' => $this->model,
+                'prompt' => $prompt,
+                'size' => self::openaiSize($aspect),
+                'quality' => config('leap.ai.image.quality') ?: null,
+            ]));
+
+        if ($response->failed()) {
+            throw new RuntimeException('OpenAI request failed: '.$response->status());
+        }
+
+        $data = $response->json('data.0.b64_json');
+        if (! is_string($data) || $data === '') {
+            throw new RuntimeException('OpenAI returned no image');
+        }
+
+        return [
+            'mime' => 'image/'.($response->json('output_format') ?: 'png'),
+            'data' => (string) base64_decode($data, true),
+            'usage' => $this->usage($response->json('usage.input_tokens'), $response->json('usage.output_tokens')),
+        ];
+    }
+
+    /**
+     * The provider's token counts in one shape, or null when it reported none.
+     *
+     * @return array{input: int, output: int}|null
+     */
+    private function usage(mixed $input, mixed $output): ?array
+    {
+        if (! is_numeric($input) && ! is_numeric($output)) {
+            return null;
+        }
+
+        return ['input' => (int) $input, 'output' => (int) $output];
+    }
+
+    /**
+     * The OpenAI canvas closest to the requested aspect ratio: landscape, portrait
+     * or square. Anything unparseable falls back to square.
+     */
+    private static function openaiSize(string $aspect): string
+    {
+        [$width, $height] = array_pad(array_map('floatval', explode(':', $aspect)), 2, 0);
+
+        if ($width <= 0 || $height <= 0 || $width === $height) {
+            return '1024x1024';
+        }
+
+        return $width > $height ? '1536x1024' : '1024x1536';
     }
 
     /**

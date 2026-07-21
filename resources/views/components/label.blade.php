@@ -1,7 +1,12 @@
 @aware(['attribute', 'name', 'label'])
+@props(['tag' => 'label'])
 {{-- showIf() hides the field itself, not a wrapper around it: the fieldset lays out its
      own children, so anything in between put a hidden field's row back in the flow. --}}
-<label class="leap-label" @if ($attribute->showIfExpression ?? false) x-show="{{ $attribute->showIfExpression }}" @endif>
+{{-- tag="div" for a field whose slot holds only action buttons and no form control.
+     A <label> without a for attribute adopts its first labelable descendant — and a
+     <button> is labelable — so hovering anywhere on the label, including a second
+     button beside it, lights up the first one as if the pointer were on it. --}}
+<{{ $tag }} class="leap-label" @if ($attribute->showIfExpression ?? false) x-show="{{ $attribute->showIfExpression }}" @endif>
     @if ($attribute->label ?? ($label ?? $name))
         <span class="leap-label">
             {!! $attribute->label ?? ($label ?? $name) !!}
@@ -39,4 +44,4 @@
         <span class="leap-error">{{ $message }}</span>
     @enderror
     {{ $slot }}
-</label>
+</{{ $tag }}>

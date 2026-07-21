@@ -571,6 +571,48 @@
     .leap-alt-generate-btn.leap-alt-generating .svg-icon {
         animation: leap-alt-spin 0.8s linear infinite;
     }
+    .leap-ai-image-estimate {
+        font-size: 0.8em;
+        opacity: 0.6;
+    }
+    /* The provider takes tens of seconds; a placeholder the size of a preview keeps
+       the dialog from looking stalled and stops it jumping when the image lands. */
+    .leap-ai-image-busy {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 120px;
+        border-radius: 6px;
+        background: var(--leap-grey-light);
+        opacity: 0.7;
+    }
+    .leap-ai-image-spinner {
+        width: 1em;
+        height: 1em;
+        border: 2px solid color-mix(in srgb, var(--leap-blue-dark) 25%, transparent);
+        border-top-color: var(--leap-blue-dark);
+        border-radius: 50%;
+        animation: leap-alt-spin 0.8s linear infinite;
+    }
+    .leap-ai-image-preview {
+        position: relative;
+        img {
+            display: block;
+            width: 100%;
+            border-radius: 6px;
+        }
+        .leap-ai-image-cost {
+            position: absolute;
+            right: 6px;
+            bottom: 6px;
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgb(0 0 0 / .55);
+            color: white;
+        }
+    }
     .leap-modal-save {
         background: var(--leap-blue-light);
         border-color: var(--leap-blue-light);

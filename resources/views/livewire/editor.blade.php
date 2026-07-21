@@ -80,5 +80,8 @@
                 @endforeach
             </fieldset>
         </div>
+        @if ($this->aiImageEnabled())
+            <x-leap::ai-image scope="editor" />
+        @endif
     @endif
 </div>
