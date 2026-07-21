@@ -20,6 +20,13 @@ Built with Livewire; styling is compiled on request (no npm/Vite build step).
 - **Frontend template** — an accessible, SEO-ready public website scaffolded with one
   command.
 
+## Live demo
+
+Try Leap at [leap.nickdekruijk.nl](https://leap.nickdekruijk.nl) — the admin panel lives at
+[/admin](https://leap.nickdekruijk.nl/admin), log in with `info@example.com` / `leapdemo`.
+It is a stock `leap:template` install. Feel free to change anything: everything you save is
+publicly visible, and the site resets itself to its seeded state 15 minutes after the last change.
+
 ## Quick start
 
 ```bash

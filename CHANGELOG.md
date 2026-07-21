@@ -5,6 +5,15 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Live demo site.** [leap.nickdekruijk.nl](https://leap.nickdekruijk.nl) runs a stock
+  `leap:template` install; log in on [/admin](https://leap.nickdekruijk.nl/admin) with
+  `info@example.com` / `leapdemo`. The site resets itself to its seeded state 15 minutes
+  after the last change, so visitors can safely try everything.
+
 ## [0.10.15] — 2026-07-21
 
 ### Fixed
