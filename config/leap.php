@@ -398,28 +398,25 @@ return [
             // Set a literal ('ai') to collect them in one folder, or combine: 'ai/{module}'.
             'folder' => '{module}',
             'aspect_ratios' => ['16:9', '4:3', '1:1', '3:4'], // offered in the generate dialog; the result is cropped to the chosen one
-            'quality' => null,       // openai only: 'low' | 'medium' | 'high' | 'auto' (null = provider default)
+            'quality' => null,       // openai only: 'low' | 'medium' | 'high' (null = the provider's 'auto'). Changes the price per image by up to 35x, so setting it explicitly also makes the cost estimate exact
             'max_width' => 1600,     // generated images are scaled down to this width
             'jpeg_quality' => 82,    // encoding quality of the stored JPEG
             'alt_text' => true,      // also generate alt text for the new image when the alt_text task is configured
             'style' => null,         // optional house-style sentence appended to every prompt
         ],
 
-        // What a call costs, in US dollars per million tokens, used to show an estimate
-        // before generating and the actual amount after. These are NOT billed amounts:
-        // they are computed here, exclude VAT and ignore any free tier, and they go stale
-        // when providers change their prices — check them against the provider's pricing
-        // page. 'estimate' is the indicative price of a single image, shown up front.
-        // A model without an entry simply shows no price. Checked 2026-07-21.
-        'pricing' => [
-            'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
-            'gemini-3.1-flash-lite-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
-            'gemini-3.1-flash-image' => ['input' => 0.30, 'output' => 60.00, 'estimate' => 0.078],
-            'gemini-3-pro-image' => ['input' => 0.30, 'output' => 120.00, 'estimate' => 0.156],
-            'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => 0.011],
-            'gpt-image-1.5' => ['input' => 5.00, 'output' => 32.00, 'estimate' => 0.042],
-            'gpt-image-2' => ['estimate' => 0.053], // per-image pricing published; no token rates
-        ],
+        // What a call costs, used to show an estimate before generating and the actual
+        // amount after. Rates per model ship with the package (see AiTask::DEFAULT_PRICING)
+        // so they can be kept current with an update instead of going stale in every
+        // published config; list a model here only to override it. Values are US dollars
+        // per million tokens, with 'estimate' the indicative price of a single image.
+        // These are NOT billed amounts: they are computed, exclude VAT and ignore any
+        // free tier. A model with neither a default nor an entry here shows no price.
+        // Where a provider charges by quality, 'estimate' is a figure per quality.
+        // 'pricing' => [
+        //     'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+        //     'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => ['low' => 0.006, 'medium' => 0.015, 'high' => 0.052]],
+        // ],
     ],
 
     /*

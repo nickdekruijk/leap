@@ -34,6 +34,7 @@ return [
     'generate_image' => 'Generate image with AI',
     'image_aspect' => 'Aspect ratio',
     'image_cost' => 'Cost',
+    'image_enlarge' => 'Click to enlarge',
     'image_expired' => 'The generated image has expired, please generate it again',
     'image_failed' => 'Could not generate an image',
     'image_generate' => 'Generate',

@@ -136,27 +136,75 @@ class AiTask
     }
 
     /**
-     * The indicative price of one call, shown before the user commits to it.
-     * A flat per-call figure from config: output size is deterministic per model,
-     * and quoting it directly avoids inventing a token count to multiply.
+     * The indicative price of one call, shown before the user commits to it. A flat
+     * per-call figure rather than a token count to multiply, because the output size
+     * is deterministic per model.
+     *
+     * Where a provider charges by quality the figure is per quality, and an unset or
+     * 'auto' quality quotes the dearest of them: the provider is then free to pick
+     * whichever it likes, and an estimate that can be exceeded is worse than a
+     * generous one. The exact amount follows right after generating anyway.
      */
     public function estimatedCost(): ?float
     {
         $estimate = $this->rates()['estimate'] ?? null;
 
+        if (is_array($estimate)) {
+            $estimate = $estimate[config('leap.ai.image.quality')] ?? ($estimate ? max($estimate) : null);
+        }
+
         return $estimate === null ? null : (float) $estimate;
     }
 
     /**
-     * The configured rates for this task's model. Read from the array rather than
-     * with a config() dot-path because model names contain dots themselves
-     * ('gemini-2.5-flash-image'), which dot notation would read as nesting.
+     * What each model costs, in US dollars per million tokens, with 'estimate' the
+     * indicative price of a single image shown before generating.
+     *
+     * These live here rather than in the published config on purpose: a copy in an
+     * application's config file freezes the prices of the day it was published and
+     * silently goes stale, while leap.ai.pricing stays available to override any of
+     * them. Not billed amounts — check them against the provider's pricing page.
+     * Checked 2026-07-21.
+     *
+     * @var array<string, array<string, float>>
+     */
+    private const DEFAULT_PRICING = [
+        // Gemini has no quality setting: one image is one price.
+        'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+        'gemini-3.1-flash-lite-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
+        'gemini-3.1-flash-image' => ['input' => 0.30, 'output' => 60.00, 'estimate' => 0.078],
+        'gemini-3-pro-image' => ['input' => 0.30, 'output' => 120.00, 'estimate' => 0.156],
+        // OpenAI charges by quality, up to 35x between low and high, so one figure per
+        // model would be meaningless. Each is the dearer of the square and the portrait
+        // or landscape canvas, so the estimate is never lower than what is charged.
+        'gpt-image-1-mini' => [
+            'input' => 2.00, 'output' => 8.00,
+            'estimate' => ['low' => 0.006, 'medium' => 0.015, 'high' => 0.052],
+        ],
+        'gpt-image-1.5' => [
+            'input' => 5.00, 'output' => 32.00,
+            'estimate' => ['low' => 0.013, 'medium' => 0.050, 'high' => 0.200],
+        ],
+        'gpt-image-2' => [
+            'input' => 5.00, 'output' => 30.00,
+            'estimate' => ['low' => 0.006, 'medium' => 0.053, 'high' => 0.211],
+        ],
+        'gpt-image-1' => [ // superseded; per-image prices published, no token rates listed
+            'estimate' => ['low' => 0.016, 'medium' => 0.063, 'high' => 0.250],
+        ],
+    ];
+
+    /**
+     * The rates for this task's model: leap.ai.pricing when it names the model,
+     * otherwise the shipped default. Read from the array rather than with a config()
+     * dot-path because model names contain dots themselves ('gemini-2.5-flash-image'),
+     * which dot notation would read as nesting.
      *
      * @return array<string, float>
      */
     private function rates(): array
     {
-        return (array) ((config('leap.ai.pricing') ?? [])[$this->model] ?? []);
+        return (array) ((config('leap.ai.pricing') ?? [])[$this->model] ?? self::DEFAULT_PRICING[$this->model] ?? []);
     }
 
     /**

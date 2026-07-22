@@ -57,4 +57,30 @@ class AssetCssTest extends TestCase
             $css
         );
     }
+
+    /**
+     * CSS nesting only permits conditional at-rules (@media, @supports, @container, …)
+     * inside a style rule. A nested @keyframes is invalid and dropped, so its name is
+     * never defined and every animation referring to it silently does nothing — which
+     * is exactly what happened to the AI spinner and the upload fade-out: both sat
+     * inside a selector and neither ever ran. Keyframes belong at the top level.
+     */
+    public function test_keyframes_are_never_nested_inside_a_selector(): void
+    {
+        $css = $this->get(route('leap.css'))->getContent();
+
+        foreach (explode('@keyframes', $css) as $index => $part) {
+            if ($index === 0) {
+                continue;
+            }
+            // Everything before this @keyframes must have balanced braces; an excess
+            // of opening braces means it sits inside a style rule.
+            $before = substr($css, 0, strpos($css, '@keyframes'.$part));
+            $this->assertSame(
+                substr_count($before, '{'),
+                substr_count($before, '}'),
+                'A @keyframes block is nested inside a selector, where browsers drop it.'
+            );
+        }
+    }
 }

@@ -18,6 +18,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   arrived, invisibly, and only showed itself after switching language tabs, which rebuilds the
   field. Translating now announces itself and the field pulls the new value back in.
 
+- **The spinners spin, and the upload row fades out.** Both `@keyframes` blocks sat nested inside
+  a selector, and CSS nesting only permits conditional at-rules there — so browsers dropped them,
+  the animation names were never defined, and every `animation` referring to them did nothing at
+  all. The AI alt-text button had therefore never turned while it worked, and a finished upload
+  never faded. Both are at the top level now, and a test walks the served stylesheet to keep them
+  there. The translate button had a second fault of the same kind: it sets `leap-alt-generating`
+  alone while the rule demanded `.leap-alt-generate-btn` as well, so it matched nothing.
+
+- **A dialog opened from the editor covers the window instead of the panel.** The editor slides in
+  with a `transform`, and a transformed element becomes the containing block for everything
+  `position: fixed` inside it. Every modal opened there was therefore bounded by the panel and
+  scrolled along with its content rather than staying put over the page. They are rendered at the
+  admin root now, through a `teleport` prop on the modal component — at `.leap` rather than the
+  body, because the font lives there and outside it a dialog falls back to the browser default.
 
 - **A module that allows CSV import no longer dies on its own index page.** The index template
   read `$this->allowImport['type']` — a key nothing sets, generates or documents, and that no
@@ -48,8 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   class, not its translated title — it does not move when the admin language changes.
 
   The dialog shows what a generation costs: an estimate before, the actual amount after. Both are
-  computed from the new `leap.ai.pricing` config rather than reported by the provider, which
-  returns token counts only — so the amounts exclude VAT, ignore free tiers, and go stale when
+  computed from a rate per model rather than reported by the provider, which returns token counts
+  only — so the amounts exclude VAT, ignore free tiers, and go stale when
   provider prices change and the config is not updated. A model with no configured rate shows no
   price rather than a wrong zero. Every generated image records its model, prompt and cost in the
   media row's `meta['ai']`.

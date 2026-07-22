@@ -1,3 +1,41 @@
+/* Top level on purpose: CSS nesting only allows conditional at-rules (@media,
+   @supports, @container, …) inside a style rule, so a nested @keyframes is
+   dropped and every animation naming it silently does nothing. */
+@keyframes leap-alt-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* The enlarged AI preview. Top level, not nested under .leap-modal: it sits outside
+   the dialog so it can cover the whole screen, above the modal's own z-index. */
+.leap-ai-image-zoom {
+    position: fixed;
+    inset: 0;
+    z-index: 1700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing);
+    background-color: rgb(0 0 0 / .85);
+    cursor: zoom-out;
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 6px;
+    }
+}
+
+@keyframes uploadingdone {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        display: none;
+    }
+}
+
 .leap-filemanager {
     .leap-header {
         H2 {
@@ -129,15 +167,6 @@
         animation: uploadingdone 0.5s forwards 1s;
         TD {
             background-color: color-mix(in srgb, var(--leap-green) 50%, transparent) !important;
-        }
-        @keyframes uploadingdone {
-            0% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-                display: none;
-            }
         }
     }
     .leap-index-table.leap-index-gridview {
@@ -394,11 +423,6 @@
                             pointer-events: none;
                             box-sizing: border-box;
                         }
-                        @keyframes leap-alt-spin {
-                            to {
-                                transform: rotate(360deg);
-                            }
-                        }
                         .leap-focus-point {
                             position: absolute;
                             transform: translate(-50%, -50%);
@@ -568,7 +592,9 @@
             height: 1em;
         }
     }
-    .leap-alt-generate-btn.leap-alt-generating .svg-icon {
+    /* The busy class alone is enough: the translate-all button in the editor sets it
+       without .leap-alt-generate-btn, so requiring both left that one never spinning. */
+    .leap-alt-generating .svg-icon {
         animation: leap-alt-spin 0.8s linear infinite;
     }
     .leap-ai-image-estimate {
@@ -601,6 +627,7 @@
             display: block;
             width: 100%;
             border-radius: 6px;
+            cursor: zoom-in;
         }
         .leap-ai-image-cost {
             position: absolute;

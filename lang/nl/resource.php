@@ -34,6 +34,7 @@ return [
     'generate_image' => 'Afbeelding genereren met AI',
     'image_aspect' => 'Beeldverhouding',
     'image_cost' => 'Kosten',
+    'image_enlarge' => 'Klik om te vergroten',
     'image_expired' => 'De gegenereerde afbeelding is verlopen, genereer opnieuw',
     'image_failed' => 'Afbeelding genereren mislukt',
     'image_generate' => 'Genereren',

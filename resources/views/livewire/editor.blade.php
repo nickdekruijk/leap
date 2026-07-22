@@ -29,7 +29,7 @@
                 <div class="leap-translate-all" x-data="{ open: false, from: '{{ $translateFrom }}', scope: 'empty', busy: false }">
                     <x-leap::button svg-icon="fas-language" label="leap::resource.translate"
                         x-on:click="const l = {{ Js::from(array_keys($this->editorLocales())) }}; from = l.find(c => c !== $wire.activeLocale) || l[0]; open = true" />
-                    <x-leap::modal show="open" close="open = false" title="{{ __('leap::resource.translate') }}">
+                    <x-leap::modal show="open" close="open = false" teleport title="{{ __('leap::resource.translate') }}">
                         <div class="leap-modal-field">
                             <label>@lang('leap::resource.translate_from')</label>
                             <select class="leap-select" x-model="from">

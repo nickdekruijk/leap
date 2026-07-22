@@ -26,6 +26,7 @@
     preview: null,
     token: null,
     cost: null,
+    zoomed: false,
     start(attribute) {
         this.attribute = attribute ?? null;
         this.prompt = '';
@@ -33,6 +34,7 @@
         this.token = null;
         this.cost = null;
         this.busy = false;
+        this.zoomed = false;
         this.open = true;
         // Suggest a prompt from what the editor is looking at right now, rather than
         // from what the page held when it was rendered.
@@ -65,7 +67,8 @@
         @endif
     },
 }" x-on:leap-generate-image.window="if ($event.detail?.scope === @js($scope)) start($event.detail?.attribute)">
-    <x-leap::modal show="open" close="open = false" title="{{ __('leap::resource.generate_image') }}">
+    {{-- teleport: in the editor this sits inside the sliding, scrolling panel. --}}
+    <x-leap::modal show="open" close="open = false" teleport title="{{ __('leap::resource.generate_image') }}">
         <div class="leap-modal-field">
             <textarea rows="4" x-model="prompt" placeholder="@lang('leap::resource.image_prompt_placeholder')"></textarea>
         </div>
@@ -83,19 +86,41 @@
             @lang('leap::resource.image_generating')
         </div>
         <div class="leap-ai-image-preview" x-show="preview && !busy" x-cloak>
-            <img x-bind:src="preview" alt="">
+            {{-- The dialog is narrow; the result deserves a proper look before it is
+                 accepted, so the preview opens full screen on click. --}}
+            <img x-bind:src="preview" alt="" role="button" tabindex="0"
+                :title="@js(__('leap::resource.image_enlarge'))"
+                x-on:click="zoomed = true" x-on:keydown.enter.prevent="zoomed = true">
             <span class="leap-ai-image-cost" x-show="cost !== null" x-text="@js(__('leap::resource.image_cost')) + ' $' + Number(cost).toFixed(3)"></span>
         </div>
+        {{-- Same shape as the translate dialog: the action in primary style with its
+             icon, then a plain cancel. Which action is primary shifts once there is a
+             result to accept. No spinning icon: the placeholder above shows the wait. --}}
         <div class="leap-modal-actions">
-            <button type="button" class="leap-modal-btn leap-alt-generate-btn" :class="{ 'leap-alt-generating': busy }" :disabled="busy || !prompt.trim()" x-on:click="generate()">
+            <button type="button" class="leap-modal-btn" :class="{ 'leap-modal-save': !token }" :disabled="busy || !prompt.trim()" x-on:click="generate()">
                 @svg('fas-wand-magic-sparkles', 'svg-icon')
                 <span x-text="token ? @js(__('leap::resource.image_regenerate')) : @js(__('leap::resource.image_generate'))"></span>
                 @if ($estimate)
                     <span class="leap-ai-image-estimate">&asymp; ${{ number_format($estimate, 3) }}</span>
                 @endif
             </button>
-            <button type="button" class="leap-modal-btn leap-modal-save" x-show="token" x-cloak :disabled="busy" x-on:click="accept()">@lang('leap::resource.image_use')</button>
+            <button type="button" class="leap-modal-btn leap-modal-save" x-show="token" x-cloak :disabled="busy" x-on:click="accept()">
+                @svg('fas-check', 'svg-icon') @lang('leap::resource.image_use')
+            </button>
             <button type="button" class="leap-modal-btn" x-on:click="open = false">@lang('leap::resource.cancel')</button>
         </div>
     </x-leap::modal>
+    {{-- Teleported to the admin root, not merely placed outside the dialog. The editor
+         panel slides in with a transform, and a transformed element becomes the
+         containing block for everything fixed inside it — so an overlay left here would
+         be bounded by the editor instead of the viewport. It goes to .leap rather than
+         the body to stay inside the styling scope. Escape is caught in the capture phase
+         so it closes the enlargement first instead of the dialog underneath it. --}}
+    <template x-teleport=".leap">
+        <div class="leap-ai-image-zoom" x-show="zoomed" x-cloak x-transition.opacity
+            x-on:click="zoomed = false"
+            x-on:keydown.escape.window.capture="if (zoomed) { zoomed = false; $event.stopPropagation(); }">
+            <img x-bind:src="preview" alt="">
+        </div>
+    </template>
 </div>

@@ -155,11 +155,75 @@ class EditorAiImageTest extends TestCase
         $this->assertEqualsWithDelta(0.038703, $result['cost'], 0.0000001);
     }
 
-    public function test_a_model_without_a_configured_rate_shows_no_cost(): void
+    /**
+     * An application whose published config predates this feature has no leap.ai.pricing
+     * at all. The rates ship with the package for exactly that reason — otherwise the
+     * whole cost display silently disappears for every existing install.
+     */
+    public function test_costs_are_shown_without_any_pricing_in_the_config(): void
     {
-        config(['leap.ai.pricing' => []]);
+        config(['leap.ai.pricing' => null]);
+        $this->fakeGemini(promptTokens: 10, imageTokens: 1290);
+
+        $editor = $this->editor();
+
+        $this->assertSame(0.039, $editor->aiImageEstimate());
+        $this->assertEqualsWithDelta(0.038703, $editor->generateImage('A red bicycle', '16:9')['cost'], 0.0000001);
+    }
+
+    public function test_a_configured_rate_overrides_the_shipped_default(): void
+    {
+        config(['leap.ai.pricing' => ['gemini-2.5-flash-image' => ['input' => 0, 'output' => 100.00, 'estimate' => 0.5]]]);
+        $this->fakeGemini(promptTokens: 10, imageTokens: 1000);
+
+        $editor = $this->editor();
+
+        $this->assertSame(0.5, $editor->aiImageEstimate());
+        $this->assertEqualsWithDelta(0.1, $editor->generateImage('A red bicycle', '16:9')['cost'], 0.0000001);
+    }
+
+    /**
+     * OpenAI charges by quality — up to 35x between low and high — so a single figure
+     * per model would be off by an order of magnitude either way.
+     */
+    public function test_the_openai_estimate_follows_the_configured_quality(): void
+    {
+        config([
+            'leap.ai.image.provider' => 'openai',
+            'leap.ai.providers.openai.api_key' => 'k',
+            'leap.ai.pricing' => null,
+        ]);
+
+        config(['leap.ai.image.quality' => 'low']);
+        $this->assertSame(0.006, $this->editor()->aiImageEstimate());
+
+        config(['leap.ai.image.quality' => 'medium']);
+        $this->assertSame(0.015, $this->editor()->aiImageEstimate());
+
+        config(['leap.ai.image.quality' => 'high']);
+        $this->assertSame(0.052, $this->editor()->aiImageEstimate());
+    }
+
+    public function test_an_unset_quality_quotes_the_dearest_the_provider_may_pick(): void
+    {
+        config([
+            'leap.ai.image.provider' => 'openai',
+            'leap.ai.providers.openai.api_key' => 'k',
+            'leap.ai.image.quality' => null,
+            'leap.ai.pricing' => null,
+        ]);
+
+        // 'auto' lets the provider choose; an estimate that can be exceeded is worse
+        // than a generous one.
+        $this->assertSame(0.052, $this->editor()->aiImageEstimate());
+    }
+
+    public function test_a_model_without_any_known_rate_shows_no_cost(): void
+    {
+        config(['leap.ai.image.model' => 'some-unreleased-model', 'leap.ai.pricing' => []]);
         $this->fakeGemini();
 
+        $this->assertNull($this->editor()->aiImageEstimate());
         $this->assertNull($this->editor()->generateImage('A red bicycle', '16:9')['cost']);
     }
 

@@ -146,25 +146,37 @@ OpenAI). Commercial use is allowed; the images stay identifiable as AI-generated
 
 ### Costs
 
-The dialog shows an estimate before generating and the actual amount after. **These are computed
-from `leap.ai.pricing`, not reported by the provider** — neither API returns a price, only token
-counts, which Leap multiplies by the rates in config. That means:
+The dialog shows an estimate before generating and the actual amount after. **These are computed,
+not reported by the provider** — neither API returns a price, only token counts, which Leap
+multiplies by a rate per model. That means:
 
 - the figures are ex VAT, in US dollars, and ignore any free tier;
-- **they go stale.** The shipped rates carry the date they were checked; when a provider changes
-  its prices the config is what has to be updated, not the code;
-- a model with no entry in `leap.ai.pricing` simply shows no price, rather than a wrong `$0.00`;
+- **they go stale** when a provider changes its prices;
+- a model with no known rate simply shows no price, rather than a wrong `$0.00`;
 - when a provider returns no usage at all, the estimate is shown instead.
+
+The rates ship with the package
+([`AiTask::DEFAULT_PRICING`](../src/Classes/AiTask.php), carrying the date they were checked), so
+they can be refreshed with an update. They are deliberately **not** in the published config: a copy
+there would freeze the prices of the day it was published and quietly outlive them. Override a
+model by naming it under `leap.ai.pricing`:
 
 ```php
 'pricing' => [
     'gemini-2.5-flash-image' => ['input' => 0.30, 'output' => 30.00, 'estimate' => 0.039],
-    'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => 0.011],
+    'gpt-image-1-mini' => ['input' => 2.00, 'output' => 8.00, 'estimate' => ['low' => 0.006, 'medium' => 0.015, 'high' => 0.052]],
 ],
 ```
 
 `input` and `output` are US dollars per million tokens and produce the amount shown afterwards;
 `estimate` is the indicative price of a single image, shown up front.
+
+**Quality changes the price.** OpenAI charges per image by quality, and the spread is large — a
+`gpt-image-2` at `high` costs about 35 times one at `low`. `estimate` is therefore a figure per
+quality for those models, picked with `leap.ai.image.quality`. Leaving that at `null` means the
+provider's own `auto`, which is free to choose the dearest, so the estimate quotes the ceiling: an
+estimate that can be exceeded is worse than a generous one. Setting the quality explicitly makes
+the estimate exact. Gemini has no quality setting, so one figure covers it.
 
 ### Other image providers
 
