@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   field. Translating now announces itself and the field pulls the new value back in.
 
 
+- **A module that allows CSV import no longer dies on its own index page.** The index template
+  read `$this->allowImport['type']` — a key nothing sets, generates or documents, and that no
+  other code reads. A resource declaring `$allowImport` the way it is meant to, with the columns
+  a file may hold and the attributes they fill, therefore threw `Undefined array key "type"`
+  before drawing a single row. CSV is the only import there is, so the check now defaults to it;
+  set the key explicitly to hide the button.
+
 ### Added
 
 - **Live demo site.** [leap.nickdekruijk.nl](https://leap.nickdekruijk.nl) runs a stock

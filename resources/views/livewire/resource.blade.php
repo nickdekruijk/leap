@@ -10,7 +10,10 @@
             @endisset
         @endcan
         @if ($this->canImport())
-            @if ($this->allowImport['type'] === 'csv')
+            {{-- CSV is the only import there is, and nothing sets or documents a 'type'
+                 key, so requiring one only made a module that enables importing crash
+                 on its own index page. --}}
+            @if (($this->allowImport['type'] ?? 'csv') === 'csv')
                 <x-leap::button svg-icon="fas-file-import" x-on:click="$refs.importCSV.click()" label="leap::resource.importCSV" />
                 <input type="file" wire:model="importCSV" x-ref="importCSV" accept=".csv" style="display:none">
             @endif
