@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A translated field shows its translation straight away, and without escaped slashes.** Two
+  faults in the same click. The prompt was built with `json_encode()` but without
+  `JSON_UNESCAPED_SLASHES`, so the model was handed `<\/p>` and — told to preserve the markup
+  exactly — handed it back verbatim, into the editor and then into the database. And a rich-text
+  field sits in `wire:ignore` and is only read into TinyMCE when the editor opens, so a value
+  written on the server reached neither the editor nor the click-to-edit preview: the translation
+  arrived, invisibly, and only showed itself after switching language tabs, which rebuilds the
+  field. Translating now announces itself and the field pulls the new value back in.
+
+
 ### Added
 
 - **Live demo site.** [leap.nickdekruijk.nl](https://leap.nickdekruijk.nl) runs a stock

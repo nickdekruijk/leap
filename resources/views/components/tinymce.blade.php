@@ -29,6 +29,20 @@
             editing: false,
             editor: null,
             init() {
+                // A rich-text field sits in wire:ignore and is only read into TinyMCE
+                // when the editor opens, so a value written on the server — the AI
+                // translation — reaches neither the editor nor the click-to-edit
+                // preview until the field is rebuilt. Pull it back explicitly.
+                Livewire.on('leap-fields-translated', () => {
+                    const fresh = this.$wire.get('{{ $attribute->dataName }}');
+                    if (fresh != null && fresh !== this.value) {
+                        this.value = fresh;
+                        if (this.editor) {
+                            this.editor.resetContent(fresh);
+                        }
+                    }
+                });
+
                 if (!this.lazy) {
                     this.activate();
                     return;

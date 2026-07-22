@@ -182,6 +182,7 @@ class Editor extends Component
         try {
             $out = AiTask::for('translate')->translate([$base => $source], $this->activeLocale, $from);
             data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $out[$base] ?? $source));
+            $this->dispatch('leap-fields-translated');
         } catch (\Throwable $e) {
             $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
         }
@@ -219,6 +220,8 @@ class Editor extends Component
             foreach (AiTask::for('translate')->translate($values, $this->activeLocale, $from) as $base => $translated) {
                 data_set($this->data, "$base.".$this->activeLocale, $this->slugifyValue($base, $translated));
             }
+
+            $this->dispatch('leap-fields-translated');
         } catch (\Throwable $e) {
             $this->dispatch('toast-error', __('leap::resource.translate_failed'))->to(Toasts::class);
         }
