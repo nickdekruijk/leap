@@ -5,7 +5,7 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.16] — 2026-07-22
 
 ### Fixed
 
@@ -54,8 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (Anthropic has no image API). Generating only produces a preview — the bytes wait in the cache
   and *Use image* is what stores the file, so a result you reject leaves nothing behind. The result
   is always a JPEG at the aspect ratio you picked, cropped by Leap rather than left to whichever
-  canvas sizes the provider happens to offer, and alt text is generated for it in the same pass
-  when the `alt_text` task is configured.
+  canvas sizes the provider happens to offer, and clicking it opens it full screen before you
+  commit. Alt text is generated for the new image in the same pass, when the `alt_text` task is
+  configured and `leap.ai.image.alt_text` is left on.
 
   Images are stored **per module**: `leap.ai.image.folder` defaults to `{module}`, so a Page's
   images land in `pages/` and a News item's in `news/`. The folder name comes from the module
@@ -63,10 +64,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   The dialog shows what a generation costs: an estimate before, the actual amount after. Both are
   computed from a rate per model rather than reported by the provider, which returns token counts
-  only — so the amounts exclude VAT, ignore free tiers, and go stale when
-  provider prices change and the config is not updated. A model with no configured rate shows no
-  price rather than a wrong zero. Every generated image records its model, prompt and cost in the
-  media row's `meta['ai']`.
+  only — so the amounts exclude VAT and ignore free tiers. The rates ship with the package rather
+  than in the published config, where they would freeze on the day they were published; they are
+  refreshed with an update, and `leap.ai.pricing` overrides one. Where a provider charges by
+  quality — OpenAI does, up to 35x between low and high — the estimate follows
+  `leap.ai.image.quality`, quoting the ceiling while that is left at the provider's `auto`. A model
+  with no known rate shows no price rather than a wrong zero. Every generated image records its
+  model, prompt and cost in the media row's `meta['ai']`.
 
   See [docs/ai.md](docs/ai.md).
 
