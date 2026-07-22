@@ -85,7 +85,9 @@ class AiTask
             .'Translate only the human-readable text between tags (and visible link text); never '
             .'change tag names, attribute values, or URLs. '
             .'Return ONLY a JSON object with the same keys and translated values. JSON: '
-            .json_encode($values, JSON_UNESCAPED_UNICODE);
+            // Unescaped slashes as well: without it the prompt shows the model <\/p>,
+            // and a model told to preserve the markup exactly hands that back verbatim
+            .json_encode($values, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $reply = $this->prompt($prompt, [], json: true);
 
