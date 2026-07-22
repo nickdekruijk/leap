@@ -806,11 +806,14 @@ class Editor extends Component
             // Translatable fields bind to data.{name}.{locale}; strip the locale to find the attribute
             ?? ($this->editorLocales() ? $this->attributes()->firstWhere('name', Str::beforeLast($name, '.')) : null);
 
-        // Update slug placeholder if this field feeds a slug target (value is the
-        // active-locale value for translatable fields)
+        // Update slug placeholder if this field feeds a slug target. For a translatable
+        // source Livewire may hand us the whole per-locale array rather than the active
+        // locale's string, so narrow it down before slugifying (as refreshSlugPlaceholders
+        // does) — otherwise Str::slug() throws "Array to string conversion".
         $slugMap = $this->slugMap();
         if ($attribute && isset($slugMap[$attribute->name])) {
-            $this->placeholder[$slugMap[$attribute->name]] = Str::slug($value);
+            $slugValue = is_array($value) ? ($value[$this->activeLocale] ?? '') : $value;
+            $this->placeholder[$slugMap[$attribute->name]] = Str::slug($slugValue);
         }
 
         // Only validate if there are actual rules

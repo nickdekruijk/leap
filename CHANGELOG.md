@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Editing a title no longer crashes the editor on a multilingual page.** The editor refreshes a
+  slug field's placeholder from its source field as you type, but on a translatable source Livewire
+  can hand the hook the whole per-locale array rather than the active locale's string. `Str::slug()`
+  was then given an array and threw "Array to string conversion" — hit, for example, when changing
+  the Dutch title of a page that has no English content. The value is now narrowed to the active
+  locale first, exactly as `refreshSlugPlaceholders()` already does.
+
 ## [0.10.16] — 2026-07-22
 
 ### Fixed
