@@ -15,8 +15,9 @@ use Illuminate\Support\Str;
  * both the page tree and standalone models (services, stories, blog posts).
  *
  * Conventions:
- * - An empty slug is generated from the title of that locale (falling back to
- *   the default-locale title when the localized title is empty).
+ * - An empty slug is generated from that locale's own title. A locale without a
+ *   title gets no slug (empty = not routable there); it never borrows another
+ *   locale's title.
  * - Collisions get a -2, -3, … suffix.
  * - The reserved homepage slug "/" is never slugified.
  *
@@ -46,7 +47,6 @@ trait HasSlug
 
         // Translatable slug: one value per configured locale (or just the current locale)
         $locales = array_keys(config('leap.locales') ?? []) ?: [app()->getLocale()];
-        $default = $locales[0];
 
         foreach ($locales as $locale) {
             $current = $this->getTranslation('slug', $locale, false);
@@ -54,8 +54,9 @@ trait HasSlug
                 continue;
             }
 
-            $title = $this->getTranslation('title', $locale, false)
-                ?: $this->getTranslation('title', $default, false);
+            // Derive from this locale's own title only. A locale without a title gets no
+            // slug (empty = not routable there) rather than borrowing another locale's.
+            $title = $this->getTranslation('title', $locale, false);
 
             $slug = $current ?: Str::slug((string) $title);
             if ($slug === '') {

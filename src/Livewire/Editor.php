@@ -556,6 +556,44 @@ class Editor extends Component
     }
 
     /**
+     * Custom validation messages. Used by both live validation (validateOnly) and the
+     * save-time validator in isValid(), so they read the same. required_without_all backs
+     * "a required translatable field must be filled in at least one locale" (see rules());
+     * its default message lists the other locale fields, so name the field instead.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return ['required_without_all' => __('leap::resource.required_in_one_locale')];
+    }
+
+    /**
+     * Human labels for the validated fields, so a message names the field rather than its
+     * dotted data path. Translatable fields validate per locale (data.{name}.{locale}), so
+     * each locale gets its own entry, suffixed with the locale name.
+     *
+     * @return array<string, string>
+     */
+    public function validationAttributes(): array
+    {
+        $locales = $this->editorLocales();
+        $attributes = [];
+
+        foreach ($this->attributes() as $attribute) {
+            if ($locales && $this->parentModule()->hasTranslation($attribute)) {
+                foreach ($locales as $locale => $name) {
+                    $attributes['data.'.$attribute->name.'.'.$locale] = $attribute->label.' ('.$name.')';
+                }
+            } else {
+                $attributes['data.'.$attribute->name] = $attribute->label;
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
      * Return the validation rules from the attributes
      *
      * @param  int|null  $id  the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
@@ -581,14 +619,33 @@ class Editor extends Component
                         }
                     }
                 }
-                // Add the validation rule — per locale for translatable fields (default required, rest optional)
+                // Add the validation rule — per locale for translatable fields. A "required"
+                // translatable field must be filled in at least one locale, not specifically
+                // the default one: the default-locale rule becomes required_without_all across
+                // the other locales, and the others stay optional. So a page written in only a
+                // secondary language (e.g. Dutch on a site whose first locale is English) still
+                // validates, with a single error when no locale is filled at all.
                 if ($this->editorLocales() && $this->parentModule()->hasTranslation($attribute)) {
                     foreach (array_keys($this->editorLocales()) as $locale) {
                         $localeRules = array_map(fn ($rule) => $this->localeUniqueRule($rule, $locale), $attribute->validate);
 
-                        $rules['data.'.$attribute->name.'.'.$locale] = $locale === $this->defaultLocale()
-                            ? $localeRules
-                            : array_map(fn ($rule) => $rule === 'required' ? 'nullable' : $rule, $localeRules);
+                        if ($locale === $this->defaultLocale()) {
+                            $others = array_values(array_map(
+                                fn (string $other): string => 'data.'.$attribute->name.'.'.$other,
+                                array_diff(array_keys($this->editorLocales()), [$locale]),
+                            ));
+                            $rules['data.'.$attribute->name.'.'.$locale] = array_map(
+                                fn ($rule) => $rule === 'required' && $others
+                                    ? 'required_without_all:'.implode(',', $others)
+                                    : $rule,
+                                $localeRules,
+                            );
+                        } else {
+                            $rules['data.'.$attribute->name.'.'.$locale] = array_map(
+                                fn ($rule) => $rule === 'required' ? 'nullable' : $rule,
+                                $localeRules,
+                            );
+                        }
                     }
                 } else {
                     $rules['data.'.$attribute->name] = $attribute->validate;
@@ -888,7 +945,7 @@ class Editor extends Component
             }
         }
 
-        $validator = Validator::make(['data' => $data], $this->rules($id), [], $this->parentModule()->validationAttributes());
+        $validator = Validator::make(['data' => $data], $this->rules($id), $this->messages(), $this->validationAttributes());
         if ($validator->fails()) {
             // Show validation errors as toasts
             foreach ($validator->messages()->keys() as $fieldKey) {

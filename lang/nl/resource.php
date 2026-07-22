@@ -45,4 +45,5 @@ return [
     'image_use' => 'Afbeelding gebruiken',
     'translate_from' => 'Vertalen uit',
     'updated' => 'bijgewerkt',
+    'required_in_one_locale' => 'Het veld :attribute is in minstens één taal verplicht.',
 ];

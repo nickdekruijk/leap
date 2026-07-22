@@ -45,4 +45,5 @@ return [
     'image_use' => 'Use image',
     'translate_from' => 'Translate from',
     'updated' => 'updated',
+    'required_in_one_locale' => 'The :attribute field is required in at least one language.',
 ];

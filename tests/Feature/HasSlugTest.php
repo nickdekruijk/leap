@@ -45,6 +45,21 @@ class HasSlugTest extends TestCase
         $this->assertSame('news-2', $this->slug($second));
     }
 
+    public function test_a_locale_without_a_title_gets_no_slug_and_does_not_borrow_another_locale(): void
+    {
+        // Default/first locale is English; the model is written in English only.
+        config()->set('leap.locales', ['en' => 'English', 'nl' => 'Nederlands']);
+
+        $model = FlatSlugModel::create(['title' => ['en' => 'News']]);
+
+        // The English slug is generated from the English title...
+        $this->assertSame('news', $model->getTranslation('slug', 'en', false));
+
+        // ...but the untranslated Dutch locale stays empty (not routable there) rather
+        // than borrowing the English title's slug.
+        $this->assertSame('', $model->getTranslation('slug', 'nl', false));
+    }
+
     public function test_a_tree_model_scopes_uniqueness_to_siblings(): void
     {
         $rootA = TreeSlugModel::create(['title' => 'Root A']);

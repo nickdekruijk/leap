@@ -16,6 +16,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the Dutch title of a page that has no English content. The value is now narrowed to the active
   locale first, exactly as `refreshSlugPlaceholders()` already does.
 
+- **A page written in only one language no longer forces the default locale.** A required
+  translatable field was required specifically in the default (first configured) locale, so on a
+  site whose first locale is English a Dutch-only page failed with "the title field is required" for
+  the empty English tab. A required translatable field is now required in at least one locale, with
+  a single clear message when no locale is filled.
+
+- **An untranslated locale no longer borrows another locale's slug.** `HasSlug` derived a locale's
+  slug from the default-locale title when its own title was empty, so saving a page written in only
+  English gave its Dutch slug the English title's slug. Each locale now derives its slug from its own
+  title only; a locale without a title gets no slug (empty = not routable there). Already-borrowed
+  slugs are left untouched — clear the field and save to drop one.
+
+- **Editor validation messages name the field and its language.** A per-locale validation error
+  showed the raw `data.title.en` path, and live (as-you-type) validation used Laravel's default
+  wording — so emptying a title showed both "…required when none of data.title.nl are present" while
+  typing and a second message on save. The editor now supplies its own messages and per-locale field
+  labels (e.g. "Title (English)"), so live and save-time validation read the same and every
+  per-locale message names the field and language instead of a dotted path.
+
 ## [0.10.16] — 2026-07-22
 
 ### Fixed
