@@ -305,6 +305,52 @@ class ModuleGenerator
             );
         }
 
+        return $this->orderSlugAfterTitle($plans);
+    }
+
+    /**
+     * Move a slug field to directly after its title, whatever order the columns are in. The
+     * editor renders the "the title changed, update the slug?" suggestion on the slug field,
+     * so it belongs right under the title the bewerker just edited.
+     *
+     * @param  array<int, array<string, mixed>>  $plans
+     * @return array<int, array<string, mixed>>
+     */
+    protected function orderSlugAfterTitle(array $plans): array
+    {
+        $slugIndex = null;
+        foreach ($plans as $i => $plan) {
+            if (($plan['baseType'] ?? null) === 'slug') {
+                $slugIndex = $i;
+                break;
+            }
+        }
+
+        if ($slugIndex === null) {
+            return $plans;
+        }
+
+        $slugPlan = $plans[$slugIndex];
+        unset($plans[$slugIndex]);
+        $plans = array_values($plans);
+
+        $titleIndex = null;
+        foreach ($plans as $i => $plan) {
+            if ($plan['titleColumn'] ?? false) {
+                $titleIndex = $i;
+                break;
+            }
+        }
+
+        // No title to anchor to: leave the slug where it was.
+        if ($titleIndex === null) {
+            array_splice($plans, $slugIndex, 0, [$slugPlan]);
+
+            return $plans;
+        }
+
+        array_splice($plans, $titleIndex + 1, 0, [$slugPlan]);
+
         return $plans;
     }
 

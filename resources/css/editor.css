@@ -361,3 +361,47 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         color: rgb(0 0 0 / .4);
     }
 }
+
+/* "The title changed, update the slug?" prompt, inline on the slug label row */
+.leap-slug-suggestion {
+    display: inline-flex;
+    align-items: center;
+    padding-left: calc(var(--spacing) / 3);
+    border-radius: var(--leap-radius);
+    background: rgb(76 175 80 / .15);
+    font-size: 0.8em;
+    font-weight: 400;
+    color: rgb(0 0 0 / .65);
+    white-space: nowrap;
+
+    [role="button"] {
+        cursor: pointer;
+        border-radius: var(--leap-radius);
+    }
+
+    .leap-slug-suggestion-apply {
+        padding: 2px 8px;
+        font-weight: 500;
+        color: white;
+        margin-left: calc(var(--spacing) / 3);
+        background: var(--leap-blue-light);
+        transition: background 0.15s;
+
+        &:hover,
+        &:focus-visible {
+            background: var(--leap-blue);
+        }
+    }
+
+    .leap-slug-suggestion-dismiss {
+        padding: 0 calc(var(--spacing) / 2);
+        font-size: 1.3em;
+        line-height: 1;
+        color: rgb(0 0 0 / .4);
+
+        &:hover,
+        &:focus-visible {
+            color: rgb(0 0 0 / .75);
+        }
+    }
+}

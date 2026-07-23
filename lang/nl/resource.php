@@ -46,4 +46,7 @@ return [
     'translate_from' => 'Vertalen uit',
     'updated' => 'bijgewerkt',
     'required_in_one_locale' => 'Het veld :attribute is in minstens één taal verplicht.',
+    'slug_update_suggest' => 'Titel gewijzigd. Slug bijwerken naar “:slug”?',
+    'slug_update_apply' => 'Bijwerken',
+    'slug_update_dismiss' => 'Huidige slug behouden',
 ];

@@ -68,6 +68,32 @@ class Editor extends Component
     public string $activeLocale = '';
 
     /**
+     * Pending "update the slug to match the changed title?" suggestions, keyed by
+     * [slug target attribute][locale] (locale '' for a monolingual editor). Set when a
+     * title changes but the slug is not eligible to follow silently; the editor offers it
+     * inline for the bewerker to accept or dismiss.
+     *
+     * @var array<string, array<string, string>>
+     */
+    public array $slugSuggestion = [];
+
+    /**
+     * Whether a slug has been deliberately set by hand (differs from its title's slug),
+     * keyed by [slug target attribute][locale]. A customized slug never follows a title
+     * change silently — it only ever gets a suggestion.
+     *
+     * @var array<string, array<string, bool>>
+     */
+    public array $slugCustomized = [];
+
+    /**
+     * Whether the record being edited is still within the silent-follow window
+     * (config leap.slug_follow_minutes after creation). While fresh, an unedited slug
+     * follows its title automatically; afterwards a change only offers a suggestion.
+     */
+    public bool $slugFresh = false;
+
+    /**
      * The name of the parent Livewire component
      *
      * The editor uses this to determine the model and attributes. This will be encrypted to prevent leaking sensitive class name
@@ -416,6 +442,10 @@ class Editor extends Component
 
         // Set the placeholders for slug attributes (use the active locale when translatable)
         $this->refreshSlugPlaceholders();
+
+        // Initialise slug-follow state (which slugs are hand-edited, and whether the record
+        // is fresh enough for a slug to follow its title silently)
+        $this->initSlugState($model);
 
         // Obfuscate passwords
         foreach ($this->attributes()->where('type', 'password') as $attribute) {
@@ -873,6 +903,10 @@ class Editor extends Component
             $this->placeholder[$slugMap[$attribute->name]] = Str::slug($slugValue);
         }
 
+        // Let a slug follow its title (silently while fresh, or as an inline suggestion)
+        // and track hand edits to the slug itself.
+        $this->syncSlugOnUpdate($name);
+
         // Only validate if there are actual rules
         if ($this->rules()) {
             $this->validateOnly($field);
@@ -916,6 +950,154 @@ class Editor extends Component
             }
             $this->placeholder[$target] = Str::slug($value);
         }
+    }
+
+    /**
+     * The locales the editor edits, or [''] for a monolingual editor (a single, locale-less
+     * slot). Lets the slug helpers treat both the same way.
+     *
+     * @return array<int, string>
+     */
+    protected function slugLocales(): array
+    {
+        return array_keys($this->editorLocales()) ?: [''];
+    }
+
+    /**
+     * Read a (title or slug) field's value for a locale as a string. Locale '' is the
+     * monolingual, non-nested slot.
+     */
+    protected function slugFieldValue(string $name, string $locale): string
+    {
+        $value = $locale === '' ? ($this->data[$name] ?? '') : ($this->data[$name][$locale] ?? '');
+
+        return is_array($value) ? '' : (string) $value;
+    }
+
+    /**
+     * Write a slug field's value for a locale, respecting the monolingual ('') slot.
+     */
+    protected function setSlugFieldValue(string $name, string $locale, string $value): void
+    {
+        if ($locale === '') {
+            $this->data[$name] = $value;
+        } else {
+            $this->data[$name][$locale] = $value;
+        }
+    }
+
+    /**
+     * Initialise the slug-follow state for the record just loaded into the editor: whether
+     * each slug is a deliberate hand edit (differs from its title's slug) and whether the
+     * record is still within the silent-follow window (leap.slug_follow_minutes after
+     * creation; a brand-new record with no created_at counts as fresh, 0 disables it).
+     */
+    protected function initSlugState(Model $model): void
+    {
+        $this->slugSuggestion = [];
+        $this->slugCustomized = [];
+
+        $minutes = (int) config('leap.slug_follow_minutes', 60);
+        $this->slugFresh = $minutes > 0
+            && (! $model->created_at || $model->created_at->gt(now()->subMinutes($minutes)));
+
+        foreach ($this->slugMap() as $source => $target) {
+            foreach ($this->slugLocales() as $locale) {
+                $slug = $this->slugFieldValue($target, $locale);
+                $title = $this->slugFieldValue($source, $locale);
+                $this->slugCustomized[$target][$locale] = $slug !== '' && $slug !== Str::slug($title);
+            }
+        }
+    }
+
+    /**
+     * React to a field change: when a title (slug source) changes, either let the slug follow
+     * silently (unedited and still fresh) or offer an inline suggestion; when the slug itself
+     * changes, record whether it is now a deliberate hand edit.
+     *
+     * @param  string  $name  the data key that changed, e.g. "title" or "title.nl"
+     */
+    protected function syncSlugOnUpdate(string $name): void
+    {
+        $map = $this->slugMap();
+        if (! $map) {
+            return;
+        }
+
+        // Split "title.nl" into base + locale (monolingual stays "title" with locale '').
+        $locale = '';
+        $base = $name;
+        if ($this->editorLocales() && str_contains($name, '.')) {
+            $locale = Str::afterLast($name, '.');
+            $base = Str::beforeLast($name, '.');
+        }
+
+        // The slug itself changed: is it still just the title's slug, or a hand edit?
+        if ($source = array_search($base, $map, true)) {
+            $slug = $this->slugFieldValue($base, $locale);
+            $title = $this->slugFieldValue($source, $locale);
+            $this->slugCustomized[$base][$locale] = $slug !== '' && $slug !== Str::slug($title);
+            unset($this->slugSuggestion[$base][$locale]);
+
+            return;
+        }
+
+        // A title (slug source) changed: reconcile its slug target.
+        if (isset($map[$base])) {
+            $target = $map[$base];
+            $new = Str::slug($this->slugFieldValue($base, $locale));
+            $current = $this->slugFieldValue($target, $locale);
+
+            // Empty slug: leave it (new record / deliberately blank; placeholder previews it,
+            // HasSlug derives on save).
+            if ($current === '') {
+                return;
+            }
+
+            if (empty($this->slugCustomized[$target][$locale]) && $this->slugFresh) {
+                // Unedited and still fresh: follow the title silently.
+                $this->setSlugFieldValue($target, $locale, $new);
+                unset($this->slugSuggestion[$target][$locale]);
+            } elseif ($new !== '' && $new !== $current) {
+                // Edited by hand, or past the window: offer it, never overwrite.
+                $this->slugSuggestion[$target][$locale] = $new;
+            } else {
+                unset($this->slugSuggestion[$target][$locale]);
+            }
+        }
+    }
+
+    /**
+     * The pending slug suggestion for a target/locale, or null. The label component calls this
+     * (guarded by method_exists) to render the inline prompt only when there is one.
+     */
+    public function slugSuggestionFor(string $target, string $locale = ''): ?string
+    {
+        return $this->slugSuggestion[$target][$locale] ?? null;
+    }
+
+    /**
+     * Accept a pending slug suggestion: fill the slug with the title's slug and let it follow
+     * silently again (it now matches the title, so it is no longer a hand edit).
+     */
+    public function applySlugSuggestion(string $target, string $locale = ''): void
+    {
+        $suggestion = $this->slugSuggestion[$target][$locale] ?? null;
+        if ($suggestion === null) {
+            return;
+        }
+
+        $this->setSlugFieldValue($target, $locale, $suggestion);
+        unset($this->slugSuggestion[$target][$locale]);
+        $this->slugCustomized[$target][$locale] = false;
+    }
+
+    /**
+     * Dismiss a pending slug suggestion, keeping the deliberate slug as it is.
+     */
+    public function dismissSlugSuggestion(string $target, string $locale = ''): void
+    {
+        unset($this->slugSuggestion[$target][$locale]);
     }
 
     /**

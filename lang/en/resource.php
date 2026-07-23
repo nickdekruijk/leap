@@ -46,4 +46,7 @@ return [
     'translate_from' => 'Translate from',
     'updated' => 'updated',
     'required_in_one_locale' => 'The :attribute field is required in at least one language.',
+    'slug_update_suggest' => 'Title changed. Update the slug to “:slug”?',
+    'slug_update_apply' => 'Update',
+    'slug_update_dismiss' => 'Keep current slug',
 ];

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A slug can follow its title, on your terms.** When you change a title in the editor, an
+  unedited slug on a freshly created record follows it automatically (you are still setting the
+  page up). On an older record — or once you have edited the slug by hand — the change instead
+  offers an inline "update the slug to …?" suggestion right under the slug field, so a live,
+  indexed URL is never changed without a click. The window is configurable via the new
+  `leap.slug_follow_minutes` config (default 60, `0` = always ask). The suggestion renders on the
+  slug field's own label row, right after its hint. `leap:module` now also emits the slug field
+  directly after its title (whatever the column order), so a generated module shows the prompt
+  where you are looking.
+
 ### Fixed
 
 - **Editing a title no longer crashes the editor on a multilingual page.** The editor refreshes a

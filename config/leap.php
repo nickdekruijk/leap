@@ -305,6 +305,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | slug_follow_minutes
+    |--------------------------------------------------------------------------
+    |
+    | How long after a record is created an unedited slug keeps silently
+    | following its title in the editor. While within this window a title
+    | change updates the derived slug automatically (you are still setting the
+    | page up). After it — or once the slug has been edited by hand — a title
+    | change instead offers an inline suggestion, so a live/indexed URL is
+    | never changed without confirmation. Set to 0 to always ask.
+    |
+    */
+    'slug_follow_minutes' => 60,
+
+    /*
+    |--------------------------------------------------------------------------
     | sitemap
     |--------------------------------------------------------------------------
     |

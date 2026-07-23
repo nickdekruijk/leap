@@ -38,6 +38,21 @@
                     <span class="leap-hint-tooltip">{!! $attribute->hint !!}</span>
                 </span>
             @endif
+            {{-- "The title changed, update the slug?" prompt, inline after the label/hint. Uses
+                 role="button" spans (not <button>) so the surrounding <label> keeps associating
+                 with its input rather than adopting a labelable button. The method_exists guard
+                 keeps this label component usable from other Livewire components (Profile, 2FA)
+                 that share it but have no slug state. --}}
+            @php($slugLocale = $attribute->currentLocale ?? '')
+            @if (method_exists($this, 'slugSuggestionFor') && ($suggestedSlug = $this->slugSuggestionFor($attribute->name, $slugLocale)))
+                <span class="leap-slug-suggestion">
+                    {{ __('leap::resource.slug_update_suggest', ['slug' => $suggestedSlug]) }}
+                    <span class="leap-slug-suggestion-apply" role="button" tabindex="0"
+                        wire:click="applySlugSuggestion('{{ $attribute->name }}', '{{ $slugLocale }}')">{{ __('leap::resource.slug_update_apply') }}</span>
+                    <span class="leap-slug-suggestion-dismiss" role="button" tabindex="0" aria-label="{{ __('leap::resource.slug_update_dismiss') }}"
+                        wire:click="dismissSlugSuggestion('{{ $attribute->name }}', '{{ $slugLocale }}')">&times;</span>
+                </span>
+            @endif
         </span>
     @endif
     @error($attribute->dataName ?? $name)

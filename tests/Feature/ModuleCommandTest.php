@@ -2,8 +2,10 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use NickDeKruijk\Leap\Classes\ModuleGenerator;
 use NickDeKruijk\Leap\Tests\Fixtures\TestModel;
 use NickDeKruijk\Leap\Tests\TestCase;
 
@@ -79,6 +81,28 @@ class ModuleCommandTest extends TestCase
         $this->assertStringContainsString("Attribute::make('body')->richtext()", $source);
         $this->assertStringContainsString("Attribute::make('summary')->textarea()", $source);
         $this->assertStringContainsString("'nl' => 'Title', 'en' => 'Title'", $source);
+    }
+
+    public function test_a_slug_is_placed_directly_after_its_title_whatever_the_column_order(): void
+    {
+        // Column order puts other fields between title and slug.
+        Schema::create('slug_order_models', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('body')->nullable();
+            $table->string('slug')->unique();
+            $table->timestamps();
+        });
+
+        $model = new class extends Model
+        {
+            protected $table = 'slug_order_models';
+        };
+
+        $names = array_column((new ModuleGenerator($model::class))->columnPlans(), 'name');
+        $titleIndex = array_search('title', $names, true);
+
+        $this->assertSame('slug', $names[$titleIndex + 1] ?? null, 'The slug must sit directly after the title.');
     }
 
     /**

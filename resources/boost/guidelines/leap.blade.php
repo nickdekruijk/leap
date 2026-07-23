@@ -47,8 +47,10 @@ class Page extends Resource
 - Behaviour: `->index()` (show as column), `->indexOnly()`, `->searchable()`,
   `->sortable()`, `->filterable()`, `->required()`, `->unique()`, `->default()`,
   `->hint('...')` (renders an (i) tooltip).
-- Slugs: declare `->slugFrom('title')` on the slug field. (`->slugify('slug')` on the
-  source field is the deprecated inverse — prefer `slugFrom`.)
+- Slugs: declare `->slugFrom('title')` on the slug field, and place it directly after its
+  title field — the editor shows the "title changed, update the slug?" suggestion right under
+  the slug input. (`->slugify('slug')` on the source field is the deprecated inverse — prefer
+  `slugFrom`.)
 - `->label()`, `->placeholder()` and `->hint()` also accept a per-locale array,
   e.g. `->label(['nl' => 'Titel', 'en' => 'Title'])`.
 
