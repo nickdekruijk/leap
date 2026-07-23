@@ -23,7 +23,7 @@ change in a minor release — don't call them from application code.
 
 ## Non-breaking by design
 
-- **Runtimes:** PHP 8.3–8.4, Laravel 12/13, Livewire 3/4.
+- **Runtimes:** PHP 8.3–8.5, Laravel 12/13, Livewire 3/4.
 - **Multilingual is opt-in:** with `leap.locales` at its default `null`, editor and
   storage behaviour is byte-for-byte identical to before.
 - **New `Attribute` methods are additive.** `slugFrom()` adds a slug-field way to

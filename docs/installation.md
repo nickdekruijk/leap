@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- PHP 8.3–8.4
+- PHP 8.3–8.5
 - Laravel 12 or 13
 - Livewire 3.7 or 4.1
 

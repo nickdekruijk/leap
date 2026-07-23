@@ -5,6 +5,20 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-07-23
+
+### Added
+
+- **PHP 8.5 is tested and supported.** The CI matrix gains it as a third runtime, so it
+  now runs PHP 8.3/8.4/8.5 × Laravel 12/13 × prefer-lowest/prefer-stable.
+
+### Changed
+
+- **The documented runtimes read PHP 8.3–8.5.** `composer.json` already required
+  `^8.3`, which allowed 8.5 all along — so a project could run on it while nothing ever
+  tested that combination. Nothing changes for an existing install; this closes the gap
+  between what the constraint permits and what is actually verified.
+
 ## [1.0.0] — 2026-07-23
 
 The stable release. The API frozen at 0.9.0 has held through the whole 0.10.x line, and
