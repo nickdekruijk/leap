@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Traits;
 
 use ArrayObject;
 use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Mediable;
 
 /**
@@ -53,7 +54,7 @@ trait HasSections
                     ? ! array_diff(array_keys($value), $localeKeys)
                     : array_keys($value) !== range(0, count($value) - 1);
                 if ($isPerLocale) {
-                    $section[$field] = $value[app()->getLocale()] ?? (reset($value) ?: '');
+                    $section[$field] = Leap::localize($value) ?? '';
                 }
             }
             $sections[$key] = new ArrayObject($section);

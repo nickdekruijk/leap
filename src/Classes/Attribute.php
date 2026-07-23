@@ -4,12 +4,11 @@ namespace NickDeKruijk\Leap\Classes;
 
 use Exception;
 use Illuminate\Support\Str;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
 class Attribute
 {
-    public static $_instance = null;
-
     public string $dataName;
 
     public string $name;
@@ -101,13 +100,13 @@ class Attribute
      */
     public static function make(string $name): Attribute
     {
-        self::$_instance = new self;
-        self::$_instance->dataName = 'data.'.$name;
-        self::$_instance->name = $name;
+        $instance = new self;
+        $instance->dataName = 'data.'.$name;
+        $instance->name = $name;
 
-        self::$_instance->label = self::$_instance->labelIndex = trans(Str::headline($name));
+        $instance->label = $instance->labelIndex = trans(Str::headline($name));
 
-        return self::$_instance;
+        return $instance;
     }
 
     /**
@@ -357,20 +356,16 @@ class Attribute
      */
     public function foreign($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
     {
-        $this->type = 'foreign';
-        $this->input = 'select';
-        $this->wire = 'live';
-
-        // Set model and id column based on column name, e.g. user_id will make the model App\Models\User referenced by id
-        $this->options['model'] = $model ?: 'App\\Models\\'.ucfirst(explode('_', $this->name)[0]);
-        $this->options['id_column'] = $id_column ?: explode('_', $this->name)[1] ?? 'id';
-        $this->options['scope'] = $scope;
-        $this->options['orderBy'] = $orderBy;
-
-        // If index is set make sure it's an array
-        $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
-
-        return $this;
+        // Guess model and id column from the column name, e.g. user_id becomes App\Models\User referenced by id
+        return $this->relation(
+            'foreign',
+            'select',
+            $model ?: 'App\\Models\\'.ucfirst(explode('_', $this->name)[0]),
+            $id_column ?: explode('_', $this->name)[1] ?? 'id',
+            $scope,
+            $orderBy,
+            $index,
+        );
     }
 
     /**
@@ -385,34 +380,51 @@ class Attribute
      */
     public function pivot($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
     {
-        $this->type = 'pivot';
-        $this->input = 'pivot';
+        // Guess the model from the plural column name, e.g. users becomes App\Models\User
+        return $this->relation(
+            'pivot',
+            'pivot',
+            $model ?: 'App\\Models\\'.ucfirst(Str::singular($this->name)),
+            $id_column ?: 'id',
+            $scope,
+            $orderBy,
+            $index,
+        );
+    }
+
+    /**
+     * The shared setup of the relation-backed attribute types (foreign, pivot):
+     * a live select fed by another model's rows.
+     *
+     * @param  string|array|null  $index  columns to show, comma-separated or as array
+     */
+    private function relation(string $type, string $input, string $model, string $id_column, $scope, $orderBy, $index): Attribute
+    {
+        $this->type = $type;
+        $this->input = $input;
         $this->wire = 'live';
 
-        // Set model and id column based on column name, e.g. users will make the model App\Models\User
-        $this->options['model'] = $model ?: 'App\\Models\\'.ucfirst(Str::singular($this->name));
-        $this->options['id_column'] = $id_column ?: 'id';
+        $this->options['model'] = $model;
+        $this->options['id_column'] = $id_column;
         $this->options['scope'] = $scope;
         $this->options['orderBy'] = $orderBy;
 
         // If index is set make sure it's an array
-        $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
+        $this->options['index'] = $index ? (is_array($index) ? $index : explode(',', $index)) : null;
 
         return $this;
     }
 
+    /**
+     * Make the Attribute a tree (parent selector for hierarchical models).
+     *
+     * The $module, $scope, $orderBy and $index parameters are accepted for
+     * signature compatibility with existing resources but are currently unused.
+     */
     public function tree(?Module $module = null, $scope = null, $orderBy = null, $index = null): Attribute
     {
         $this->type = 'tree';
         $this->input = null;
-        // $this->wire = 'live';
-
-        // $this->options['model'] = $module->getModel()::class;
-        // $this->options['scope'] = $scope;
-        // $this->options['orderBy'] = $orderBy;
-
-        // If index is set make sure it's an array
-        // $this->options['index'] = $index ? (is_array($index) ? $index : (explode(',', $index))) : null;
 
         return $this;
     }
@@ -505,11 +517,7 @@ class Attribute
      */
     protected function localized(string|array|null $value): ?string
     {
-        if (is_array($value)) {
-            return $value[app()->getLocale()] ?? (reset($value) ?: null);
-        }
-
-        return $value;
+        return Leap::localize($value);
     }
 
     public function label(string|array|null $label = null, string|array|null $labelIndex = null): Attribute

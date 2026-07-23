@@ -17,10 +17,12 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Livewire\Toasts;
+use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 use Spatie\Translatable\HasTranslations;
 
 class Resource extends Module
 {
+    use ToastsValidationErrors;
     use WithFileUploads;
 
     /**
@@ -304,11 +306,30 @@ class Resource extends Module
 
     public function hasTranslation(Attribute $attribute): bool
     {
-        if ($this->translatable) {
-            return in_array($attribute->name, $this->translatable);
+        $translatable = $this->translatable();
+
+        return $translatable ? in_array($attribute->name, $translatable) : false;
+    }
+
+    /**
+     * Whether the resolver already asked the model, so a genuinely
+     * non-translatable model is not re-instantiated on every call.
+     */
+    private bool $translatableResolved = false;
+
+    /**
+     * The model's translatable attribute names, or false when the model is not
+     * translatable. Resolved lazily from the model — callers no longer need to
+     * call getModel() first to prime the $translatable property.
+     */
+    public function translatable(): array|false
+    {
+        if ($this->translatable === false && ! $this->translatableResolved) {
+            $this->getModel();
+            $this->translatableResolved = true;
         }
 
-        return false;
+        return $this->translatable;
     }
 
     private Attribute|false|null $sortableCache = null;
@@ -495,9 +516,7 @@ class Resource extends Module
         }
         $validator = Validator::make(['data' => $this->data], $rules, [], $this->validationAttributes());
         if ($validator->fails()) {
-            foreach ($validator->messages()->keys() as $fieldKey) {
-                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
-            }
+            $this->toastValidationErrors($validator);
             $validator->validate();
 
             return false;
@@ -1014,20 +1033,15 @@ class Resource extends Module
     }
 
     /**
-     * Extra buttons to add to editor toolbar just before the cancel/close button
+     * Extra buttons to add to editor toolbar just before the cancel/close button.
+     * Override in a resource and return entries shaped like:
+     * ['label' => 'Opslaan', 'icon' => 'fas-save', 'livewire' => 'ComponentName', 'action' => 'method']
      *
-     * @return array
+     * @return array<int, array{label: string, icon: string, livewire: string, action: string}>
      */
     public function editorButtons()
     {
-        return [
-            // [
-            //     'label' => 'Opslaan',
-            //     'icon' => 'fas-save',
-            //     'livewire' => 'ComponentName',
-            //     'action' => 'method',
-            // ],
-        ];
+        return [];
     }
 
     public function render()

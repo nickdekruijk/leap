@@ -1,7 +1,7 @@
 .leap {
     .leap-editor {
         background-color: var(--leap-grey-light);
-        box-shadow: inset rgb(0 0 0 / .05) 1px 0 0;
+        box-shadow: inset var(--leap-tint-dark) 1px 0 0;
         position: absolute;
         overflow: auto;
         width: 100%;
@@ -97,7 +97,7 @@ BODY.sorting {
 }
 BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     &:has(> LABEL.leap-label:first-child:hover) {
-        background-color: rgb(0 0 0 / .05);
+        background-color: var(--leap-tint-dark);
         LABEL.leap-label .svg-icon {
             opacity: 0.6;
         }
@@ -272,7 +272,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
            so hovering it is a no-op instead of implying something new happens. */
         .leap-editor & .leap-button.active,
         .leap-editor & .leap-button.active:hover:not([disabled]) {
-            background-color: rgb(255 255 255 / .2);
+            background-color: var(--leap-line-light);
             border-color: transparent;
             cursor: default;
         }
@@ -281,7 +281,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         width: auto;
         min-width: 110px;
         line-height: 1.3;
-        border-color: rgb(255 255 255 / .2);
+        border-color: var(--leap-line-light);
         background-color: transparent;
         color: white;
         font-size: var(--font-size-button);
@@ -292,7 +292,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         }
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
         &:hover:not([disabled]) {
-            background-color: rgb(255 255 255 / .2);
+            background-color: var(--leap-line-light);
             border-color: transparent;
             cursor: pointer;
         }
@@ -349,7 +349,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
 
     &:hover,
     &:focus-visible {
-        border-color: #0cb;
+        border-color: var(--leap-blue-light);
         &::after {
             opacity: 0.6;
         }

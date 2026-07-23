@@ -2,7 +2,6 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
-use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -20,30 +19,32 @@ use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
 use NickDeKruijk\Leap\Traits\CanLog;
+use NickDeKruijk\Leap\Traits\InteractsWithAiImages;
+use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 
 class Editor extends Component
 {
     use CanLog;
+    use InteractsWithAiImages;
+    use ToastsValidationErrors;
     use WithRateLimiting;
 
-    /**
-     * Rate-limit an AI action (paid third-party call) per user; toast + abort when
-     * exceeded. Returns false when the caller should stop.
-     */
-    private function aiRateLimit(): bool
+    const int CREATE_NEW = -1;
+
+    protected function aiImagePermission(): string
     {
-        try {
-            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
-
-            return true;
-        } catch (TooManyRequestsException $e) {
-            $this->dispatch('toast-error', __('leap::resource.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
-
-            return false;
-        }
+        return 'update';
     }
 
-    const int CREATE_NEW = -1;
+    protected function aiImageFolder(): string
+    {
+        return ImageGenerator::folderFor(Leap::context()->module());
+    }
+
+    protected function aiLangFile(): string
+    {
+        return 'leap::resource';
+    }
 
     /**
      * The id of the row currently being edited, also toggles editor
@@ -144,11 +145,7 @@ class Editor extends Component
      */
     public function editorLocales(): array
     {
-        $module = $this->parentModule();
-        // Resource::$translatable is populated from the model in getModel(); ensure it's initialised
-        $module->getModel();
-
-        return $module->translatable ? (config('leap.locales') ?: []) : [];
+        return $this->parentModule()->translatable() ? (config('leap.locales') ?: []) : [];
     }
 
     /**
@@ -526,11 +523,8 @@ class Editor extends Component
                     $sectionData['_title'] = collect($sectionAttributes)
                         ->where('sectionTitle', true)
                         ->map(function ($title) use ($sectionData) {
-                            $value = $sectionData[$title->name] ?? '';
                             // Translatable section fields are stored per locale; use the active one for the label
-                            if (is_array($value)) {
-                                $value = $value[$this->activeLocale] ?? (reset($value) ?: '');
-                            }
+                            $value = Leap::localize($sectionData[$title->name] ?? '', $this->activeLocale) ?? '';
 
                             return strip_tags($value);
                         })
@@ -1189,10 +1183,7 @@ class Editor extends Component
 
         $validator = Validator::make(['data' => $data], $this->rules($id), $this->messages(), $this->validationAttributes());
         if ($validator->fails()) {
-            // Show validation errors as toasts
-            foreach ($validator->messages()->keys() as $fieldKey) {
-                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
-            }
+            $this->toastValidationErrors($validator);
             // Show validation errors
             $validator->validate();
 
@@ -1283,8 +1274,13 @@ class Editor extends Component
 
             $this->updateAttributes($model);
 
+            // Collect the three dirty sets once: pivotIsDirty() queries the database,
+            // so calling it per check would cost a round-trip each time.
+            $dirty = $model->getDirty();
+            $pivotDirty = $this->pivotIsDirty();
+
             // Check if anything changed
-            if ($model->isDirty() || $this->mediaUpdated || $this->pivotIsDirty()) {
+            if ($dirty || $this->mediaUpdated || $pivotDirty) {
                 if ($this->editing == self::CREATE_NEW) {
                     $model->save();
                     $this->syncMedia($model);
@@ -1295,10 +1291,11 @@ class Editor extends Component
                     $this->dispatch('updateIndex', $model->id);
                     $this->editing = $model->id;
                 } else {
-                    if (count($model->getDirty()) + count($this->mediaUpdated) + count($this->pivotIsDirty()) > 3) {
-                        $this->dispatch('toast', count($model->getDirty()) + count($this->mediaUpdated).' '.__('leap::resource.columns').' '.__('leap::resource.updated'))->to(Toasts::class);
+                    $updated = count($dirty) + count($this->mediaUpdated) + count($pivotDirty);
+                    if ($updated > 3) {
+                        $this->dispatch('toast', $updated.' '.__('leap::resource.columns').' '.__('leap::resource.updated'))->to(Toasts::class);
                     } else {
-                        foreach (array_merge($model->getDirty(), $this->mediaUpdated, $this->pivotIsDirty()) as $attribute => $value) {
+                        foreach (array_merge($dirty, $this->mediaUpdated, $pivotDirty) as $attribute => $value) {
                             $this->dispatch('toast', ucfirst($this->parentModule()->validationAttributes()['data.'.explode('.', $attribute)[0]]).' '.__('leap::resource.updated'))->to(Toasts::class);
                         }
                     }
@@ -1394,24 +1391,6 @@ class Editor extends Component
     }
 
     /**
-     * Whether the AI image generation feature is configured (provider + api key).
-     */
-    public function aiImageEnabled(): bool
-    {
-        return AiTask::for('image')->enabled();
-    }
-
-    /**
-     * The indicative price of one generation, shown before the user commits to it.
-     * Null when the configured model has no known rate — better nothing than a wrong
-     * amount. See leap.ai.pricing.
-     */
-    public function aiImageEstimate(): ?float
-    {
-        return AiTask::for('image')->estimatedCost();
-    }
-
-    /**
      * A prompt suggestion for a media attribute, built from what the editor is
      * looking at: the record's title plus the text of the section the field belongs
      * to. Fills the generate dialog, where it can be edited before anything is sent.
@@ -1481,68 +1460,15 @@ class Editor extends Component
     }
 
     /**
-     * Generate an image for review. Nothing is stored yet: the bytes are parked in the
-     * cache under a one-off token and returned as a data URI for the preview, so an
-     * image the editor rejects never leaves a file behind. Returns the token, the
-     * preview and what the call cost (null when the model has no configured rate).
-     *
-     * @return array{token?: string, preview?: string, cost?: float|null}
-     */
-    public function generateImage(string $prompt, string $aspect): array
-    {
-        Leap::validatePermission('update');
-
-        if (trim($prompt) === '' || ! $this->aiRateLimit()) {
-            return [];
-        }
-
-        try {
-            $image = ImageGenerator::generate($prompt, $aspect);
-        } catch (\Throwable $e) {
-            $this->dispatch('toast-error', __('leap::resource.image_failed'))->to(Toasts::class);
-
-            return [];
-        }
-
-        return [
-            'token' => ImageGenerator::park($image, $prompt),
-            'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
-            'cost' => $image['cost'],
-        ];
-    }
-
-    /**
      * Accept a generated image: store it in the module's folder, describe it, and
      * attach it to the attribute the same way picking a file from the browser does.
      * Saving stays the editor's own Save button.
      */
     public function useGeneratedImage(string $attribute, string $token): void
     {
-        Leap::validatePermission('update');
-
-        $image = ImageGenerator::unpark($token);
-
-        if (! $image) {
-            $this->dispatch('toast-error', __('leap::resource.image_expired'))->to(Toasts::class);
-
+        if (! $media = $this->acceptGeneratedImage($token)) {
             return;
         }
-
-        $media = ImageGenerator::store(
-            $image['data'],
-            $image['extension'],
-            ImageGenerator::folderFor(Leap::context()->module()),
-            $image['prompt'],
-            $image,
-        );
-
-        if (! $media) {
-            $this->dispatch('toast-error', __('leap::resource.image_failed'))->to(Toasts::class);
-
-            return;
-        }
-
-        ImageGenerator::describeAndStore($media);
 
         $this->mediaUpdated[$attribute] = $attribute;
         $this->data[$attribute] = [...(array) ($this->data[$attribute] ?? []), $media->id];

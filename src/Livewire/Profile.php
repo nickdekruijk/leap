@@ -18,9 +18,11 @@ use NickDeKruijk\Leap\Actions\SendTwoFactorEmailCode;
 use NickDeKruijk\Leap\Actions\VerifyTwoFactorEmailCode;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
+use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 
 class Profile extends Module
 {
+    use ToastsValidationErrors;
     use WithRateLimiting;
 
     public $component = 'leap.profile';
@@ -118,7 +120,7 @@ class Profile extends Module
         Leap::validatePermission('update');
 
         // Only one two factor method can be active at a time
-        $this->disableTwoFactorEmail(silent: true);
+        $this->resetTwoFactorEmail();
 
         $enable($this->user);
 
@@ -224,25 +226,31 @@ class Profile extends Module
         $this->dispatch('toast', __('leap::auth.two_factor_email_resent'))->to(Toasts::class);
     }
 
-    public function disableTwoFactorEmail(bool $silent = false)
+    public function disableTwoFactorEmail()
     {
-        if (! $silent) {
-            Leap::validatePermission('update');
-        }
+        // Livewire methods are client-callable with arbitrary arguments, so the
+        // permission check must not be skippable via a parameter; the silent
+        // variant below is protected and only reachable from server-side code.
+        Leap::validatePermission('update');
 
+        $this->resetTwoFactorEmail();
+
+        $this->confirmCode = null;
+        $this->log('two-factor-email-disable');
+        $this->dispatch('toast', __('leap::auth.two_factor_disabled'))->to(Toasts::class);
+    }
+
+    /**
+     * Clear the e-mail second factor without logging or toasting, for internal
+     * use when another enrollment supersedes it.
+     */
+    protected function resetTwoFactorEmail(): void
+    {
         Cache::forget(SendTwoFactorEmailCode::cacheKey($this->user));
 
         if ($this->user->two_factor_email_confirmed_at) {
             $this->user->forceFill(['two_factor_email_confirmed_at' => null])->save();
         }
-
-        if ($silent) {
-            return;
-        }
-
-        $this->confirmCode = null;
-        $this->log('two-factor-email-disable');
-        $this->dispatch('toast', __('leap::auth.two_factor_disabled'))->to(Toasts::class);
     }
 
     public function getTitle(): string
@@ -283,10 +291,7 @@ class Profile extends Module
         // Run validation
         $validator = Validator::make(['data' => $this->data], $this->rules(), [], $this->validationAttributes());
         if ($validator->fails()) {
-            // Show validation errors as toasts
-            foreach ($validator->messages()->keys() as $fieldKey) {
-                $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
-            }
+            $this->toastValidationErrors($validator);
             // Show validation errors
             $validator->validate();
         } else {

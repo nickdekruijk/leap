@@ -26,7 +26,7 @@ trait NavigationItem
      */
     public function getPriority(): int
     {
-        return $this->priority ?: 1;
+        return $this->priority ?? 1;
     }
 
     /**

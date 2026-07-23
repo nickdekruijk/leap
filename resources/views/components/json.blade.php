@@ -11,6 +11,7 @@
             </label>
         @endforeach
     @else
-        <div disabled class="leap-textarea">{!! nl2br($value) !!}</div>
+        {{-- Escape before nl2br: JSON columns hold user-submitted data (e.g. form submissions) --}}
+        <div disabled class="leap-textarea">{!! nl2br(e($value)) !!}</div>
     @endif
 </x-leap::label>

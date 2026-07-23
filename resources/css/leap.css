@@ -58,8 +58,11 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
 
     /* shared primitives (dedupe repeated literals) */
     --leap-radius: 3px;
+    --leap-radius-lg: 6px;
     --leap-border: 1px solid rgb(0 0 0 / .2);
     --leap-field-bg: rgb(255 255 255 / .5);
+    --leap-tint-dark: rgb(0 0 0 / .05);
+    --leap-line-light: rgb(255 255 255 / .2);
 
     /* responsive button/link text scale (separate from --font-size: different
        values and breakpoints), shared by .leap-button, the locale select and
@@ -121,6 +124,22 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
         padding: 0;
         cursor: inherit;
     }
+
+    /* utility: center content both ways (thumbnails, spinners, overlays) */
+    .leap-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* utility: full-screen backdrop; z-index and background set per use */
+    .leap-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .leap-main {
@@ -168,8 +187,7 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
     .leap-search-input {
         margin-left: auto;
         margin-right: var(--spacing);
-        padding: 6px 10px;
-        border: 1px solid rgb(255 255 255 / .2);
+        border: 1px solid var(--leap-line-light);
         color: white;
         border-radius: var(--leap-radius);
         font: inherit;
@@ -510,7 +528,7 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
                 background-color: var(--leap-index-row);
                 display: table-cell;
                 color: var(--leap-index-row-color);
-                box-shadow: inset rgb(255 255 255 / .35) 0 1px 0, inset rgb(0 0 0 / .05) 0 -1px 0;
+                box-shadow: inset rgb(255 255 255 / .35) 0 1px 0, inset var(--leap-tint-dark) 0 -1px 0;
                 padding-top: 6px;
                 padding-bottom: 6px;
                 max-width: 30vw;
@@ -534,7 +552,7 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
             &:hover {
                 .leap-index-column,
                 TD {
-                    box-shadow: inset rgb(0 0 0 / .05) 0 -1px 0;
+                    box-shadow: inset var(--leap-tint-dark) 0 -1px 0;
                 }
                 cursor: pointer;
             }
@@ -556,7 +574,7 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
                     background-color: var(--leap-grey) !important;
                     font-size: 1em;
                     color: var(--leap-index-row-first-color);
-                    box-shadow: inset rgb(0 0 0 / .05) 0 1px 0, inset rgb(0 0 0 / .05) 0 -1px 0;
+                    box-shadow: inset var(--leap-tint-dark) 0 1px 0, inset var(--leap-tint-dark) 0 -1px 0;
                 }
             }
         }
@@ -593,9 +611,9 @@ html,body,p,ol,ul,li,dl,dt,dd,blockquote,figure,fieldset,legend,textarea,pre,ifr
             display: flex;
         }
         .leap-index-row {
-            box-shadow: inset rgb(255 255 255 / .35) 0 1px 0, inset rgb(0 0 0 / .05) 0 -1px 0;
+            box-shadow: inset rgb(255 255 255 / .35) 0 1px 0, inset var(--leap-tint-dark) 0 -1px 0;
             &.leap-index-row-selected {
-                box-shadow: inset rgb(0 0 0 / .05) 0 -1px 0;
+                box-shadow: inset var(--leap-tint-dark) 0 -1px 0;
                 background-color: var(--leap-index-row-selected);
             }
         }
@@ -807,7 +825,7 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
             align-items: center;
             gap: calc(var(--spacing) / 2);
             padding: calc(var(--spacing) / 3) calc(var(--spacing) / 2);
-            background-color: rgb(0 0 0 / .05);
+            background-color: var(--leap-tint-dark);
             border-radius: var(--leap-radius);
 
             &:not(:first-child) {
@@ -1070,9 +1088,9 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
 
     .leap-button {
         --leap-button-bg: transparent;
-        --leap-button-bg-hover: rgb(255 255 255 / .2);
+        --leap-button-bg-hover: var(--leap-line-light);
         line-height: 1.3;
-        border-color: rgb(255 255 255 / .2);
+        border-color: var(--leap-line-light);
         background-color: var(--leap-button-bg);
         font-size: var(--font-size-button);
         @media (max-width: 512px) {
@@ -1128,10 +1146,6 @@ BODY:not(.sorting) .leap-index-table .leap-index-row:hover {
         background-repeat: no-repeat;
         background-position: 2px 55%;
         background-size: 18px;
-        OPTION {
-            opacity: 0.1;
-            color: red;
-        }
     }
 
     .leap-input::-webkit-datetime-edit {
@@ -1421,6 +1435,14 @@ BODY:not(.sorting) .leap-files LI {
     }
 
     border: 0 none;
+
+    .form-message {
+        margin: 0 var(--spacing);
+        padding: calc(var(--spacing) / 2) var(--spacing);
+        border-radius: var(--leap-radius);
+        background-color: var(--leap-line-light);
+        font-size: var(--font-size-button);
+    }
 }
 
 /* ==== TOASTS ==== */

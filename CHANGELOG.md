@@ -5,9 +5,88 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.10.18] — 2026-07-23
+
+### Changed
+
+- **The login, forgot-password, reset-password and 2FA screens share one scaffold.** The
+  identical dialog/logo/status wrapper is now an `x-leap::auth-card` component. The status
+  message it shows (`.form-message`) had no styling at all and now has some.
+
+- **CSS tokens replace repeated literals.** `--leap-tint-dark` and `--leap-line-light` stand in
+  for the two most-repeated `rgb(…)` values, `--leap-radius-lg` for the recurring 6px radius, and
+  a hard-coded `#0cb` became `var(--leap-blue-light)`. Two opt-in utilities, `.leap-center` and
+  `.leap-overlay`, are available for the repeated flex-center and full-screen-backdrop patterns.
+
+- **The AI image pipeline lives in one trait.** The generate→park→preview→accept→store→describe
+  flow existed twice, nearly line for line, in the editor and the filemanager. Both now use
+  `InteractsWithAiImages`; the components only declare their permission, target folder and
+  language file, and keep their own handling of the accepted image.
+
+- **Repeated snippets became shared helpers.** `Leap::localize()` resolves a per-locale array to
+  one string (was open-coded six times), `toastValidationErrors()` turns a failed validator into
+  toasts (was copied three times), `Media::TYPES` is the single list of which extensions and MIME
+  types count as image/bitmap/audio/video (was two drifting copies), `ImageGenerator::ratio()` is
+  the one aspect-ratio parser, and `Attribute::foreign()`/`pivot()` share one relation builder.
+
+- **`Resource::translatable()` resolves itself.** `hasTranslation()` used to return wrong results
+  until something happened to call `getModel()` first (the editor called it just to prime the
+  property). The translatable attribute list is now resolved lazily on first use.
+
+- **Saving no longer asks the database three times whether pivots changed**, and the
+  "N columns updated" toast now counts pivot changes too.
+
+### Security
+
+- **A permission only grants when it is strictly `true`.** An operator-precedence slip
+  (`?? false === true` parses as `?? (false === true)`) meant the permission gate returned the
+  raw stored value instead of comparing it to `true`, so any truthy value — `1`, `"yes"` — passed.
+  The comparison is now explicit and covered by a regression test.
+
+- **Uploaded SVGs are sanitized.** SVG is XML that can carry scripts, and the filemanager disk is
+  typically public and same-origin — an SVG with an embedded `<script>` would run in the session
+  of anyone opening its URL. Uploads now strip script and foreignObject blocks, inline event
+  handlers and `javascript:` URLs before storing. Opt out with
+  `leap.filemanager.sanitize_svg => false`.
+
+- **Destructive filemanager operations re-validate their paths.** `$selectedFiles` and
+  `$openFolders` are public Livewire properties a hostile client can set directly; delete, crop,
+  focus-point, alt-text and upload now refuse dot-segments and absolute paths the same way rename
+  already did.
+
+- **The JSON read-only field escapes its values.** The `json` attribute renders stored JSON —
+  often user-submitted data such as form submissions — and printed keys and values unescaped,
+  allowing stored XSS in the admin. Same for the 2FA status message, escaped for consistency.
+
+- **Disabling e-mail 2FA always checks permission.** `disableTwoFactorEmail()` took a
+  `$silent` flag that skipped the permission check, and Livewire methods are client-callable with
+  arbitrary arguments. The silent variant is now a protected method the client cannot reach.
 
 ### Fixed
+
+- **Logging with a string context no longer crashes when another module is active.** The
+  module-mismatch branch in `CanLog::log()` wrote an array key onto the string before the
+  string-to-array normalisation ran — a PHP 8 fatal. The context is now normalised first.
+
+- **Upload size config accepts lowercase suffixes.** `bytes()` only knew `K/M/G`, so a
+  `upload_max_filesize` of `'20m'` was read as 20 bytes and rejected nearly every upload.
+
+- **A module priority of `0` is honoured.** Module discovery and `getPriority()` used `?:`,
+  which treats `0` as unset and overwrote it with a fallback; both now use `??`. Module discovery
+  also no longer trips over an empty module list.
+
+- **AI replies wrapped in prose decode reliably.** The JSON object in a provider reply was
+  extracted with a greedy brace match, which corrupts the decode as soon as the surrounding prose
+  contains a `}`. Replies are now decoded directly (code fences stripped) with a balanced-brace
+  fallback, shared by translation and alt-text generation as `AiTask::decodeReply()`.
+
+- **The disable-2FA and delete-passkey buttons are red again.** Profile used a `danger` button
+  variant that has no CSS; they now use the same `secondary` variant as every other destructive
+  button.
+
+- **Debug leftovers removed.** A stray red `OPTION` style in the select styling, a red
+  placeholder background on the file-browser dialog, a dead `padding` declaration and a
+  commented-out `dd()`.
 
 - **A slug only has to be unique among its siblings.** `HasSlug` has always scoped slug
   generation to siblings (the same slug may repeat under a different parent — `/a/options` and

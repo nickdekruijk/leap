@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Support\Facades\Gate;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
@@ -43,5 +45,22 @@ class AccessControlTest extends TestCase
         $response = $this->get(route('leap.home'));
 
         $response->assertRedirect(route('leap.login'));
+    }
+
+    public function test_a_permission_grants_only_when_strictly_true(): void
+    {
+        // Regression: "?? false === true" parsed as "?? (false === true)", so the
+        // strict check was dead and any truthy stored value passed the gate.
+        $this->actingAs($this->createUser());
+        Leap::context()->setModule('TestModule');
+
+        Leap::context()->setPermissions(['TestModule' => ['update' => 1]]);
+        $this->assertFalse(Gate::allows('leap::update'));
+
+        Leap::context()->setPermissions(['TestModule' => ['update' => true]]);
+        $this->assertTrue(Gate::allows('leap::update'));
+
+        Leap::context()->setPermissions(['TestModule' => ['all_permissions' => 'yes']]);
+        $this->assertFalse(Gate::allows('leap::update'));
     }
 }

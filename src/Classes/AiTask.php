@@ -91,11 +91,37 @@ class AiTask
 
         $reply = $this->prompt($prompt, [], json: true);
 
-        // Some providers wrap the JSON in a ```json fence; extract the object.
-        $decoded = preg_match('/\{.*\}/s', $reply, $match) ? json_decode($match[0], true) : null;
+        $decoded = self::decodeReply($reply);
 
         // Keep the original value for any key the model dropped.
-        return array_map('strval', array_merge($values, array_intersect_key(is_array($decoded) ? $decoded : [], $values)));
+        return array_map('strval', array_merge($values, array_intersect_key($decoded ?? [], $values)));
+    }
+
+    /**
+     * Decode a JSON object from a provider reply. Providers wrap the object in a
+     * ```json fence or surrounding prose despite instructions, so prefer a clean
+     * decode of the fence-stripped reply and only then fall back to the outermost
+     * brace pair — a greedy match alone corrupts replies whose prose contains "}".
+     */
+    public static function decodeReply(string $reply): ?array
+    {
+        $decoded = json_decode(trim(preg_replace('/^```\w*\s*$/m', '', $reply)), true);
+
+        // Fall back to the first balanced brace pair; counting depth instead of a
+        // greedy match keeps surrounding prose containing "}" from corrupting it.
+        if (! is_array($decoded) && ($start = strpos($reply, '{')) !== false) {
+            $depth = 0;
+            for ($i = $start, $length = strlen($reply); $i < $length; $i++) {
+                if ($reply[$i] === '{') {
+                    $depth++;
+                } elseif ($reply[$i] === '}' && --$depth === 0) {
+                    $decoded = json_decode(substr($reply, $start, $i - $start + 1), true);
+                    break;
+                }
+            }
+        }
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     /**
@@ -434,9 +460,9 @@ class AiTask
      */
     private static function openaiSize(string $aspect): string
     {
-        [$width, $height] = array_pad(array_map('floatval', explode(':', $aspect)), 2, 0);
+        [$width, $height] = ImageGenerator::ratio($aspect);
 
-        if ($width <= 0 || $height <= 0 || $width === $height) {
+        if ($width === $height) {
             return '1024x1024';
         }
 

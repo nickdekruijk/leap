@@ -3,7 +3,6 @@
 namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
-use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
@@ -17,10 +16,12 @@ use NickDeKruijk\Leap\Classes\ImageGenerator;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Module;
+use NickDeKruijk\Leap\Traits\InteractsWithAiImages;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileManager extends Module
 {
+    use InteractsWithAiImages;
     use WithFileUploads;
     use WithRateLimiting;
 
@@ -116,6 +117,9 @@ class FileManager extends Module
         // path segments), rebuild the target directory from the open folders, and
         // re-check the extension and size against the actual uploaded file.
         $name = basename((string) ($this->uploads[$id]['name'] ?? ''));
+        if (! $this->validatePath()) {
+            return;
+        }
         $path = $this->storagePrefix().implode('/', $this->openFolders);
 
         if ($name === '' || ! $this->hasExtension($name, config('leap.filemanager.allowed_extensions'))) {
@@ -148,7 +152,16 @@ class FileManager extends Module
             $name = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
         }
 
-        if ($uploaded->storeAs($path, $name, config('leap.filemanager.disk'))) {
+        // SVG is XML that can carry scripts, and the filemanager disk is typically
+        // public and same-origin — an unsanitized SVG would run in the session of
+        // anyone opening its URL. Strip active content before storing.
+        if ($this->hasExtension($name, 'svg') && config('leap.filemanager.sanitize_svg', true)) {
+            $stored = $this->getStorage()->put($path.'/'.$name, self::sanitizeSvg((string) file_get_contents($uploaded->path())));
+        } else {
+            $stored = (bool) $uploaded->storeAs($path, $name, config('leap.filemanager.disk'));
+        }
+
+        if ($stored) {
             Media::forFile($path.'/'.$name);
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $name]))->to(Toasts::class);
             $this->log('upload', $path.'/'.$name);
@@ -180,7 +193,7 @@ class FileManager extends Module
     {
         $value = trim($value);
         $num = (int) $value;
-        $last = substr($value, -1);
+        $last = strtoupper(substr($value, -1));
 
         $factor = [
             'K' => 1,
@@ -373,6 +386,9 @@ class FileManager extends Module
     {
         Leap::validatePermission('delete');
         foreach ($this->selectedFiles as $id => $file) {
+            if (! $this->validatePath($file)) {
+                continue;
+            }
             $full = $this->full($file);
             $media = Media::findFile($full);
             if ($media) {
@@ -406,6 +422,9 @@ class FileManager extends Module
         Leap::validatePermission('delete');
 
         $this->closeDirectory($depth);
+        if (! $this->validatePath()) {
+            return false;
+        }
         $full = $this->storagePrefix().implode('/', $this->openFolders);
 
         // Check if the directory exists and is in the columns array, toast error if it doesn't
@@ -469,7 +488,6 @@ class FileManager extends Module
 
         // Close folders if new selected file is in different folder
         if ($fileName && ($depth !== count($this->openFolders) || ! $this->selectedFiles)) {
-            // dd($depth, $this->openFolders);
             $this->closeDirectory($depth);
             $this->selectedFiles = [];
         }
@@ -532,6 +550,31 @@ class FileManager extends Module
         }
 
         return $this->storagePrefix().$full;
+    }
+
+    /**
+     * Validate the client-supplied path segments a destructive operation is about
+     * to act on. $selectedFiles and $openFolders are public Livewire properties,
+     * so they cannot be trusted: reject anything that starts with a slash or dot
+     * or contains a dot-segment, the same rules renameSelectedFile applies (minus
+     * its deliberate single "../" allowance for moving a file up one level).
+     *
+     * @param  string|null  $name  file or folder name relative to the open folders
+     */
+    protected function validatePath(?string $name = null): bool
+    {
+        $segments = $name === null ? $this->openFolders : [...$this->openFolders, $name];
+
+        foreach ($segments as $segment) {
+            $segment = (string) $segment;
+            if ($segment === '' || str_starts_with($segment, '/') || str_starts_with($segment, '.') || str_contains($segment, '/.')) {
+                $this->dispatch('toast-error', __('leap::filemanager.rename_invalid_path', ['attribute' => $segment]))->to(Toasts::class);
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -702,6 +745,22 @@ class FileManager extends Module
         ];
     }
 
+    /**
+     * Strip active content from an uploaded SVG: script and foreignObject blocks,
+     * inline event handlers and javascript: URLs. Regex-based on purpose — no XML
+     * parser dependency — and deliberately coarse: a false positive costs a
+     * decorative attribute, a false negative costs an admin session.
+     */
+    public static function sanitizeSvg(string $svg): string
+    {
+        $svg = preg_replace('/<\s*(script|foreignObject)\b[^>]*>.*?<\s*\/\s*\1\s*>/is', '', $svg);
+        $svg = preg_replace('/<\s*(script|foreignObject)\b[^>]*\/\s*>/i', '', $svg);
+        $svg = preg_replace('/\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $svg);
+        $svg = preg_replace('/\s(href|xlink:href)\s*=\s*(["\']?)\s*(?:javascript|data)\s*:[^"\'>\s]*\2/i', '', $svg);
+
+        return $svg;
+    }
+
     public function hasExtension(string $file, array|string $extensions): bool
     {
         $extension = strtolower(pathinfo($file)['extension'] ?? null);
@@ -714,22 +773,22 @@ class FileManager extends Module
 
     public function isAudio(string $file): bool
     {
-        return $this->hasExtension($file, ['flac', 'mp3', 'wav', 'aac']);
+        return $this->hasExtension($file, Media::TYPES['audio']['extensions']);
     }
 
     public function isVideo(string $file): bool
     {
-        return $this->hasExtension($file, ['mp4', 'm4v', 'mov', 'avi', 'wmv']);
+        return $this->hasExtension($file, Media::TYPES['video']['extensions']);
     }
 
     public function isImage(string $file): bool
     {
-        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp']);
+        return $this->hasExtension($file, Media::TYPES['image']['extensions']);
     }
 
     public function isBitmap(string $file): bool
     {
-        return $this->hasExtension($file, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+        return $this->hasExtension($file, Media::TYPES['bitmap']['extensions']);
     }
 
     public function isPdf(string $file): bool
@@ -757,6 +816,10 @@ class FileManager extends Module
 
         $x = round(max(0, min(100, $x)), 2);
         $y = round(max(0, min(100, $y)), 2);
+
+        if (! $this->validatePath(reset($this->selectedFiles))) {
+            return;
+        }
 
         $media = Media::forFile($this->full(reset($this->selectedFiles)));
         if ($media) {
@@ -816,6 +879,10 @@ class FileManager extends Module
 
         $texts = array_filter(array_map('trim', $texts));
 
+        if (! $this->validatePath(reset($this->selectedFiles))) {
+            return;
+        }
+
         $media = Media::forFile($this->full(reset($this->selectedFiles)));
         if ($media) {
             $meta = $media->meta ?? [];
@@ -850,11 +917,7 @@ class FileManager extends Module
         Leap::validatePermission('update');
 
         // Each call hits a paid third-party API — cap per user.
-        try {
-            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
-        } catch (TooManyRequestsException $e) {
-            $this->dispatch('toast-error', __('leap::filemanager.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
-
+        if (! $this->aiRateLimit()) {
             return [];
         }
 
@@ -867,60 +930,19 @@ class FileManager extends Module
         }
     }
 
-    /**
-     * Whether the AI image generation feature is configured (provider + api key).
-     */
-    public function aiImageEnabled(): bool
+    protected function aiImagePermission(): string
     {
-        return AiTask::for('image')->enabled();
+        return 'create';
     }
 
-    /**
-     * The indicative price of one generation, or null when the configured model has
-     * no known rate. See leap.ai.pricing.
-     */
-    public function aiImageEstimate(): ?float
+    protected function aiImageFolder(): string
     {
-        return AiTask::for('image')->estimatedCost();
+        return $this->storagePrefix().implode('/', $this->openFolders);
     }
 
-    /**
-     * Generate an image for review. Nothing is written to the disk yet: the bytes wait
-     * in the cache under a one-off token, so an image that is not accepted leaves no
-     * file behind. Returns the token, a data URI to preview and what the call cost.
-     *
-     * @return array{token?: string, preview?: string, cost?: float|null}
-     */
-    public function generateImage(string $prompt, string $aspect): array
+    protected function aiLangFile(): string
     {
-        Leap::validatePermission('create');
-
-        if (trim($prompt) === '') {
-            return [];
-        }
-
-        // Each call hits a paid third-party API — cap per user.
-        try {
-            $this->rateLimit((int) config('leap.ai.rate_limit', 30), method: 'ai');
-        } catch (TooManyRequestsException $e) {
-            $this->dispatch('toast-error', __('leap::filemanager.ai_rate_limited', ['seconds' => $e->secondsUntilAvailable]))->to(Toasts::class);
-
-            return [];
-        }
-
-        try {
-            $image = ImageGenerator::generate($prompt, $aspect);
-        } catch (\Throwable $e) {
-            $this->dispatch('toast-error', __('leap::filemanager.image_failed'))->to(Toasts::class);
-
-            return [];
-        }
-
-        return [
-            'token' => ImageGenerator::park($image, $prompt),
-            'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
-            'cost' => $image['cost'],
-        ];
+        return 'leap::filemanager';
     }
 
     /**
@@ -929,31 +951,9 @@ class FileManager extends Module
      */
     public function useGeneratedImage(string $token): void
     {
-        Leap::validatePermission('create');
-
-        $image = ImageGenerator::unpark($token);
-
-        if (! $image) {
-            $this->dispatch('toast-error', __('leap::filemanager.image_expired'))->to(Toasts::class);
-
+        if (! $media = $this->acceptGeneratedImage($token)) {
             return;
         }
-
-        $media = ImageGenerator::store(
-            $image['data'],
-            $image['extension'],
-            $this->storagePrefix().implode('/', $this->openFolders),
-            $image['prompt'],
-            $image,
-        );
-
-        if (! $media) {
-            $this->dispatch('toast-error', __('leap::filemanager.image_failed'))->to(Toasts::class);
-
-            return;
-        }
-
-        ImageGenerator::describeAndStore($media);
 
         $this->selectedFiles = [basename($media->file_name)];
         unset($this->columns);
@@ -977,7 +977,7 @@ class FileManager extends Module
         Leap::validatePermission('update');
 
         $file = reset($this->selectedFiles);
-        if (count($this->selectedFiles) !== 1 || ! $this->imageCropEnabled($file)) {
+        if (count($this->selectedFiles) !== 1 || ! $this->imageCropEnabled($file) || ! $this->validatePath($file)) {
             return;
         }
 

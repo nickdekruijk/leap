@@ -3,11 +3,10 @@
 namespace NickDeKruijk\Leap\Classes;
 
 use Illuminate\Support\Str;
+use NickDeKruijk\Leap\Leap;
 
 class Section
 {
-    public static $_instance = null;
-
     public string $name;
 
     public ?string $view;
@@ -21,13 +20,13 @@ class Section
      */
     public static function make(string $name): Section
     {
-        self::$_instance = new self;
-        self::$_instance->name = $name;
-        self::$_instance->view = 'sections.'.$name;
+        $instance = new self;
+        $instance->name = $name;
+        $instance->view = 'sections.'.$name;
 
-        self::$_instance->label = Str::headline($name);
+        $instance->label = Str::headline($name);
 
-        return self::$_instance;
+        return $instance;
     }
 
     /**
@@ -62,7 +61,7 @@ class Section
     public function label(string|array $label): Section
     {
         // Accept a per-locale array (['nl' => '…', 'en' => '…']) and resolve to the current locale
-        $this->label = is_array($label) ? ($label[app()->getLocale()] ?? (reset($label) ?: '')) : $label;
+        $this->label = (string) (Leap::localize($label) ?? '');
 
         return $this;
     }

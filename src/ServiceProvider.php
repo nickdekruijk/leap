@@ -191,8 +191,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     {
         $modulePermissions = Leap::context()->permissionsFor($module ? $module::class : null);
 
-        return ($modulePermissions[$ability] ?? false === true)
-            || ($modulePermissions['all_permissions'] ?? false === true);
+        return (($modulePermissions[$ability] ?? false) === true)
+            || (($modulePermissions['all_permissions'] ?? false) === true);
     }
 
     /**

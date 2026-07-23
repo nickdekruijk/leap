@@ -80,11 +80,12 @@ class ImageGenerator
     }
 
     /**
-     * An aspect ratio string as a [width, height] pair, falling back to square.
+     * An aspect ratio string ("16:9") as a [width, height] pair, falling back to
+     * square. Public because AiTask picks its provider canvas from the same parse.
      *
      * @return array{int|float, int|float}
      */
-    private static function ratio(string $aspect): array
+    public static function ratio(string $aspect): array
     {
         [$width, $height] = array_pad(array_map('floatval', explode(':', $aspect)), 2, 0);
 
@@ -238,11 +239,9 @@ class ImageGenerator
 
         $reply = $task->prompt($prompt, [['mime' => $media->mime_type, 'data' => $data]], json: true);
 
-        // Some providers (e.g. Claude) wrap the JSON in a ```json code fence despite
-        // the instruction, so extract the object first.
-        $decoded = preg_match('/\{.*\}/s', $reply, $match) ? json_decode($match[0], true) : null;
+        $decoded = AiTask::decodeReply($reply);
 
-        return array_map('strval', array_intersect_key(is_array($decoded) ? $decoded : [], $locales));
+        return array_map('strval', array_intersect_key($decoded ?? [], $locales));
     }
 
     /**

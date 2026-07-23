@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Auth;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
 use NickDeKruijk\Leap\Traits\CanLog;
@@ -57,5 +58,18 @@ class LogUserTest extends TestCase
         $log = $this->logger()::log('test-action');
 
         $this->assertNull($log->user_id);
+    }
+
+    public function test_log_accepts_a_string_context_while_another_module_is_active(): void
+    {
+        // Regression: the module-mismatch branch wrote $context['module'] onto a
+        // string $context before the string-to-array normalisation, a PHP 8 fatal.
+        Leap::context()->setModule('App\\Leap\\SomeOtherModule');
+
+        $log = $this->logger()::log('test-action', 'a plain string context');
+
+        $this->assertSame('App\\Leap\\SomeOtherModule', $log->module);
+        $this->assertSame('a plain string context', $log->context['context']);
+        $this->assertArrayHasKey('module', $log->context);
     }
 }

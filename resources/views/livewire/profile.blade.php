@@ -53,7 +53,7 @@
 
                     <div class="leap-fieldset-buttons">
                         <x-leap::button type="button" svg-icon="fas-rotate" wire:click="regenerateRecoveryCodes" label="leap::auth.two_factor_regenerate" />
-                        <x-leap::button type="button" svg-icon="fas-ban" wire:click="disableTwoFactor" class="danger" label="leap::auth.two_factor_disable" />
+                        <x-leap::button type="button" svg-icon="fas-ban" wire:click="disableTwoFactor" class="secondary" label="leap::auth.two_factor_disable" />
                     </div>
                 @elseif ($this->twoFactorEnrolling)
                     <label class="leap-label">
@@ -88,7 +88,7 @@
                     </label>
 
                     <div class="leap-fieldset-buttons">
-                        <x-leap::button type="button" svg-icon="fas-ban" wire:click="disableTwoFactorEmail" class="danger" label="leap::auth.two_factor_disable" />
+                        <x-leap::button type="button" svg-icon="fas-ban" wire:click="disableTwoFactorEmail" class="secondary" label="leap::auth.two_factor_disable" />
                     </div>
                 @elseif ($this->twoFactorEmailEnrolling)
                     <label class="leap-label">
@@ -130,7 +130,7 @@
                                 <li>
                                     <span>{{ $passkey->name }}</span>
                                     <span>{{ $passkey->last_used_at ? $passkey->last_used_at->diffForHumans() : __('leap::auth.passkey_never_used') }}</span>
-                                    <x-leap::button type="button" svg-icon="fas-trash" class="danger" label="leap::auth.delete" onclick="if (confirm('{{ __('leap::auth.passkey_delete_confirm') }}')) leapPasskeyDelete({{ $passkey->id }})" />
+                                    <x-leap::button type="button" svg-icon="fas-trash" class="secondary" label="leap::auth.delete" onclick="if (confirm('{{ __('leap::auth.passkey_delete_confirm') }}')) leapPasskeyDelete({{ $passkey->id }})" />
                                 </li>
                             @endforeach
                         </ul>

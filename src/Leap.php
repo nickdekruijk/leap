@@ -105,6 +105,20 @@ class Leap
     }
 
     /**
+     * Resolve a value that may be a per-locale array (['nl' => '…', 'en' => '…'])
+     * to the entry for the given locale (default: the current one), falling back
+     * to the first entry. Anything that is not an array passes through untouched.
+     */
+    public static function localize(mixed $value, ?string $locale = null): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return $value[$locale ?? app()->getLocale()] ?? (reset($value) ?: null);
+    }
+
+    /**
      * The URL prefix for the given locale (defaults to the active locale): an empty
      * string for the default/only locale, "/xx" otherwise. Shared by the frontend
      * template's routing, language switcher, sitemap and the leapLocalized() macro

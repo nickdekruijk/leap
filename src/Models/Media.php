@@ -139,21 +139,38 @@ class Media extends Model
         );
     }
 
+    /**
+     * The single source for what counts as which media type. The filemanager
+     * checks file extensions, this model checks stored MIME types; adding a
+     * format means adding it to both lists of its type here and nowhere else.
+     */
+    public const TYPES = [
+        'image' => [
+            'extensions' => ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'],
+            'mimes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+        ],
+        'bitmap' => [
+            'extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            'mimes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+        ],
+        'audio' => [
+            'extensions' => ['flac', 'mp3', 'wav', 'aac'],
+            'mimes' => ['audio/flac', 'audio/mp3', 'audio/wav', 'audio/aac'],
+        ],
+        'video' => [
+            'extensions' => ['mp4', 'm4v', 'mov', 'avi', 'wmv'],
+            'mimes' => ['video/mp4', 'video/m4v', 'video/mov', 'video/avi', 'video/wmv'],
+        ],
+    ];
+
     public function isImage(): bool
     {
-        return Str::contains($this->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']);
+        return Str::contains($this->mime_type, self::TYPES['image']['mimes']);
     }
 
     public function alt(?string $locale = null): string
     {
-        $value = $this->meta['alt'] ?? null;
-        if (is_array($value)) {
-            $locale = $locale ?? app()->getLocale();
-
-            return $value[$locale] ?? reset($value) ?: '';
-        }
-
-        return (string) ($value ?? '');
+        return (string) (Leap::localize($this->meta['alt'] ?? null, $locale) ?? '');
     }
 
     /**
@@ -174,17 +191,17 @@ class Media extends Model
 
     public function isAudio(): bool
     {
-        return Str::contains($this->mime_type, ['audio/flac', 'audio/mp3', 'audio/wav', 'audio/aac']);
+        return Str::contains($this->mime_type, self::TYPES['audio']['mimes']);
     }
 
     public function isVideo(): bool
     {
-        return Str::contains($this->mime_type, ['video/mp4', 'video/m4v', 'video/mov', 'video/avi', 'video/wmv']);
+        return Str::contains($this->mime_type, self::TYPES['video']['mimes']);
     }
 
     public function isBitmap(): bool
     {
-        return Str::contains($this->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+        return Str::contains($this->mime_type, self::TYPES['bitmap']['mimes']);
     }
 
     public function mediables(): HasMany
