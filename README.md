@@ -100,6 +100,13 @@ admin-editable footer, per-page SEO and a sitemap. See
 
 PHP 8.3–8.4 · Laravel 12/13 · Livewire 3/4.
 
+## Releases
+
+Pushing a tag publishes a GitHub release automatically, with that version's
+[CHANGELOG.md](CHANGELOG.md) section as its notes — so the changelog stays the only place
+a release is written. A tag whose version has no changelog section fails the workflow
+rather than publishing an empty release.
+
 ## License
 
 MIT. See [LICENSE.md](LICENSE.md).
