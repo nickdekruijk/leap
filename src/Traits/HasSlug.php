@@ -109,8 +109,12 @@ trait HasSlug
      * or null for a flat model where slugs are globally unique. Defaults to "parent"
      * when the table has that column — so page trees keep sibling scoping and flat
      * models need no configuration. Override to scope by a different column.
+     *
+     * Public because the editor asks the model for it too, to scope a slug field's
+     * unique validation rule the same way this trait scopes generation — otherwise
+     * validation rejects a slug that the trait would happily allow under another parent.
      */
-    protected function slugSiblingColumn(): ?string
+    public function slugSiblingColumn(): ?string
     {
         static $cache = [];
         $table = $this->getTable();

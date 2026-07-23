@@ -595,7 +595,17 @@ class Editor extends Component
      */
     public function messages(): array
     {
-        return ['required_without_all' => __('leap::resource.required_in_one_locale')];
+        $messages = ['required_without_all' => __('leap::resource.required_in_one_locale')];
+
+        // rules() forbids the reserved "/" slug on a page that has a parent. The default not_in
+        // message ("the selected value is invalid") explains nothing, so say what the rule means
+        // — per slug field, and with a wildcard for the per-locale keys (data.slug.en).
+        foreach (array_values($this->slugMap()) as $target) {
+            $messages['data.'.$target.'.not_in'] = __('leap::resource.slug_root_only');
+            $messages['data.'.$target.'.*.not_in'] = __('leap::resource.slug_root_only');
+        }
+
+        return $messages;
     }
 
     /**
@@ -624,6 +634,35 @@ class Editor extends Component
     }
 
     /**
+     * The column that scopes slug uniqueness to siblings, straight from the model (HasSlug
+     * auto-detects a "parent" column and models may override it), or null when the model
+     * does not use HasSlug — then slugs stay globally unique.
+     */
+    protected function slugSiblingColumn(): ?string
+    {
+        $model = $this->getModel();
+
+        return method_exists($model, 'slugSiblingColumn') ? $model->slugSiblingColumn() : null;
+    }
+
+    /**
+     * Scope a unique rule to the record's siblings by appending an extra where pair, the same
+     * form ->unique(ignoreSoftDeletes: true) already uses for ",deleted_at,NULL". The value
+     * comes from the data being edited, so changing the parent re-scopes the rule; a root
+     * record scopes on the literal "NULL", which Laravel validates as whereNull.
+     */
+    protected function siblingScopedRule(mixed $rule, string $siblingColumn): mixed
+    {
+        if (! is_string($rule) || ! str_starts_with($rule, 'unique:')) {
+            return $rule;
+        }
+
+        $value = $this->data[$siblingColumn] ?? null;
+
+        return $rule.','.$siblingColumn.','.($value === null || $value === '' ? 'NULL' : $value);
+    }
+
+    /**
      * Return the validation rules from the attributes
      *
      * @param  int|null  $id  the id of the model to update or null if creating, usedto replace {id} in rules (usualy the unique rule)
@@ -638,6 +677,12 @@ class Editor extends Component
 
         $rules = [];
 
+        // A slug is only unique among its siblings (see HasSlug), so its unique rule has to
+        // be scoped the same way — otherwise validation rejects a slug the model would allow
+        // under another parent.
+        $siblingColumn = $this->slugSiblingColumn();
+        $slugTargets = array_values($this->slugMap());
+
         foreach ($this->attributes() as $attribute) {
             // Walk thru the validation rules of each attribute
             if ($attribute->validate) {
@@ -649,6 +694,21 @@ class Editor extends Component
                         }
                     }
                 }
+
+                // Work on a copy from here: appending the sibling scope is not idempotent the
+                // way the placeholder replacement above is, and $attribute->validate would
+                // collect a second scope on the next rules() call.
+                $validate = $attribute->validate;
+                if ($siblingColumn && in_array($attribute->name, $slugTargets, true)) {
+                    $validate = array_map(fn ($rule) => $this->siblingScopedRule($rule, $siblingColumn), $validate);
+
+                    // "/" is the reserved homepage slug (see HasSlug) and only means anything at
+                    // the root: deeper in the tree it collides with its parent's own URL and the
+                    // page becomes unreachable, so refuse it there.
+                    if (! empty($this->data[$siblingColumn])) {
+                        $validate[] = 'not_in:/';
+                    }
+                }
                 // Add the validation rule — per locale for translatable fields. A "required"
                 // translatable field must be filled in at least one locale, not specifically
                 // the default one: the default-locale rule becomes required_without_all across
@@ -657,7 +717,7 @@ class Editor extends Component
                 // validates, with a single error when no locale is filled at all.
                 if ($this->editorLocales() && $this->parentModule()->hasTranslation($attribute)) {
                     foreach (array_keys($this->editorLocales()) as $locale) {
-                        $localeRules = array_map(fn ($rule) => $this->localeUniqueRule($rule, $locale), $attribute->validate);
+                        $localeRules = array_map(fn ($rule) => $this->localeUniqueRule($rule, $locale), $validate);
 
                         if ($locale === $this->defaultLocale()) {
                             $others = array_values(array_map(
@@ -678,7 +738,7 @@ class Editor extends Component
                         }
                     }
                 } else {
-                    $rules['data.'.$attribute->name] = $attribute->validate;
+                    $rules['data.'.$attribute->name] = $validate;
                 }
             }
         }

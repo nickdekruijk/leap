@@ -49,4 +49,5 @@ return [
     'slug_update_suggest' => 'Titel gewijzigd. Slug bijwerken naar “:slug”?',
     'slug_update_apply' => 'Bijwerken',
     'slug_update_dismiss' => 'Huidige slug behouden',
+    'slug_root_only' => 'Alleen de homepage — een pagina zonder bovenliggende pagina — kan “/” als slug gebruiken.',
 ];

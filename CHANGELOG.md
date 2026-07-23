@@ -5,6 +5,23 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A slug only has to be unique among its siblings.** `HasSlug` has always scoped slug
+  generation to siblings (the same slug may repeat under a different parent — `/a/options` and
+  `/b/options` are different addresses), but the editor's `unique()` rule was global and rejected
+  exactly that: a second "Options" page could not be created under another parent. The rule now
+  carries the same sibling scope the model uses, taken from the parent being edited, so it
+  re-scopes when you move the page. Flat models without a parent column keep global uniqueness.
+
+- **Only a root page can claim the reserved "/" slug.** Sibling-scoped uniqueness (above) would
+  otherwise allow one "/" per parent, and such a page is broken: "/" deeper in the tree resolves
+  to its parent's own path, so the page is unreachable, shows up twice in the sitemap and can
+  displace the real homepage. Giving "/" to a page that has a parent is now a validation error
+  that says so, instead of silently producing a duplicate URL.
+
 ## [0.10.17] — 2026-07-23
 
 ### Added

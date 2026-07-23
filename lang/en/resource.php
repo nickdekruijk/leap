@@ -49,4 +49,5 @@ return [
     'slug_update_suggest' => 'Title changed. Update the slug to “:slug”?',
     'slug_update_apply' => 'Update',
     'slug_update_dismiss' => 'Keep current slug',
+    'slug_root_only' => 'Only the homepage — a page without a parent — can use “/” as its slug.',
 ];
