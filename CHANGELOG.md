@@ -46,11 +46,28 @@ Nothing in this release changes behaviour for an existing project. Upgrading fro
   `App\Models\Admin`, or a `User` outside `App\Models` — got a module pointed at a class
   that does not exist. It now reads the model from the auth provider.
 
+- **`owenvoke/blade-fontawesome` must be 3.2.2 or newer.** The constraint was `^3.1`, and
+  v3.2.1 of that package declares `"php": "^8.3"` while still using PHP 8.4-only syntax in
+  `SyncIconsCommand`. On PHP 8.3 that file is a `ParseError`, and because its service
+  provider registers the command, *every* artisan call fatals — not only the icon sync.
+  v3.1.0 was safe (it correctly required php ^8.4, so Composer skipped it on 8.3); v3.2.1
+  is the version that claims support it does not have.
+
+- **`laravel/pint` must be 1.18.1 or newer.** Pint ships a prebuilt phar and the v1.18.0
+  build is broken on its own: every run dies with `Call to undefined method
+  PhpCsFixer\Config::setParallelConfig()`. Only a `--prefer-lowest` install picked it up.
+
 - **Stale caching documentation.** `docs/upgrading.md` claimed `leap.cache` defaults to
   on and can be disabled with `LEAP_CACHE=false`, contradicting the same document a few
   lines down: the page-tree cache was removed and `LEAP_CACHE` is a no-op. `docs/template.md`
   still explained the consent design in terms of server-side page caching.
   `docs/caching.md` was already correct and is unchanged.
+
+### Added
+
+- **Releases are published from the changelog.** Pushing a tag now creates a GitHub
+  release with that version's `CHANGELOG.md` section as its notes. Packagist reads tags
+  and never needed them, which is why the first 78 tags produced none.
 
 ### Tests
 
