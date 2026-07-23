@@ -3,6 +3,24 @@
 The 1.0 release is designed to minimise breakage. See [CHANGELOG.md](../CHANGELOG.md)
 for the full list; the practical notes:
 
+## What semver covers from 1.0
+
+The module DSL you write against: the fluent builders on `Attribute` and `Section`, and
+the `Module`/`Resource` classes you extend (their properties and overridable methods).
+Alongside those, three things a project depends on without calling any PHP:
+
+- **The consent banner's markup, class names and `window.consent`** — projects style the
+  banner from their own stylesheet and gate their own scripts on that object.
+- **`resources/js/consent.js`** as a path. The frontend template bundles it out of the
+  package by `base_path('vendor/nickdekruijk/leap/resources/js/consent.js')`, so moving
+  the file breaks every generated site with nothing to catch it.
+- **Published view names** under `leap::`, which a project can override with
+  `vendor:publish --tag=leap-views`.
+
+Methods marked `@internal` are Leap's own rendering and plumbing that happen to be
+`public` (PHP has no package-private). They are not part of the supported API and may
+change in a minor release — don't call them from application code.
+
 ## Non-breaking by design
 
 - **Runtimes:** PHP 8.3–8.4, Laravel 12/13, Livewire 3/4.
@@ -27,9 +45,6 @@ for the full list; the practical notes:
   (`leap.module`, `leap.permissions`, `leap.role.name`) to the `LeapContext` service.
   Those keys are still mirrored throughout 1.x for backward compatibility and will be
   removed in 2.0. If you read them, switch to `Leap::context()`.
-- **`leap.cache` defaults to on.** The frontend page tree is now cached; it invalidates
-  automatically on page save/delete, so this is safe. Disable with `LEAP_CACHE=false`
-  or clear with `php artisan cache:clear`.
 - **Mandatory 2FA enrollment** has an explicit default in config — review
   `leap.auth_2fa` if you rely on a specific setting.
 - **Panel CSS is now plain CSS, not SCSS, and consolidated from 12 files to 3**
@@ -43,6 +58,11 @@ for the full list; the practical notes:
   `true`** (every bitmap format) instead of `false`. Only affects a freshly
   published `config/leap.php` — existing configs with an explicit `false` or array
   are untouched. `true` is now valid syntax alongside the existing array form.
+- **`leap.login_image` now defaults to `null`** instead of a random
+  `picsum.photos` photo, so a login page no longer calls a third party out of the
+  box. Existing configs keep whatever they already have; only a freshly published
+  `config/leap.php` gets `null`. The picsum URL stays in the config comment — put
+  it back (or point at your own image) to get the photo again.
 
 ## Pre-`getPages()` projects
 

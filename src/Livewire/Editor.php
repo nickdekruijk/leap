@@ -6,6 +6,7 @@ use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
@@ -1203,6 +1204,16 @@ class Editor extends Component
         foreach ($this->attributes() as $attribute) {
             if ($attribute->type == 'password' && ! $this->data[$attribute->name]) {
                 // Ignore empty passwords
+            } elseif ($attribute->type == 'password') {
+                // The panel is where an administrator sets someone's password, so it
+                // cannot depend on the application's model remembering to cast it.
+                // A stock Laravel user model casts 'password' => 'hashed', and that
+                // cast is idempotent; leave those to the model so nothing changes for
+                // them, and hash here for a model that would otherwise have stored
+                // the value as typed.
+                $model->{$attribute->name} = ($model->getCasts()[$attribute->name] ?? null) === 'hashed'
+                    ? $this->data[$attribute->name]
+                    : Hash::make($this->data[$attribute->name]);
             } elseif ($attribute->type == 'media') {
                 // Ignore media files
             } elseif ($attribute->type == 'pivot') {

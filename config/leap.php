@@ -213,12 +213,19 @@ return [
     |--------------------------------------------------------------------------
     | login_image
     |--------------------------------------------------------------------------
-    | Image to show on the login screen. By default random from picsum.photos.
-    | Default image viewport is 380x332 pixels and zooms to 1.5 magnification
-    | and times two for retina screens. So 1140x996 pixels is a good size.
+    | Image to show on the login screen. Null (the default) shows no image and
+    | the login form is centred on its own. Any URL or local path works, for
+    | example a random photo from picsum.photos:
+    |
+    |   'login_image' => 'https://picsum.photos/1140/996',
+    |
+    | Off by default because it would make every login page call a third party.
+    |
+    | The image viewport is 380x332 pixels and zooms to 1.5 magnification, times
+    | two for retina screens. So 1140x996 pixels is a good size.
     |
     */
-    'login_image' => 'https://picsum.photos/1140/996',
+    'login_image' => null,
 
     /*
     |--------------------------------------------------------------------------

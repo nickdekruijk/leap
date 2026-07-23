@@ -259,8 +259,9 @@ given**: it covered what was on the table at the time, and no longer does.
 
 ### Nothing loads before it is allowed
 
-Pages are cached server-side, so the HTML is identical for every visitor and can never
-contain a tracker or an `<iframe>`. Anything that needs permission is parked in a
+The rendered HTML is the same for every visitor and can never contain a tracker or an
+`<iframe>`: nothing about it depends on what someone has consented to. Anything that
+needs permission is parked in a
 `<template data-consent="analytics">`, which the browser parses but does not run — no
 script executes, no request goes out, not even for an external `src`. `consent.js` clones
 it into the page once that category is granted, recreating the `<script>` elements so

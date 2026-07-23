@@ -5,6 +5,63 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-07-23
+
+The stable release. The API frozen at 0.9.0 has held through the whole 0.10.x line, and
+this tag makes that guarantee binding under semver: breaking changes now wait for 2.0.
+
+**What semver covers:** the module DSL you write against — the fluent builders on
+`Attribute` and `Section`, and the `Module`/`Resource` classes you extend (their
+properties and overridable methods). Plus three things a project depends on without
+calling any PHP: the consent banner's markup, class names and `window.consent`; the path
+`resources/js/consent.js`, which the frontend template bundles straight out of the
+package; and the published view names under `leap::`. Methods marked `@internal` are the
+package's own rendering and plumbing that happen to be `public` — not supported API, and
+free to change in a minor. See [docs/upgrading.md](docs/upgrading.md).
+
+Nothing in this release changes behaviour for an existing project. Upgrading from
+0.10.18 is a constraint bump; `^0.10` never resolves to 1.0.0 on its own.
+
+### Security
+
+- **A password set in the admin is now hashed by the panel itself.** The editor wrote the
+  typed value to the model and relied on the application's user model to cast it —
+  `'password' => 'hashed'`, which a stock Laravel model has and a hand-written one may
+  not. Without that cast the password was stored exactly as typed, and since Fortify
+  verifies with `Hash::check()` the account could then never log in. The editor now
+  hashes password attributes unless the model already casts them, so the stock case is
+  byte-for-byte unchanged and the unsafe one is fixed.
+
+### Changed
+
+- **`leap.login_image` defaults to `null`** instead of a random `https://picsum.photos`
+  photo, so a login page no longer calls a third party out of the box. The picsum URL
+  stays in the config comment as a ready example. Only a freshly published
+  `config/leap.php` is affected — an existing config keeps whatever it has.
+
+### Fixed
+
+- **The Users module follows the configured auth provider.** It derived its model from
+  its own class name (`App\Models\User`), so a project authenticating anything else —
+  `App\Models\Admin`, or a `User` outside `App\Models` — got a module pointed at a class
+  that does not exist. It now reads the model from the auth provider.
+
+- **Stale caching documentation.** `docs/upgrading.md` claimed `leap.cache` defaults to
+  on and can be disabled with `LEAP_CACHE=false`, contradicting the same document a few
+  lines down: the page-tree cache was removed and `LEAP_CACHE` is a no-op. `docs/template.md`
+  still explained the consent design in terms of server-side page caching.
+  `docs/caching.md` was already correct and is unchanged.
+
+### Tests
+
+360 tests, up from 291. New coverage for the `LeapAuth` middleware, the logout route, the
+passkeys asset route (both enabled and disabled), the Dashboard/Navigation/Toasts
+components, user and role management (including the two password bugs above), the
+`NavigationItem` trait, `HasMedia`, the `Mediable` pivot, `ToastsValidationErrors` and
+`ImageGenerator`. `tests/TestCase.php` now registers the `Leap` facade alias and the
+blade-icons providers that package discovery gives a real application, so a full page
+render works in a test.
+
 ## [0.10.18] — 2026-07-23
 
 ### Changed

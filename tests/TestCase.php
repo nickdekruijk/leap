@@ -2,15 +2,18 @@
 
 namespace NickDeKruijk\Leap\Tests;
 
+use BladeUI\Icons\BladeIconsServiceProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Intervention\Image\Laravel\ServiceProvider as ImageServiceProvider;
 use Laravel\Fortify\FortifyServiceProvider;
 use Laravel\Passkeys\PasskeysServiceProvider;
 use Livewire\LivewireServiceProvider;
+use NickDeKruijk\Leap\Facade;
 use NickDeKruijk\Leap\ServiceProvider;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use Orchestra\Testbench\TestCase as Orchestra;
+use OwenVoke\BladeFontAwesome\BladeFontAwesomeServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
@@ -21,7 +24,24 @@ abstract class TestCase extends Orchestra
             FortifyServiceProvider::class,
             PasskeysServiceProvider::class,
             ImageServiceProvider::class,
+            // The panel navigation and several views call svg(); without these the
+            // icon manifest cannot be resolved and any render reaches for it.
+            BladeIconsServiceProvider::class,
+            BladeFontAwesomeServiceProvider::class,
             ServiceProvider::class,
+        ];
+    }
+
+    /**
+     * Mirror the alias package discovery registers from composer.json's
+     * extra.laravel.aliases. Testbench does not apply the package's own
+     * discovery, and the panel layout calls the short `Leap::` facade, so
+     * without this every full-page render fails on "Class Leap not found".
+     */
+    protected function getPackageAliases($app): array
+    {
+        return [
+            'Leap' => Facade::class,
         ];
     }
 

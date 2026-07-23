@@ -1,11 +1,22 @@
 /*
  * Cookie consent.
  *
- * Pages are cached server-side, so the HTML is the same for everyone: it never contains
- * a tracker or an <iframe>. Anything that needs permission is parked in a <template>,
- * which the browser parses but does not run — no script executes, no request is made,
- * not even for an external src. Only once a category is granted is that content cloned
- * into the page, with its <script> elements recreated so they actually run.
+ * The rendered HTML is the same for everyone — nothing about it depends on what a
+ * visitor consented to — so it never contains a tracker or an <iframe>. Anything that
+ * needs permission is parked in a <template>, which the browser parses but does not
+ * run — no script executes, no request is made, not even for an external src. Only
+ * once a category is granted is that content cloned into the page, with its <script>
+ * elements recreated so they actually run.
+ *
+ * The path to this file is public API. Nothing in leap serves it: the frontend template
+ * bundles it straight out of the package, by path
+ *
+ *   base_path('vendor/nickdekruijk/leap/resources/js/consent.js')
+ *
+ * (see the template's layouts/app.blade.php). Moving or renaming it therefore breaks
+ * every generated site silently — the bundle drops one file, window.consent is
+ * undefined, and the banner's Alpine init() throws where nobody is looking. Treat it
+ * like any other public API: it moves on a major only, with a changelog entry.
  *
  * The choice lives in one first-party cookie, stamped with a fingerprint of the cookie
  * registry. Add a service and the fingerprint changes, the stored choice stops matching,

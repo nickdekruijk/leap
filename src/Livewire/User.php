@@ -2,12 +2,28 @@
 
 namespace NickDeKruijk\Leap\Livewire;
 
+use Illuminate\Database\Eloquent\Model;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Resource;
 
 class User extends Resource
 {
+    /**
+     * The panel's users are whoever the configured auth provider authenticates,
+     * not a guess at App\Models\User. Resource::getModel() derives the model from
+     * the class name, which breaks the moment a project authenticates something
+     * else (App\Models\Admin, or a User outside App\Models) — the module then
+     * points at a class that does not exist.
+     */
+    public function getModel(): Model
+    {
+        $this->model ??= Leap::userModel()::class;
+
+        return parent::getModel();
+    }
+
     public function attributes()
     {
         return [
