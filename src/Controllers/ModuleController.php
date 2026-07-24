@@ -15,11 +15,19 @@ class ModuleController extends Controller
      */
     public static function getAllModules(): Collection
     {
+        // Keyed by slug: the slug is what identifies a module in its route name
+        // (leap.module.{slug}), so two modules sharing one cannot both exist. The
+        // app/Leap scan runs last on purpose — a project's own module then replaces
+        // one a package self-registered, which is what putting the file there means.
+        // Slugless navigation items (Logout, $slug = false) get a key of their own;
+        // they register no route and several of them are perfectly valid.
         $modules = [];
+        $slugless = 0;
 
         // Get default modules from config
         foreach (config('leap.default_modules') as $module) {
-            $modules[] = is_string($module) ? new $module : $module;
+            $module = is_string($module) ? new $module : $module;
+            $modules[$module->getSlug() ?: '#'.$slugless++] = $module;
         }
 
         // Find all modules in app/Leap directory
@@ -27,8 +35,10 @@ class ModuleController extends Controller
             $module = 'App\\'.config('leap.app_modules').'\\'.basename($file, '.php');
             $module = new $module;
             $module->priority = $module->priority ?? $counter + 1;
-            $modules[] = $module;
+            $modules[$module->getSlug() ?: '#'.$slugless++] = $module;
         }
+
+        $modules = array_values($modules);
 
         // Sort the models by priority
         usort($modules, function ($a, $b): int {

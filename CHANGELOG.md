@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] — 2026-07-24
+
+### Fixed
+
+- **Two modules claiming one slug now yield one module.** A slug is a module's identity —
+  the navigation entry and the route name `leap.module.{slug}` — but nothing enforced
+  that, so a duplicate produced two navigation items and two `Route::get()` calls under
+  the same name. It surfaces the moment a package starts shipping a module a project
+  already keeps its own copy of: `nickdekruijk/settings` 1.3.0 registers its own settings
+  screen, and every project with an `app/Leap/Setting.php` then listed Settings twice.
+  Modules are now keyed by slug, and because the `app/Leap/` scan runs after
+  `leap.default_modules`, a project's own module replaces the one a package registered —
+  which is the override a project means by keeping the file. Delete your copy to move to
+  the package's version. Navigation items with `$slug = false` (Logout) register no route
+  and are exempt. See [modules-and-resources.md](docs/modules-and-resources.md#discovery).
+
 ## [1.0.1] — 2026-07-23
 
 ### Added

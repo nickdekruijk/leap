@@ -15,6 +15,15 @@ register modules explicitly by adding their class names to
 `config('leap.default_modules')`. Both sources are merged at request time, so a
 package that self-registers a module needs no config entry in the host app.
 
+A module's slug identifies it — it is the navigation entry and the route name
+`leap.module.{slug}` — so two modules cannot share one. When they do, the last
+registration wins, and the `app/Leap/` scan runs after `default_modules`: **your own
+module replaces one a package registered under the same slug.** That is how you override
+a package's screen — copy it into `app/Leap/`, change what you need, and the package's
+version steps aside. Conversely, if a package starts shipping a module you already had
+your own copy of, delete yours to move to the package's version. Navigation items with
+`$slug = false` (like Logout) register no route and are never deduplicated.
+
 ## A resource
 
 ```php
