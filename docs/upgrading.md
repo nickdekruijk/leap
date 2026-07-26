@@ -47,6 +47,22 @@ change in a minor release — don't call them from application code.
   removed in 2.0. If you read them, switch to `Leap::context()`.
 - **Mandatory 2FA enrollment** has an explicit default in config — review
   `leap.auth_2fa` if you rely on a specific setting.
+- **Image generation moved to `leap.ai.image.presets`.** A preset names the model (and
+  optionally its quality and stored size), and the model name says which provider runs
+  it, so `leap.ai.image.provider`, `model` and `quality` are gone from a freshly
+  published config. An existing config keeps working unchanged — those three keys still
+  behave as a single unnamed preset — but they are **deprecated and will be removed in
+  2.0**, so move them into `presets` when convenient. Two presets or more turn the
+  generate dialog's model choice into a picker; see
+  [ai.md](ai.md#image-presets).
+- **Generated images are no longer cropped or scaled down.** The dialog asks for a shape
+  (landscape, portrait, square) instead of an exact aspect ratio, and the stored JPEG
+  keeps the proportions *and* the resolution the model produced — so a template that
+  assumed every generated image was exactly `16:9` should set the ratio in CSS, and a
+  site that serves the stored file straight into a page may want to set
+  `leap.ai.image.max_width` (freshly published configs now have `null`; an existing
+  config keeps whatever number it has). `leap.ai.image.aspect_ratios` is no longer read
+  and can be deleted from your config.
 - **Panel CSS is now plain CSS, not SCSS, and consolidated from 12 files to 3**
   (`leap.css`, `filemanager.css`, `editor.css`). If you overrode one of the old
   per-feature files under `resources/css/leap/` (e.g. `nav.scss`, `forms.scss`,
@@ -58,6 +74,15 @@ change in a minor release — don't call them from application code.
   `true`** (every bitmap format) instead of `false`. Only affects a freshly
   published `config/leap.php` — existing configs with an explicit `false` or array
   are untouched. `true` is now valid syntax alongside the existing array form.
+- **TinyMCE `content_css` now needs a `.tinymce` scope.** The default tinymce
+  options set `'body_class' => 'tinymce'`, and the click-to-edit preview
+  (`lazy_sections`) renders the content inline in the admin page with the same
+  `content_css` applied. Element-level rules that used to be safely isolated inside
+  the old editor iframe — e.g. `h3 { color: red }` in a project's
+  `public/css/tinymce.css` — now leak onto the admin panel's own headings. Scope every
+  rule under `.tinymce` (`.tinymce h3 { … }`) and add `'body_class' => 'tinymce'` to
+  `leap.tinymce.options` if your config predates it, so the same stylesheet styles both
+  the editor body and the preview without bleeding out.
 - **`leap.login_image` now defaults to `null`** instead of a random
   `picsum.photos` photo, so a login page no longer calls a third party out of the
   box. Existing configs keep whatever they already have; only a freshly published
