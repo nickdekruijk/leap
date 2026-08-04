@@ -5,6 +5,33 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-08-04
+
+### Fixed
+
+- **Section fields are readable in the editor on a monolingual site.** With `leap.locales`
+  unset, every section field showed *"[object Object]"* whenever the column held a
+  per-locale array — which it does on any site seeded by `leap-template`, since the seeders
+  ship every language. `editorLocales()` is empty without configured locales, so the field's
+  `dataName` gets no locale and the input binds to the stored value itself. `HasSections`
+  has resolved exactly this on the frontend for as long as it has existed, so a page
+  rendered fine while its editor did not; the collapsed section title was the one exception,
+  and the giveaway — it is the only place that goes through `Leap::localize()`
+  unconditionally.
+  It was destructive as well: the editor writes its data back unchanged, so the first
+  keystroke in such a field replaced the whole array with a single string.
+  The editor now resolves a leftover per-locale array to the site's locale, the same way the
+  frontend does. Collapsing is gated on `leap.locales` rather than on `editorLocales()`:
+  that one is also empty for a module whose model has no translatable columns, and
+  collapsing there would throw away languages the site still serves. Only sub-fields marked
+  `translatable()` are touched — an `Attribute::json()` value is an associative array too,
+  and flattening it would destroy it.
+  **Switching a site between one language and several keeps working in both directions and
+  is now covered by tests.** Turning `leap.locales` on keeps the text a field already had
+  as its default locale (that wrap was already there, but untested); turning it off resolves
+  the array back to one string. Neither direction rewrites the column — the editor converts
+  what it finds when a page is opened, and a page nobody edits keeps the shape it has.
+
 ## [1.2.0] — 2026-08-04
 
 ### Changed
