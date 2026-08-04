@@ -945,6 +945,13 @@ class FileManager extends Module
         try {
             return ImageGenerator::describe(Media::forFile($this->full($file)));
         } catch (\Throwable $e) {
+            // A failed suggestion must not cost the upload, so it stays a toast. But it
+            // used to leave no trace at all, and "it failed" is not something anyone can
+            // act on: a provider rejecting an image for being too large looked exactly
+            // like a missing API key. report() puts it wherever the project already sends
+            // its exceptions.
+            report($e);
+
             $this->dispatch('toast-error', __('leap::filemanager.alt_text_ai_failed'))->to(Toasts::class);
 
             return [];

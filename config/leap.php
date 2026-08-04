@@ -422,6 +422,12 @@ return [
         'alt_text' => [
             'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
             'model' => null,    // null => gemini-2.5-flash / claude-haiku-4-5 / gpt-4o-mini
+            // Longest side of the copy that is sent, in pixels. A photo off a camera does
+            // not fit otherwise: providers cap an image at a few megabytes once base64
+            // encoded, and base64 adds a third to whatever is on disk. 1568 is the size
+            // above which the vision models resize server-side anyway, so anything larger
+            // is paid for and thrown away. Set to null to send the original untouched.
+            'max_width' => 1568,
         ],
 
         // Translate editor content (per field or all fields) into the active locale.

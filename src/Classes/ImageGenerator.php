@@ -316,7 +316,7 @@ class ImageGenerator
 
         $locales = config('leap.locales') ?? [app()->getLocale() => ''];
 
-        $data = base64_encode(Storage::disk($media->disk ?: config('leap.filemanager.disk'))->get($media->file_name));
+        $image = self::describePayload($media);
         $prompt = 'Write alt text for screen-reader users, one per language. Describe only the main '
             .'subject and its purpose, in the shortest phrase that is still complete. Omit '
             .'decorative background, colours, lighting and styling unless they are essential to the '
@@ -325,11 +325,45 @@ class ImageGenerator
             .'"photo of". Return ONLY a JSON object mapping locale code to alt text. Languages: '
             .collect($locales)->map(fn ($name, $code) => trim("$code $name"))->implode(', ');
 
-        $reply = $task->prompt($prompt, [['mime' => $media->mime_type, 'data' => $data]], json: true);
+        $reply = $task->prompt($prompt, [$image], json: true);
 
         $decoded = AiTask::decodeReply($reply);
 
         return array_map('strval', array_intersect_key($decoded ?? [], $locales));
+    }
+
+    /**
+     * The image as it goes to the provider: scaled down and base64 encoded.
+     *
+     * A photo straight off a camera does not fit. Anthropic caps an image at 5 MB
+     * base64 and 8000 pixels on its longest side, and base64 adds a third to whatever
+     * is on disk — so a 7 MB drone photo is 9.3 MB in transit and is refused before
+     * anything is described. Nothing was resized here, while the same class already
+     * does exactly that for images it generates (see normalize()).
+     *
+     * Scaling down is not only about fitting: a provider that accepts a 48 megapixel
+     * file resizes it server-side anyway, so the extra bytes are paid for and thrown
+     * away. leap.ai.alt_text.max_width bounds the longest side — width *and* height,
+     * because a portrait photo of 6048 pixels is just as far over as a landscape one.
+     * scaleDown never enlarges, so a small image passes through untouched.
+     *
+     * Sent as JPEG whatever the source was. Transparency is lost in the copy that
+     * travels, which is of no consequence for describing a picture, and the file on
+     * disk is not touched. Set max_width to null to send the original.
+     *
+     * @return array{mime: string, data: string}
+     */
+    private static function describePayload(Media $media): array
+    {
+        $file = Storage::disk($media->disk ?: config('leap.filemanager.disk'))->get($media->file_name);
+
+        if (! $max = (int) config('leap.ai.alt_text.max_width')) {
+            return ['mime' => $media->mime_type, 'data' => base64_encode($file)];
+        }
+
+        $image = Media::imageManager()->read($file)->scaleDown(width: $max, height: $max);
+
+        return ['mime' => 'image/jpeg', 'data' => base64_encode((string) $image->toJpeg())];
     }
 
     /**
@@ -349,7 +383,10 @@ class ImageGenerator
                 $media->save();
             }
         } catch (\Throwable $e) {
-            // The image is stored and usable; the alt text can be added by hand.
+            // The image is stored and usable; the alt text can be added by hand. Still
+            // worth reporting: silence here made a provider refusing an oversized image
+            // indistinguishable from a task that was never configured.
+            report($e);
         }
     }
 }
