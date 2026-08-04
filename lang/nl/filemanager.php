@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'ai_cost' => 'Kosten',
+    'ai_generated' => 'Gegenereerd met AI',
+    'ai_model' => 'Model',
     'already_exist' => ':attribute bestaat al',
     'cancel' => 'Annuleren',
     'close' => 'Sluiten',
@@ -35,6 +38,7 @@ return [
     'invalid_characters' => ':attribute bevat ongeldige tekens',
     'is_not_empty' => ':attribute is niet leeg',
     'media_in_use' => ':attribute wordt gebruikt als media en kan niet worden verwijderd',
+    'new_ai_image' => 'AI-afbeelding',
     'new_folder' => 'Nieuwe map',
     'rename_file' => 'Bestand hernoemen',
     'rename_invalid_path' => ':attribute bevat een ongeldig pad',

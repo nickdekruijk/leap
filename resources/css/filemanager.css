@@ -473,6 +473,47 @@
                     font-weight: 600;
                 }
             }
+            /* Marks a file no camera made. Sits with the filename because that is the
+               fact worth seeing at a glance; what it was prompted with unfolds below
+               only when asked for. */
+            .leap-ai-badge {
+                font: inherit;
+                font-size: 0.7em;
+                font-weight: 600;
+                letter-spacing: 0.03em;
+                vertical-align: 0.15em;
+                margin-left: 0.4em;
+                padding: 0.15em 0.45em;
+                border: 1px solid var(--leap-grey);
+                border-radius: var(--leap-radius);
+                background: none;
+                color: color-mix(in srgb, var(--leap-blue-dark) 65%, transparent);
+                cursor: pointer;
+                &:hover,
+                &.active {
+                    border-color: var(--leap-blue);
+                    background-color: var(--leap-blue-light);
+                    color: var(--leap-blue-dark);
+                }
+            }
+            /* Where the file came from, set apart from what it is by a rule. The prompt
+               reads as a caption under the figures, centred with them. */
+            .leap-filemanager-ai {
+                width: 100%;
+                margin-top: calc(var(--spacing) / 2);
+                padding: calc(var(--spacing) / 2) var(--spacing) 0;
+                border-top: 1px solid var(--leap-grey-light);
+                text-align: center;
+                .leap-filemanager-ai-prompt {
+                    font-size: 0.85em;
+                    line-height: 1.5;
+                    font-style: italic;
+                    margin: 0 0 calc(var(--spacing) / 2);
+                }
+                TABLE {
+                    margin: 0 auto;
+                }
+            }
         }
     }
 }

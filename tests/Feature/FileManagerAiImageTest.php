@@ -83,6 +83,31 @@ class FileManagerAiImageTest extends TestCase
         $this->assertNotNull(Media::where('file_name', 'photos/a-yellow-canoe.jpg')->first());
     }
 
+    /**
+     * Months later nobody remembers which of these images a person shot and which one a
+     * model made up, so the file says so itself: an A.I. badge next to the filename, and
+     * behind it the prompt it came from, the model that answered and what that cost —
+     * straight from the media row.
+     */
+    public function test_the_stats_panel_says_a_generated_image_was_generated(): void
+    {
+        $this->fakeProvider();
+
+        $filemanager = new FileManager;
+        $filemanager->useGeneratedImage($filemanager->generateImage('A yellow canoe', 'square')['token']);
+
+        $ai = $filemanager->selectedFileAi();
+
+        $this->assertSame('A yellow canoe', $ai['prompt']);
+        $this->assertSame('gemini-2.5-flash-image', $ai['model']);
+
+        // An uploaded file has nothing to say about a model or a prompt.
+        Storage::disk('public')->put('holiday.jpg', $this->pngBytes());
+        $filemanager->selectedFiles = ['holiday.jpg'];
+
+        $this->assertNull($filemanager->selectedFileAi());
+    }
+
     public function test_a_name_already_taken_gets_a_suffix_instead_of_overwriting(): void
     {
         $this->fakeProvider();

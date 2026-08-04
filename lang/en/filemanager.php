@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'ai_cost' => 'Cost',
+    'ai_generated' => 'Generated with AI',
+    'ai_model' => 'Model',
     'already_exist' => ':attribute already exists',
     'cancel' => 'Cancel',
     'close' => 'Close',
@@ -35,6 +38,7 @@ return [
     'invalid_characters' => ':attribute contains invalid characters',
     'is_not_empty' => ':attribute is not empty',
     'media_in_use' => ':attribute is used as media and cannot be deleted',
+    'new_ai_image' => 'AI image',
     'new_folder' => 'New folder',
     'rename_file' => 'Rename file',
     'rename_invalid_path' => ':attribute contains an invalid path',

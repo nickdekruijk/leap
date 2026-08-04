@@ -19,12 +19,6 @@
 }">
     <header class="leap-header">
         <h2>{{ $this->currentDirectory() }}</h2>
-        @can('leap::create')
-            @if ($this->aiImageEnabled())
-                <x-leap::button svg-icon="fas-wand-magic-sparkles" label="leap::resource.generate_image"
-                    x-on:click="$dispatch('leap-generate-image', { scope: 'filemanager' })" />
-            @endif
-        @endcan
         @if ($browse)
             <x-leap::button svg-icon="fas-times" wire:click="$parent.fileBrowser" label="leap::resource.cancel" />
         @endif
@@ -61,6 +55,16 @@
                                         @svg('fas-upload', 'svg-icon')
                                         <span>@lang('Upload') <small>(max {{ $this->humanFileSize($this->maxUploadSize(), 0) }})</small></span>
                                     </button>
+                                    {{-- Alongside new folder and upload: it is a third way to get a
+                                         file into the folder that is open, not a screen-level action.
+                                         Short label to sit next to those two; the full one is the
+                                         tooltip and the dialog's own title. --}}
+                                    @if ($this->aiImageEnabled())
+                                        <button x-on:click="$dispatch('leap-generate-image', { scope: 'filemanager' })"
+                                            title="@lang('leap::resource.generate_image')" class="leap-button">
+                                            @svg('fas-wand-magic-sparkles', 'svg-icon')<span> @lang('leap::filemanager.new_ai_image')</span>
+                                        </button>
+                                    @endif
                                 @endcan <button wire:click="toggleViewMode" class="leap-button">
                                     @svg($viewMode === 'grid' ? 'fas-list' : 'fas-th', 'svg-icon')
                                 </button>
@@ -362,12 +366,20 @@
                         @endforeach
                     </div>
                 </div>
-                <div class="leap-filemanager-stats">
+                @php($ai = $this->selectedFileAi())
+                <div class="leap-filemanager-stats" x-data="{ aiInfo: false }">
                     <h3>
                         @if (count($selectedFiles) > 1)
                             {{ count($selectedFiles) }} @lang('leap::filemanager.files')
                         @else
                             {{ reset($selectedFiles) }}
+                            {{-- A badge rather than a block: which images a model made is
+                                 worth seeing at a glance, the prompt behind it is worth
+                                 looking up now and then. --}}
+                            @if ($ai)
+                                <button type="button" class="leap-ai-badge" :class="{ 'active': aiInfo }"
+                                    x-on:click="aiInfo = !aiInfo" title="@lang('leap::filemanager.ai_generated')">A.I.</button>
+                            @endif
                         @endif
                     </h3>
                     @if (count($selectedFiles) === 1)
@@ -394,6 +406,30 @@
                             @endif
                         @endforeach
                     </table>
+                    {{-- Where the image came from, for an image nobody photographed. Folded
+                         away behind the badge: the prompt reads as a caption and would
+                         otherwise outweigh the figures it sits under. --}}
+                    @if ($ai)
+                        <div class="leap-filemanager-ai" x-show="aiInfo" x-cloak>
+                            @if (! empty($ai['prompt']))
+                                <p class="leap-filemanager-ai-prompt">{{ $ai['prompt'] }}</p>
+                            @endif
+                            <table>
+                                @if (! empty($ai['model']))
+                                    <tr>
+                                        <td>@lang('leap::filemanager.ai_model')</td>
+                                        <td align="right">{{ $ai['model'] }}{{ empty($ai['quality']) ? '' : ' ('.$ai['quality'].')' }}</td>
+                                    </tr>
+                                @endif
+                                @if (isset($ai['cost']) && config('leap.ai.show_costs', true))
+                                    <tr>
+                                        <td>@lang('leap::filemanager.ai_cost')</td>
+                                        <td align="right">${{ number_format($ai['cost'], 3) }}</td>
+                                    </tr>
+                                @endif
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endif

@@ -697,6 +697,27 @@ class FileManager extends Module
         $this->editFile(true);
     }
 
+    /**
+     * What generated the selected file, when AI did: the prompt it was asked for, the
+     * model that answered and what it cost. Null for anything else, and for a multiple
+     * selection — this is a property of one file, not of a set.
+     *
+     * Read straight from the media row's meta['ai'], written when the image was stored,
+     * so an image keeps saying where it came from long after the session that made it.
+     *
+     * @return array{prompt?: string, model?: string, quality?: string, cost?: float, generated_at?: string}|null
+     */
+    public function selectedFileAi(): ?array
+    {
+        if (count($this->selectedFiles) !== 1) {
+            return null;
+        }
+
+        $media = Media::forFile($this->full(reset($this->selectedFiles)));
+
+        return $media?->meta['ai'] ?? null;
+    }
+
     public function selectedFilesStats()
     {
         $size = 0;

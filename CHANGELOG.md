@@ -5,6 +5,58 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-08-04
+
+### Added
+
+- **Image generation takes named presets, so the editor picks the model.** `leap.ai.image.presets`
+  maps a label to a model id with an optional `:quality` suffix
+  (`'medium' => 'gpt-image-1-mini:medium'`). The provider follows from the model name, so one
+  preset can run on Gemini and the next on OpenAI, and a preset whose provider has no api key is
+  not offered. `max_width` and `jpeg_quality` stay global — they are post-processing the provider
+  never sees.
+  Two presets or more add a **Quality** select to the generate dialog, each option carrying its own
+  price estimate; one preset leaves the dialog exactly as it was. Keys are free-form —
+  `low`/`medium`/`high` are translated, anything else is shown as written. The picked preset
+  travels as a key, never as a model name, so the browser cannot ask for a model the config does
+  not offer. See [ai.md](docs/ai.md#image-presets).
+- **The file manager says which images a model made.** Selecting a generated image puts an **A.I.**
+  badge next to its name; clicking that unfolds the prompt it came from, the model that answered
+  (and its quality) and what the call cost. Which files were generated is worth seeing at a glance,
+  the rest only now and then, so the details stay folded away. It reads `meta['ai']` on the media
+  row, so it works for images generated long before this release — and the cost line follows
+  `leap.ai.show_costs` like everywhere else.
+- **Costs can be hidden without losing them.** `leap.ai.show_costs` (default `true`) controls the
+  estimate and the amount shown in the panel; `leap.ai.record_costs` (default `true`) controls
+  whether the amount is kept in the media row's `meta['ai']['cost']`. Separate switches: a computed
+  figure you would rather not show an editor is still worth having for reporting. The row now also
+  records the quality the image was generated at.
+
+### Changed
+
+- **The generate dialog asks for a shape instead of an aspect ratio, and no longer crops.**
+  Landscape, portrait and square are the three canvases the providers actually offer, so the
+  request maps onto them exactly (OpenAI a canvas size, Gemini a 4:3 / 3:4 / 1:1 hint). The stored
+  JPEG now keeps the proportions the model produced: cutting a strip off to force `16:9` threw away
+  part of an image that had been paid for and approved in the preview. For the same reason
+  **`leap.ai.image.max_width` now defaults to `null`** — the resolution the model answered with is
+  kept, and how large an image is *displayed* is a frontend concern. Set a number to cap it on a
+  site that serves the stored file straight into a page. Encoding to JPEG at `jpeg_quality` still
+  happens; providers answer in PNG. `leap.ai.image.aspect_ratios` is gone
+  from the published config and no longer read; a ratio string passed to `ImageGenerator::generate()`
+  or `generateImage()` is reduced to its orientation, so existing calls keep working.
+  `ImageGenerator::ratio()` is deprecated in favour of `ImageGenerator::orientation()`.
+- **The file manager's generate button moved into the folder's own button row**, next to *New
+  folder* and *Upload*, instead of sitting top right in the screen header. Generating puts a file
+  in the folder that is open, so it belongs with the other two ways of doing that rather than
+  among the screen-level actions.
+
+### Deprecated
+
+- **`leap.ai.image.provider`, `model` and `quality`.** They still decide when a config sets them
+  (behaving as a single unnamed preset), so existing installs are unaffected, but `presets` replaces
+  all three and they are scheduled for removal in **2.0**.
+
 ## [1.0.2] — 2026-07-24
 
 ### Fixed
