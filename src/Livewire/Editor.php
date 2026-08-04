@@ -517,6 +517,30 @@ class Editor extends Component
                                 $this->data[$sectionAttribute->name][$index][$sub->name] = [$this->defaultLocale() => $value];
                             }
                         }
+                    } elseif (! config('leap.locales')) {
+                        // And the other way round. A monolingual site stores a section field
+                        // as a plain string, but a per-locale array can still be sitting there:
+                        // seeders ship every language, and a site that dropped back to one
+                        // locale keeps what it had. Without a locale in the field's dataName
+                        // the input would bind to the array itself, which a browser renders as
+                        // "[object Object]" and the first keystroke replaces wholesale.
+                        //
+                        // HasSections does exactly this on the frontend, which is why a page
+                        // renders fine while its editor does not. Only translatable sub-fields:
+                        // an Attribute::json() value is an associative array too, and collapsing
+                        // that would destroy it.
+                        //
+                        // The condition is the site's locales, not editorLocales(): that one is
+                        // also false for a module whose model has no translatable columns, and
+                        // collapsing there would throw away languages the site still serves.
+                        // Such a module keeps the old behaviour — wrong on screen, but nothing
+                        // is lost.
+                        foreach (collect($sectionAttributes)->where('translatable', true) as $sub) {
+                            $value = $this->data[$sectionAttribute->name][$index][$sub->name] ?? null;
+                            if (is_array($value) && $value !== [] && ! array_is_list($value)) {
+                                $this->data[$sectionAttribute->name][$index][$sub->name] = Leap::localize($value) ?? '';
+                            }
+                        }
                     }
 
                     // Set section titles
