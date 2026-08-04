@@ -56,7 +56,7 @@ trait InteractsWithAiImages
      */
     public function aiImagePresets(): array
     {
-        $show = config('leap.ai.show_costs', true);
+        $show = config('leap.ai.show_costs');
         $presets = [];
 
         foreach (ImageGenerator::presets() as $key => $task) {
@@ -141,7 +141,7 @@ trait InteractsWithAiImages
         return [
             'token' => ImageGenerator::park($image, $prompt),
             'preview' => 'data:image/'.($image['extension'] === 'svg' ? 'svg+xml' : 'jpeg').';base64,'.base64_encode($image['data']),
-            'cost' => config('leap.ai.show_costs', true) ? $image['cost'] : null,
+            'cost' => config('leap.ai.show_costs') ? $image['cost'] : null,
         ];
     }
 

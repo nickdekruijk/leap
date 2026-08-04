@@ -421,7 +421,7 @@
                                         <td align="right">{{ $ai['model'] }}{{ empty($ai['quality']) ? '' : ' ('.$ai['quality'].')' }}</td>
                                     </tr>
                                 @endif
-                                @if (isset($ai['cost']) && config('leap.ai.show_costs', true))
+                                @if (isset($ai['cost']) && config('leap.ai.show_costs'))
                                     <tr>
                                         <td>@lang('leap::filemanager.ai_cost')</td>
                                         <td align="right">${{ number_format($ai['cost'], 3) }}</td>

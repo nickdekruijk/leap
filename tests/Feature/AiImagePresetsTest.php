@@ -40,6 +40,9 @@ class AiImagePresetsTest extends TestCase
         Leap::context()->setModule(ArticleResource::class);
 
         config([
+            // Costs ship hidden; the estimates asserted here are what showing them says.
+            // The tests that cover hiding set it back to false themselves.
+            'leap.ai.show_costs' => true,
             'leap.ai.image' => ['presets' => [], 'folder' => '{module}', 'alt_text' => false],
             'leap.ai.providers.gemini.api_key' => 'gemini-key',
             'leap.ai.providers.openai.api_key' => 'openai-key',

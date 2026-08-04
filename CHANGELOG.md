@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`leap.ai.show_costs` now defaults to `false`.** The estimate and the amount are computed
+  from the rates in `leap.ai.pricing`, never reported by the provider, so they exclude VAT
+  and any free tier and will not match an invoice. Close enough to report on, not close
+  enough to put in front of an editor who did not ask for it — so the panel stays quiet
+  unless a project says otherwise, which is the right way round for a figure that can be
+  wrong. Set it to `true` where the person generating is the person paying.
+  `record_costs` stays `true`: nothing recomputes the amount afterwards, so turning that off
+  loses what an image cost for good. A config that names `show_costs` explicitly is
+  unaffected.
+
 ### Fixed
 
 - **A published config no longer hides keys that a later release added below the top level.**
   Laravel's `mergeConfigFrom` is a single `array_merge`, so a project's `config/leap.php`
-  replaced whole sections: publishing before 1.1.0 meant `leap.ai.show_costs` read `null`
+  replaced whole sections: publishing before 1.1.0 meant `leap.ai.record_costs` read `null`
   rather than the `true` this package ships, and every future nested key would have arrived
   the same way — off, with nothing to notice. The package config is now merged in at every
   level, so a config only has to hold what it wants to differ.

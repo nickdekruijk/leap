@@ -38,6 +38,8 @@ class EditorAiImageTest extends TestCase
         Leap::context()->setModule(ArticleResource::class);
 
         config([
+            // Costs ship hidden; this class is about what they say when shown.
+            'leap.ai.show_costs' => true,
             'leap.ai.image.provider' => 'gemini',
             'leap.ai.providers.gemini.api_key' => 'test-key',
             'leap.ai.pricing' => [

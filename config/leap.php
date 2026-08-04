@@ -399,12 +399,15 @@ return [
         'rate_limit' => 30,
 
         // Whether the panel shows what a call costs: the estimate before generating and
-        // the actual amount afterwards. Both are computed from the rates below, never
-        // reported by the provider, so turn this off where a figure that can be slightly
-        // wrong is worse than no figure at all. Recording is a separate switch:
-        // record_costs keeps the amount on the media row (meta['ai']['cost']) for
-        // reporting, whether or not anyone is shown it.
-        'show_costs' => true,
+        // the actual amount afterwards. Off by default — both figures are computed from
+        // the rates below, never reported by the provider, so they exclude VAT and any
+        // free tier, and an editor reading a price that is close but not the invoice is
+        // usually worse served than one reading none. Turn it on where the person
+        // generating is the person paying.
+        'show_costs' => false,
+        // Recording is a separate switch, and stays on: the amount is kept on the media
+        // row (meta['ai']['cost']) for reporting whether or not anyone is shown it.
+        // Nothing computes it later — off means that image's cost is gone for good.
         'record_costs' => true,
 
         // Chat models (alt_text and translate). Null takes the provider's default;

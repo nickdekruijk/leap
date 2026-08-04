@@ -53,7 +53,9 @@ class ConfigMergePublishedTest extends TestCase
     {
         $this->publishPreOnePointOne();
 
-        $this->assertTrue(config('leap.ai.show_costs'));
+        // Strict assertions on purpose: a key that never arrived reads as null, which
+        // would slip through anything looser than assertFalse/assertTrue.
+        $this->assertFalse(config('leap.ai.show_costs'));
         $this->assertTrue(config('leap.ai.record_costs'));
     }
 
@@ -106,7 +108,8 @@ class ConfigMergePublishedTest extends TestCase
     {
         $this->publish([]);
 
-        $this->assertTrue(config('leap.ai.show_costs'));
+        $this->assertFalse(config('leap.ai.show_costs'));
+        $this->assertTrue(config('leap.ai.record_costs'));
         $this->assertSame('admin', config('leap.route_prefix'));
         $this->assertNull(config('leap.ai.image.max_width'));
     }

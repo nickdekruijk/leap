@@ -133,7 +133,9 @@ class ConfigMergeTest extends TestCase
      */
     public function test_the_booted_application_sees_the_shipped_defaults(): void
     {
-        $this->assertTrue(config('leap.ai.show_costs'));
+        // assertFalse, not assertFalsy: null is what a key that never arrived reads as,
+        // and this asserting the shipped false is the whole point.
+        $this->assertFalse(config('leap.ai.show_costs'));
         $this->assertTrue(config('leap.ai.record_costs'));
         $this->assertSame([], config('leap.ai.image.presets'));
     }

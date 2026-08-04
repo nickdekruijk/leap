@@ -255,12 +255,15 @@ the provider its own `auto`, which is free to choose the dearest, so the estimat
 ceiling: an estimate that can be exceeded is worse than a generous one. Naming the quality makes
 the estimate exact. Gemini has no quality setting, so one figure covers it.
 
-**Two switches, not one.** `leap.ai.show_costs` (default `true`) decides whether the panel shows
-any of this — with it off there is no estimate on the button, none next to the preset options and
-no amount after generating. `leap.ai.record_costs` (default `true`) decides whether the amount is
-kept in the media row's `meta['ai']['cost']`. They are separate on purpose: a computed figure you
-would rather not put in front of an editor is still worth having when you want to know what a
-month of generating cost.
+**Two switches, not one.** `leap.ai.show_costs` (default `false`) decides whether the panel shows
+any of this — off, as it ships, there is no estimate on the button, none next to the preset options
+and no amount after generating. `leap.ai.record_costs` (default `true`) decides whether the amount
+is kept in the media row's `meta['ai']['cost']`. They are separate on purpose, and default in
+opposite directions for the same reason: these figures are computed from the rates above, so they
+exclude VAT and any free tier and will not match an invoice — close enough to report on, not close
+enough to put in front of an editor who did not ask. Turn `show_costs` on where the person
+generating is the person paying. Recording stays on because nothing recomputes it afterwards: with
+it off, what that image cost is gone for good.
 
 ### Other image providers
 
