@@ -21,6 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **An index that lists a pivot attribute eager loads it.** Rendering a pivot column reads
+  the relation off every row, so a resource that did not name it in `$with` paid one query
+  per row — and on a project running `Model::preventLazyLoading()` (which the frontend
+  template's own `AppServiceProvider` turns on locally) opening the index threw
+  *"Attempted to lazy load [tags] on model […] but lazy loading is disabled"* instead.
+  Which relations the index reads is something the resource already knows from its
+  attributes, so it loads them itself rather than asking every resource to repeat it. A
+  resource that does name the relation in `$with` keeps its own version, constraints and
+  all.
 - **A published config no longer hides keys that a later release added below the top level.**
   Laravel's `mergeConfigFrom` is a single `array_merge`, so a project's `config/leap.php`
   replaced whole sections: publishing before 1.1.0 meant `leap.ai.record_costs` read `null`

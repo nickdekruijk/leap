@@ -809,9 +809,19 @@ class Resource extends Module
             $data = $data->where($this->treeview()->name, $parent_id);
         }
 
-        // Eager load relationships
-        if ($this->with) {
-            $data = $data->with($this->with);
+        // Eager load relationships. Every pivot attribute is added on its own account:
+        // the loop further down reads $row->{$attribute->name} for each row, so leaving
+        // them to $with would be one query per row on every index that lists a pivot —
+        // silent until a project turns on Model::preventLazyLoading(), which then throws
+        // instead. The resource's own $with comes last so a constrained relation it
+        // names wins over the plain one added here.
+        $with = array_merge(
+            $this->allAttributes($index)->where('type', 'pivot')->pluck('name')->all(),
+            (array) ($this->with ?: []),
+        );
+
+        if ($with) {
+            $data = $data->with($with);
         }
         // Eager load relationship counts
         if ($this->withCount) {
