@@ -34,6 +34,33 @@ All keys live in `config/leap.php`. The most-used ones:
 Read any value with `config('leap.<key>')`, or inspect it with
 `php artisan config:show leap.<key>`.
 
+## What a published config has to contain
+
+Nothing in particular. Your `config/leap.php` only has to hold what you want to
+differ; leap fills in the rest from the config it ships, nested keys included. So a
+config published two releases ago keeps working, and a key a later release adds
+arrives at its documented default instead of as `null`.
+
+This is deeper than Laravel's own `mergeConfigFrom`, which merges top-level keys only
+and would let a published `ai` section hide every key added below it since. **Lists are
+the exception, deliberately:** an array with numeric keys replaces its counterpart
+whole, so trimming `default_modules` to two entries leaves two, and
+`'presets' => []` means none. Only arrays keyed by name are combined.
+
+You are free to delete anything you have not changed:
+
+```php
+return [
+    'route_prefix' => 'app',
+    'ai' => [
+        'image' => ['presets' => ['standard' => 'gpt-image-1-mini']],
+    ],
+];
+```
+
+`php artisan config:show leap` prints the merged result, which is what the application
+reads — worth checking after an upgrade if a default surprises you.
+
 ## Theming
 
 The panel's CSS (`leap.css`, `filemanager.css`, `editor.css`) is plain CSS — no build

@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Closure;
 use Composer\InstalledVersions;
+use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -202,7 +203,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/leap.php', 'leap');
+        $this->mergeLeapConfigFrom(__DIR__.'/../config/leap.php', 'leap');
 
         // Configure Laravel Fortify for per-user TOTP two factor authentication.
         // Leap drives its own routes and Livewire UI, so Fortify's own routes are
@@ -232,5 +233,61 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         // Scoped so it is flushed between requests / Livewire updates and never
         // leaks into queued jobs the way Laravel's Context does.
         $this->app->scoped(LeapContext::class);
+    }
+
+    /**
+     * Merge the package config into the published one, nested keys included.
+     *
+     * Laravel's own mergeConfigFrom is a single array_merge, so a published
+     * config.leap replaces whole top-level sections: a project that published
+     * config/leap.php before a release added leap.ai.show_costs reads null for
+     * it, not the true this package ships. Every key added below the top level
+     * would otherwise silently arrive turned off in every existing install.
+     */
+    protected function mergeLeapConfigFrom(string $path, string $key): void
+    {
+        if ($this->app instanceof CachesConfiguration && $this->app->configurationIsCached()) {
+            return;
+        }
+
+        $config = $this->app->make('config');
+
+        $config->set($key, $this->mergeLeapConfig(require $path, $config->get($key, [])));
+    }
+
+    /**
+     * The published value wins wherever it says anything; the package fills in
+     * what it is silent about.
+     *
+     * Only maps are merged. A list is a complete answer — dropping a module
+     * from default_modules or an extension from filemanager.allowed_extensions
+     * means exactly that, and merging by index would hand the removed entries
+     * straight back. So a list replaces its counterpart whole, as does any
+     * value whose shape differs between the two (a map published over a list,
+     * or the other way round).
+     *
+     * @param  array<mixed>  $package
+     * @param  array<mixed>  $published
+     * @return array<mixed>
+     */
+    protected function mergeLeapConfig(array $package, array $published): array
+    {
+        foreach ($published as $key => $value) {
+            $package[$key] = $this->isMap($value) && $this->isMap($package[$key] ?? null)
+                ? $this->mergeLeapConfig($package[$key], $value)
+                : $value;
+        }
+
+        return $package;
+    }
+
+    /**
+     * Whether a value is an array keyed by name rather than by position. An
+     * empty array counts as a list: 'presets' => [] is an editor saying there
+     * are none, which a merge must not undo.
+     */
+    protected function isMap(mixed $value): bool
+    {
+        return is_array($value) && ! array_is_list($value);
     }
 }

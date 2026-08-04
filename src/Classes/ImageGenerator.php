@@ -127,7 +127,7 @@ class ImageGenerator
 
         $image = Media::imageManager()->read($data);
 
-        if ($maxWidth = (int) config('leap.ai.image.max_width', 1600)) {
+        if ($maxWidth = (int) config('leap.ai.image.max_width')) {
             $image = $image->scaleDown(width: $maxWidth);
         }
 

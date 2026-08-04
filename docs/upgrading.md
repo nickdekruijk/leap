@@ -47,6 +47,14 @@ change in a minor release — don't call them from application code.
   removed in 2.0. If you read them, switch to `Leap::context()`.
 - **Mandatory 2FA enrollment** has an explicit default in config — review
   `leap.auth_2fa` if you rely on a specific setting.
+- **Your published config no longer has to be complete.** Leap merges the config it
+  ships into yours at every level, so a key a release adds below the top level now
+  arrives at its documented default rather than as `null`. Mostly this is the fix for a
+  silent problem — but it does mean a section you *shortened* to switch something off is
+  now filled back in. If you disabled a feature by deleting its key rather than setting
+  it, set it explicitly. Lists are never merged, so `default_modules` and friends still
+  mean exactly what they say. See
+  [configuration.md](configuration.md#what-a-published-config-has-to-contain).
 - **Image generation moved to `leap.ai.image.presets`.** A preset names the model (and
   optionally its quality and stored size), and the model name says which provider runs
   it, so `leap.ai.image.provider`, `model` and `quality` are gone from a freshly
@@ -61,8 +69,9 @@ change in a minor release — don't call them from application code.
   assumed every generated image was exactly `16:9` should set the ratio in CSS, and a
   site that serves the stored file straight into a page may want to set
   `leap.ai.image.max_width` (freshly published configs now have `null`; an existing
-  config keeps whatever number it has). `leap.ai.image.aspect_ratios` is no longer read
-  and can be deleted from your config.
+  config keeps whatever number it has, and one that never mentioned the key follows the
+  `null` too). `leap.ai.image.aspect_ratios` is no longer read and can be deleted from
+  your config.
 - **Panel CSS is now plain CSS, not SCSS, and consolidated from 12 files to 3**
   (`leap.css`, `filemanager.css`, `editor.css`). If you overrode one of the old
   per-feature files under `resources/css/leap/` (e.g. `nav.scss`, `forms.scss`,

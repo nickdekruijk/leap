@@ -5,6 +5,27 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A published config no longer hides keys that a later release added below the top level.**
+  Laravel's `mergeConfigFrom` is a single `array_merge`, so a project's `config/leap.php`
+  replaced whole sections: publishing before 1.1.0 meant `leap.ai.show_costs` read `null`
+  rather than the `true` this package ships, and every future nested key would have arrived
+  the same way — off, with nothing to notice. The package config is now merged in at every
+  level, so a config only has to hold what it wants to differ.
+  **Lists are deliberately exempt:** an array with numeric keys replaces its counterpart
+  whole, so trimming `default_modules` leaves it trimmed and `'presets' => []` means none.
+  Only arrays keyed by name are combined, and a value whose shape differs between the two
+  is taken from the project as-is.
+  Note the one case where this changes behaviour rather than fixing it: a section you
+  *shortened* to turn something off is now filled back in from the package. Set the key
+  explicitly instead of deleting it.
+- **`leap.ai.image.max_width` follows the `null` it documents.** The code fell back to
+  `1600` when the key was absent, while the published config and the 1.1.0 notes both say
+  the model's own resolution is kept. A config that names a number is unaffected.
+
 ## [1.1.0] — 2026-08-04
 
 ### Added
