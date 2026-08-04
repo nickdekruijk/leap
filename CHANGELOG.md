@@ -5,6 +5,36 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] — 2026-08-04
+
+### Fixed
+
+- **Alt text can now be generated for a photo out of a camera.** The button failed on
+  every image straight off a phone, camera or drone. `describe()` sent the file as it
+  sat on disk, and providers cap an image at a few megabytes once base64 encoded —
+  which adds a third to whatever the file already was. A 7 MB drone photo travelled as
+  9.3 MB and was refused before anything was described.
+  The copy that travels is now bounded by `leap.ai.alt_text.max_width`, default 1568
+  pixels on its **longest side** — width and height both, because a portrait photo of
+  6048 pixels is just as far over as a landscape one. That number is where the vision
+  models resize server-side anyway, so everything above it was paid for and thrown
+  away. It only ever scales down, so a small image passes through untouched, and the
+  file on disk is not modified. The copy is sent as JPEG whatever the source was;
+  transparency is of no consequence for describing a picture. Set it to `null` to send
+  the original.
+- **A failed alt text leaves a trace.** Both places that catch it — the file manager
+  button and the automatic pass after generating an image — dropped the exception on
+  the floor. That is right in the sense that a failed suggestion must not cost the
+  upload or the image that was just paid for, but it left nothing to act on: a
+  provider refusing an oversized image looked exactly like a missing API key. Both now
+  `report()` first, so it lands wherever the project already sends its exceptions. The
+  toast, the upload and the generated image are unchanged.
+
+  **Note:** alt text still shows no price. `prompt()` discards the token usage the
+  provider reports, and no rates ship for chat or vision models, so `cost()` has
+  nothing to work with — only image generation is priced. Measuring a chat task is a
+  separate change.
+
 ## [1.2.1] — 2026-08-04
 
 ### Fixed
