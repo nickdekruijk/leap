@@ -12,16 +12,21 @@
            'filemanager' — a free-form prompt, stored in the folder currently open.
 --}}
 
-{{-- The same list as config/leap.php, so an install whose published config predates
-     this feature still offers every ratio instead of just the first. --}}
-@php($aspects = config('leap.ai.image.aspect_ratios') ?: ['16:9', '4:3', '1:1', '3:4'])
-@php($estimate = $this->aiImageEstimate())
+{{-- Shape, not an exact ratio: the model keeps its own framing, and these three are
+     what the providers actually offer as a canvas. --}}
+@php($orientations = ['landscape', 'portrait', 'square'])
+
+{{-- The presets from leap.ai.image.presets, each with the price of picking it. One
+     preset means there is nothing to choose, so the picker is left out entirely. --}}
+@php($presets = $this->aiImagePresets())
 
 <div x-data="{
     open: false,
     attribute: null,
     prompt: '',
-    aspect: @js(reset($aspects)),
+    orientation: @js(reset($orientations)),
+    preset: @js(array_key_first($presets)),
+    estimates: @js(array_map(fn ($preset) => $preset['estimate'], $presets)),
     busy: false,
     preview: null,
     token: null,
@@ -48,7 +53,7 @@
         this.preview = null;
         this.token = null;
         this.cost = null;
-        $wire.generateImage(this.prompt, this.aspect).then(result => {
+        $wire.generateImage(this.prompt, this.orientation, this.preset).then(result => {
             if (result && result.token) {
                 this.token = result.token;
                 this.preview = result.preview;
@@ -72,11 +77,22 @@
         <div class="leap-modal-field">
             <textarea rows="4" x-model="prompt" placeholder="@lang('leap::resource.image_prompt_placeholder')"></textarea>
         </div>
+        @if (count($presets) > 1)
+            {{-- Above the shape: it decides the model, and with it the price. --}}
+            <div class="leap-modal-field">
+                <label>@lang('leap::resource.image_quality')</label>
+                <select class="leap-select" x-model="preset" :disabled="busy">
+                    @foreach ($presets as $key => $preset)
+                        <option value="{{ $key }}">{{ $preset['label'] }}@if ($preset['estimate']) &nbsp;&asymp; ${{ number_format($preset['estimate'], 3) }}@endif</option>
+                    @endforeach
+                </select>
+            </div>
+        @endif
         <div class="leap-modal-field">
-            <label>@lang('leap::resource.image_aspect')</label>
-            <select class="leap-select" x-model="aspect" :disabled="busy">
-                @foreach ($aspects as $ratio)
-                    <option value="{{ $ratio }}">{{ $ratio }}</option>
+            <label>@lang('leap::resource.image_orientation')</label>
+            <select class="leap-select" x-model="orientation" :disabled="busy">
+                @foreach ($orientations as $orientation)
+                    <option value="{{ $orientation }}">@lang('leap::resource.image_orientation_'.$orientation)</option>
                 @endforeach
             </select>
         </div>
@@ -100,9 +116,10 @@
             <button type="button" class="leap-modal-btn" :class="{ 'leap-modal-save': !token }" :disabled="busy || !prompt.trim()" x-on:click="generate()">
                 @svg('fas-wand-magic-sparkles', 'svg-icon')
                 <span x-text="token ? @js(__('leap::resource.image_regenerate')) : @js(__('leap::resource.image_generate'))"></span>
-                @if ($estimate)
-                    <span class="leap-ai-image-estimate">&asymp; ${{ number_format($estimate, 3) }}</span>
-                @endif
+                {{-- The estimate follows the selected preset, so the button never quotes
+                     the price of a model that is no longer the one being asked. --}}
+                <span class="leap-ai-image-estimate" x-show="estimates[preset]" x-cloak
+                    x-text="'≈ $' + Number(estimates[preset]).toFixed(3)"></span>
             </button>
             <button type="button" class="leap-modal-btn leap-modal-save" x-show="token" x-cloak :disabled="busy" x-on:click="accept()">
                 @svg('fas-check', 'svg-icon') @lang('leap::resource.image_use')

@@ -15,23 +15,35 @@ use NickDeKruijk\Leap\Tests\TestCase;
  */
 class ImageGeneratorTest extends TestCase
 {
-    public function test_an_aspect_ratio_is_parsed_into_a_pair(): void
+    public function test_the_three_orientations_pass_through_untouched(): void
     {
-        $this->assertSame([16.0, 9.0], ImageGenerator::ratio('16:9'));
-        $this->assertSame([4.0, 3.0], ImageGenerator::ratio('4:3'));
+        $this->assertSame('landscape', ImageGenerator::orientation('landscape'));
+        $this->assertSame('portrait', ImageGenerator::orientation('portrait'));
+        $this->assertSame('square', ImageGenerator::orientation('square'));
     }
 
     /**
-     * Anything unparseable falls back to square rather than dividing by zero
-     * further down, where the failure would surface as a broken image instead of
-     * a sensible default.
+     * The dialog offered exact ratios before it offered shapes, so a ratio still sitting
+     * in a project's own call is reduced to the shape it describes rather than refused.
+     */
+    public function test_an_aspect_ratio_is_reduced_to_its_orientation(): void
+    {
+        $this->assertSame('landscape', ImageGenerator::orientation('16:9'));
+        $this->assertSame('landscape', ImageGenerator::orientation('4:3'));
+        $this->assertSame('portrait', ImageGenerator::orientation('3:4'));
+        $this->assertSame('square', ImageGenerator::orientation('1:1'));
+    }
+
+    /**
+     * Anything unparseable falls back to square rather than picking a shape at random,
+     * where the surprise would only surface in the generated image.
      */
     public function test_a_nonsense_ratio_falls_back_to_square(): void
     {
-        $this->assertSame([1, 1], ImageGenerator::ratio(''));
-        $this->assertSame([1, 1], ImageGenerator::ratio('16:0'));
-        $this->assertSame([1, 1], ImageGenerator::ratio('wide'));
-        $this->assertSame([1, 1], ImageGenerator::ratio('-16:9'));
+        $this->assertSame('square', ImageGenerator::orientation(''));
+        $this->assertSame('square', ImageGenerator::orientation('16:0'));
+        $this->assertSame('square', ImageGenerator::orientation('wide'));
+        $this->assertSame('square', ImageGenerator::orientation('-16:9'));
     }
 
     /**

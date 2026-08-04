@@ -31,6 +31,17 @@ towards 2.0.
 **Why deferred:** removing it is a behaviour change for anyone still reading the global
 keys; belongs with the 2.0 cleanup.
 
+## leap.ai.image — drop the pre-preset keys in 2.0
+`leap.ai.image.provider`, `model` and `quality` are deprecated since presets landed. They
+are gone from the published config, but `ImageGenerator::preset()` still falls back to
+them for a preset with a `null` value, and `AiTask::forImage()` reads both `model` and
+`quality` before deciding — which is also why `providerFor()` needs an "unknown model
+name" branch at all. Removing the three keys collapses that to: a preset always names its
+model, the model always names its provider.
+
+**Why deferred:** it is the whole point of the deprecation that existing configs keep
+working; belongs with the 2.0 cleanup, alongside the `LeapContext` mirror above.
+
 ## files.blade.php ↔ media.blade.php — merge
 `resources/views/components/files.blade.php` and `media.blade.php` are near-identical
 (a `<ul class="leap-files">` with per-item open-link + delete button; media adds tags and

@@ -29,7 +29,7 @@ literals.
         'deepl'  => ['api_key' => env('DEEPL_API_KEY')], // translation only; no vision
     ],
 
-    // Per-task { provider, model }. provider null = task disabled;
+    // The chat tasks take { provider, model }. provider null = task disabled;
     // model null = the good default for the chosen provider.
     'alt_text' => [
         'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
@@ -39,17 +39,21 @@ literals.
         'provider' => null, // 'gemini' | 'claude' | 'openai' | 'deepl'
         'model' => null,    // null => provider default; override e.g. 'claude-sonnet-5'
     ],
+    // Image generation takes named presets instead: no presets = disabled.
     'image' => [
-        'provider' => null, // 'gemini' | 'openai' (Claude and DeepL cannot generate images)
-        'model' => null,    // null => gemini-2.5-flash-image / gpt-image-1-mini
+        'presets' => [
+            // 'standard' => 'gpt-image-1-mini',
+        ],
         'folder' => '{module}', // where generated images are stored, see below
     ],
 ],
 ```
 
-A task is **enabled** when its `provider` is set **and** that provider's `api_key` is non-empty.
-Because the default model is keyed to the chosen provider, leaving `model` as `null` always
-resolves to a working default — set a literal only to force a specific model.
+A chat task is **enabled** when its `provider` is set **and** that provider's `api_key` is
+non-empty. Because the default model is keyed to the chosen provider, leaving `model` as `null`
+always resolves to a working default — set a literal only to force a specific model. Image
+generation names its models in [presets](#image-presets) instead, and is enabled when at least one
+of them has an api key.
 
 **Limits.** `leap.ai.timeout` (default `60` seconds) bounds each provider request so a slow API
 can't hang the admin, and `leap.ai.rate_limit` (default `30`) caps AI actions per user per minute
@@ -70,13 +74,41 @@ above a minute means raising the proxy timeout as well
 | `openai` | OpenAI | ✅ | ✅ | ✅ | `gpt-4o-mini` / `gpt-image-1-mini` |
 | `deepl` | DeepL | — (text only) | ✅ | — | — (DeepL has no model choice) |
 
-Each task picks its own provider **and** model, so you can run cheap alt texts on one model and
-better translation prose on another (e.g. `claude-sonnet-5`). Alt text requires a vision-capable
-provider; DeepL is translation-only. Anthropic has no image-generation API, so `claude` cannot
-back the `image` task.
+Each chat task picks its own provider **and** model, so you can run cheap alt texts on one model
+and better translation prose on another (e.g. `claude-sonnet-5`). Alt text requires a
+vision-capable provider; DeepL is translation-only. Anthropic has no image-generation API, so
+`claude` cannot back the `image` task. Image generation has no `provider` of its own: each preset
+names a model, and the model name says which provider runs it.
 
-Because the default model is keyed to the **task** as well as the provider, `image` never falls
-back to a chat model: `gemini` resolves to `gemini-2.5-flash-image`, `openai` to `gpt-image-1-mini`.
+Because the default model is keyed to the **task** as well as the provider, a chat task never
+resolves to an image model or the other way round.
+
+### Models
+
+The model name is passed to the provider untouched, so **any model id the provider accepts works** —
+the lists below are the ones Leap knows a price for, not a whitelist.
+
+**Image generation** (`leap.ai.image.presets`). Each of these ships with a rate and a per-image
+estimate, so the generate dialog can quote a cost before you commit to it:
+
+| Provider | Models (cheapest first) |
+| --- | --- |
+| `gemini` | `gemini-2.5-flash-image`, `gemini-3.1-flash-lite-image`, `gemini-3.1-flash-image`, `gemini-3-pro-image` |
+| `openai` | `gpt-image-1-mini`, `gpt-image-1.5`, `gpt-image-2`, `gpt-image-1` (superseded) |
+
+**Chat** (`leap.ai.alt_text.model`, `leap.ai.translate.model`) — alt text needs a vision-capable
+model, translation does not:
+
+| Provider | Models (default first) |
+| --- | --- |
+| `gemini` | `gemini-2.5-flash`, `gemini-2.5-pro` |
+| `claude` | `claude-haiku-4-5`, `claude-sonnet-5`, `claude-opus-4-8` |
+| `openai` | `gpt-4o-mini`, `gpt-4o` |
+| `deepl` | — (no model choice) |
+
+No rates ship for chat models, so those calls show no price unless you list one under
+`leap.ai.pricing` — see [Costs](#costs) for why the rates live in the package rather than in the
+published config.
 
 > AI calls hit a paid third-party API (Gemini has a free tier; DeepL has a free key). Image and
 > text content is sent to the configured provider — review the provider's terms before enabling.
@@ -117,8 +149,46 @@ Details:
 ## Image generation (editor and file manager)
 
 When `image` is configured, a wand button (✨) appears next to a media field's browse button in the
-editor, and in the file manager's header. It opens a dialog with a prompt, an aspect ratio and a
-preview.
+editor, and in the file manager next to *New folder* and *Upload* — the third way to get a file
+into the folder you have open. It opens a dialog with a prompt, a shape and a preview.
+
+### Image presets
+
+`leap.ai.image.presets` is the list of model + quality combinations the dialog offers. The key is
+the label, the value a model id with an optional `:quality` suffix:
+
+```php
+'image' => [
+    'presets' => [
+        'low' => 'gemini-2.5-flash-image',
+        'medium' => 'gpt-image-1-mini:medium',
+        'high' => 'gemini-3-pro-image',
+    ],
+],
+```
+
+- **The provider comes from the model name**, not from a setting: `gemini*` runs on Gemini,
+  `gpt-*` on OpenAI. So one preset can be a cheap Gemini image and the next an expensive OpenAI
+  one, and a preset whose provider has no api key is simply not offered.
+- **`:quality` is OpenAI only** (`low`, `medium`, `high`); Gemini has no quality setting and
+  ignores it. It changes the price per image by up to 35x, so naming it also makes the estimate
+  exact — see [Costs](#costs).
+- **No presets means no image generation.** One preset means there is nothing to pick, so the
+  dialog leaves the picker out and looks exactly as it did before presets existed. Two or more add
+  a **Quality** select above the shape, each option showing its own estimate.
+- **The keys are yours.** `low`, `medium`, `high` and `maximum` ship translated; any other key is
+  shown as written (`'print ready'` → "Print Ready"), so you can name presets after what they are
+  for. To translate one of your own, publish the panel translations and add
+  `image_quality_<key>` to `resource.php`.
+- **A preset only says what to order.** How the answer is stored
+  (`leap.ai.image.max_width`, `jpeg_quality`) is post-processing the provider never sees, so it
+  stays one setting for every preset.
+- **The picked preset is a key, never a model.** The browser sends the key; an unknown one falls
+  back to the first preset, so a request cannot name a model of its own.
+
+> **Deprecated:** `leap.ai.image.provider`, `model` and `quality` still work when a config
+> published before presets sets them (they behave as a single unnamed preset), but they are
+> scheduled for removal in 2.0 — move them into `presets` when convenient.
 
 - **The prompt is prefilled from the section.** For a media field inside a section, the suggestion
   is built from the record's title and that section's own text, at the language tab you are on,
@@ -127,9 +197,14 @@ preview.
 - **Nothing is stored until you accept.** Generating produces a preview only; the bytes wait in the
   cache for 15 minutes. *Use image* stores the file and attaches it to the field — a result you
   reject leaves nothing behind. Saving the record is still the editor's own **Save**.
-- **The result is always a JPEG at the ratio you picked.** Providers offer a handful of canvas
-  sizes, so Leap crops and scales the result itself (`leap.ai.image.max_width`,
-  `jpeg_quality`). The aspect ratios offered are `leap.ai.image.aspect_ratios`.
+- **You pick a shape, not an exact ratio.** Landscape, portrait or square — the three canvases the
+  providers actually offer (OpenAI 1536×1024, 1024×1536, 1024×1024; Gemini gets 4:3, 3:4 or 1:1 as
+  its ratio hint). **What the model produced is what gets stored:** its proportions *and* its
+  resolution, so the framing you approved in the preview is the file you get and a high-resolution
+  model stays high-resolution. The only change is the encoding — providers answer in PNG, and the
+  same picture as JPEG at `leap.ai.image.jpeg_quality` is a fraction of the bytes. Set
+  `leap.ai.image.max_width` to a number to cap the width anyway; that is worth doing on a site that
+  serves the stored file straight into a page and uses a model that answers at 2K or 4K.
 - **Alt text follows automatically** when `leap.ai.image.alt_text` is on and the `alt_text` task is
   configured — the new image is described in the same pass. A failing alt text never loses the
   image you just paid for.
@@ -138,8 +213,10 @@ preview.
   the admin is organised. Set a literal (`'ai'`) to collect them in one folder, or combine them:
   `'ai/{module}'`. The name comes from the module class, not its translated title, so it does not
   move when the admin language changes. The file manager stores into the folder that is open.
-- **Every generated image records what made it** in the media row's `meta['ai']`: model, prompt,
-  cost and who generated it when.
+- **Every generated image records what made it** in the media row's `meta['ai']`: model, quality,
+  prompt, cost and who generated it when. Selecting it in the file manager marks it with an
+  **A.I.** badge next to the filename, and clicking that unfolds the prompt, model and cost — so
+  months later it is still clear which images were photographed and which were prompted.
 
 Both providers additionally stamp provenance metadata on their output (SynthID for Gemini, C2PA for
 OpenAI). Commercial use is allowed; the images stay identifiable as AI-generated.
@@ -173,10 +250,17 @@ model by naming it under `leap.ai.pricing`:
 
 **Quality changes the price.** OpenAI charges per image by quality, and the spread is large — a
 `gpt-image-2` at `high` costs about 35 times one at `low`. `estimate` is therefore a figure per
-quality for those models, picked with `leap.ai.image.quality`. Leaving that at `null` means the
-provider's own `auto`, which is free to choose the dearest, so the estimate quotes the ceiling: an
-estimate that can be exceeded is worse than a generous one. Setting the quality explicitly makes
+quality for those models, picked with the preset's `:quality` suffix. A preset without one leaves
+the provider its own `auto`, which is free to choose the dearest, so the estimate quotes the
+ceiling: an estimate that can be exceeded is worse than a generous one. Naming the quality makes
 the estimate exact. Gemini has no quality setting, so one figure covers it.
+
+**Two switches, not one.** `leap.ai.show_costs` (default `true`) decides whether the panel shows
+any of this — with it off there is no estimate on the button, none next to the preset options and
+no amount after generating. `leap.ai.record_costs` (default `true`) decides whether the amount is
+kept in the media row's `meta['ai']['cost']`. They are separate on purpose: a computed figure you
+would rather not put in front of an editor is still worth having when you want to know what a
+month of generating cost.
 
 ### Other image providers
 
@@ -231,5 +315,5 @@ Provider calls are covered by tests using `Http::fake()` — see
 [`tests/Feature/EditorAiImageTest.php`](../tests/Feature/EditorAiImageTest.php) and
 [`tests/Feature/FileManagerAiImageTest.php`](../tests/Feature/FileManagerAiImageTest.php) — so the
 prompt-building, JSON decoding (including code-fence-wrapped replies), DeepL request shape,
-per-locale filling, the cropping to the requested aspect ratio and the cost calculation are all
+per-locale filling, the shape asked of each provider and the cost calculation are all
 exercised without spending tokens.

@@ -264,18 +264,56 @@ class EditorAiImageTest extends TestCase
         $this->assertEqualsWithDelta(0.038703, $media->meta['ai']['cost'], 0.0000001);
     }
 
-    public function test_the_stored_image_is_cropped_to_the_chosen_aspect_ratio(): void
+    /**
+     * The orientation is what the model is asked for; its own framing is what gets
+     * stored. Cropping a strip off to force an exact ratio would throw away part of an
+     * image that was paid for and reviewed as it stands.
+     */
+    public function test_the_stored_image_keeps_the_proportions_the_model_produced(): void
     {
         $this->fakeGemini();
 
         $editor = $this->editor();
-        $editor->useGeneratedImage('image', $editor->generateImage('Square source', '16:9')['token']);
+        $editor->useGeneratedImage('image', $editor->generateImage('Square source', 'landscape')['token']);
 
         $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/square-source.jpg'));
 
-        // A square provider image, framed to 16:9 by the crop step.
+        // A square provider image stays square, asked landscape or not.
         $this->assertSame(64, $image->width());
-        $this->assertSame(36, $image->height());
+        $this->assertSame(64, $image->height());
+    }
+
+    /**
+     * A site that derives its own display sizes wants the model's resolution kept, so
+     * the stored file can serve as the master to resize from.
+     */
+    public function test_a_null_max_width_keeps_the_models_own_resolution(): void
+    {
+        config(['leap.ai.image.max_width' => null]);
+        $this->fakeGemini();
+
+        $editor = $this->editor();
+        $editor->useGeneratedImage('image', $editor->generateImage('Untouched source', 'landscape')['token']);
+
+        $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/untouched-source.jpg'));
+
+        $this->assertSame(64, $image->width());
+        $this->assertSame(64, $image->height());
+    }
+
+    public function test_the_stored_image_is_scaled_down_to_the_configured_width(): void
+    {
+        config(['leap.ai.image.max_width' => 32]);
+        $this->fakeGemini();
+
+        $editor = $this->editor();
+        $editor->useGeneratedImage('image', $editor->generateImage('Wide source', 'landscape')['token']);
+
+        $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/wide-source.jpg'));
+
+        // Scaled, not cropped: both sides shrink by the same factor.
+        $this->assertSame(32, $image->width());
+        $this->assertSame(32, $image->height());
     }
 
     public function test_an_expired_token_reports_back_instead_of_storing_anything(): void

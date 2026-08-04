@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Models\Media;
 use ReflectionClass;
+use RuntimeException;
 
 /**
  * The pipeline behind the AI image button: prompt in, a stored, normalised JPEG and
@@ -22,14 +23,63 @@ use ReflectionClass;
 class ImageGenerator
 {
     /**
+     * The presets from leap.ai.image.presets as the tasks they name, in config order and
+     * keyed by their own name, limited to the ones that can actually run — a preset
+     * naming a model whose provider has no API key is simply not offered.
+     *
+     * A preset says what to ask the provider for: a model id with an optional ':quality'
+     * suffix. How the answer is stored (max_width, jpeg_quality) is post-processing and
+     * stays global — the provider never sees it.
+     *
+     * An empty or absent list falls back to a single preset built from the older
+     * leap.ai.image provider/model/quality keys, which is what keeps a config written
+     * before presets existed working unchanged — including having the feature off when
+     * no provider was ever named.
+     *
+     * @return array<string, AiTask>
+     */
+    public static function presets(): array
+    {
+        $presets = config('leap.ai.image.presets') ?: ['' => null];
+
+        return array_filter(
+            array_map(self::preset(...), $presets),
+            fn (AiTask $task) => $task->enabled(),
+        );
+    }
+
+    /**
+     * One configured preset value as the task it names: 'model' or 'model:quality'.
+     * Null means the older leap.ai.image keys decide.
+     */
+    private static function preset(?string $value): AiTask
+    {
+        [$model, $quality] = array_pad(explode(':', (string) $value, 2), 2, null);
+
+        return AiTask::forImage($model ?: null, $quality);
+    }
+
+    /**
      * Generate an image and return the bytes ready to be stored, together with what
      * the call cost (null when the model has no configured rates).
      *
-     * @return array{data: string, extension: string, cost: float|null, model: string|null}
+     * The preset is looked up by key rather than taken as a model name, so a value
+     * coming from the browser can only ever select something the config already
+     * offers; an unknown one falls back to the first preset.
+     *
+     * @param  string  $orientation  'square', 'landscape' or 'portrait'
+     * @return array{data: string, extension: string, cost: float|null, model: string|null, quality: string|null}
      */
-    public static function generate(string $prompt, string $aspect = '16:9'): array
+    public static function generate(string $prompt, string $orientation = 'landscape', ?string $preset = null): array
     {
-        $task = AiTask::for('image');
+        $orientation = self::orientation($orientation);
+
+        $presets = self::presets();
+        $task = $presets[$preset] ?? reset($presets);
+
+        if (! $task) {
+            throw new RuntimeException('No usable image preset is configured');
+        }
 
         // Generating an image routinely takes 20-40 seconds, well past PHP's default
         // 30 second ceiling for web requests. Without this the worker is killed while
@@ -41,26 +91,35 @@ class ImageGenerator
             $prompt = trim($prompt).' '.$style;
         }
 
-        $image = $task->image($prompt, $aspect);
+        $image = $task->image($prompt, $orientation);
 
         return [
-            ...self::normalize($image['mime'], $image['data'], $aspect),
+            ...self::normalize($image['mime'], $image['data']),
             'cost' => $task->cost($image['usage']) ?? $task->estimatedCost(),
             'model' => $task->model,
+            'quality' => $task->quality,
         ];
     }
 
     /**
-     * Bring provider output to one predictable shape: a JPEG at exactly the requested
-     * aspect ratio, no wider than leap.ai.image.max_width. Providers only offer a
-     * handful of canvas sizes, so cropping here is what makes the ratio picker exact.
+     * Store provider output in one predictable format: a JPEG in the proportions the
+     * model produced, no wider than leap.ai.image.max_width.
      *
-     * Vector output is left alone — there is nothing to crop or re-encode, and a
+     * Nothing is cropped. The model was asked for an orientation, not an exact ratio,
+     * so its own framing is the composition someone judged in the preview — cutting a
+     * strip off to force a ratio would throw away part of the image that was paid for.
+     *
+     * A null max_width keeps the model's own resolution, for a site that derives its
+     * own sizes from the original. Everything else is unchanged: the image is still
+     * re-encoded, because providers answer in PNG and that is several times the bytes
+     * of the same picture as JPEG.
+     *
+     * Vector output is left alone — there is nothing to scale or re-encode, and a
      * future SVG-capable provider should not be squashed into a bitmap.
      *
      * @return array{data: string, extension: string}
      */
-    private static function normalize(string $mime, string $data, string $aspect): array
+    private static function normalize(string $mime, string $data): array
     {
         if (str_contains($mime, 'svg')) {
             return ['data' => $data, 'extension' => 'svg'];
@@ -68,20 +127,21 @@ class ImageGenerator
 
         $image = Media::imageManager()->read($data);
 
-        [$aspectWidth, $aspectHeight] = self::ratio($aspect);
-        $width = min((int) config('leap.ai.image.max_width', 1600), $image->width());
-        $height = (int) round($width * $aspectHeight / $aspectWidth);
+        if ($maxWidth = (int) config('leap.ai.image.max_width', 1600)) {
+            $image = $image->scaleDown(width: $maxWidth);
+        }
 
         return [
-            'data' => (string) $image->coverDown($width, $height)
-                ->toJpeg(quality: (int) config('leap.ai.image.jpeg_quality', 82)),
+            'data' => (string) $image->toJpeg(quality: (int) config('leap.ai.image.jpeg_quality', 82)),
             'extension' => 'jpg',
         ];
     }
 
     /**
-     * An aspect ratio string ("16:9") as a [width, height] pair, falling back to
-     * square. Public because AiTask picks its provider canvas from the same parse.
+     * An aspect ratio string ("16:9") as a [width, height] pair, falling back to square.
+     *
+     * @deprecated 1.1 The dialog asks for an orientation and the model's own framing is
+     *             kept, so nothing parses ratios any more. Use orientation() instead.
      *
      * @return array{int|float, int|float}
      */
@@ -90,6 +150,28 @@ class ImageGenerator
         [$width, $height] = array_pad(array_map('floatval', explode(':', $aspect)), 2, 0);
 
         return $width > 0 && $height > 0 ? [$width, $height] : [1, 1];
+    }
+
+    /**
+     * The orientation to ask for, as one of 'square', 'landscape' or 'portrait'.
+     *
+     * An aspect ratio string ("16:9") is accepted as well and reduced to its
+     * orientation, so a call written before the picker offered orientations — or a
+     * ratio still sitting in a project's own code — keeps working.
+     */
+    public static function orientation(string $value): string
+    {
+        if (in_array($value, ['square', 'landscape', 'portrait'], true)) {
+            return $value;
+        }
+
+        [$width, $height] = array_pad(array_map('floatval', explode(':', $value)), 2, 0);
+
+        return match (true) {
+            $width <= 0 || $height <= 0, $width === $height => 'square',
+            $width > $height => 'landscape',
+            default => 'portrait',
+        };
     }
 
     /**
@@ -102,7 +184,7 @@ class ImageGenerator
      * rejects raw JPEG outright ("Incorrect string value" on insert). Encoding costs
      * a third in size and makes the payload safe on every driver.
      *
-     * @param  array{data: string, extension: string, cost: float|null, model: string|null}  $image
+     * @param  array{data: string, extension: string, cost: float|null, model: string|null, quality: string|null}  $image
      */
     public static function park(array $image, string $prompt): string
     {
@@ -121,7 +203,7 @@ class ImageGenerator
      * Fetch a parked image back for accepting, or null when the token is unknown or
      * its 15 minutes are up. Single use: the entry is removed as it is read.
      *
-     * @return array{data: string, extension: string, cost: float|null, model: string|null, prompt: string}|null
+     * @return array{data: string, extension: string, cost: float|null, model: string|null, quality: string|null, prompt: string}|null
      */
     public static function unpark(string $token): ?array
     {
@@ -139,7 +221,12 @@ class ImageGenerator
      * The name is derived from the prompt so the file manager stays readable, and an
      * existing name gets the same -2, -3 suffix the crop-as-new flow uses.
      *
-     * @param  array{model?: string|null, cost?: float|null}  $meta  Recorded on the media row
+     * What made the image is recorded on the row: which model, at which quality, what
+     * it was asked and by whom. The amount is only kept when leap.ai.record_costs is
+     * on — that is a separate switch from showing it, so a panel that hides prices can
+     * still report on what a month of generating cost.
+     *
+     * @param  array{model?: string|null, quality?: string|null, cost?: float|null}  $meta  Recorded on the media row
      */
     public static function store(string $data, string $extension, string $folder, string $prompt, array $meta = []): Media|false
     {
@@ -163,8 +250,9 @@ class ImageGenerator
             $media->meta = array_merge($media->meta ?? [], [
                 'ai' => array_filter([
                     'model' => $meta['model'] ?? null,
+                    'quality' => $meta['quality'] ?? null,
                     'prompt' => $prompt,
-                    'cost' => $meta['cost'] ?? null,
+                    'cost' => config('leap.ai.record_costs', true) ? $meta['cost'] ?? null : null,
                     'generated_at' => (string) now(),
                     'user_id' => Auth::user()?->id,
                 ], fn ($value) => $value !== null),

@@ -17,6 +17,7 @@ class AiTask
         public string $task,
         public ?string $provider,
         public ?string $model,
+        public ?string $quality = null,
     ) {}
 
     /**
@@ -30,7 +31,44 @@ class AiTask
             $task,
             $provider,
             config("leap.ai.$task.model") ?: self::defaultModel($provider, $task),
+            config("leap.ai.$task.quality") ?: null,
         );
+    }
+
+    /**
+     * An image task for an explicit model and quality, as an image preset names them.
+     * Both fall back to the older leap.ai.image.model / .quality, so a config written
+     * before presets existed keeps resolving exactly as it did.
+     *
+     * The provider follows from the model itself: a preset may name a model from a
+     * different provider than the next one, so there is nothing single to configure.
+     */
+    public static function forImage(?string $model = null, ?string $quality = null): self
+    {
+        $model = $model ?: config('leap.ai.image.model') ?: null;
+        $provider = ($model ? self::providerFor($model) : null) ?: config('leap.ai.image.provider');
+
+        return new self(
+            'image',
+            $provider,
+            $model ?: self::defaultModel($provider, 'image'),
+            $quality ?: config('leap.ai.image.quality') ?: null,
+        );
+    }
+
+    /**
+     * The provider a model belongs to, by its name. Model families are named after
+     * their maker, which is what makes a preset able to carry its provider with it;
+     * an unfamiliar name returns null so the caller can fall back to the config.
+     */
+    public static function providerFor(string $model): ?string
+    {
+        return match (true) {
+            str_starts_with($model, 'gemini') => 'gemini',
+            str_starts_with($model, 'gpt-'), str_starts_with($model, 'dall-e') => 'openai',
+            str_starts_with($model, 'claude') => 'claude',
+            default => null,
+        };
     }
 
     /**
@@ -133,11 +171,11 @@ class AiTask
      *
      * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
      */
-    public function image(string $prompt, string $aspect = '16:9'): array
+    public function image(string $prompt, string $orientation = 'landscape'): array
     {
         return match ($this->provider) {
-            'gemini' => $this->imageGemini($prompt, $aspect),
-            'openai' => $this->imageOpenai($prompt, $aspect),
+            'gemini' => $this->imageGemini($prompt, $orientation),
+            'openai' => $this->imageOpenai($prompt, $orientation),
             default => throw new RuntimeException("Provider '$this->provider' cannot generate images"),
         };
     }
@@ -176,7 +214,7 @@ class AiTask
         $estimate = $this->rates()['estimate'] ?? null;
 
         if (is_array($estimate)) {
-            $estimate = $estimate[config('leap.ai.image.quality')] ?? ($estimate ? max($estimate) : null);
+            $estimate = $estimate[$this->quality] ?? ($estimate ? max($estimate) : null);
         }
 
         return $estimate === null ? null : (float) $estimate;
@@ -367,21 +405,30 @@ class AiTask
     }
 
     /**
-     * Gemini image generation over generateContent. The aspect ratio is passed along
-     * as a hint; the caller crops to the exact ratio anyway, so a model that ignores
-     * imageConfig still produces a correctly framed image.
+     * Gemini image generation over generateContent. The orientation becomes the ratio
+     * asked of the model; what it answers with is kept as it is.
+     *
+     * 4:3 and 3:4 rather than the wider 16:9 and 9:16, because every image model in the
+     * family supports them and they sit closest to the canvas OpenAI returns — so the
+     * same orientation produces a comparable shape whichever preset ran.
      *
      * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
      */
-    private function imageGemini(string $prompt, string $aspect): array
+    private function imageGemini(string $prompt, string $orientation): array
     {
+        $ratio = match ($orientation) {
+            'square' => '1:1',
+            'portrait' => '3:4',
+            default => '4:3',
+        };
+
         $response = Http::withHeaders(['x-goog-api-key' => $this->apiKey()])
             ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
             ->post("https://generativelanguage.googleapis.com/v1beta/models/$this->model:generateContent", [
                 'contents' => [['parts' => [['text' => $prompt]]]],
                 'generationConfig' => [
                     'responseModalities' => ['IMAGE'],
-                    'imageConfig' => ['aspectRatio' => $aspect],
+                    'imageConfig' => ['aspectRatio' => $ratio],
                 ],
             ]);
 
@@ -408,20 +455,26 @@ class AiTask
     }
 
     /**
-     * OpenAI image generation. Only three canvas sizes exist, so the aspect ratio
-     * picks the closest one and the caller crops it to the exact ratio.
+     * OpenAI image generation. It offers exactly three canvases, which is where the
+     * square/landscape/portrait choice comes from in the first place.
      *
      * @return array{mime: string, data: string, usage: array{input: int, output: int}|null}
      */
-    private function imageOpenai(string $prompt, string $aspect): array
+    private function imageOpenai(string $prompt, string $orientation): array
     {
+        $size = match ($orientation) {
+            'square' => '1024x1024',
+            'portrait' => '1024x1536',
+            default => '1536x1024',
+        };
+
         $response = Http::withToken($this->apiKey())
             ->connectTimeout(10)->timeout((int) config('leap.ai.timeout', 60))
             ->post('https://api.openai.com/v1/images/generations', array_filter([
                 'model' => $this->model,
                 'prompt' => $prompt,
-                'size' => self::openaiSize($aspect),
-                'quality' => config('leap.ai.image.quality') ?: null,
+                'size' => $size,
+                'quality' => $this->quality,
             ]));
 
         if ($response->failed()) {
@@ -452,21 +505,6 @@ class AiTask
         }
 
         return ['input' => (int) $input, 'output' => (int) $output];
-    }
-
-    /**
-     * The OpenAI canvas closest to the requested aspect ratio: landscape, portrait
-     * or square. Anything unparseable falls back to square.
-     */
-    private static function openaiSize(string $aspect): string
-    {
-        [$width, $height] = ImageGenerator::ratio($aspect);
-
-        if ($width === $height) {
-            return '1024x1024';
-        }
-
-        return $width > $height ? '1536x1024' : '1024x1536';
     }
 
     /**

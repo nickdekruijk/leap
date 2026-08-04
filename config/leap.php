@@ -398,6 +398,23 @@ return [
         'timeout' => 60,
         'rate_limit' => 30,
 
+        // Whether the panel shows what a call costs: the estimate before generating and
+        // the actual amount afterwards. Both are computed from the rates below, never
+        // reported by the provider, so turn this off where a figure that can be slightly
+        // wrong is worse than no figure at all. Recording is a separate switch:
+        // record_costs keeps the amount on the media row (meta['ai']['cost']) for
+        // reporting, whether or not anyone is shown it.
+        'show_costs' => true,
+        'record_costs' => true,
+
+        // Chat models (alt_text and translate). Null takes the provider's default;
+        // any model id the provider accepts works, for example:
+        //   gemini => gemini-2.5-flash (default), gemini-2.5-pro
+        //   claude => claude-haiku-4-5 (default), claude-sonnet-5, claude-opus-4-8
+        //   openai => gpt-4o-mini (default), gpt-4o
+        // No rates ship for chat models, so a call shows no price unless one is listed
+        // under 'pricing' below. DeepL has no model to choose.
+
         // Generate image alt texts (per locale) in the filemanager.
         'alt_text' => [
             'provider' => null, // 'gemini' | 'claude' | 'openai' (vision required)
@@ -414,15 +431,42 @@ return [
         // Generate an image from a prompt: in the editor next to a media field's browse
         // button (prefilled from the section's own content) and in the file manager.
         'image' => [
-            'provider' => null, // 'gemini' | 'openai' (Claude and DeepL cannot generate images)
-            'model' => null,    // null => gemini-2.5-flash-image / gpt-image-1-mini
+            // The model + quality combinations offered in the generate dialog. The key is
+            // the label ('low', 'medium' and 'high' are translated, anything else shows as
+            // written), the value a model id with an optional ':quality' suffix — openai
+            // only, gemini has no quality setting. Quality changes the price per image by
+            // up to 35x, so naming it also makes the cost estimate exact.
+            //
+            // The provider follows from the model id and needs its api key above, so one
+            // preset may run on Gemini and the next on OpenAI. No presets means no image
+            // generation; one preset means there is nothing to pick and that one is simply
+            // used; two or more show a picker.
+            //
+            // Models that ship with a price estimate, so the dialog can quote a cost up
+            // front (any other id the provider accepts works too, but without one):
+            //   gemini => gemini-2.5-flash-image, gemini-3.1-flash-lite-image,
+            //             gemini-3.1-flash-image, gemini-3-pro-image
+            //   openai => gpt-image-1-mini, gpt-image-1.5, gpt-image-2,
+            //             gpt-image-1 (superseded)
+            'presets' => [
+                // 'standard' => 'gpt-image-1-mini',
+                // 'low' => 'gemini-2.5-flash-image',
+                // 'medium' => 'gpt-image-1-mini:medium',
+                // 'high' => 'gemini-3-pro-image',
+            ],
             // Where generated images are stored on the filemanager disk. {module} is the
             // module's folder name, so a Page lands in pages/ and a News item in news/.
             // Set a literal ('ai') to collect them in one folder, or combine: 'ai/{module}'.
             'folder' => '{module}',
-            'aspect_ratios' => ['16:9', '4:3', '1:1', '3:4'], // offered in the generate dialog; the result is cropped to the chosen one
-            'quality' => null,       // openai only: 'low' | 'medium' | 'high' (null = the provider's 'auto'). Changes the price per image by up to 35x, so setting it explicitly also makes the cost estimate exact
-            'max_width' => 1600,     // generated images are scaled down to this width
+            // The stored JPEG keeps what the model produced: its proportions (the dialog
+            // asks for a shape, not an exact ratio, so nothing is cropped) and its
+            // resolution. The file is the master; display sizes are a frontend concern.
+            //
+            // Set max_width to a number to cap it anyway — worth doing on a site that
+            // serves the stored file straight into a page and uses a model that answers
+            // at 2K or 4K. Encoding to JPEG always happens: providers answer in PNG,
+            // several times the bytes of the same picture as JPEG.
+            'max_width' => null,
             'jpeg_quality' => 82,    // encoding quality of the stored JPEG
             'alt_text' => true,      // also generate alt text for the new image when the alt_text task is configured
             'style' => null,         // optional house-style sentence appended to every prompt
