@@ -34,6 +34,25 @@ trait HasMedia
     }
 
     /**
+     * Return the URL of a resized copy of the first media for the given
+     * attribute, or of the file itself when there is nothing to resize.
+     */
+    public function mediaImage(string $attribute, string|int|null $preset = null): ?string
+    {
+        return $this->mediaFor($attribute)->first()?->url($preset);
+    }
+
+    /**
+     * Return a srcset value for the first media for the given attribute.
+     *
+     * @param  array<int>|null  $widths  Defaults to leap.images.component_widths
+     */
+    public function mediaSrcset(string $attribute, ?array $widths = null): string
+    {
+        return $this->mediaFor($attribute)->first()?->srcset($widths) ?? '';
+    }
+
+    /**
      * Return the media for the given attribute
      */
     public function mediaFor(string $attribute): Collection

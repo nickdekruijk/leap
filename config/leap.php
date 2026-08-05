@@ -291,9 +291,109 @@ return [
         ],
         'disk' => 'public', // Must refer to a disk defined in config/filesystems.php, e.g. 'local' or 'public'
         'sanitize_svg' => true, // Strip scripts, event handlers and javascript: URLs from uploaded SVGs. SVGs are served same-origin from the disk above, so an unsanitized SVG can run in an admin's session (stored XSS)
+        // What happens when an upload has the name of a file that is already there and different contents. false stores it beside the old one as name-1.jpg, which is the safe answer: nothing that was on a page changes without someone saying so. true writes over it instead and everything pointing at that media keeps pointing at it, now showing the new picture -- which is what "upload a new version" is usually meant to do, but it changes every page using it at once. Only for someone with update permission; anyone else gets the numbered copy
+        'upload_replace' => false,
         'image_crop_enabled' => true, // true = all bitmap formats (svg is always excluded, it's vector). false disables. Or an array of extensions for finer control, e.g. ['jpeg', 'jpg', 'png', 'webp'] to exclude gif (cropping breaks animation)
         'image_focus_enabled' => true, // true = all bitmap formats (svg is always excluded, it's vector). false disables. Or an array of extensions for finer control, e.g. ['jpeg', 'jpg', 'png', 'webp', 'gif']
         'upload_max_filesize' => '128G', // Maximum size of an uploaded file in bytes, still limited by php.ini upload_max_filesize and post_max_size
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | images
+    |--------------------------------------------------------------------------
+    |
+    | Resized copies of images on the filemanager disk, written on first request
+    | and served straight off disk by the web server from then on. Every URL
+    | carries a prefix of the file's sha256, so replacing a file changes every
+    | URL pointing at it: there is no cache to invalidate, browsers and CDNs
+    | included, only orphaned copies to prune.
+    |
+    | Off by default in 1.x. A site still running nickdekruijk/imageresize would
+    | otherwise have two packages answering overlapping routes. Turn it on, then
+    | drop imageresize -- see docs/images.md.
+    |
+    */
+    'images' => [
+
+        // Master switch. false = no route, no disk, no resizing: Media::url()
+        // returns the original and <x-leap::responsive-image> emits a plain img.
+        'enabled' => false,
+
+        // First URL segment and, for a local disk, the directory under public/.
+        // Must not collide with an application route or another package's.
+        'route' => 'img',
+
+        // Where resized copies are written. Leap registers this disk itself,
+        // rooted at public_path() of the route above, unless filesystems.disks
+        // already defines the name -- so nothing has to be added to
+        // config/filesystems.php. Name another disk to override, but a disk the
+        // web server cannot serve statically (s3, or anything outside public/)
+        // needs 'eager' below, since the fallback that generates on first
+        // request only fires for a URL the web server tried and missed.
+        'disk' => 'leap-images',
+
+        // Where originals are read from. null = leap.filemanager.disk.
+        'source_disk' => null,
+
+        // Characters of the sha256 that go in the URL. 8 is 32 bits: for a
+        // collision to serve the wrong picture two different files would have to
+        // share both the prefix and the path, which the path already prevents.
+        'hash_length' => 8,
+
+        // Generate every preset in a queued job as soon as a file is stored or
+        // changed, instead of on first request. Required for a disk the web
+        // server cannot serve statically. Needs a queue worker.
+        'eager' => false,
+        'queue' => null,
+
+        // Seconds a generation holds its lock. A second request for the same URL
+        // waits for it rather than decoding the same original all over again.
+        'lock_seconds' => 10,
+
+        // Refuse to decode an original above this many pixels and serve it
+        // as-is, rather than let GD blow past memory_limit and take the worker
+        // down with it (GD needs roughly width * height * 4 bytes). null
+        // disables the guard.
+        'max_source_pixels' => 40_000_000,
+
+        // How long a generated copy may be cached. Its URL changes whenever the
+        // file does, so it is immutable by construction.
+        'max_age' => 31536000,
+
+        // What a preset that does not say otherwise gets.
+        'defaults' => [
+            'fit' => 'contain',         // contain = fit within width/height, ratio kept | cover = crop to exactly that box
+            'height' => null,           // null with fit=contain means the width is the only constraint
+            'quality' => 80,
+            // How hard the webp encoder works, 0 to 6. Buys about a tenth of the
+            // file size at the same quality for about half again the encoding
+            // time -- paid once, on a file the web server then serves forever.
+            // libwebp's "method", so it needs the Imagick driver; the GD one has
+            // no equivalent and ignores this. null leaves the default (4).
+            'effort' => 6,
+            'format' => 'webp',         // null = keep the source format. 'webp' | 'jpg' | 'png' | 'avif'
+            'lossless_from' => ['png'], // Source extensions encoded losslessly: a screenshot full of text turns to mush at quality 80
+            'upscale' => false,         // An original smaller than the preset is passed through, not blown up
+            'blur' => null,             // 1-100
+            'grayscale' => false,
+        ],
+
+        // The srcset ladder. Every width here is also a preset named after
+        // itself, so $media->url(1200) works and <x-leap::responsive-image
+        // :widths="[600, 900]"> needs no further configuration.
+        'widths' => [600, 900, 1200, 1600, 1920, 2560],
+
+        // Named presets, for what the ladder does not cover. Each may set any
+        // key from 'defaults' plus 'width'. A name here wins over a width above.
+        'presets' => [
+            // 'square' => ['width' => 600, 'height' => 600, 'fit' => 'cover'],
+            // 'og' => ['width' => 1200, 'height' => 630, 'fit' => 'cover', 'format' => 'jpg'],
+        ],
+
+        // Ladder <x-leap::responsive-image> uses when given no :widths. Separate
+        // from 'widths' so the allowlist can be wider than the default output.
+        'component_widths' => [600, 900, 1200, 1600],
     ],
 
     /*

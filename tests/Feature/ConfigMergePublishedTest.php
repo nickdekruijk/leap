@@ -102,6 +102,43 @@ class ConfigMergePublishedTest extends TestCase
     }
 
     /**
+     * The images section is the newest one to land, so it is exactly what an
+     * older published config is silent about — and turning up as null would read
+     * as "off" for enabled while leaving every preset lookup empty.
+     */
+    public function test_the_images_section_arrives_in_full(): void
+    {
+        $this->publishPreOnePointOne();
+
+        $this->assertFalse(config('leap.images.enabled'));
+        $this->assertSame('img', config('leap.images.route'));
+        $this->assertSame('webp', config('leap.images.defaults.format'));
+        $this->assertSame([600, 900, 1200, 1600, 1920, 2560], config('leap.images.widths'));
+    }
+
+    /**
+     * A ladder is a complete answer: a project that wants two widths gets two,
+     * not two plus everything this package happens to ship with.
+     */
+    public function test_a_published_width_ladder_is_not_refilled(): void
+    {
+        $this->publish(['images' => [
+            'enabled' => true,
+            'widths' => [600, 1200],
+            'defaults' => ['quality' => 60],
+        ]]);
+
+        $this->assertSame([600, 1200], config('leap.images.widths'));
+        $this->assertTrue(config('leap.images.enabled'));
+
+        // While the defaults, being a map, still gain what the project never
+        // mentioned.
+        $this->assertSame(60, config('leap.images.defaults.quality'));
+        $this->assertSame('webp', config('leap.images.defaults.format'));
+        $this->assertSame(['png'], config('leap.images.defaults.lossless_from'));
+    }
+
+    /**
      * A project that published nothing at all -- the config is the package's.
      */
     public function test_an_unpublished_install_gets_the_package_config(): void

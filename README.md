@@ -87,13 +87,14 @@ admin-editable footer, per-page SEO and a sitemap. See
 - [Modules and resources](docs/modules-and-resources.md)
 - [Attributes reference](docs/attributes.md)
 - [Sections](docs/sections.md)
+- [Images](docs/images.md)
 - [Multilingual content](docs/multilingual.md)
 - [AI features](docs/ai.md)
 - [Frontend template](docs/template.md)
 - [Permissions & authentication](docs/permissions-and-auth.md)
 - [Configuration](docs/configuration.md)
 - [Caching](docs/caching.md)
-- [Upgrading to 1.0](docs/upgrading.md)
+- [Upgrading](docs/upgrading.md)
 - [Changelog](CHANGELOG.md)
 
 ## Requirements

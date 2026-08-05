@@ -13,13 +13,17 @@ use Laravel\Fortify\Fortify;
 use Laravel\Passkeys\Events\PasskeyVerified;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Classes\ImageResizer;
+use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
+use NickDeKruijk\Leap\Jobs\GenerateImageDerivatives;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
+use NickDeKruijk\Leap\Models\Media;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -72,6 +76,48 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
+        // Public, unauthenticated, and outside the panel prefix: this is the
+        // fallback that generates a resized copy the web server just failed to
+        // find. Only registered when the feature is on, so a site still running
+        // nickdekruijk/imageresize cannot end up with two packages claiming
+        // overlapping paths.
+        if (config('leap.images.enabled')) {
+            $this->registerImagesDisk();
+            $this->loadRoutesFrom(__DIR__.'/../routes/images.php');
+
+            // Nothing overwrites a resized copy, so an image that goes away or
+            // changes leaves its own behind. Both are known exactly here — the
+            // path and the hash it had — so they can be taken along at once
+            // rather than swept up later by leap:images --prune, which is for
+            // what happens out of leap's sight.
+            Media::deleted(function (Media $media): void {
+                ImageResizer::forget($media->file_name, $media->sha256);
+            });
+
+            Media::updated(function (Media $media): void {
+                foreach (['file_name', 'sha256'] as $attribute) {
+                    if ($media->wasChanged($attribute)) {
+                        // Whatever it was before this save: a renamed file and a
+                        // replaced one both orphan the copies of the old one.
+                        ImageResizer::forget($media->getOriginal('file_name'), $media->getOriginal('sha256'));
+
+                        return;
+                    }
+                }
+            });
+
+            if (config('leap.images.eager')) {
+                // Every path leap writes a file through ends in a saved Media
+                // row, so this one listener covers uploads, crops, AI images and
+                // anything an application adds later.
+                Media::saved(function (Media $media): void {
+                    if ($media->isBitmap() && $media->sha256) {
+                        GenerateImageDerivatives::dispatch($media->id, $media->sha256);
+                    }
+                });
+            }
+        }
+
         if (config('leap.migrations')) {
             $this->loadMigrationsFrom(__DIR__.'/../migrations');
         }
@@ -118,6 +164,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ImageCommand::class,
                 ModuleCommand::class,
                 UserCommand::class,
             ]);
@@ -233,6 +280,42 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         // Scoped so it is flushed between requests / Livewire updates and never
         // leaks into queued jobs the way Laravel's Context does.
         $this->app->scoped(LeapContext::class);
+    }
+
+    /**
+     * Define the disk resized images are written to, so a project does not have
+     * to add one to config/filesystems.php to use the feature. Rooted inside
+     * public/ because the whole point is that the web server serves a generated
+     * copy directly on every request after the first.
+     *
+     * Set from boot() rather than register(): a disk is only ever read when
+     * Storage::disk() is called, and by boot() the configuration is settled
+     * whichever way the application was assembled.
+     *
+     * A disk the project defines itself under the same name always wins — that
+     * is how you point this at s3 (together with leap.images.eager, since
+     * nothing can fall back to PHP for a URL the web server never sees).
+     */
+    protected function registerImagesDisk(): void
+    {
+        $disk = config('leap.images.disk');
+
+        if (! $disk || config('filesystems.disks.'.$disk)) {
+            return;
+        }
+
+        $route = trim((string) config('leap.images.route'), '/');
+
+        config(['filesystems.disks.'.$disk => [
+            'driver' => 'local',
+            'root' => public_path($route),
+            'url' => '/'.$route,
+            'visibility' => 'public',
+            // Never reachable through Laravel's own /storage route: a resized
+            // copy is meant to be served by the web server, not by PHP.
+            'serve' => false,
+            'throw' => false,
+        ]]);
     }
 
     /**

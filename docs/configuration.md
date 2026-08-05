@@ -20,6 +20,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `locales` | `null` | `null` = monolingual; an assoc array enables per-locale editing. See [multilingual.md](multilingual.md). |
 | `sitemap` | `['models' => []]` | Extra models that contribute to `sitemap.xml` (each `Sitemapable`). The template also adds every `content` type automatically. |
 | `content` | `[]` | The template's listed content types, `slug => Model::class`. Managed by `leap:content`. See [content-types.md](content-types.md). |
+| `images` | *(array)* | Resized copies of images on the filemanager disk. Off by default. See [images.md](images.md). |
 | `auth_2fa` | *(array)* | Two factor authentication settings. See [permissions-and-auth.md](permissions-and-auth.md). |
 | `auth_passkeys` | *(array)* | Passkey settings. |
 | `password_reset` | `true` | Enable the forgot/reset password flow. |

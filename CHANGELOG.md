@@ -5,6 +5,66 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-08-05
+
+### Added
+
+- **Resized images, with a cache that cannot go stale.** Leap now serves resized copies of
+  the images on the filemanager disk: `<x-leap::responsive-image>` for a full srcset,
+  `$media->url(1200)` for a single size, `Leap::image($path, 1200)` for an image with no
+  Media row. Copies are generated on the first request and served straight off disk by the
+  web server after that, so PHP runs once per URL and never again.
+  Each URL carries the first eight characters of the file's sha256
+  (`/img/1200/photos/office-a1b2c3d4.jpg.webp`). Replace an image with a different one
+  under the same name and every URL pointing at it changes, so the browser, the CDN and
+  the web server serving the file without asking all move on together. There is nothing to
+  invalidate — only orphaned copies to sweep with `php artisan leap:images --prune`.
+  This is what the separate `nickdekruijk/imageresize` package could not do: its cache path
+  came from the file's name alone, so a replaced image kept serving the old one until
+  someone deleted the whole directory by hand.
+  Deleting, renaming or replacing an image through leap takes its copies along at that
+  moment — the path and hash they were made under are known exactly there — so pruning is
+  only for what happens out of leap's sight.
+  **Off by default** (`leap.images.enabled`), because a site still running imageresize
+  would otherwise have two packages answering overlapping routes. Nothing changes for an
+  existing install until it is turned on: no route, no disk, no migration, no helper. See
+  [docs/images.md](docs/images.md), including how to migrate off imageresize.
+- **`php artisan leap:images`** — `--warm` to generate everything up front (a post-deploy
+  step, since a fresh release directory starts with an empty cache), `--prune` to delete
+  copies nothing points at, `--sync` to re-read files written from outside leap (an rsync,
+  a deploy script, an import — nothing else re-reads the row those URLs are built from),
+  `--clear` to start over, `--dry-run` on any of them.
+- **`Media::syncFromDisk()`** — re-reads size, mime type and content hash and drops the
+  cached dimensions. Anything that writes over an existing file should call it.
+- **`$media->url` and `$media->srcset`** also read as properties, giving the file's own
+  URL and the default srcset ladder. Not sugar: Eloquent resolves a property it has no
+  attribute for by looking for a method of that name and insisting it return a
+  relationship, so the new `url()`/`srcset()` methods would otherwise make reading
+  `$media->url` throw where it used to be null.
+- **`leap.filemanager.upload_replace`** — an upload with the name of a file that is
+  already there still lands beside it as `name-1.jpg` by default. Set this to `true` and
+  it writes over the old one instead, keeping the same Media row, so everything already
+  pointing at that image shows the new one: "upload a new version" doing what it says.
+  The numbering exists because a resized copy used to be addressed by file name alone,
+  which made replacing a file something that could not be seen; the hash in the URL is
+  what makes the choice safe to offer. Off by default all the same — writing over a file
+  changes every page using it at once — and only for someone with update permission;
+  anyone else gets the numbered copy.
+
+### Fixed
+
+- **Cropping an image over itself left the wrong dimensions behind.** The file manager
+  updated the row's size, hash and history but not the cached `meta.width`/`meta.height`,
+  and `dimensions()` returns those as soon as they are set. Every crop therefore left the
+  frontend reserving the aspect ratio of the picture as it was before, for good. The crop
+  now re-reads the file through `syncFromDisk()`.
+- **A photo off a phone measured as landscape.** `Media::dimensions()` read the raw pixel
+  size and ignored the EXIF orientation tag, so a portrait photo with `Orientation=6` was
+  stored as 4000×3000 while every browser displayed it 3000×4000 — the `<img>` reserved a
+  box of the wrong shape and the page jumped when the picture loaded. Dimensions and
+  resized copies are both taken from the image the right way up now. Existing rows are
+  corrected by `leap:images --warm`.
+
 ## [1.2.2] — 2026-08-04
 
 ### Fixed

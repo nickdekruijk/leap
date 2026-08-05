@@ -2,7 +2,12 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
+use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\FileManager;
+use NickDeKruijk\Leap\Models\Media;
+use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
 
 class FileManagerCropFocusTest extends TestCase
@@ -47,5 +52,34 @@ class FileManagerCropFocusTest extends TestCase
         $this->assertTrue($fileManager->imageFocusEnabled('photo.gif'));
         $this->assertTrue($fileManager->imageCropEnabled('photo.png'));
         $this->assertTrue($fileManager->imageFocusEnabled('photo.png'));
+    }
+
+    public function test_cropping_over_the_original_updates_everything_the_row_knows_about_it(): void
+    {
+        Storage::fake('public');
+        $gd = imagecreatetruecolor(400, 200);
+        ob_start();
+        imagepng($gd);
+        Storage::disk('public')->put('photo.png', ob_get_clean());
+
+        $this->actingAs(User::create(['name' => 'Admin', 'email' => 'a@example.com', 'password' => 'x']));
+        Leap::context()->setModule(FileManager::class)->setPermissions([
+            FileManager::class => ['read' => true, 'create' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        $media = Media::forFile('photo.png');
+        $sha256 = $media->sha256;
+        $this->assertSame(['width' => 400, 'height' => 200], $media->dimensions());
+
+        $fileManager = Livewire::test(FileManager::class)->instance();
+        $fileManager->selectedFiles = ['photo.png'];
+        $fileManager->cropImage(0, 0, 50, 50, false, null);
+
+        // The cached dimensions have to follow the crop, or the frontend keeps
+        // reserving the shape of the picture as it was; and the hash has to
+        // follow it too, or every resized copy keeps its old address.
+        $media->refresh();
+        $this->assertSame(['width' => 200, 'height' => 100], $media->dimensions());
+        $this->assertNotSame($sha256, $media->sha256);
     }
 }

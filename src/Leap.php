@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Classes\Section;
 use NickDeKruijk\Leap\Controllers\ModuleController;
 use NickDeKruijk\Leap\Traits\CanLog;
@@ -91,6 +92,29 @@ class Leap
         return uksort($array, function ($a, $b) use ($coll) {
             return collator_compare($coll, $a, $b);
         });
+    }
+
+    /**
+     * The URL of a resized copy of an image on the filemanager disk, addressed
+     * by path — for images that have no Media row, such as a video poster
+     * fetched from YouTube. With a row in hand, use $media->url($preset).
+     *
+     * Falls back to the URL of the file itself whenever there is nothing to
+     * resize, so this is always safe to print.
+     */
+    public static function image(?string $file, string|int|null $preset = null): ?string
+    {
+        return ImageUrl::for($file, $preset);
+    }
+
+    /**
+     * A srcset value for an image addressed by path.
+     *
+     * @param  array<int>|null  $widths  Defaults to leap.images.component_widths
+     */
+    public static function imageSrcset(?string $file, ?array $widths = null): string
+    {
+        return ImageUrl::srcset($file, $widths);
     }
 
     /**

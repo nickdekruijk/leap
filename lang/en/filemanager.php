@@ -60,6 +60,7 @@ return [
     'title' => 'File Manager',
     'upload_done' => ':attribute uploaded',
     'upload_failed' => ':attribute upload failed',
+    'upload_replaced' => ':attribute replaced',
     'upload_not_allowed' => ':attribute is not allowed',
     'upload_too_large' => ':attribute is too large',
 ];

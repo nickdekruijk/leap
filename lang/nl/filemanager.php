@@ -60,6 +60,7 @@ return [
     'title' => 'Bestandsbeheer',
     'upload_done' => ':attribute geupload',
     'upload_failed' => ':attribute upload mislukt',
+    'upload_replaced' => ':attribute vervangen',
     'upload_not_allowed' => ':attribute is niet toegestaan',
     'upload_too_large' => ':attribute is te groot',
 ];

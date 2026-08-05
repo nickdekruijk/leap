@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -134,6 +135,7 @@ class FileManager extends Module
         }
 
         // Check if uploaded file already exists
+        $replacing = false;
         if ($this->getStorage()->exists($path.'/'.$name)) {
             // Compare sha256 hash of both files
             $hash_existing = hash('sha256', $this->getStorage()->get($path.'/'.$name));
@@ -143,13 +145,23 @@ class FileManager extends Module
 
                 return;
             }
-            $n = 1;
-            $fileParts = pathinfo($name);
-            while ($this->getStorage()->exists($path.'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
-                $n++;
+
+            // Writing over it is a different act than adding a file, so it takes
+            // the permission that matches: someone who may only add gets the
+            // numbered copy instead of quietly changing a picture that pages are
+            // already showing.
+            if (config('leap.filemanager.upload_replace') && Gate::allows('leap::update')) {
+                $replacing = true;
+                $this->dispatch('toast-alert', __('leap::filemanager.upload_replaced', ['attribute' => $name]))->to(Toasts::class);
+            } else {
+                $n = 1;
+                $fileParts = pathinfo($name);
+                while ($this->getStorage()->exists($path.'/'.$fileParts['filename'].'-'.$n.'.'.$fileParts['extension'])) {
+                    $n++;
+                }
+                $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
+                $name = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
             }
-            $this->dispatch('toast-alert', __('leap::filemanager.already_exist', ['attribute' => $name]))->to(Toasts::class);
-            $name = $fileParts['filename'].'-'.$n.'.'.$fileParts['extension'];
         }
 
         // SVG is XML that can carry scripts, and the filemanager disk is typically
@@ -162,9 +174,17 @@ class FileManager extends Module
         }
 
         if ($stored) {
-            Media::forFile($path.'/'.$name);
+            $media = Media::forFile($path.'/'.$name);
+
+            // The row already existed and still holds what the old file was, down
+            // to the hash every resized copy is addressed by. Everything pointing
+            // at this media keeps pointing at it, and now shows the new picture.
+            if ($replacing && $media) {
+                $media->syncFromDisk('Replaced by upload');
+            }
+
             $this->dispatch('toast', __('leap::filemanager.upload_done', ['attribute' => $name]))->to(Toasts::class);
-            $this->log('upload', $path.'/'.$name);
+            $this->log($replacing ? 'update' : 'upload', $path.'/'.$name);
             unset($this->columns);
         } else {
             $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $name]))->to(Toasts::class);
@@ -1072,14 +1092,10 @@ class FileManager extends Module
             // Overwrite original
             $this->getStorage()->put($full, $encoded);
             $media = Media::findFile($full) ?? Media::forFile($full);
-            if ($media) {
-                $media->size = $this->getStorage()->size($full);
-                $media->sha256 = hash('sha256', $encoded);
-                $history = $media->history ?? [];
-                $history[] = now().' Cropped from '.$imgW.'x'.$imgH.' to '.$cropW.'x'.$cropH.' by '.Auth::user()?->name.' #'.Auth::user()?->id;
-                $media->history = $history;
-                $media->save();
-            }
+            // Re-read rather than patch the row by hand: the cached dimensions
+            // have to go too, or the frontend keeps reserving the aspect ratio
+            // of the picture as it was before the crop.
+            $media && $media->syncFromDisk('Cropped from '.$imgW.'x'.$imgH.' to '.$cropW.'x'.$cropH);
             $this->dispatch('toast', __('leap::filemanager.crop_done', ['attribute' => $file]))->to(Toasts::class);
             $this->log('update', 'Cropped '.$full.' from '.$imgW.'x'.$imgH.' to '.$cropW.'x'.$cropH);
         }
