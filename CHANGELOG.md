@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] — 2026-08-05
+
+### Changed
+
+- **`leap.images.defaults.lossless_from` is now empty**, where 1.3.0 shipped `['png']`.
+  The reasoning behind that default — text in a screenshot turns to mush at quality 80 —
+  was never measured. It is: against quality 80 at the same width, lossless webp is 5.4x
+  the bytes for a screenshot and 8.5x for a photograph that happens to have been saved as
+  a PNG. Nobody should pay that without asking for it. The setting stays, for the sites
+  whose PNGs really are line art or UI: add `'png'` back and re-run
+  `php artisan leap:images --prune --warm`.
+
 ## [1.3.0] — 2026-08-05
 
 ### Added

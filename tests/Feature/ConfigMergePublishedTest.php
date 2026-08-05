@@ -135,7 +135,7 @@ class ConfigMergePublishedTest extends TestCase
         // mentioned.
         $this->assertSame(60, config('leap.images.defaults.quality'));
         $this->assertSame('webp', config('leap.images.defaults.format'));
-        $this->assertSame(['png'], config('leap.images.defaults.lossless_from'));
+        $this->assertSame([], config('leap.images.defaults.lossless_from'));
     }
 
     /**

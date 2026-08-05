@@ -373,7 +373,12 @@ return [
             // no equivalent and ignores this. null leaves the default (4).
             'effort' => 6,
             'format' => 'webp',         // null = keep the source format. 'webp' | 'jpg' | 'png' | 'avif'
-            'lossless_from' => ['png'], // Source extensions encoded losslessly: a screenshot full of text turns to mush at quality 80
+            // Source extensions encoded losslessly. Empty on purpose: measured against
+            // quality 80, lossless webp is five times the bytes for a screenshot and
+            // eight for a photograph that happens to be a PNG, which is not a trade to
+            // make on anyone's behalf. Add 'png' where the images really are line art,
+            // UI or text on flat colour, and the artefacts show
+            'lossless_from' => [],
             'upscale' => false,         // An original smaller than the preset is passed through, not blown up
             'blur' => null,             // 1-100
             'grayscale' => false,

@@ -120,7 +120,7 @@ For anything the ladder does not cover, name it:
 | `fit` | `contain` | `contain` fits within the box keeping the ratio; `cover` crops to exactly it. |
 | `quality` | `80` | 1–100. |
 | `format` | `webp` | `null` keeps the source format. |
-| `lossless_from` | `['png']` | Source formats encoded losslessly — a screenshot full of text turns to mush at quality 80. |
+| `lossless_from` | `[]` | Source formats encoded losslessly. Costs five to eight times the bytes, so add `'png'` only where the images really are line art, UI or text on flat colour. |
 | `upscale` | `false` | An original smaller than the preset is passed through, not blown up. |
 | `blur` | `null` | 1–100. |
 | `grayscale` | `false` | |
