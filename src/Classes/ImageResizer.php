@@ -33,12 +33,14 @@ class ImageResizer
      * Asked before a <source> is offered, because the alternative is a browser
      * that prefers avif being handed a URL that cannot be produced, and a
      * <picture> gives it no second chance: it commits to the first type it
-     * recognises and never falls back to the <img>. GD has no avif encoder at
-     * all, so a site wanting avif has to be on Intervention's Imagick driver.
+     * recognises and never falls back to the <img>.
      *
-     * Probed rather than assumed from the extension list: whether a build has
-     * the encoder is a property of the machine, not of the package. One tiny
-     * encode per format per process, memoized.
+     * Probed rather than assumed, because neither the driver's name nor its own
+     * answer can be trusted: this package's CI runs a GD that writes avif and an
+     * Imagick that does not, and Imagick::queryFormats() lists avif on builds
+     * that then fail to encode it. Knowing a format is not being able to write
+     * one. So a pixel is encoded and the result believed. One tiny encode per
+     * format per process, memoized.
      */
     public static function supports(string $format): bool
     {

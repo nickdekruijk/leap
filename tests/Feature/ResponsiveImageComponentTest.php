@@ -4,7 +4,6 @@ namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Drivers\Imagick\Driver;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Tests\ImageTestCase;
 
@@ -112,14 +111,12 @@ class ResponsiveImageComponentTest extends ImageTestCase
 
     public function test_extra_formats_become_sources_ahead_of_the_img(): void
     {
-        if (! extension_loaded('imagick') || ! in_array('AVIF', \Imagick::queryFormats(), true)) {
-            $this->markTestSkipped('This build of Imagick has no avif encoder.');
-        }
-
+        // webp and jpg rather than avif: which formats a build can encode is a
+        // property of the machine, and this package's CI turned out to differ
+        // from the machine it was written on in both directions.
         config([
-            'image.driver' => Driver::class,
             'leap.images.component_widths' => [600, 1200],
-            'leap.images.defaults.format' => ['avif' => ['quality' => 55], 'webp' => []],
+            'leap.images.defaults.format' => ['webp' => [], 'jpg' => []],
         ]);
 
         $media = $this->bitmap();
@@ -127,8 +124,8 @@ class ResponsiveImageComponentTest extends ImageTestCase
         $html = $this->render($media, 'sizes="100vw"');
 
         $this->assertStringContainsString('<picture>', $html);
-        $this->assertStringContainsString('type="image/avif"', $html);
-        $this->assertStringContainsString('/img/600.avif/pic-'.$hash.'.jpg.avif 600w', $html);
+        $this->assertStringContainsString('type="image/webp"', $html);
+        $this->assertStringContainsString('/img/600.webp/pic-'.$hash.'.jpg.webp 600w', $html);
 
         // The srcset moves onto the <source>; a browser that took one must not
         // also find a ladder on the <img> and pick from that instead. Asserted
@@ -143,21 +140,24 @@ class ResponsiveImageComponentTest extends ImageTestCase
         $this->assertStringContainsString('src="/img/1200.fallback/pic-'.$hash.'.jpg"', $html);
     }
 
-    public function test_a_format_the_driver_cannot_encode_is_never_offered(): void
+    public function test_a_format_that_cannot_be_encoded_is_never_offered(): void
     {
         config([
-            'image.driver' => \Intervention\Image\Drivers\Gd\Driver::class,
             'leap.images.component_widths' => [600],
-            'leap.images.defaults.format' => ['avif' => [], 'webp' => []],
+            'leap.images.defaults.format' => ['zzz' => [], 'webp' => []],
         ]);
 
         $html = $this->render($this->bitmap(), 'sizes="100vw"');
 
         // A <picture> commits to the first type it recognises and never falls
-        // back to the <img>, so an avif source GD cannot produce would be a
-        // broken image with no second chance. What it can produce stays: the
+        // back to the <img>, so a source that cannot be produced would be a
+        // broken image with no second chance. What can be produced stays: the
         // webp source is still there, and still worth having.
-        $this->assertStringNotContainsString('image/avif', $html);
+        //
+        // A format no build has, rather than a real one: CI turned out to have a
+        // GD that writes avif, so naming avif here would assert the runner's
+        // configuration instead of this package's behaviour.
+        $this->assertStringNotContainsString('image/zzz', $html);
         $this->assertStringContainsString('type="image/webp"', $html);
     }
 }

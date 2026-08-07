@@ -183,7 +183,16 @@ route then serves the original unresized.
 This matters more than it sounds: a `<picture>` commits to the first `type` it recognises and never
 falls back to the `<img>`, so a `<source>` that 404s is a broken image with no second chance. What
 the driver *can* do stays: on GD, `['avif', 'webp']` simply becomes a webp source and the fallback.
-GD has no avif encoder at all, so avif needs Intervention's Imagick driver:
+Which formats a driver has is a property of the machine, not of the driver's name: this package's
+own CI turned out to run a GD that writes avif and an Imagick that does not, and
+`Imagick::queryFormats()` lists avif on builds that then fail to encode it. So there is no rule to
+quote here, only a thing to check on the machine that will serve the site:
+
+```php
+php -r 'var_dump((string) Intervention\Image\ImageManager::gd()->create(1,1)->encodeByExtension("avif") !== "");'
+```
+
+Many GD builds have no avif encoder, and Imagick is the usual answer where that is the case:
 
 ```php
 // config/image.php

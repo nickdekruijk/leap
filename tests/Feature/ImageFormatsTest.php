@@ -171,12 +171,12 @@ class ImageFormatsTest extends ImageTestCase
 
     public function test_sources_offers_only_what_the_driver_can_encode(): void
     {
-        $this->withFormats(['avif' => [], 'webp' => []]);
+        $this->withFormats(['zzz' => [], 'webp' => []]);
 
         $media = $this->media('photos/office.jpg');
         $types = array_column(ImageUrl::sources($media, [600, 1200]), 'type');
 
-        foreach (['avif', 'webp'] as $format) {
+        foreach (['zzz', 'webp'] as $format) {
             // A <picture> commits to the first type it recognises and never
             // falls back to the <img>, so offering a format the driver cannot
             // produce is a broken image with no second chance.
@@ -201,16 +201,18 @@ class ImageFormatsTest extends ImageTestCase
      * support at all, so without this the format leap now offers would never be
      * produced anywhere in the suite.
      */
-    public function test_imagick_actually_encodes_the_avif_a_source_promises(): void
+    public function test_the_driver_actually_encodes_the_avif_a_source_promises(): void
     {
-        if (! extension_loaded('imagick') || ! in_array('AVIF', \Imagick::queryFormats(), true)) {
-            $this->markTestSkipped('This build of Imagick has no avif encoder.');
-        }
-
         config(['image.driver' => Driver::class]);
         $this->withFormats();
 
-        $this->assertTrue(ImageResizer::supports('avif'));
+        // Gated on the probe rather than on Imagick::queryFormats(), which lists
+        // avif on builds that then fail to encode it: the format being known is
+        // not the format being writable, and that gap is the whole reason
+        // supports() encodes a pixel instead of reading a list.
+        if (! ImageResizer::supports('avif')) {
+            $this->markTestSkipped('This build cannot encode avif.');
+        }
 
         $encoded = ImageResizer::encode($this->jpegBytes(800, 600), ImagePreset::find('600.avif'), 'jpg');
 
@@ -219,22 +221,24 @@ class ImageFormatsTest extends ImageTestCase
     }
 
     /**
-     * The same call on GD, which is the default and cannot do it. Nothing throws
-     * and nothing is offered — the <source> is simply not there.
+     * A format nothing can encode, rather than a real one this or that build
+     * happens to lack. Which formats a driver has is a property of the machine:
+     * this package's CI turned out to run a GD that writes avif and an Imagick
+     * that does not, so a test naming either would assert the runner's
+     * configuration and not this package's behaviour.
      */
-    public function test_gd_reports_no_avif_and_is_not_offered_one(): void
+    public function test_a_format_that_cannot_be_encoded_is_never_offered(): void
     {
-        config(['image.driver' => \Intervention\Image\Drivers\Gd\Driver::class]);
-        $this->withFormats();
+        $this->withFormats(['zzz' => [], 'webp' => []]);
 
-        $this->assertFalse(ImageResizer::supports('avif'));
+        $this->assertFalse(ImageResizer::supports('zzz'));
 
-        // Not "no sources at all": webp it can encode, so that one is still
-        // offered and the <picture> still earns its keep. Only the format this
-        // driver cannot produce is left out.
+        // Not "no sources at all": webp can be encoded, so that one is still
+        // offered and the <picture> still earns its keep. Only the format that
+        // cannot be produced is left out.
         $types = array_column(ImageUrl::sources($this->media(), [600]), 'type');
 
-        $this->assertNotContains('image/avif', $types);
+        $this->assertNotContains('image/zzz', $types);
         $this->assertContains('image/webp', $types);
     }
 
@@ -244,33 +248,31 @@ class ImageFormatsTest extends ImageTestCase
     }
 
     /**
-     * A list of nothing this driver can encode must not leave .avif in every
-     * plain srcset and every og:image — addresses no copy can ever be written
-     * for. Nothing encodable left means the source's own format, which works
-     * everywhere.
+     * A list of nothing this driver can encode must not leave that format in
+     * every plain srcset and every og:image, addresses no copy can ever be
+     * written for. Nothing encodable left means the source's own format, which
+     * works everywhere.
      */
     public function test_a_lone_url_skips_a_format_the_driver_cannot_encode(): void
     {
-        config(['image.driver' => \Intervention\Image\Drivers\Gd\Driver::class]);
-        $this->withFormats(['avif' => []]);
+        $this->withFormats(['zzz' => []]);
 
-        $this->assertFalse(ImageResizer::supports('avif'));
+        $this->assertFalse(ImageResizer::supports('zzz'));
         $this->assertNull(ImagePreset::find('1200')->format());
         $this->assertStringEndsWith('.jpg', (string) $this->media()->url(1200));
     }
 
-    public function test_a_lone_url_takes_the_last_format_the_driver_can_encode(): void
+    public function test_a_lone_url_takes_the_last_format_that_can_be_encoded(): void
     {
-        config(['image.driver' => \Intervention\Image\Drivers\Gd\Driver::class]);
-        $this->withFormats(['avif' => [], 'webp' => []]);
+        $this->withFormats(['webp' => [], 'zzz' => []]);
 
-        // avif is unreachable here, webp is not — so webp, not the source.
+        // zzz is unreachable everywhere, webp is not, so webp and not the source.
         $this->assertSame('webp', ImagePreset::find('1200')->format());
     }
 
     /**
      * A ladder of named presets. Without this anything wanting a preset the
-     * widths cannot express — a hero at its own quality, a crop — has to build
+     * widths cannot express, a hero at its own quality or a crop, has to build
      * its own srcset, and then its own <picture> too, which is where the
      * heaviest image on the page quietly loses the format it benefits from most.
      */
@@ -295,7 +297,6 @@ class ImageFormatsTest extends ImageTestCase
     public function test_a_named_ladder_still_offers_the_picture_sources(): void
     {
         config([
-            'image.driver' => \Intervention\Image\Drivers\Gd\Driver::class,
             'leap.images.presets' => ['hero-900' => ['width' => 900, 'quality' => 65]],
             'leap.images.defaults.format' => ['avif' => [], 'webp' => []],
         ]);

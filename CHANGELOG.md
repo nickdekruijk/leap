@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] — 2026-08-07
+
+### Fixed
+
+- **The image format tests asserted the machine they were written on.** Nothing in the package
+  changed: `ImageResizer::supports()` probes because which formats a driver can write is a property
+  of the build, and that is still what it does. The tests around it did not follow their own
+  reasoning, naming avif and expecting GD to lack it. CI runs a GD that writes avif and an Imagick
+  that does not, so five of them failed there while passing locally. They now use a format no build
+  has, and the one test that does need a real encoder skips on the probe rather than on
+  `Imagick::queryFormats()`, which lists avif on builds that then fail to encode it.
+
+  The documentation said "GD has no avif encoder at all" in three places. It is a common
+  configuration, not a rule, and the same CI disproves it. Replaced with the one-liner that answers
+  the question on the machine that will serve the site.
+
 ## [1.5.0] — 2026-08-07
 
 ### Added
@@ -38,8 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   broken; a `<picture>` commits to the first `type` it recognises and never falls back to the `<img>`.
   What the driver can do stays, so on GD `['avif', 'webp']` is simply a webp source and the fallback.
   Probed rather than assumed from a list: whether a build has an encoder is a property of the
-  machine, not of this package. GD has no avif encoder at all, so avif needs Intervention's Imagick
-  driver.
+  machine, not of the driver's name: this package's own CI turned out to run a GD that writes avif
+  and an Imagick that does not, and Imagick::queryFormats() lists avif on builds that then fail to
+  encode it. Check the machine that will serve the site rather than trusting a rule of thumb.
 
   A lone URL skips formats the driver cannot encode when picking its own, so a list of nothing but
   avif on GD resolves to the source format rather than to `.avif` addresses no copy can be written
