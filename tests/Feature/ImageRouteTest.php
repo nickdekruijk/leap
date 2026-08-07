@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Storage;
+use NickDeKruijk\Leap\Classes\ImagePreset;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Tests\ImageTestCase;
 
@@ -87,5 +88,43 @@ class ImageRouteTest extends ImageTestCase
         // file is put back, so it must not be remembered as missing.
         $response->assertNotFound();
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+    }
+
+    /**
+     * The route has to accept the dot, or every <source> a <picture> offers is a
+     * 404 while ImagePreset::find() happily resolves the name in isolation.
+     * Caught on a real site, not here: the unit tests around find() and the
+     * component both passed while nothing could actually be fetched.
+     */
+    public function test_a_format_suffixed_preset_is_reachable_over_http(): void
+    {
+        config(['leap.images.defaults.format' => ['webp' => []]]);
+
+        $media = $this->media();
+
+        $response = $this->get($media->url('1200.webp'));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/webp');
+    }
+
+    public function test_the_picture_fallback_is_reachable_over_http(): void
+    {
+        config(['leap.images.defaults.format' => ['webp' => []]]);
+
+        $media = $this->media();
+
+        $response = $this->get($media->url('1200.'.ImagePreset::FALLBACK));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    public function test_the_preset_segment_takes_one_dot_and_no_more(): void
+    {
+        // The route pattern is the first gate: a segment that could carry a
+        // second dot is a segment that could carry "..".
+        $this->get('/img/6.0.0/photos/pic-a1b2c3d4.jpg.webp')->assertNotFound();
+        $this->get('/img/../composer.json')->assertNotFound();
     }
 }

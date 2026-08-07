@@ -119,7 +119,7 @@ For anything the ladder does not cover, name it:
 | `width` / `height` | — | The box. `height` may be omitted for a width-only constraint. |
 | `fit` | `contain` | `contain` fits within the box keeping the ratio; `cover` crops to exactly it. |
 | `quality` | `80` | 1–100. |
-| `format` | `webp` | `null` keeps the source format. |
+| `format` | `webp` | `null` keeps the source format. An array offers several: see [More than one format](#more-than-one-format). |
 | `lossless_from` | `[]` | Source formats encoded losslessly. Costs five to eight times the bytes, so add `'png'` only where the images really are line art, UI or text on flat colour. |
 | `upscale` | `false` | An original smaller than the preset is passed through, not blown up. |
 | `blur` | `null` | 1–100. |
@@ -129,6 +129,106 @@ Two things are never resized: an **SVG**, which already scales, and an **animate
 which GD would flatten to a single frame. Both are served as they are. So is an original
 above `max_source_pixels` (40 megapixels by default) — decoding it would want roughly
 `width × height × 4` bytes and take the worker down with it.
+
+## More than one format
+
+`format` takes one encoding, or several. A string is what every copy becomes, as before. An
+array is an ordered offer, best first:
+
+```php
+'defaults' => [
+    'format' => ['avif' => ['quality' => 55], 'webp' => []],
+],
+```
+
+`<x-leap::responsive-image>` then wraps its `<img>` in a `<picture>`, one `<source>` per entry:
+
+```html
+<picture>
+  <source type="image/avif" srcset="/img/600.avif/pic-a1b2c3d4.jpg.avif 600w, …" sizes="100vw">
+  <source type="image/webp" srcset="/img/600.webp/pic-a1b2c3d4.jpg.webp 600w, …" sizes="100vw">
+  <img src="/img/1200.fallback/pic-a1b2c3d4.jpg" width="2000" height="1000" alt="…">
+</picture>
+```
+
+Each format is the same preset asked for differently: `{preset}.{format}`, so `1200.avif`, and
+lands in a directory of its own. It is a per-preset option, so a named preset can offer a different
+set from the widths around it, and the allowlist is that preset's own list: `/img/1200.jpg/` on a
+preset that offers only avif and webp is as much a 404 as `/img/9999/` is.
+
+**Quality is per format, and wants to be.** AVIF reaches the same picture at a markedly lower number
+than webp; carrying webp's 80 over would make the avif copy the *larger* of the two, which is the
+whole point thrown away. Any key from `defaults` can be set per format.
+
+**A lone URL takes the last entry.** `$media->url(1200)`, an og:image, a video poster: none of them
+can negotiate. The list is best first, so the last is the most compatible, and that is what a single
+address gets. Handing a scraper avif because it happened to be listed first is how a social preview
+turns into a blank box.
+
+**A second format costs nothing until something asks for it.** A browser downloads exactly one
+`<source>`, and a copy is written on first request, so the ladder a visitor's browser cannot read is
+never generated. Only `eager` warms everything up front.
+
+**Give it a list, not a lone string, if you want a fallback.** `'format' => 'avif'` is one encoding
+for everyone, so there is no `<picture>` and nothing underneath it: a browser without avif gets
+nothing at all. `'format' => ['avif']` is the same single format *offered*, with the `<img>` beneath
+it in the source's own format. The list is what buys the safety net.
+
+Formats the driver cannot encode are skipped when a lone URL picks its format too, so a list of
+nothing but avif on GD resolves to the source format rather than to `.avif` addresses no copy can be
+written for. A lone `'format' => 'avif'` string is an explicit instruction and is left alone; the
+route then serves the original unresized.
+
+**A format the driver cannot encode is dropped from the markup**, not offered and served broken.
+This matters more than it sounds: a `<picture>` commits to the first `type` it recognises and never
+falls back to the `<img>`, so a `<source>` that 404s is a broken image with no second chance. What
+the driver *can* do stays: on GD, `['avif', 'webp']` simply becomes a webp source and the fallback.
+GD has no avif encoder at all, so avif needs Intervention's Imagick driver:
+
+```php
+// config/image.php
+'driver' => Intervention\Image\Drivers\Imagick\Driver::class,
+```
+
+### The fallback
+
+The `<img>` inside the `<picture>` is reached only by a browser that matched no `<source>`. It gets
+the preset's `fallback`: an **override on top of the preset itself**, addressed as
+`{preset}.fallback`:
+
+```php
+'defaults' => [
+    'format' => ['avif' => ['quality' => 55], 'webp' => []],
+    'fallback' => ['format' => null],
+],
+```
+
+Built on the preset rather than beside it, so `width`, `height` and `fit` come along. That is the
+whole reason it is an override: a square preset whose fallback was a loose 1200 would hand a legacy
+browser a different *shape* than every `<source>` above it, and the layout would jump on exactly the
+machines least able to cope.
+
+```php
+'presets' => [
+    'square' => ['width' => 600, 'height' => 600, 'fit' => 'cover'],
+    // square.fallback is 600x600 cover too, in the source's own format
+],
+```
+
+Narrow it where the full size is wasted on the few who land there:
+
+```php
+'hero' => ['width' => 2560, 'fallback' => ['width' => 1200, 'format' => null]],
+```
+
+Leave `format` alone unless you are sure. Forcing `jpg` flattens every transparent png onto black;
+avif and webp both carry alpha, so this last step is the only one that can lose it.
+
+Worth knowing for image search: Google indexes what is in the `<img src>`, not what is only in a
+`srcset` or `<source>`. With a `<picture>` that is this fallback, so do not make it tiny.
+
+With `format` a plain string there is no `<picture>`, no fallback preset and no change to anything:
+the component emits the same `<img>` with the same ladder it always did.
 
 ## Deploying
 

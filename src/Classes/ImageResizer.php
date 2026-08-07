@@ -28,6 +28,42 @@ class ImageResizer
     private const LOSSY_EXTENSIONS = ['jpg', 'jpeg', 'webp', 'avif', 'heic', 'jp2'];
 
     /**
+     * Whether the configured driver can actually encode this format.
+     *
+     * Asked before a <source> is offered, because the alternative is a browser
+     * that prefers avif being handed a URL that cannot be produced, and a
+     * <picture> gives it no second chance: it commits to the first type it
+     * recognises and never falls back to the <img>. GD has no avif encoder at
+     * all, so a site wanting avif has to be on Intervention's Imagick driver.
+     *
+     * Probed rather than assumed from the extension list: whether a build has
+     * the encoder is a property of the machine, not of the package. One tiny
+     * encode per format per process, memoized.
+     */
+    public static function supports(string $format): bool
+    {
+        static $supported = [];
+
+        $format = strtolower($format);
+
+        // Keyed on the driver too: whether a format can be encoded is a property
+        // of the driver, so one answer cannot stand for both. Production never
+        // switches mid-process, but a test that does would otherwise read the
+        // answer the other driver gave.
+        $key = ((string) config('image.driver')).':'.$format;
+
+        return $supported[$key] ??= (function () use ($format): bool {
+            try {
+                return (string) Media::imageManager()
+                    ->create(1, 1)
+                    ->encodeByExtension($format, quality: 1) !== '';
+            } catch (Throwable) {
+                return false;
+            }
+        })();
+    }
+
+    /**
      * Where a resized copy lives on the images disk: the source tree mirrored
      * once per preset, with the hash on the file rather than around it.
      *

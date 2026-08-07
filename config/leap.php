@@ -420,7 +420,48 @@ return [
             // libwebp's "method", so it needs the Imagick driver; the GD one has
             // no equivalent and ignores this. null leaves the default (4).
             'effort' => 6,
-            'format' => 'webp',         // null = keep the source format. 'webp' | 'jpg' | 'png' | 'avif'
+            // One format, or several. A string encodes every copy that way, as
+            // before. An array is an ordered offer, best first: the component
+            // wraps its <img> in a <picture> and gives each entry a <source>,
+            // so the browser takes the first type it recognises.
+            //
+            //     'format' => 'webp',
+            //     'format' => ['avif' => ['quality' => 55], 'webp' => []],
+            //
+            // Options may be set per format, and want to be: avif reaches the
+            // same picture at a markedly lower number than webp, and carrying
+            // webp's 80 over would make the avif copy the larger of the two.
+            //
+            // A lone URL -- $media->url(1200), an og:image, a video poster --
+            // cannot negotiate, so it takes the *last* entry: the list is best
+            // first, so the last is the most compatible. Handing a scraper avif
+            // because it was listed first is how a social preview goes blank.
+            //
+            // A format the driver cannot encode is left out of the markup rather
+            // than offered and served broken -- a <picture> commits to the first
+            // type it recognises and never falls back to the <img>. GD has no
+            // avif encoder, so avif needs image.driver on Imagick.
+            //
+            // null keeps the source format. 'webp' | 'jpg' | 'png' | 'avif'
+            'format' => 'webp',
+
+            // What the <img> inside a <picture> gets: the copy a browser lands
+            // on when it matched no <source> at all. Only consulted when
+            // 'format' above is a list; one format needs no fallback.
+            //
+            // An override on top of the preset itself, so width, height and fit
+            // come along -- a square preset whose fallback was a loose 1200
+            // would hand a legacy browser a different shape than every <source>
+            // above it. Narrow it with 'width' where the full size is wasted on
+            // the few who land here.
+            //
+            // format: null keeps the source's own. Forcing jpg would flatten
+            // every transparent png onto black; avif and webp both carry alpha,
+            // so this is the only step that could lose it.
+            //
+            // It is also what Google Images indexes, since Google reads the
+            // <img src> and not a srcset -- so do not make it tiny.
+            'fallback' => ['format' => null],
             // Source extensions encoded losslessly. Empty on purpose: measured against
             // quality 80, lossless webp is five times the bytes for a screenshot and
             // eight for a photograph that happens to be a PNG, which is not a trade to
@@ -447,6 +488,7 @@ return [
         // Ladder <x-leap::responsive-image> uses when given no :widths. Separate
         // from 'widths' so the allowlist can be wider than the default output.
         'component_widths' => [600, 900, 1200, 1600],
+
     ],
 
     /*

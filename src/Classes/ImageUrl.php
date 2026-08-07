@@ -56,23 +56,85 @@ class ImageUrl
      *
      * @param  array<int>|null  $widths  Defaults to leap.images.component_widths
      */
-    public static function srcset(Media|string|null $file, ?array $widths = null): string
+    public static function srcset(Media|string|null $file, ?array $widths = null, ?string $format = null): string
     {
         if (! self::isResizable($file) || ! config('leap.images.enabled')) {
             return '';
         }
 
+        $suffix = $format ? '.'.strtolower($format) : '';
         $entries = [];
 
-        foreach ($widths ?? config('leap.images.component_widths', []) as $width) {
-            if (! ImagePreset::find($width)) {
+        foreach (self::ladder($widths) as $preset => $width) {
+            if (! ImagePreset::find($preset.$suffix)) {
                 continue;
             }
 
-            $entries[] = self::for($file, $width).' '.((int) $width).'w';
+            $entries[] = self::for($file, $preset.$suffix).' '.$width.'w';
         }
 
         return implode(', ', $entries);
+    }
+
+    /**
+     * A ladder normalised to preset name => the width it is served at.
+     *
+     * A list of numbers is the common case, where the two are the same thing:
+     * [600, 1200] is the 600 preset at 600w. A map names them separately, for a
+     * ladder of named presets. ['hero-900' => 900] is the hero-900 preset,
+     * which carries its own quality or crop, described to the browser as 900w.
+     *
+     * Without that second form anything wanting a preset the widths cannot
+     * express has to build its own srcset, and then it also has to build its own
+     * <picture>, which is exactly where a hero photograph loses the format it
+     * would most benefit from.
+     *
+     * @param  array<int|string, int|string>|null  $widths
+     * @return array<string, int>
+     */
+    public static function ladder(?array $widths = null): array
+    {
+        $ladder = [];
+
+        foreach ($widths ?? config('leap.images.component_widths', []) as $key => $value) {
+            $ladder[is_string($key) ? $key : (string) $value] = (int) $value;
+        }
+
+        return $ladder;
+    }
+
+    /**
+     * One entry per extra format the active driver can encode: the type for the
+     * <source> and the srcset to go with it, best first. Empty when the project
+     * configured no extra formats, so the component keeps emitting a bare <img>.
+     *
+     * @param  array<int>|null  $widths
+     * @return array<int, array{type: string, srcset: string}>
+     */
+    public static function sources(Media|string|null $file, ?array $widths = null): array
+    {
+        $sources = [];
+
+        // Taken from the first rung, since 'format' is a per-preset option: a
+        // named preset may offer a different set from the widths around it.
+        $ladder = self::ladder($widths);
+        $offered = ImagePreset::find(array_key_first($ladder))?->formats() ?? [];
+
+        foreach (array_keys($offered) as $format) {
+            if (! ImageResizer::supports($format)) {
+                continue;
+            }
+
+            $srcset = self::srcset($file, $widths, $format);
+
+            if ($srcset === '') {
+                continue;
+            }
+
+            $sources[] = ['type' => 'image/'.$format, 'srcset' => $srcset];
+        }
+
+        return $sources;
     }
 
     /**

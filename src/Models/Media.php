@@ -188,13 +188,29 @@ class Media extends Model
     }
 
     /**
-     * A srcset value for this image, one entry per width.
+     * A srcset value for this image, one entry per rung.
      *
-     * @param  array<int>|null  $widths  Defaults to leap.images.component_widths
+     * A list of numbers is the common case; a map names presets separately, so
+     * ['hero-900' => 900] is the hero-900 preset described as 900w.
+     *
+     * @param  array<int|string, int|string>|null  $widths  Defaults to leap.images.component_widths
      */
-    public function srcset(?array $widths = null): string
+    public function srcset(?array $widths = null, ?string $format = null): string
     {
-        return ImageUrl::srcset($this, $widths);
+        return ImageUrl::srcset($this, $widths, $format);
+    }
+
+    /**
+     * The <source> entries for a <picture>: one per extra format in
+     * leap.images.formats the active driver can encode, best first. Empty when
+     * none are configured.
+     *
+     * @param  array<int|string, int|string>|null  $widths  Defaults to leap.images.component_widths
+     * @return array<int, array{type: string, srcset: string}>
+     */
+    public function sources(?array $widths = null): array
+    {
+        return ImageUrl::sources($this, $widths);
     }
 
     /**

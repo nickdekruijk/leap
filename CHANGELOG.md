@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`format` now takes a list: AVIF and webp from one `<x-leap::responsive-image>`, with a fallback
+  that still works.** A string is one encoding for everyone, as before. An array is an ordered offer,
+  best first: the component wraps its `<img>` in a `<picture>` and gives each entry a `<source>`, so
+  the browser takes the first type it recognises.
+
+  ```php
+  'format' => ['avif' => ['quality' => 55], 'webp' => []],
+  ```
+
+  Quality is per format, and wants to be: avif reaches the same picture at a markedly lower number
+  than webp, and carrying webp's 80 over would make the avif copy the larger of the two: the whole
+  point thrown away.
+
+  Each format is the same preset asked for differently, `{preset}.{format}`, so a copy per format
+  lands in a directory of its own. It stays a per-preset option, so a named preset may offer a
+  different set from the widths around it, and the allowlist is that preset's own list.
+
+  **A lone URL takes the last entry.** `$media->url()`, an og:image, a video poster: none of them can
+  negotiate, and the list is best first, so the last is the most compatible. Handing a scraper avif
+  because it was listed first is how a social preview goes blank.
+
+  A second format costs nothing until something asks for it: a browser downloads exactly one
+  `<source>` and a copy is written on first request, so the ladder a visitor cannot read is never
+  generated.
+
+  A format the active driver cannot encode is left out of the markup rather than offered and served
+  broken; a `<picture>` commits to the first `type` it recognises and never falls back to the `<img>`.
+  What the driver can do stays, so on GD `['avif', 'webp']` is simply a webp source and the fallback.
+  Probed rather than assumed from a list: whether a build has an encoder is a property of the
+  machine, not of this package. GD has no avif encoder at all, so avif needs Intervention's Imagick
+  driver.
+
+  A lone URL skips formats the driver cannot encode when picking its own, so a list of nothing but
+  avif on GD resolves to the source format rather than to `.avif` addresses no copy can be written
+  for. A lone `'format' => 'avif'` *string* is an explicit instruction and is left alone, but it also
+  has no `<picture>` and so no fallback for browsers without avif, which is what the list form is for.
+
+- **`fallback`: a per-preset option for what the `<img>` inside a `<picture>` gets.** An override on
+  top of the preset itself, addressed as `{preset}.fallback`, so `width`, `height` and `fit` come
+  along. That is the point of it being an override: a square preset whose fallback was a loose width
+  would hand a legacy browser a different shape than every `<source>` above it, and the layout would
+  jump on exactly the machines least able to cope. Narrow it with `width` where the full size is
+  wasted on the few who land there.
+
+  Its format defaults to the source's own, deliberately: forcing jpg would flatten every transparent
+  png onto black, and avif and webp both carry alpha, so this is the only step that could lose it. It
+  is also what Google Images indexes, since Google reads the `<img src>` and not a `srcset`.
+
+  With `format` a plain string there is no `<picture>` and no fallback preset, and the component
+  emits exactly the `<img>` and ladder it did before. Existing projects generate the same copies at
+  the same URLs.
+
 - **`leap.not_found_log`: a line in the log when a page is asked for that is not there.**
   Off by default — a missing page is not a fault of the application, and most 404s are a
   scanner working through a wordlist rather than anything to fix. Switch it on when you
