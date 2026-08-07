@@ -260,6 +260,54 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | not_found_log
+    |--------------------------------------------------------------------------
+    | Writes a line to the application log when a page is asked for that does not
+    | exist. Off by default: a missing page is not a fault of the application, and
+    | most 404s are a scanner walking a wordlist rather than anything to fix.
+    |
+    | Switch it on when you are chasing broken links — after a migration, or when
+    | a redirect map is being written. The line carries the path and, trimmed, the
+    | referer that led there, which is the pair that says which link to fix and
+    | where it lives.
+    |
+    | The IP address is anonymized: 198.51.100.xxx, not the whole thing. Together
+    | with the user agent that is what separates a visitor who followed a dead
+    | link from a bot working through a wordlist — which is the first thing you
+    | want to know and the last thing a bare path can tell you. Switch
+    | 'ip_address_anonymized' off for the whole address, and know why you did.
+    | The same key names as the 'logging' block above, with the same meaning.
+    |
+    | The referer is kept whole, query string and all: "?page=3" says which page
+    | of a listing carried the dead link and "?utm_source=..." says the newsletter
+    | did, which is the question. Browsers have defaulted to
+    | strict-origin-when-cross-origin for years, so a referer from somewhere else
+    | is usually just an origin anyway — the full URLs are your own pages.
+    | Set 'referer_query_string' to false to keep only the path.
+    |
+    | 'throttle_minutes' is how long the same path stays quiet after it has been
+    | written once. Without it a scanner writes a line per guess: a log nobody can
+    | read, on a disk that fills at whatever rate the scanner chooses.
+    |
+    | 'channel' names a logging channel from config/logging.php, so these lines can
+    | go to a file of their own rather than into the middle of everything else.
+    | Null uses the default channel.
+    |
+    */
+    'not_found_log' => [
+        'enabled' => env('LEAP_NOT_FOUND_LOG', false),
+        'channel' => env('LEAP_NOT_FOUND_LOG_CHANNEL'), // null = the default channel
+        'level' => 'info',
+        'throttle_minutes' => 60,
+        'referer' => true, // Log the page that linked here — the reason this is useful
+        'referer_query_string' => true, // Include its query string; false keeps only the path
+        'ip_address' => true, // Log the visitor's IP address
+        'ip_address_anonymized' => true, // Take the last part off it (192.168.1.xxx)
+        'user_agent' => true, // Log the user agent string — with the IP, this is what spots a bot
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | filemanager
     |--------------------------------------------------------------------------
     | Configuration for the built in file manager

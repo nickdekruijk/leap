@@ -4,7 +4,9 @@ namespace NickDeKruijk\Leap;
 
 use Closure;
 use Composer\InstalledVersions;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +16,7 @@ use Laravel\Passkeys\Events\PasskeyVerified;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\ImageResizer;
+use NickDeKruijk\Leap\Classes\NotFoundLog;
 use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
@@ -24,6 +27,7 @@ use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
 use NickDeKruijk\Leap\Models\Media;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -75,6 +79,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         ]);
 
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+
+        $this->registerNotFoundLog();
 
         // Public, unauthenticated, and outside the panel prefix: this is the
         // fallback that generates a resized copy the web server just failed to
@@ -184,6 +190,40 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         });
 
         $this->registerLocalizedRouteMacro();
+    }
+
+    /**
+     * Note a page that was asked for and is not there, when the site asks for that.
+     *
+     * Hung off render() rather than report(), and the difference is not a preference:
+     * Symfony's HttpException is on Laravel's internal do-not-report list, so a report
+     * callback is never handed a 404 at all. Taking it off that list to reach one would
+     * hand every 403 and every abort() to everything else that reports, Sentry included.
+     * The callback returns null, so the error page renders as it always did.
+     *
+     * Registered from here because this package is the one that is installed in
+     * production. The frontend template is a dev dependency — its service provider is
+     * absent on the server, which is the only place a 404 log is worth anything.
+     *
+     * callAfterResolving, so nothing forces the exception handler into existence early on
+     * a console boot that will never need it — and the callback costs nothing until
+     * something actually throws.
+     *
+     * Registered whether or not the feature is on, with NotFoundLog::record() asking that
+     * question when it is called. Reading the config here instead would decide it once,
+     * at boot, before a test or a runtime override has had a chance to say otherwise.
+     */
+    protected function registerNotFoundLog(): void
+    {
+        $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {
+            if (! method_exists($handler, 'renderable')) {
+                return;
+            }
+
+            $handler->renderable(function (NotFoundHttpException $e, Request $request): void {
+                NotFoundLog::record($request);
+            });
+        });
     }
 
     /**

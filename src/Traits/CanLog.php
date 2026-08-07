@@ -38,7 +38,7 @@ trait CanLog
             && ! in_array($module, config('leap.logging.skip_modules'))
         ) {
             // Anonymize IP address if needed
-            $ip = config('leap.logging.ip_address_anonymized') ? preg_replace(['/\.\d*$/', '/[\da-f]*:[\da-f]*$/'], ['.xxx', 'xxxx:xxxx'], request()->ip()) : request()->ip();
+            $ip = config('leap.logging.ip_address_anonymized') ? Leap::anonymizeIp(request()->ip()) : request()->ip();
 
             // Create log entry and return model instance
             /** @disregard P1013 Undefined method 'id' intelephense */

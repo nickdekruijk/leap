@@ -307,6 +307,23 @@ class Leap
         return Attribute::make('permissions')->label(__('leap::auth.permissions'))->sections(...$sections);
     }
 
+    /**
+     * An IP address with its last part taken off: 192.168.1.42 becomes 192.168.1.xxx,
+     * and 2001:db8::1234:5678 becomes 2001:db8::xxxx:xxxx.
+     *
+     * Enough to tell one network from another, which is what a log is ever asked, and not
+     * enough to tell one person from another, which is what it should not be able to
+     * answer. Null in, null out — a request without an address is not an address to hide.
+     */
+    public static function anonymizeIp(?string $ip): ?string
+    {
+        if ($ip === null) {
+            return null;
+        }
+
+        return preg_replace(['/\.\d*$/', '/[\da-f]*:[\da-f]*$/'], ['.xxx', 'xxxx:xxxx'], $ip);
+    }
+
     public static function htmlTitle(): string
     {
         $title = config('leap.title');

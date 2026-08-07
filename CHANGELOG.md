@@ -5,6 +5,64 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-08-07
+
+### Added
+
+- **`leap.not_found_log`: a line in the log when a page is asked for that is not there.**
+  Off by default — a missing page is not a fault of the application, and most 404s are a
+  scanner working through a wordlist rather than anything to fix. Switch it on when you
+  are chasing broken links, after a migration or while writing a redirect map.
+
+  The line answers two questions: which link is broken and where does it live, and was
+  this a visitor or a machine. The second one is why the anonymized IP and the user agent
+  are on — a bare path cannot tell them apart, and that answer decides whether there is
+  anything to fix at all.
+
+  ```php
+  'not_found_log' => [
+      'enabled' => env('LEAP_NOT_FOUND_LOG', false),
+      'channel' => env('LEAP_NOT_FOUND_LOG_CHANNEL'), // null = the default channel
+      'level' => 'info',
+      'throttle_minutes' => 60,
+      'referer' => true,                 // the page that linked here
+      'referer_query_string' => true,    // including its query string
+      'ip_address' => true,              // log the visitor's IP
+      'ip_address_anonymized' => true,   // with its last part taken off
+      'user_agent' => true,              // log the user agent string
+  ],
+  ```
+
+  The address is written as `198.51.100.xxx` — enough to tell one network from another,
+  which is what a log is ever asked, and not enough to tell one person from another.
+  Switching `ip_address_anonymized` off gives the whole thing, and is a decision worth
+  making on purpose. The same key names as the `logging` block, with the same meaning;
+  both now share one implementation, `Leap::anonymizeIp()`.
+
+  The referer is kept whole, query string and all: `?page=3` says which page of a listing
+  carried the dead link and `?utm_source=…` says the newsletter did. It is also nearly
+  always one of your own URLs — browsers have defaulted to
+  `strict-origin-when-cross-origin` for years, so a referer from somewhere else arrives as
+  a bare origin with no path and no query at all. `referer_query_string => false` keeps
+  only the path, for a site whose own URLs carry something it would rather not log.
+
+  `channel` names a channel from `config/logging.php`, so these can go to a file of their
+  own instead of into the middle of everything else.
+
+  `throttle_minutes` is how long the same path stays quiet after it has been written once.
+  Without it a scanner writes a line per guess: a log nobody can read, on a disk that
+  fills at whatever rate a stranger chooses.
+
+  Hung off the exception handler's `render()`, not `report()`. Symfony's `HttpException`
+  is on Laravel's internal do-not-report list, so a report callback is never handed a 404
+  at all — and taking it off that list to reach one would hand every 403 and every
+  `abort()` to whatever else is reporting, Sentry included. The callback returns null, so
+  the error page renders exactly as before.
+
+  This lives here rather than in `leap-template` because `leap-template` is a dev
+  dependency: its service provider is absent on the server, which is the only place a 404
+  log is worth anything.
+
 ## [1.4.0] — 2026-08-07
 
 ### Changed
