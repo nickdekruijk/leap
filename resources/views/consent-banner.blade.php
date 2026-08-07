@@ -24,25 +24,15 @@
 @if (Consent::enabled() && $categories->isNotEmpty())
     <script>window.leapConsent = @json(Consent::toArray());</script>
 
+    {{-- The behaviour lives in consent.js, as Alpine.data('leapConsent'). It used to be
+         an inline object here, and it reached for window.consent from inside the markup.
+         Alpine's CSP build — which a site needs to drop 'unsafe-eval' from its
+         Content-Security-Policy — allows neither: method shorthand in an object literal
+         is not in its grammar, and anything on globalThis is refused. Every other
+         directive below is unchanged; the parser understands all of them. --}}
     <div
         class="consent"
-        x-data="{
-            open: false,
-            settings: false,
-            choice: {},
-            init() {
-                this.open = !window.consent.answered();
-                document.addEventListener('consent:open', () => { this.open = true; this.settings = {{ Consent::granular() ? 'true' : 'false' }}; });
-            },
-            accept() { window.consent.acceptAll(); this.open = false; },
-            refuse() { window.consent.refuseAll(); this.open = false; },
-            save() {
-                @foreach ($categories as $key => $category)
-                    this.choice['{{ $key }}'] ? window.consent.grant('{{ $key }}') : window.consent.revoke('{{ $key }}');
-                @endforeach
-                this.open = false;
-            },
-        }"
+        x-data="leapConsent"
         x-show="open"
         x-cloak
         x-on:keydown.escape.window="open = false"

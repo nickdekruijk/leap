@@ -53,7 +53,11 @@
 
     @if (Consent::enabled())
         <p>
-            <button type="button" class="button cookie-table-change" x-on:click="window.consent.open()">
+            {{-- Its own scope, from consent.js. It used to call window.consent.open()
+                 through whatever x-data the host layout happened to put on <body> —
+                 which the CSP build refuses on both counts, and which meant this button
+                 silently did nothing on a page that had no such wrapper. --}}
+            <button type="button" class="button cookie-table-change" x-data="leapConsentReopen" x-on:click="reopen()">
                 @lang('leap::consent.change')
             </button>
         </p>

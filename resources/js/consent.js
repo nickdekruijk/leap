@@ -146,5 +146,109 @@ window.consent = (function () {
     state = read();
     activate();
 
+    /*
+     * The banner's behaviour, as an Alpine component rather than an inline x-data object.
+     *
+     * It used to be written in the markup, and it reached for window.consent and
+     * document.addEventListener from there. Alpine's CSP build — the one that parses
+     * expressions itself instead of handing them to the Function constructor, so a site
+     * can drop 'unsafe-eval' from its Content-Security-Policy — allows neither: method
+     * shorthand in an object literal is not in its grammar, and every value that sits on
+     * globalThis is refused outright.
+     *
+     * Registered here rather than in the template because this is where the answer
+     * already lives. The component closes over `api` and `config` directly, so it never
+     * touches a global at all — the restriction is met rather than worked around, and
+     * there is one place that knows how consent is stored instead of two.
+     *
+     * The markup keeps every other directive it had: x-show="open", x-show="!settings",
+     * x-model="choice['analytics']", x-on:click="accept()". All of those the CSP parser
+     * understands.
+     */
+    const registerComponents = function (Alpine) {
+        Alpine.data('leapConsent', function () {
+            return {
+                open: false,
+                settings: false,
+                choice: {},
+
+                init() {
+                    this.open = !api.answered();
+
+                    // Reopened from the cookie table, or by anything else that asks. A
+                    // granular banner opens on its categories, since someone changing a
+                    // choice they already made is asking for exactly those.
+                    document.addEventListener('consent:open', () => {
+                        this.open = true;
+                        this.settings = config.granular === true;
+                    });
+                },
+
+                accept() {
+                    api.acceptAll();
+                    this.open = false;
+                },
+
+                refuse() {
+                    api.refuseAll();
+                    this.open = false;
+                },
+
+                save() {
+                    (config.categories || []).forEach((category) => {
+                        this.choice[category] ? api.grant(category) : api.revoke(category);
+                    });
+
+                    this.open = false;
+                },
+            };
+        });
+
+        /*
+         * The "change your choice" button in the cookie table. It stands on a page of its
+         * own, outside the banner, so it needs a scope of its own — it used to borrow
+         * whatever x-data the host layout happened to put on <body>, and to call
+         * window.consent.open() through it.
+         */
+        Alpine.data('leapConsentReopen', function () {
+            return {
+                reopen() {
+                    api.open();
+                },
+            };
+        });
+    };
+
+    /*
+     * Registered whichever way round the two files happen to load.
+     *
+     * Alpine dispatches alpine:init once, from start(), and a listener added after that
+     * never hears it — so a bundle that puts this file after Alpine would register
+     * nothing, the banner's x-data would name a component that does not exist, and the
+     * banner would never appear. Which is to say: it would never ask, and the site would
+     * look like one that had already been answered. Nothing on the page says so.
+     *
+     * window.Alpine only exists once Alpine's own script has run, and that script starts
+     * it immediately — so finding it here means the event has been and gone. Register
+     * straight away, then put the elements that named these components through init
+     * again, since they were walked while the components were still unknown.
+     *
+     * The documented order — this file first — is still the better one: it costs nothing
+     * and there is no second walk. This is here so that getting it wrong is a matter of
+     * a few wasted milliseconds rather than a consent banner nobody sees.
+     */
+    if (window.Alpine) {
+        registerComponents(window.Alpine);
+
+        document.querySelectorAll('[x-data^="leapConsent"]').forEach(function (el) {
+            window.Alpine.destroyTree(el);
+            window.Alpine.initTree(el);
+        });
+    } else {
+        document.addEventListener('alpine:init', function () {
+            registerComponents(window.Alpine);
+        });
+    }
+
     return api;
 })();

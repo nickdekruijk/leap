@@ -5,6 +5,42 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-08-07
+
+### Changed
+
+- **The consent banner works under Alpine's CSP build.** Its behaviour used to be an
+  inline `x-data` object that called `window.consent` and `document.addEventListener`
+  from inside the markup. Alpine's CSP build — the one a site needs in order to keep
+  `'unsafe-eval'` out of its Content-Security-Policy — refuses both: method shorthand in
+  an object literal is not in its grammar, and every value that sits on `globalThis` is
+  rejected outright. On such a site the banner threw on load and never appeared, which
+  means it also never asked.
+
+  The behaviour moved into `resources/js/consent.js`, as `Alpine.data('leapConsent')`. It
+  closes over the same `api` the file already builds, so it reaches for no global at all —
+  the restriction is met rather than worked around, and there is one place that knows how
+  consent is stored instead of two. Every other directive in the banner is unchanged.
+
+  The "change your choice" button in the cookie table gets its own scope,
+  `Alpine.data('leapConsentReopen')`. It used to borrow whatever `x-data` the host layout
+  happened to put on `<body>` and call `window.consent.open()` through it — so on a page
+  without such a wrapper it silently did nothing.
+
+  **Nothing is required of a site that is not using the CSP build**: both components are
+  ordinary `Alpine.data()` registrations and work the same under the standard build. A
+  site that has published its own copy of `consent-banner.blade.php` keeps working too,
+  since the old inline object still calls a `window.consent` that is still there — but it
+  will not survive a move to the CSP build until it takes this change.
+
+  Bundling `resources/js/consent.js` before Alpine, as the frontend template does, is
+  still the better order — but it is no longer a requirement. `alpine:init` fires once and
+  a listener added afterwards never hears it, so a bundle in the wrong order would have
+  registered nothing and the banner would simply never have appeared, which looks exactly
+  like a visitor who had already answered. The file now checks whether Alpine is already
+  present and, if so, registers immediately and re-initialises the two elements that name
+  these components.
+
 ## [1.3.1] — 2026-08-05
 
 ### Changed

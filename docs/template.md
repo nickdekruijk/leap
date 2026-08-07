@@ -317,6 +317,29 @@ own stylesheet — the package CSS is structural and reads the template's design
 overrides**. Treat it as breaking and say so in the changelog. To replace the markup
 outright: `php artisan vendor:publish --tag=leap-views`.
 
+### Alpine
+
+The banner's behaviour is `Alpine.data('leapConsent')`, registered by `consent.js`; the
+cookie table's "change your choice" button is `Alpine.data('leapConsentReopen')`.
+
+**Bundle `consent.js` before Alpine** — the template's layout already does. It is not a
+hard requirement: `alpine:init` fires once and a listener added afterwards never hears it,
+so `consent.js` checks whether Alpine is already there and, if it is, registers straight
+away and puts the banner through `initTree` again. Getting the order wrong costs a second
+walk of two elements rather than a consent banner nobody ever sees.
+
+It is written this way so the banner runs under [Alpine's CSP
+build](https://alpinejs.dev/advanced/csp), which a site needs if it wants to keep
+`'unsafe-eval'` out of its Content-Security-Policy. That build parses the expressions in
+the markup itself, and its grammar has no method shorthand in an object literal and no
+access to anything on `globalThis` — so an `x-data` that calls `window.consent` cannot
+work there. Both components are ordinary registrations and behave identically under the
+standard build, so nothing is required of a site that is not using the CSP one.
+
+A project that has published its own copy of `consent-banner.blade.php` keeps its copy,
+and keeps working — but that copy will not survive a move to the CSP build until it takes
+the same change.
+
 ## Caching
 
 The page tree is memoized per request (`once()`); there is no persistent cache to

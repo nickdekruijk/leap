@@ -110,7 +110,9 @@ Alongside those, three things a project depends on without calling any PHP:
   banner from their own stylesheet and gate their own scripts on that object.
 - **`resources/js/consent.js`** as a path. The frontend template bundles it out of the
   package by `base_path('vendor/nickdekruijk/leap/resources/js/consent.js')`, so moving
-  the file breaks every generated site with nothing to catch it.
+  the file breaks every generated site with nothing to catch it. It registers the banner's
+  Alpine components, and copes with being bundled either side of Alpine — before it is
+  still the better order, but after no longer costs the banner.
 - **Published view names** under `leap::`, which a project can override with
   `vendor:publish --tag=leap-views`.
 

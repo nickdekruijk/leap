@@ -80,4 +80,69 @@ class ConsentTest extends TestCase
         $this->assertArrayHasKey('granular', $blob);
         $this->assertArrayHasKey('default', $blob);
     }
+
+    /**
+     * The banner names a component; it does not carry its behaviour.
+     *
+     * It used to be an inline x-data object calling window.consent from inside the
+     * markup. Alpine's CSP build — the one a site needs to keep 'unsafe-eval' out of its
+     * Content-Security-Policy — has no method shorthand in its grammar and refuses every
+     * value on globalThis, so there the banner threw on load and never appeared. A banner
+     * that never appears is a banner that never asks.
+     */
+    public function test_the_banner_carries_no_behaviour_of_its_own(): void
+    {
+        $html = view('leap::consent-banner')->render();
+
+        $this->assertStringContainsString('x-data="leapConsent"', $html);
+
+        // The two the CSP build refuses outright.
+        $this->assertStringNotContainsString('window.consent', $html);
+        $this->assertStringNotContainsString('init()', $html);
+    }
+
+    public function test_the_cookie_table_button_brings_its_own_scope(): void
+    {
+        // It used to borrow whatever x-data the host layout happened to put on <body>,
+        // and did nothing at all on a page that had none.
+        $html = view('leap::cookie-table')->render();
+
+        $this->assertStringContainsString('x-data="leapConsentReopen"', $html);
+        $this->assertStringContainsString('x-on:click="reopen()"', $html);
+        $this->assertStringNotContainsString('window.consent', $html);
+    }
+
+    public function test_consent_js_registers_the_components_the_markup_names(): void
+    {
+        $js = file_get_contents(__DIR__.'/../../resources/js/consent.js');
+
+        $this->assertStringContainsString("Alpine.data('leapConsent'", $js);
+        $this->assertStringContainsString("Alpine.data('leapConsentReopen'", $js);
+    }
+
+    /**
+     * Registered whichever way round the two files load.
+     *
+     * alpine:init is dispatched once, from Alpine's start(), and a listener added after
+     * that never hears it. A bundle that puts consent.js second would therefore register
+     * nothing at all — and the failure is silent: the banner simply never appears, which
+     * looks exactly like a visitor who has already answered.
+     *
+     * So there are two paths, and this asserts both are still there. Verified in a
+     * browser with the scripts in the wrong order: with the fallback the banner opens and
+     * "accept" writes the cookie, without it the button does nothing.
+     */
+    public function test_consent_js_survives_being_bundled_after_alpine(): void
+    {
+        $js = file_get_contents(__DIR__.'/../../resources/js/consent.js');
+
+        // The ordinary path: Alpine is still to come.
+        $this->assertStringContainsString("addEventListener('alpine:init'", $js);
+
+        // The fallback: Alpine is already here, so register now and walk the elements
+        // that were initialised while the components were unknown.
+        $this->assertStringContainsString('if (window.Alpine)', $js);
+        $this->assertStringContainsString('destroyTree', $js);
+        $this->assertStringContainsString('initTree', $js);
+    }
 }
