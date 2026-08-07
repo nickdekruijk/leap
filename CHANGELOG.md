@@ -18,8 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Imagick::queryFormats()`, which lists avif on builds that then fail to encode it.
 
   The documentation said "GD has no avif encoder at all" in three places. It is a common
-  configuration, not a rule, and the same CI disproves it. Replaced with the one-liner that answers
-  the question on the machine that will serve the site.
+  configuration, not a rule, and the same CI disproves it. It now says how to find out instead, and
+  says to ask over HTTP: `php artisan tinker` runs under the CLI binary, and CLI and PHP-FPM
+  routinely load different extensions, so a server whose terminal reports no avif can be serving
+  avif on every request.
 
 ## [1.5.0] — 2026-08-07
 

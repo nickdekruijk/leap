@@ -188,9 +188,23 @@ own CI turned out to run a GD that writes avif and an Imagick that does not, and
 `Imagick::queryFormats()` lists avif on builds that then fail to encode it. So there is no rule to
 quote here, only a thing to check on the machine that will serve the site:
 
-```php
-php -r 'var_dump((string) Intervention\Image\ImageManager::gd()->create(1,1)->encodeByExtension("avif") !== "");'
+**Ask the process that serves the site, not the one on the command line.** `php artisan tinker` runs
+under the CLI binary, and CLI and PHP-FPM routinely load different extensions from different ini
+files: a server whose CLI reports no avif can be serving avif all day. Trusting the terminal here
+gets you a false negative and a format you switched off for no reason.
+
+So ask over HTTP. Request a URL for the format and look at what comes back:
+
+```bash
+curl -sI 'https://example.com/img/900.avif/photos/office-a1b2c3d4.jpg.avif' | grep -i content-type
 ```
+
+`image/avif` means the web process encoded it. Anything else, usually the original's own type, means
+it could not, and the `<source>` is being left out of the markup exactly as intended. Checking the
+rendered page works too: no `type="image/avif"` in the HTML is the same answer.
+
+`ImageResizer::supports('avif')` is the predicate the package itself uses, so it is the right thing
+to call from a route or a controller. From `tinker` it only tells you about the CLI.
 
 Many GD builds have no avif encoder, and Imagick is the usual answer where that is the case:
 
