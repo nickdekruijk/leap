@@ -340,6 +340,36 @@ A project that has published its own copy of `consent-banner.blade.php` keeps it
 and keeps working — but that copy will not survive a move to the CSP build until it takes
 the same change.
 
+## Content-Security-Policy
+
+A generated site is **not** CSP-strict out of the box, and moving it there is a project of
+its own. What the template does guarantee is that it is not itself in the way: none of its
+own Alpine expressions names a global, which is the one thing the CSP build refuses
+outright. A test in `leap-template` fails the build if one creeps back in.
+
+What a site still has to do, in the order the work actually falls:
+
+1. **`script-src` needs `'unsafe-eval'`, or Alpine's CSP build.** The standard build
+   evaluates every directive expression with the `Function` constructor. The
+   [CSP build](https://alpinejs.dev/advanced/csp) parses them itself — its grammar covers
+   object literals, comparisons, ternaries, assignment and calls with arguments, and stops
+   at arrow functions, template literals and anything on `globalThis`.
+2. **Alpine comes from Livewire here.** The template renders `<livewire:search />`, so
+   `@livewireScripts` supplies Alpine and it is the standard build. `livewire.csp_safe`
+   swaps it for the CSP one, at roughly 120KB — and applies the same grammar to every
+   Livewire component the project writes afterwards. A site that drops the search
+   component can load Alpine on its own instead and pay nothing.
+3. **`'unsafe-inline'` is the harder half**, and it is separate from all of the above. The
+   layout has inline `<script>` blocks of its own, and `setting('html_head')` and
+   `setting('scripts_<category>')` exist precisely so an editor can paste a vendor's
+   snippet — which a nonce cannot cover without rewriting what they pasted.
+
+Worth doing in report-only first: `Content-Security-Policy-Report-Only` with a collector
+behind it measures what a policy would break before it breaks it. Note that a report-only
+policy is inert in Chrome and Safari without a `report-uri` or `report-to`, and that
+`frame-ancestors` is ignored in report-only entirely — so the directives that are ready
+belong in an enforcing header alongside it, not in the one being measured.
+
 ## Caching
 
 The page tree is memoized per request (`once()`); there is no persistent cache to
