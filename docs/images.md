@@ -289,6 +289,26 @@ php artisan leap:images --prune --dry-run   # report without touching anything
 `--warm` also re-measures dimensions, which corrects rows stored before leap read the EXIF
 orientation of photos off a phone.
 
+### Run it with the PHP the site runs on
+
+`--prune` and `--warm` refuse to start when the image driver cannot encode a single one of
+the formats the presets offer, and say so:
+
+```
+The image driver cannot encode avif or webp, which leap.images asks every preset for.
+```
+
+That is not a configuration mistake, it is the command line running a different PHP than
+the site: a server on 8.5 with Imagick, a default `php` still on 8.4 without it. The site
+keeps serving AVIF while artisan cannot see that AVIF exists, and every copy on disk then
+reads as a layout leap does not write. Left to itself `--prune` deletes all of them and
+`--warm` rewrites them at addresses the markup never asks for.
+
+Check with `php -m | grep -i imagick`, and if it is missing there but the site is fine,
+name the version: `php8.5 artisan leap:images --prune`. On Forge, the site's PHP version
+and the server's CLI version are set in two different places, and a scheduled job runs on
+whichever `php` resolves to. `update-alternatives --display php` shows which one that is.
+
 ## Remote disks
 
 Point `leap.images.disk` at an s3 disk you define yourself in `config/filesystems.php` and

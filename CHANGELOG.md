@@ -5,6 +5,43 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.2] — 2026-08-10
+
+### Fixed
+
+- **`leap:images --prune` deleted good copies when artisan ran on a PHP the site does not use.**
+  Found on a live server: a site on PHP 8.5 with Imagick, serving avif to every visitor, and a
+  default `php` still on 8.4 without the extension. One prune, and the copies behind the lightbox
+  were gone.
+
+  Nothing was wrong with the files. `ImagePreset::format()` drops the formats the driver cannot
+  encode, because offering a `<source>` no copy can ever be written for is worse than not offering
+  it. With no encoder for any of them there is nothing left to drop to, so it answers "the source's
+  own format", and `parseTargetPath()` then reads `photo-a1b2c3d4.jpg.webp` as a name this package
+  would never have written. `isOrphan()` says so, in as many words, and prune believes it. The hash
+  and the original are never even looked at.
+
+  `--prune` and `--warm` now refuse to start when a preset offers formats and the driver can write
+  none of them, and name the PHP binary they are running under:
+
+  ```
+  The image driver cannot encode avif or webp, which leap.images asks every preset for.
+    Every copy already written that way then reads as a layout this package does not write:
+    --prune would delete all of them and --warm would rewrite them at addresses nothing asks for.
+    Almost always a command line running a different PHP than the site. The driver is
+    imagick; check that this PHP has it: /usr/bin/php8.4
+  ```
+
+  Before the dry run, deliberately. A `--prune --dry-run` under the wrong binary reports how many
+  files it would delete, which reads as an answer while the question was wrong.
+
+  A preset offering one format is untouched: that is a plain string and it passes through whether
+  the driver has the encoder or not, exactly as before.
+
+  On Forge this is two settings in two places: the site's PHP version, and the server's CLI
+  version. A scheduled job runs on whichever `php` resolves to, and `update-alternatives --display
+  php` says which one that is. See docs/images.md.
+
 ## [1.5.1] — 2026-08-07
 
 ### Fixed

@@ -103,6 +103,57 @@ class ImageCommandTest extends ImageTestCase
         Storage::disk('leap-images')->assertExists('1200/pic-'.substr($media->sha256, 0, 8).'.jpg.webp');
     }
 
+    /**
+     * The disagreement that costs files: the site encodes AVIF perfectly well over
+     * HTTP while the command line cannot, because it runs a PHP without the driver's
+     * extension. format() then drops every format it cannot write and answers "the
+     * source's own", the copies on disk stop matching what the preset says it writes,
+     * and prune reads every one of them as an older layout. Nothing here is broken
+     * except what the command was told, so it has to refuse rather than tidy up.
+     */
+    public function test_it_refuses_to_prune_when_the_driver_can_write_none_of_the_offered_formats(): void
+    {
+        $media = $this->media();
+        $this->artisan('leap:images --warm')->assertSuccessful();
+
+        // No driver encodes these, which is the point: it stands in for a build
+        // without the AVIF and webp encoders rather than for a typo in the config.
+        config(['leap.images.defaults.format' => ['zzz' => [], 'qqq' => []]]);
+
+        $this->artisan('leap:images --prune')
+            ->expectsOutputToContain('zzz')
+            ->assertFailed();
+
+        Storage::disk('leap-images')->assertExists('600/pic-'.substr($media->sha256, 0, 8).'.jpg.webp');
+    }
+
+    public function test_it_refuses_to_warm_on_the_same_grounds(): void
+    {
+        config(['leap.images.defaults.format' => ['zzz' => [], 'qqq' => []]]);
+
+        $this->artisan('leap:images --warm')->assertFailed();
+
+        $this->assertSame([], Storage::disk('leap-images')->allFiles());
+    }
+
+    /**
+     * One encodable format is enough. The presets still describe the paths on disk,
+     * and a format the driver happens not to have is a <source> the markup leaves
+     * out rather than a copy that has gone missing.
+     */
+    public function test_it_prunes_as_usual_when_one_offered_format_can_be_written(): void
+    {
+        $media = $this->media();
+        $this->artisan('leap:images --warm')->assertSuccessful();
+
+        config(['leap.images.defaults.format' => ['zzz' => [], 'webp' => []]]);
+        config(['leap.images.widths' => [1200]]);
+
+        $this->artisan('leap:images --prune')->assertSuccessful();
+
+        Storage::disk('leap-images')->assertMissing('600/pic-'.substr($media->sha256, 0, 8).'.jpg.webp');
+    }
+
     public function test_a_dry_run_deletes_nothing(): void
     {
         $media = $this->media();

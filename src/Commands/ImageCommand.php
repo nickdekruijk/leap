@@ -52,6 +52,19 @@ class ImageCommand extends Command
             return self::FAILURE;
         }
 
+        if (($this->option('prune') || $this->option('warm')) && ($blind = $this->formatsThisDriverCannotWrite()) !== []) {
+            $this->components->error(
+                'The image driver cannot encode '.implode(' or ', $blind).', which leap.images asks every preset for.'
+            );
+            $this->line('  <fg=gray>Every copy already written that way then reads as a layout this package does not write:</>');
+            $this->line('  <fg=gray>--prune would delete all of them and --warm would rewrite them at addresses nothing asks for.</>');
+            $this->line('  <fg=gray>Almost always a command line running a different PHP than the site. The driver is</> '
+                .'<fg=yellow>'.((string) config('image.driver')).'</><fg=gray>; check that this PHP has it:</> <fg=yellow>'.PHP_BINARY.'</>');
+            $this->newLine();
+
+            return self::FAILURE;
+        }
+
         if ($this->option('sync')) {
             $this->sync();
         }
@@ -69,6 +82,43 @@ class ImageCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * The formats the config offers that this driver cannot encode a single one
+     * of, so the paths those presets describe are not the paths on disk.
+     *
+     * Both destructive options read the file names back through the preset that
+     * would have written them, and a preset asks the driver which format that
+     * is: format() drops what cannot be encoded, and with nothing left it
+     * answers "the source's own", so a copy ending in .avif no longer looks like
+     * anything this package writes. prune() calls that an older layout and
+     * deletes it; warm() writes the copy again at an address the markup does not
+     * use. Neither is wrong about what it was told. What it was told is wrong.
+     *
+     * It happens for one reason in practice: a command line running a different
+     * PHP than the site, without the extension the driver needs. The site keeps
+     * serving AVIF perfectly well while artisan cannot see that AVIF exists,
+     * which is exactly the sort of disagreement that ends in deleted files.
+     *
+     * Only the presets that offer several formats can say this. One format is a
+     * plain string, and that is passed through whether the driver has it or not.
+     *
+     * @return array<int, string>
+     */
+    private function formatsThisDriverCannotWrite(): array
+    {
+        $blind = [];
+
+        foreach (ImagePreset::all() as $preset) {
+            if ($preset->formats() === [] || $preset->format() !== null) {
+                continue;
+            }
+
+            $blind = array_merge($blind, array_keys($preset->formats()));
+        }
+
+        return array_values(array_unique($blind));
     }
 
     /**
