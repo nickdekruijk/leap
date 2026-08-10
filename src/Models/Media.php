@@ -90,32 +90,31 @@ class Media extends Model
     /**
      * The Intervention driver to encode with.
      *
-     * Laravel 13 reads config('images.driver') -- the strings 'gd' and 'imagick', set
-     * from IMAGE_DRIVER -- for its own image feature. That is honoured first, so a host
-     * app that switches to Imagick gets the same driver here instead of silently keeping
-     * GD, a weaker avif encoder and no webp effort setting. config('image.driver') is
-     * intervention/image-laravel's key and holds a driver classname; still read, for
-     * projects that set it. GD when neither says anything.
+     * Two keys can name one, and the order between them is not the obvious one.
+     *
+     * config('image.driver') is intervention/image-laravel's, and holds a driver
+     * classname. It is only there when a project published that config and wrote a
+     * driver into it, so it is always a deliberate answer, and it wins.
+     *
+     * config('images.default') is Laravel 13's own, holding the names 'gd' and
+     * 'imagick' and fed by IMAGE_DRIVER. It cannot be asked whether anyone chose it:
+     * the framework answers 'gd' whether the app set that or set nothing at all. So it
+     * is read second -- a site that wants it to decide simply deletes the older file.
      *
      * @return class-string<DriverInterface>
      */
     public static function imageDriver(): string
     {
-        $named = match (config('images.driver')) {
-            'imagick' => ImagickDriver::class,
-            'gd' => GdDriver::class,
-            default => null,
-        };
+        $legacy = config('image.driver');
 
-        if ($named) {
-            return $named;
+        if (is_string($legacy) && is_a($legacy, DriverInterface::class, true)) {
+            return $legacy;
         }
 
-        $driver = config('image.driver');
-
-        return is_string($driver) && is_a($driver, DriverInterface::class, true)
-            ? $driver
-            : GdDriver::class;
+        return match (config('images.default')) {
+            'imagick' => ImagickDriver::class,
+            default => GdDriver::class,
+        };
     }
 
     /**

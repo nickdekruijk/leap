@@ -214,10 +214,15 @@ Set it the way Laravel does, and this package follows:
 IMAGE_DRIVER=imagick
 ```
 
-That is `config('images.driver')`, which Laravel's own `Image` facade reads too, so one setting
-covers both. `config('image.driver')` — intervention/image-laravel's key, holding a driver
-classname — is still read for projects that set it, but `images.driver` wins where both are
-present.
+That is `config('images.default')`, which Laravel's own `Image` facade reads too, so one
+setting covers both.
+
+`config('image.driver')` — intervention/image-laravel's key, holding a driver classname — is
+still read, and **it wins where both are present**. Not the other way around: `images.default`
+answers `gd` on an app that never chose one, since that is the framework's own default, so
+reading it first would move every site with an older `config/image.php` from Imagick to GD
+without anyone asking. The older file can only have been written on purpose. A project that
+wants the `.env` to decide deletes `config/image.php`.
 
 ### The fallback
 

@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] — 2026-08-10
+
+### Fixed
+
+- **The driver fix in 1.6.0 read a config key that does not exist.** It asked for
+  `config('images.driver')`; Laravel's is `config('images.default')`. That branch therefore
+  never fired, and `IMAGE_DRIVER=imagick` went on being ignored exactly as before — the thing
+  1.6.0 said it had fixed. Nothing regressed, but nothing improved either.
+
+  The order between the two keys is reversed with it, and that is the more important half.
+  `config('images.default')` answers `gd` on an app that never chose one, since that is the
+  framework's own default, and it cannot be asked whether anyone meant it. Reading it first
+  would have moved every site with a published `config/image.php` from Imagick to GD, taking
+  the avif tier and the webp `effort` setting with it. So the older key wins now: it can only
+  be there on purpose. A project that wants `.env` to decide deletes `config/image.php`.
+
 ## [1.6.0] — 2026-08-10
 
 ### Changed

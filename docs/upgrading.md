@@ -24,18 +24,20 @@ alongside Leap until now, because the two want different major versions of
 
 ### If you set the image driver
 
-`config('image.driver')` still works. But Laravel 13 reads `config('images.driver')` from
-`IMAGE_DRIVER`, and this package now reads that first, so on a site where both are set the
-`.env` value wins:
+`config('image.driver')` keeps working and keeps winning, so nothing changes for a site that
+has one. What is new is that a site *without* one now follows Laravel's own key:
 
 ```ini
 IMAGE_DRIVER=imagick
 ```
 
-Worth checking on any site that runs avif: if you had `IMAGE_DRIVER=imagick` for Laravel's own
-image handling and a `config/image.php` that never got written, this package was encoding on GD
-without saying so. After the update it follows the `.env`, so avif quality and `effort` change
-on the next `leap:images --warm`.
+That is `config('images.default')`, which Laravel's `Image` facade reads too. Worth setting on
+any site that runs avif and had been relying on the GD default.
+
+The older key wins on purpose. `images.default` answers `gd` on an app that never chose one,
+because that is the framework's default, so preferring it would have moved every site with a
+published `config/image.php` from Imagick to GD — and with it the avif tier and the webp
+`effort` setting — without a word. To hand the decision to `.env`, delete `config/image.php`.
 
 ## 1.3 — resized images
 
