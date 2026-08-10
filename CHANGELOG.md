@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **An original whose extension is not lowercase was a 404 on Linux.** `targetPath()`
+  lowercased the source's extension when composing a copy's address, so
+  `news/PHOTO.JPG` was offered as `news/PHOTO-750e0179.jpg.webp`.
+  `parseTargetPath()` is the inverse and has only that address to work from, so the
+  request went looking for `news/PHOTO.jpg`, which on a case sensitive filesystem is
+  a different file — and one that is not there. The extension is now carried over
+  exactly as the source spells it.
+
+  Nobody saw this while developing: macOS does not tell the two names apart, so the
+  original was found and the copy written. It only shows on the server.
+
+  Copies already written under the lowercased name are orphaned by this, since the
+  address changed. `leap:images --prune` takes them along; the new address is written
+  on the next request either way.
+
 - **Validation on blur came back on Livewire 4.** Fourteen inputs across login, profile,
   two factor, forgot-password and reset-password used `wire:model.blur`, which in Livewire 4
   only syncs client-side: no request, so no `updated()`, so no per-field validation until

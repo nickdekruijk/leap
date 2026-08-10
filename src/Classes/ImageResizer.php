@@ -74,11 +74,18 @@ class ImageResizer
      * A directory per hash would be a directory per file per preset — three for
      * every copy once the source tree is rebuilt inside it, and an empty one
      * left behind whenever a copy goes.
+     *
+     * The source's extension is carried over exactly as it is, PHOTO.JPG and
+     * all. parseTargetPath() below is the inverse and has only the address to
+     * work from, so anything this method changes about the name is a name the
+     * request can no longer find on a case sensitive filesystem: lowercasing it
+     * here made every .JPG on a Linux server a 404, while a Mac answered it
+     * because its filesystem does not care.
      */
     public static function targetPath(string $sourcePath, ImagePreset $preset, string $hash): string
     {
         $sourcePath = ltrim($sourcePath, '/');
-        $extension = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
+        $extension = pathinfo($sourcePath, PATHINFO_EXTENSION);
         $directory = trim(pathinfo($sourcePath, PATHINFO_DIRNAME), '.');
 
         return $preset->name.'/'

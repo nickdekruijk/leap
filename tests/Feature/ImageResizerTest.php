@@ -153,6 +153,13 @@ class ImageResizerTest extends ImageTestCase
             'test/photos/office-a1b2c3d4.jpg',
             ImageResizer::targetPath('photos/office.jpg', $this->preset(['width' => 1200, 'format' => null]), 'a1b2c3d4')
         );
+
+        // The source's own spelling, not a tidied version of it. The output format
+        // is this package's own and stays lowercase.
+        $this->assertSame(
+            'test/photos/OFFICE-a1b2c3d4.JPG.webp',
+            ImageResizer::targetPath('photos/OFFICE.JPG', $webp, 'a1b2c3d4')
+        );
     }
 
     public function test_a_target_path_reads_back_as_the_original_it_was_made_from(): void
@@ -178,7 +185,20 @@ class ImageResizerTest extends ImageTestCase
     {
         $preset = $this->preset(['width' => 1200, 'format' => 'webp']);
 
-        foreach (['office.jpg', 'photos/office.jpg', 'a/b/c/my photo-2.jpeg', 'photos/already.webp'] as $path) {
+        // The uppercase ones are the reason this loop is not decoration: the copy's
+        // address is all the request has to find the original by, and a filesystem
+        // that tells .JPG and .jpg apart will not forgive a changed letter.
+        $paths = [
+            'office.jpg',
+            'photos/office.jpg',
+            'a/b/c/my photo-2.jpeg',
+            'photos/already.webp',
+            'news/PHOTO.JPG',
+            'a/b/Mixed.JpEg',
+            'slides/SHOUTING.PNG',
+        ];
+
+        foreach ($paths as $path) {
             $this->assertSame(
                 ['path' => $path, 'hash' => 'a1b2c3d4'],
                 ImageResizer::parseTargetPath(
