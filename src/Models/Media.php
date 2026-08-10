@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\DriverInterface;
+use Intervention\Image\Interfaces\ImageManagerInterface;
 use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Leap;
 
@@ -73,20 +76,46 @@ class Media extends Model
     }
 
     /**
-     * An Intervention ImageManager, built directly rather than through the
-     * Intervention\Image\Laravel facade. Laravel 13 ships its own `Illuminate\Image`
-     * feature bound to the same `image` container key, so that facade now resolves to
-     * Laravel's manager (whose Intervention bridge calls a method the installed
-     * intervention/image version does not have). Resolving the manager here avoids the
-     * collision. Uses the configured Intervention driver when set, else GD.
+     * An Intervention ImageManager, built directly rather than through a facade.
+     * Laravel 13 ships its own `Illuminate\Image` feature bound to the `image`
+     * container key, which intervention/image-laravel also claims; this package
+     * therefore depends on intervention/image itself and never registers a binding,
+     * so a host app is free to use Laravel's Image facade for its own code.
      */
-    public static function imageManager(): ImageManager
+    public static function imageManager(): ImageManagerInterface
     {
+        return ImageManager::usingDriver(static::imageDriver());
+    }
+
+    /**
+     * The Intervention driver to encode with.
+     *
+     * Laravel 13 reads config('images.driver') -- the strings 'gd' and 'imagick', set
+     * from IMAGE_DRIVER -- for its own image feature. That is honoured first, so a host
+     * app that switches to Imagick gets the same driver here instead of silently keeping
+     * GD, a weaker avif encoder and no webp effort setting. config('image.driver') is
+     * intervention/image-laravel's key and holds a driver classname; still read, for
+     * projects that set it. GD when neither says anything.
+     *
+     * @return class-string<DriverInterface>
+     */
+    public static function imageDriver(): string
+    {
+        $named = match (config('images.driver')) {
+            'imagick' => ImagickDriver::class,
+            'gd' => GdDriver::class,
+            default => null,
+        };
+
+        if ($named) {
+            return $named;
+        }
+
         $driver = config('image.driver');
 
         return is_string($driver) && is_a($driver, DriverInterface::class, true)
-            ? ImageManager::withDriver($driver)
-            : ImageManager::gd();
+            ? $driver
+            : GdDriver::class;
     }
 
     /**
@@ -109,7 +138,7 @@ class Media extends Model
 
         try {
             $storage = Storage::disk($this->disk ?: config('leap.filemanager.disk'));
-            $image = static::imageManager()->read($storage->get($this->file_name));
+            $image = static::imageManager()->decodeBinary($storage->get($this->file_name));
 
             // A photo straight off a phone is stored the way the sensor read it
             // with an EXIF tag saying which way is up. Intervention keeps that

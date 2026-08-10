@@ -1037,7 +1037,7 @@ class FileManager extends Module
             return;
         }
 
-        $image = Media::imageManager()->read($fileContents);
+        $image = Media::imageManager()->decodeBinary($fileContents);
         $imgW = $image->width();
         $imgH = $image->height();
 
@@ -1051,7 +1051,7 @@ class FileManager extends Module
 
         $cropped = $image->crop($cropW, $cropH, $px1, $py1);
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        $encoded = (string) $cropped->encodeByExtension($extension);
+        $encoded = (string) $cropped->encodeUsingFileExtension($extension);
 
         if ($saveAsNew) {
             // Validate the new filename

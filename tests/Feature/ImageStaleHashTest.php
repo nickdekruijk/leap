@@ -60,7 +60,7 @@ class ImageStaleHashTest extends ImageTestCase
         $response->assertRedirect($media->url(1200));
 
         // And the corrected URL serves the file that is there now.
-        $image = Media::imageManager()->read($this->get($media->url(1200))->getContent());
+        $image = Media::imageManager()->decodeBinary($this->get($media->url(1200))->getContent());
         $this->assertSame(1000, $image->width());
     }
 

@@ -100,6 +100,13 @@ attribute a translatable model does not list in `$translatable` is read as a pla
 attribute rather than throwing — which is what lets `metaDescription()` reach for an
 `intro` on models that have none.
 
+The trait supplies the values; what turns them into tags is
+[`laravel/head`](https://laravel.com/docs/head). `leap:template` scaffolds an
+`App\Providers\HeadServiceProvider` that declares the site-wide defaults, the error-page
+`robots`, and a view composer that sets the per-page title, description, hreflang
+alternates, Open Graph image and JSON-LD. The layout renders one `@head` directive and
+nothing else between `<head>` and `</head>`.
+
 ## Sections
 
 The template ships self-contained section types — `slide` (carousel), `default`

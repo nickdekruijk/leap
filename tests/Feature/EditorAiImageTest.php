@@ -278,7 +278,7 @@ class EditorAiImageTest extends TestCase
         $editor = $this->editor();
         $editor->useGeneratedImage('image', $editor->generateImage('Square source', 'landscape')['token']);
 
-        $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/square-source.jpg'));
+        $image = Media::imageManager()->decodeBinary(Storage::disk('public')->get('article-resources/square-source.jpg'));
 
         // A square provider image stays square, asked landscape or not.
         $this->assertSame(64, $image->width());
@@ -297,7 +297,7 @@ class EditorAiImageTest extends TestCase
         $editor = $this->editor();
         $editor->useGeneratedImage('image', $editor->generateImage('Untouched source', 'landscape')['token']);
 
-        $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/untouched-source.jpg'));
+        $image = Media::imageManager()->decodeBinary(Storage::disk('public')->get('article-resources/untouched-source.jpg'));
 
         $this->assertSame(64, $image->width());
         $this->assertSame(64, $image->height());
@@ -311,7 +311,7 @@ class EditorAiImageTest extends TestCase
         $editor = $this->editor();
         $editor->useGeneratedImage('image', $editor->generateImage('Wide source', 'landscape')['token']);
 
-        $image = Media::imageManager()->read(Storage::disk('public')->get('article-resources/wide-source.jpg'));
+        $image = Media::imageManager()->decodeBinary(Storage::disk('public')->get('article-resources/wide-source.jpg'));
 
         // Scaled, not cropped: both sides shrink by the same factor.
         $this->assertSame(32, $image->width());

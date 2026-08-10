@@ -236,7 +236,7 @@ class AiImagePresetsTest extends TestCase
         $editor->useGeneratedImage('image', $editor->generateImage('Dear one', '1:1', 'dear')['token']);
 
         $width = fn (string $file) => Media::imageManager()
-            ->read(Storage::disk('public')->get('article-resources/'.$file))->width();
+            ->decodeBinary(Storage::disk('public')->get('article-resources/'.$file))->width();
 
         $this->assertSame(20, $width('cheap-one.jpg'));
         $this->assertSame(20, $width('dear-one.jpg'));

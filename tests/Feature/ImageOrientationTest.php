@@ -30,7 +30,7 @@ class ImageOrientationTest extends ImageTestCase
         Storage::disk('public')->put('phone.jpg', $this->jpegBytesWithOrientation(400, 300, 6));
         $media = Media::forFile('phone.jpg');
 
-        $image = Media::imageManager()->read($this->get($media->url(600))->getContent());
+        $image = Media::imageManager()->decodeBinary($this->get($media->url(600))->getContent());
 
         // Not upscaled past its 300px displayed width, and portrait either way.
         $this->assertSame(300, $image->width());

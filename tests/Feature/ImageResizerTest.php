@@ -21,7 +21,7 @@ class ImageResizerTest extends ImageTestCase
     {
         $encoded = ImageResizer::encode($this->jpegBytes(2000, 1000), $this->preset(['width' => 600]), 'jpg');
 
-        $image = Media::imageManager()->read((string) $encoded);
+        $image = Media::imageManager()->decodeBinary((string) $encoded);
         $this->assertSame(600, $image->width());
         $this->assertSame(300, $image->height());
     }
@@ -30,7 +30,7 @@ class ImageResizerTest extends ImageTestCase
     {
         $encoded = ImageResizer::encode($this->jpegBytes(300, 200), $this->preset(['width' => 1200]), 'jpg');
 
-        $image = Media::imageManager()->read((string) $encoded);
+        $image = Media::imageManager()->decodeBinary((string) $encoded);
         $this->assertSame(300, $image->width());
     }
 
@@ -42,7 +42,7 @@ class ImageResizerTest extends ImageTestCase
             'jpg'
         );
 
-        $image = Media::imageManager()->read((string) $encoded);
+        $image = Media::imageManager()->decodeBinary((string) $encoded);
         $this->assertSame(600, $image->width());
         $this->assertSame(600, $image->height());
     }

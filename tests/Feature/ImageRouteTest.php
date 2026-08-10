@@ -26,7 +26,7 @@ class ImageRouteTest extends ImageTestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'image/webp');
 
-        $image = Media::imageManager()->read($response->getContent());
+        $image = Media::imageManager()->decodeBinary($response->getContent());
         $this->assertSame(1200, $image->width());
         $this->assertSame(600, $image->height());
     }
@@ -72,7 +72,7 @@ class ImageRouteTest extends ImageTestCase
 
         $response = $this->get($media->url(1200));
 
-        $image = Media::imageManager()->read($response->getContent());
+        $image = Media::imageManager()->decodeBinary($response->getContent());
         $this->assertSame(300, $image->width());
     }
 

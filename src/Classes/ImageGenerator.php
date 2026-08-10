@@ -125,14 +125,14 @@ class ImageGenerator
             return ['data' => $data, 'extension' => 'svg'];
         }
 
-        $image = Media::imageManager()->read($data);
+        $image = Media::imageManager()->decodeBinary($data);
 
         if ($maxWidth = (int) config('leap.ai.image.max_width')) {
             $image = $image->scaleDown(width: $maxWidth);
         }
 
         return [
-            'data' => (string) $image->toJpeg(quality: (int) config('leap.ai.image.jpeg_quality', 82)),
+            'data' => (string) $image->encodeUsingFileExtension('jpg', quality: (int) config('leap.ai.image.jpeg_quality', 82)),
             'extension' => 'jpg',
         ];
     }
@@ -361,9 +361,9 @@ class ImageGenerator
             return ['mime' => $media->mime_type, 'data' => base64_encode($file)];
         }
 
-        $image = Media::imageManager()->read($file)->scaleDown(width: $max, height: $max);
+        $image = Media::imageManager()->decodeBinary($file)->scaleDown(width: $max, height: $max);
 
-        return ['mime' => 'image/jpeg', 'data' => base64_encode((string) $image->toJpeg())];
+        return ['mime' => 'image/jpeg', 'data' => base64_encode((string) $image->encodeUsingFileExtension('jpg'))];
     }
 
     /**

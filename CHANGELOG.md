@@ -5,6 +5,39 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-08-10
+
+### Changed
+
+- **`intervention/image-laravel` is gone; this package now depends on `intervention/image ^4.0`
+  directly.** It was only ever a supplier: the facade and the container binding it registers are
+  used nowhere here, and `Media::imageManager()` already built its own manager to step around the
+  `image` container key that Laravel 13's own image feature claims as well.
+
+  Keeping it was blocking every host app. `intervention/image-laravel` pins
+  `intervention/image ^3.11`, `Illuminate\Image` requires `^4.0`, so a site on Laravel 13 could not
+  install Laravel's `Image` facade for its own code as long as it had Leap. It can now.
+
+  Laravel 12 is unaffected — `intervention/image ^4` is framework-agnostic and wants PHP 8.3, which
+  this package already required.
+
+  A project that used the `Image::` facade or `config/image.php` from `intervention/image-laravel`
+  has to require that package itself, or move to Laravel's `Image` facade.
+
+### Fixed
+
+- **`IMAGE_DRIVER=imagick` was ignored.** The driver was read from `config('image.driver')` only —
+  intervention/image-laravel's key, holding a driver classname. Laravel 13 reads
+  `config('images.driver')`, the plain names `gd` and `imagick`, from `IMAGE_DRIVER`. A site that
+  set that got Laravel's Image on Imagick and this package still silently on GD: a weaker avif
+  encoder, and `effort` quietly doing nothing, since libwebp's `method` is only reachable through
+  Imagick.
+
+  `Media::imageDriver()` now reads `images.driver` first and falls back to `image.driver`, so one
+  setting covers both. `ImageResizer::supports()` memoizes on that resolved driver instead of on
+  the raw config value, which was `null` on any app that never set the old key — one answer then
+  stood for both drivers, exactly what the key was there to prevent.
+
 ## [1.5.3] — 2026-08-10
 
 ### Fixed

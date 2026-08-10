@@ -49,8 +49,8 @@ class AltTextPayloadTest extends TestCase
 
     private function image(int $width, int $height, string $format = 'jpeg'): Media
     {
-        $image = Media::imageManager()->create($width, $height);
-        $data = $format === 'png' ? (string) $image->toPng() : (string) $image->toJpeg();
+        $image = Media::imageManager()->createImage($width, $height);
+        $data = (string) $image->encodeUsingFileExtension($format === 'png' ? 'png' : 'jpg');
         $path = "photo-$width-$height.$format";
 
         Storage::disk('public')->put($path, $data);
@@ -68,7 +68,7 @@ class AltTextPayloadTest extends TestCase
         $request = Http::recorded()[0][0];
         $source = $request['messages'][0]['content'][0]['source'];
         $decoded = base64_decode($source['data']);
-        $image = Media::imageManager()->read($decoded);
+        $image = Media::imageManager()->decodeBinary($decoded);
 
         return [
             'mime' => $source['media_type'],

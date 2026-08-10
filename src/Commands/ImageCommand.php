@@ -59,7 +59,7 @@ class ImageCommand extends Command
             $this->line('  <fg=gray>Every copy already written that way then reads as a layout this package does not write:</>');
             $this->line('  <fg=gray>--prune would delete all of them and --warm would rewrite them at addresses nothing asks for.</>');
             $this->line('  <fg=gray>Almost always a command line running a different PHP than the site. The driver is</> '
-                .'<fg=yellow>'.((string) config('image.driver')).'</><fg=gray>; check that this PHP has it:</> <fg=yellow>'.PHP_BINARY.'</>');
+                .'<fg=yellow>'.Media::imageDriver().'</><fg=gray>; check that this PHP has it:</> <fg=yellow>'.PHP_BINARY.'</>');
             $this->newLine();
 
             return self::FAILURE;

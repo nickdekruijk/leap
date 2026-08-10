@@ -51,14 +51,15 @@ class ImageResizer
         // Keyed on the driver too: whether a format can be encoded is a property
         // of the driver, so one answer cannot stand for both. Production never
         // switches mid-process, but a test that does would otherwise read the
-        // answer the other driver gave.
-        $key = ((string) config('image.driver')).':'.$format;
+        // answer the other driver gave. Keyed on the resolved driver rather than
+        // on a config value, which is null on an app that never set one.
+        $key = Media::imageDriver().':'.$format;
 
         return $supported[$key] ??= (function () use ($format): bool {
             try {
                 return (string) Media::imageManager()
-                    ->create(1, 1)
-                    ->encodeByExtension($format, quality: 1) !== '';
+                    ->createImage(1, 1)
+                    ->encodeUsingFileExtension($format, quality: 1) !== '';
             } catch (Throwable) {
                 return false;
             }
@@ -148,7 +149,7 @@ class ImageResizer
         }
 
         try {
-            $image = Media::imageManager()->read($contents);
+            $image = Media::imageManager()->decodeBinary($contents);
 
             // Before anything measures it: Intervention reads the EXIF
             // orientation but does not act on it, so an unrotated portrait photo
@@ -170,7 +171,7 @@ class ImageResizer
             }
 
             if ($preset->grayscale()) {
-                $image = $image->greyscale();
+                $image = $image->grayscale();
             }
 
             if ($preset->blur()) {
@@ -187,8 +188,8 @@ class ImageResizer
             $quality = $preset->isLossless($sourceExtension) ? 100 : $preset->quality();
 
             return in_array($extension, self::LOSSY_EXTENSIONS, true)
-                ? $image->encodeByExtension($extension, quality: $quality)
-                : $image->encodeByExtension($extension);
+                ? $image->encodeUsingFileExtension($extension, quality: $quality)
+                : $image->encodeUsingFileExtension($extension);
         } catch (Throwable) {
             return null;
         }

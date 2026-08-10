@@ -206,12 +206,18 @@ rendered page works too: no `type="image/avif"` in the HTML is the same answer.
 `ImageResizer::supports('avif')` is the predicate the package itself uses, so it is the right thing
 to call from a route or a controller. From `tinker` it only tells you about the CLI.
 
-Many GD builds have no avif encoder, and Imagick is the usual answer where that is the case:
+Many GD builds have no avif encoder, and Imagick is the usual answer where that is the case.
+Set it the way Laravel does, and this package follows:
 
-```php
-// config/image.php
-'driver' => Intervention\Image\Drivers\Imagick\Driver::class,
+```ini
+# .env
+IMAGE_DRIVER=imagick
 ```
+
+That is `config('images.driver')`, which Laravel's own `Image` facade reads too, so one setting
+covers both. `config('image.driver')` — intervention/image-laravel's key, holding a driver
+classname — is still read for projects that set it, but `images.driver` wins where both are
+present.
 
 ### The fallback
 

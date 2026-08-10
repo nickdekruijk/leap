@@ -3,6 +3,40 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.6 — Intervention Image 4
+
+`composer update` handles it. `intervention/image-laravel` is removed and
+`intervention/image` moves from 3.x to 4.x; nothing in your own code has to change unless one
+of the two notes below applies.
+
+### If you use the `Image::` facade or `config/image.php`
+
+Those come from `intervention/image-laravel`, which this package no longer pulls in. Either
+require it yourself:
+
+```
+composer require intervention/image-laravel
+```
+
+or, on Laravel 13, move to the framework's own `Image` facade — which you could not install
+alongside Leap until now, because the two want different major versions of
+`intervention/image`.
+
+### If you set the image driver
+
+`config('image.driver')` still works. But Laravel 13 reads `config('images.driver')` from
+`IMAGE_DRIVER`, and this package now reads that first, so on a site where both are set the
+`.env` value wins:
+
+```ini
+IMAGE_DRIVER=imagick
+```
+
+Worth checking on any site that runs avif: if you had `IMAGE_DRIVER=imagick` for Laravel's own
+image handling and a `config/image.php` that never got written, this package was encoding on GD
+without saying so. After the update it follows the `.env`, so avif quality and `effort` change
+on the next `leap:images --warm`.
+
 ## 1.3 — resized images
 
 Nothing changes on `composer update` alone: `leap.images.enabled` ships as `false`, so no
