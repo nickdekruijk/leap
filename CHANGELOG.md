@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.3] — 2026-08-10
+
+### Fixed
+
+- **Validation on blur came back on Livewire 4.** Fourteen inputs across login, profile,
+  two factor, forgot-password and reset-password used `wire:model.blur`, which in Livewire 4
+  only syncs client-side: no request, so no `updated()`, so no per-field validation until
+  submit. They now use `wire:model.live.blur`. Identical behaviour on Livewire 3, where
+  `isLive` and `onBlur` are separate flags and the setter only commits when neither `lazy`
+  nor `blur` is set — so this is the same code path either version resolves to.
+
 ## [1.5.2] — 2026-08-10
 
 ### Fixed

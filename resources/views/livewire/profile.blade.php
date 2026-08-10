@@ -15,16 +15,16 @@
                 @if (\NickDeKruijk\Leap\Leap::mustEnrollTwoFactor())
                     <div class="leap-notice-danger">{{ __('leap::auth.two_factor_required_notice') }}</div>
                 @endif
-                <x-leap::input wire:model.blur="data.name" name="data.name" label="{{ __('leap::auth.name') }}" autocomplete="name" />
-                <x-leap::input wire:model.blur="data.email" name="data.email" label="{{ __('leap::auth.email') }}" type="email" disabled />
+                <x-leap::input wire:model.live.blur="data.name" name="data.name" label="{{ __('leap::auth.name') }}" autocomplete="name" />
+                <x-leap::input wire:model.live.blur="data.email" name="data.email" label="{{ __('leap::auth.email') }}" type="email" disabled />
             </fieldset>
         </form>
         <form class="leap-form" wire:submit="submit">
             <fieldset class="leap-fieldset">
                 <h3>@lang('leap::auth.update_password')</h3>
-                <x-leap::input wire:model.blur="data.password_current" name="data.password_current" label="{{ __('leap::auth.password_current') }}" type="password" autocomplete="current-password" />
-                <x-leap::input wire:model.blur="data.password_new" name="data.password_new" label="{{ __('leap::auth.password_new') }}" type="password" autocomplete="new-password" />
-                <x-leap::input wire:model.blur="data.password_new_confirmation" name="data.password_new_confirmation" label="{{ __('leap::auth.password_new_confirmation') }}" type="password" autocomplete="new-password" />
+                <x-leap::input wire:model.live.blur="data.password_current" name="data.password_current" label="{{ __('leap::auth.password_current') }}" type="password" autocomplete="current-password" />
+                <x-leap::input wire:model.live.blur="data.password_new" name="data.password_new" label="{{ __('leap::auth.password_new') }}" type="password" autocomplete="new-password" />
+                <x-leap::input wire:model.live.blur="data.password_new_confirmation" name="data.password_new_confirmation" label="{{ __('leap::auth.password_new_confirmation') }}" type="password" autocomplete="new-password" />
             </fieldset>
         </form>
 
@@ -76,7 +76,7 @@
                         </ul>
                     </div>
 
-                    <x-leap::input wire:model.blur="confirmCode" name="confirmCode" label="{{ __('leap::auth.verification_code') }}" autocomplete="one-time-code" autofocus />
+                    <x-leap::input wire:model.live.blur="confirmCode" name="confirmCode" label="{{ __('leap::auth.verification_code') }}" autocomplete="one-time-code" autofocus />
 
                     <div class="leap-fieldset-buttons">
                         <x-leap::button type="submit" svg-icon="fas-check" class="primary" label="leap::auth.two_factor_confirm" />
@@ -95,7 +95,7 @@
                         <span class="leap-label">{{ __('leap::auth.two_factor_email_setup_hint', ['email' => $this->user->email]) }}</span>
                     </label>
 
-                    <x-leap::input wire:model.blur="confirmCode" name="confirmCode" label="{{ __('leap::auth.verification_code') }}" autocomplete="one-time-code" autofocus />
+                    <x-leap::input wire:model.live.blur="confirmCode" name="confirmCode" label="{{ __('leap::auth.verification_code') }}" autocomplete="one-time-code" autofocus />
 
                     <div class="leap-fieldset-buttons">
                         <x-leap::button type="submit" svg-icon="fas-check" class="primary" label="leap::auth.two_factor_confirm" />

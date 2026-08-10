@@ -18,7 +18,7 @@
             @endif
 
             <fieldset class="leap-fieldset">
-                <x-leap::input wire:model.blur="code" label="{{ __('leap::auth.verification_code') }}" autofocus autocomplete="one-time-code" inputmode="text" />
+                <x-leap::input wire:model.live.blur="code" label="{{ __('leap::auth.verification_code') }}" autofocus autocomplete="one-time-code" inputmode="text" />
                 <small class="leap-hint">{{ $this->method === 'email' ? __('leap::auth.two_factor_email_hint') : __('leap::auth.two_factor_hint') }}</small>
             </fieldset>
             <fieldset class="leap-fieldset leap-fieldset-buttons">
