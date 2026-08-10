@@ -10,6 +10,12 @@ on:
 permissions:
   contents: write
 
+# One run at a time per tag, so a second delivery waits for the first instead of racing
+# it to the create call.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -52,7 +58,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes-file notes.md \
-            --verify-tag
+          # Idempotent, because one tag can arrive as more than one run: a re-push of a
+          # moved tag, or two delivery events for a single `git push --follow-tags`.
+          # `gh release create` answers the second one with "Release.tag_name already
+          # exists" and a 422, which fails the job -- and leaves a red cross on a release
+          # that was in fact published correctly by the first.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release edit "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file notes.md
+          else
+            gh release create "${GITHUB_REF_NAME}" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes-file notes.md \
+              --verify-tag
+          fi
