@@ -71,6 +71,73 @@ class HasSectionsTest extends TestCase
     }
 
     /**
+     * Dropping a language from leap.locales does not un-translate what is already stored.
+     * Requiring every key to be a configured locale made such a value miss the test, so the
+     * raw array reached the view and htmlspecialchars() refused it — a 500 on every page,
+     * because sections feed the navigation too.
+     */
+    public function test_it_resolves_a_per_locale_field_that_still_holds_a_dropped_locale(): void
+    {
+        config(['leap.locales' => ['en' => 'English']]);
+        app()->setLocale('en');
+
+        $body = $this->model([
+            ['_name' => 'text', '_sort' => 1, 'body' => ['en' => 'Hello', 'nl' => 'Hallo']],
+        ])->sections()->first()['body'];
+
+        $this->assertIsString($body);
+        $this->assertSame('Hello', $body);
+    }
+
+    /**
+     * The lower bound of that leniency: at least one key has to be a configured locale.
+     * Without it there is nothing separating a translation set from a data array whose keys
+     * happen to be two or three lowercase letters (['id' => …, 'url' => …]), so a value
+     * holding only dropped locales is left as it is rather than guessed at.
+     */
+    public function test_it_leaves_a_field_alone_when_no_key_is_a_configured_locale(): void
+    {
+        config(['leap.locales' => ['en' => 'English']]);
+        app()->setLocale('en');
+
+        $body = $this->model([
+            ['_name' => 'text', '_sort' => 1, 'body' => ['nl' => 'Hallo', 'de' => 'Hallo']],
+        ])->sections()->first()['body'];
+
+        $this->assertSame(['nl' => 'Hallo', 'de' => 'Hallo'], $body);
+    }
+
+    /**
+     * An Attribute::json() value is not a translation set, even though it is associative.
+     */
+    public function test_it_leaves_a_data_array_alone_on_a_multilingual_site(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English']]);
+
+        $size = $this->model([
+            ['_name' => 'text', '_sort' => 1, 'size' => ['width' => 100, 'height' => 50]],
+        ])->sections()->first()['size'];
+
+        $this->assertSame(['width' => 100, 'height' => 50], $size);
+    }
+
+    /**
+     * Nor is one that happens to carry a locale-shaped key alongside its own, which is what
+     * the editor already assumes (see SectionMonolingualTest::test_a_json_field_is_left_alone).
+     */
+    public function test_it_leaves_a_data_array_holding_a_locale_shaped_key_alone(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English']]);
+        app()->setLocale('nl');
+
+        $layout = $this->model([
+            ['_name' => 'text', '_sort' => 1, 'layout' => ['columns' => 3, 'nl' => 'not a translation']],
+        ])->sections()->first()['layout'];
+
+        $this->assertSame(['columns' => 3, 'nl' => 'not a translation'], $layout);
+    }
+
+    /**
      * A list value is not a translation set. On a monolingual site the only thing telling
      * the two apart is that a translation set has string keys.
      */

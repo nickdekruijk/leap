@@ -49,8 +49,8 @@ Tests boot a minimal Testbench app against an in-memory SQLite database (see
 `tests/TestCase.php`). Add a test for every behaviour change. The suite is PHPUnit —
 do not introduce Pest without discussing the dependency change first.
 
-> Note: some `TwoFactor*` tests are currently failing independently of recent work;
-> confirm a change doesn't *add* failures by comparing against the base commit.
+The whole suite passes, so treat any failure as something the current change caused
+rather than pre-existing noise.
 
 ## The stub template
 

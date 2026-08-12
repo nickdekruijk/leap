@@ -40,19 +40,26 @@ trait HasSections
         // Convert each section to an ArrayObject, resolving per-locale fields to the current locale
         $locales = config('leap.locales');
         $localeKeys = $locales ? array_keys($locales) : null;
+        $looksLikeLocale = fn ($key) => is_string($key) && preg_match('/^[a-z]{2,3}([_-][A-Za-z0-9]{2,4})?$/', $key);
         foreach ($sections ?: [] as $key => $section) {
             foreach ($section as $field => $value) {
                 // A per-locale array (['nl' => …, 'en' => …]); media fields are Collections
-                // (objects, not arrays) and are skipped. With leap.locales set the keys must
-                // be known locales; when it is null (monolingual) any associative array is
-                // treated as a translation set — the seeders still ship every locale, so the
-                // extras are collapsed to the current locale rather than rendered raw.
+                // (objects, not arrays) and are skipped. With leap.locales set it counts as a
+                // translation set when at least one key is a configured locale and every key
+                // reads as a locale code — requiring all of them to be configured meant a
+                // language dropped from leap.locales made the whole value miss the test and
+                // reach the view as a raw array, which is a TypeError in htmlspecialchars().
+                // When leap.locales is null (monolingual) any associative array is treated as
+                // a translation set — the seeders still ship every locale, so the extras are
+                // collapsed to the current locale rather than rendered raw.
                 if (! is_array($value) || $value === []) {
                     continue;
                 }
+                $valueKeys = array_keys($value);
                 $isPerLocale = $localeKeys !== null
-                    ? ! array_diff(array_keys($value), $localeKeys)
-                    : array_keys($value) !== range(0, count($value) - 1);
+                    ? array_intersect($valueKeys, $localeKeys) !== []
+                        && ! array_filter($valueKeys, fn ($key) => ! $looksLikeLocale($key))
+                    : $valueKeys !== range(0, count($value) - 1);
                 if ($isPerLocale) {
                     $section[$field] = Leap::localize($value) ?? '';
                 }

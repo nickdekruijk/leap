@@ -5,6 +5,30 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **A section keeps rendering after a language is dropped from `leap.locales`.** A stored
+  translation set was only recognised when *every* one of its keys was a configured
+  locale, so removing a language (launching with one, say) made values written before that
+  fail the test. `Leap::localize()` was then skipped and the raw array reached the view,
+  where `htmlspecialchars()` refuses it. Sections feed the navigation too, so this was a
+  500 on every page rather than one broken section.
+
+  `HasSections` now treats a value as a translation set when at least one key is a
+  configured locale and every key reads as a locale code. `{"en": "…", "nl": "…"}` on an
+  English-only site is a translation set whose Dutch entry is ignored, and a data array
+  (`{"width": …, "height": …}`) still is not, because none of its keys is a locale. The
+  shape check on every key keeps a json field that happens to carry a locale-shaped key
+  (`{"columns": 3, "nl": "…"}`) out of it as well, which is what the editor side already
+  assumed. A monolingual site (`leap.locales` null) is untouched.
+
+  The lower bound is deliberate: a value holding only dropped locales (`{"nl": "…"}` on an
+  English-only site) has no configured locale among its keys and is left as it is, because
+  nothing separates it from a data array whose keys happen to be two or three lowercase
+  letters, such as `{"id": …, "url": …}`.
+
 ## [1.8.0] — 2026-08-12
 
 ### Added
