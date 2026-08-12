@@ -28,6 +28,7 @@ return [
     'table_provider' => 'Provider',
     'table_retention' => 'Retention',
     'first_party' => 'This website',
+    'wildcard_note' => 'An asterisk in a name stands for a part that differs per visit or per site.',
     'and' => 'and',
     'no_cookies' => 'Sets no cookies on this website itself. The moment you load the content, your data (including your IP address) goes to :services.',
 ];

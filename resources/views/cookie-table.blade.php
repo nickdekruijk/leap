@@ -2,9 +2,9 @@
     The cookie registry, rendered for a privacy page.
 
     Everything here comes from config('leap.consent'). Purpose and retention cannot be
-    scanned — no tool can tell you what a cookie is *for* — so they are declared there
-    and a browser test holds the declaration to the truth: a cookie that turns up
-    without being listed fails the build.
+    scanned — no tool can tell you what a cookie is *for* — so they are declared there,
+    and ConsentCookieDeclarationTest holds the declaration to the truth for every cookie
+    the server sets. The ones a script sets afterwards need a browser to be seen at all.
 --}}
 @php
     use NickDeKruijk\Leap\Classes\Consent;
@@ -50,6 +50,14 @@
             </tbody>
         </table>
     @endforeach
+
+    {{-- Only when there is something to explain. A name like _pk_id* ends in a part that
+         differs per site, so the asterisk is honest — but on its own it reads as a typo to
+         anyone who has not written a glob before. A site whose cookies all have fixed
+         names gets no sentence about asterisks. --}}
+    @if (Consent::cookies()->contains(fn ($cookie) => str_contains($cookie['name'], '*')))
+        <p class="cookie-table-note">@lang('leap::consent.wildcard_note')</p>
+    @endif
 
     @if (Consent::enabled())
         <p>

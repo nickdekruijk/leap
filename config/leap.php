@@ -701,8 +701,10 @@ return [
     | The cookie list is a manifest, not decoration. A scanner can see that a cookie
     | exists, but never what it is for or how long it is kept — and that is exactly
     | what a privacy statement has to state. So it is declared here, the cookie table
-    | on the privacy page renders it, and a browser test holds it to the truth: any
-    | cookie that turns up without being declared fails the build.
+    | on the privacy page renders it, and ConsentCookieDeclarationTest holds it to the
+    | truth: a cookie the server sets without being declared here fails the build.
+    | Cookies a script sets in the browser are only visible to a browser suite, so a
+    | site that loads one checks it there.
     |
     | enabled  false = no banner at all. Every category then falls back to `default`.
     | default  What a category is worth when nobody was asked: 'denied' (a site with
@@ -732,7 +734,13 @@ return [
                         'provider' => null, // first party
                         'cookies' => [
                             ['name' => 'XSRF-TOKEN', 'retention' => '2 hours'],
-                            ['name' => '*-session', 'retention' => '2 hours'],
+                            // ':session' is filled in with config('session.cookie') when
+                            // the registry is read, so the table shows the name that is
+                            // really in the browser ("acme-session") instead of a pattern
+                            // a visitor has to work out. It cannot be resolved here:
+                            // config files are loaded alphabetically, so leap.php is read
+                            // before session.php exists.
+                            ['name' => ':session', 'retention' => '2 hours'],
                             ['name' => 'consent', 'retention' => '6 months'],
                         ],
                     ],

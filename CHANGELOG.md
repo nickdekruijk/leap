@@ -5,6 +5,39 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-08-12
+
+### Added
+
+- **The cookie table names the session cookie instead of describing it.** It was declared
+  as `*-session`, which is a pattern, not a name: a visitor who opens their browser to
+  check finds `acme-session` and no row that matches it. The registry now declares
+  `:session` and `Consent::cookies()` fills in `config('session.cookie')` when it is read,
+  so the table shows the name that is really there — including on a site that renamed it.
+  The placeholder is resolved at read time because config files load alphabetically and
+  `leap.php` is parsed before `session.php` exists. A site with a published
+  `config/leap.php` needs to change nothing: `*-session` resolves the same way, so it gets
+  the real name too.
+
+  `ConsentCookieDeclarationTest` is new and holds the registry to that: it walks the
+  `Set-Cookie` headers of a request through the `web` middleware and fails on any cookie
+  the server sets without declaring. Cookies written by JavaScript are invisible to it, so
+  a site that loads Matomo or GA4 still checks that half in its own browser suite.
+
+- **The table explains its asterisks.** `_pk_id*` stays a wildcard, because Matomo really
+  does hang a varying part on the end, but the table now renders one sentence saying what
+  the asterisk stands for (`leap::consent.wildcard_note`, nl and en). It appears only when
+  a declared name contains one, so a site with fixed names gets no footnote about a
+  character it does not show.
+
+### Fixed
+
+- **Renotating the session cookie no longer expires everyone's consent.** The fingerprint
+  that expires a stored choice now folds the session cookie in under a fixed token instead
+  of its name, so `*-session`, `:session` and the resolved name all hash the same. It is
+  the same cookie either way, and a visitor has nothing to say about how it is spelled.
+  Adding a service still changes the fingerprint, which is what it is for.
+
 ## [1.7.0] — 2026-08-12
 
 ### Added

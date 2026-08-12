@@ -254,12 +254,27 @@ Two things then keep it honest:
 
 - `@include('leap::cookie-table')` renders the registry on the privacy page, so the page
   cannot drift away from the code.
-- A browser test measures the real site against it. **A cookie that turns up without
-  being declared fails the build** — an integration cannot quietly start setting cookies
-  and turn the privacy page into a lie. (Cookies set by the server are httpOnly and
-  invisible to script, so they are checked from their `Set-Cookie` headers; cookies set
-  by JavaScript appear in no header at all, so those need a real browser. Both halves are
-  needed.)
+- Tests measure the real site against it. **A cookie that turns up without being declared
+  fails the build** — an integration cannot quietly start setting cookies and turn the
+  privacy page into a lie. The two halves are set where each is visible: the package's
+  `ConsentCookieDeclarationTest` reads the `Set-Cookie` headers of a request through the
+  `web` middleware, which is everything the server sets; a cookie written by JavaScript
+  appears in no header at all, so a site that loads such a script (Matomo, GA4) checks
+  that half in its own browser suite.
+
+### Names a visitor can recognise
+
+The table is read by people who do not write code, so the name in it has to be the name
+their browser shows.
+
+- **`:session`** is filled in with `config('session.cookie')` when the registry is read.
+  The session cookie's name is per project, and config files cannot read each other — they
+  load alphabetically, so `leap.php` is parsed before `session.php` exists — so it is a
+  placeholder here and a real name (`acme-session`) in the table.
+- **An asterisk** stays where a name genuinely varies: Matomo's `_pk_id*` ends in a part
+  that differs per site. The table then renders one sentence
+  (`leap::consent.wildcard_note`) explaining what the asterisk stands for, and renders
+  nothing when no declared name contains one.
 
 Add a service and the registry's fingerprint changes, which **expires the consent already
 given**: it covered what was on the table at the time, and no longer does.

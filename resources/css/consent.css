@@ -182,3 +182,12 @@
     border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
     vertical-align: top;
 }
+
+/* Reads as a footnote to the tables above it, not as another paragraph of the page.
+   The margin is set rather than left to the browser: a site with a CSS reset zeroes
+   paragraph margins, and this one sits directly above the reopen button. */
+.cookie-table-note {
+    margin: 0 0 var(--space, 1.5rem);
+    font-size: 0.875em;
+    color: color-mix(in srgb, currentColor 70%, transparent);
+}

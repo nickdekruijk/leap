@@ -28,6 +28,7 @@ return [
     'table_provider' => 'Aanbieder',
     'table_retention' => 'Bewaartermijn',
     'first_party' => 'Deze website',
+    'wildcard_note' => 'Een sterretje in een naam staat voor een stuk dat per bezoek of per site verschilt.',
     'and' => 'en',
     'no_cookies' => 'Plaatst zelf geen cookies op deze website. Zodra je de inhoud laadt, gaan je gegevens (waaronder je IP-adres) naar :services.',
 ];

@@ -157,6 +157,24 @@ class ConsentTest extends TestCase
         $this->assertStringNotContainsString('window.consent', $html);
     }
 
+    public function test_the_cookie_table_explains_an_asterisk_only_when_it_shows_one(): void
+    {
+        // Matomo really does hang a varying part on the end (_pk_id.1.a1b2), so the
+        // wildcard stays — but on its own it reads as a typo to anyone who has never
+        // written a glob.
+        $this->assertStringContainsString(__('leap::consent.wildcard_note'), view('leap::cookie-table')->render());
+
+        // A site whose cookies all have fixed names gets no sentence about asterisks.
+        config()->set('leap.consent.categories.analytics.services', [
+            ['name' => 'Matomo', 'cookies' => [['name' => 'mtm_cookie_consent', 'retention' => '30 years']]],
+        ]);
+        config()->set('leap.consent.categories.necessary.services', [
+            ['name' => 'Website', 'cookies' => [['name' => 'XSRF-TOKEN', 'retention' => '2 hours']]],
+        ]);
+
+        $this->assertStringNotContainsString(__('leap::consent.wildcard_note'), view('leap::cookie-table')->render());
+    }
+
     public function test_consent_js_registers_the_components_the_markup_names(): void
     {
         $js = file_get_contents(__DIR__.'/../../resources/js/consent.js');

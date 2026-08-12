@@ -3,6 +3,19 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.8 — the cookie table says what the browser says
+
+`composer update` handles it, and nobody is asked for consent again: the fingerprint that
+expires a stored choice folds the session cookie in under a fixed token, so renotating it
+hashes the same.
+
+**The privacy page shows `acme-session` instead of `*-session`.** A published
+`config/leap.php` needs no edit — the old `*-session` resolves the same way — but the
+shipped default now reads `:session`, which is what to write in a config you maintain by
+hand. Sites with their own copy of `cookie-table.blade.php`
+(`resources/views/vendor/leap/`) miss the footnote explaining the asterisks that remain;
+`leap::consent.wildcard_note` is the string, rendered when a declared name contains a `*`.
+
 ## 1.6 — Intervention Image 4
 
 `composer update` handles it. `intervention/image-laravel` is removed and

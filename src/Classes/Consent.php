@@ -12,8 +12,10 @@ use Illuminate\Support\Collection;
  * per project, while everything that reasons about it is not. It is a manifest, not a
  * preference: a scanner can see that a cookie exists, but never what it is for or how
  * long it is kept — and that is precisely what a privacy statement has to state. So it
- * is declared by hand, and a browser test holds it to the truth (any cookie that turns
- * up without being declared fails the build).
+ * is declared by hand, and ConsentCookieDeclarationTest holds it to the truth: every
+ * cookie the server sets has to be in here. What a script sets after the page loads is
+ * beyond a test suite without a browser, and belongs in the browser suite of the site
+ * that loads it.
  *
  * Nothing here decides what loads: that happens in the browser, because pages are
  * cached server-side and consent-dependent HTML would serve one visitor's choice to
@@ -73,8 +75,15 @@ class Consent
 
     /**
      * Every declared cookie, flattened, each carrying the category and service it
-     * belongs to. This is what the cookie table renders and what the browser test
-     * measures the real world against.
+     * belongs to. This is what the cookie table renders and what the cookies a request
+     * really sets are measured against.
+     *
+     * ':session' is filled in here rather than in the config file. The session cookie's
+     * name is per project (config/session.php derives it from APP_NAME, and a project
+     * may set it outright), and config files cannot read each other: they load
+     * alphabetically, so leap.php is parsed before session.php exists. A privacy page
+     * that prints a placeholder, or guesses the name and gets it wrong, is worse than
+     * useless — a visitor checking their browser finds a cookie no row mentions.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -83,7 +92,7 @@ class Consent
         return static::categories()->flatMap(
             fn (array $category, string $key): array => collect($category['services'] ?? [])
                 ->flatMap(fn (array $service): array => collect($service['cookies'] ?? [])
-                    ->map(fn (array $cookie): array => $cookie + [
+                    ->map(fn (array $cookie): array => ['name' => static::resolveName($cookie['name'] ?? '')] + $cookie + [
                         'category' => $key,
                         'service' => $service['name'] ?? '',
                         'provider' => $service['provider'] ?? '',
@@ -91,6 +100,20 @@ class Consent
                     ->all())
                 ->all()
         )->values();
+    }
+
+    /**
+     * The placeholders a declared cookie name may use, resolved against the app config.
+     *
+     * '*-session' is what the registry used to say, and a site that published
+     * config/leap.php still has it. It means the same thing, so it resolves the same way
+     * rather than leaving those sites with a pattern on their privacy page forever.
+     */
+    protected static function resolveName(string $name): string
+    {
+        return in_array($name, [':session', '*-session'], true)
+            ? (string) config('session.cookie')
+            : $name;
     }
 
     /**
@@ -113,12 +136,23 @@ class Consent
      * consent no longer covers it — so the fingerprint changes, the stored choice stops
      * matching, and the banner asks again. Without this a site could quietly start
      * setting cookies a visitor never agreed to.
+     *
+     * The session cookie goes in under a fixed token instead of its resolved name. It is
+     * the same cookie however the registry spells it, so spelling it differently is not a
+     * change a visitor has anything to say about — and the token is the string the
+     * registry used to declare ('*-session'), so upgrading to ':session' leaves every
+     * fingerprint exactly as it was and nobody is asked twice for nothing.
      */
     public static function version(): string
     {
         return substr(md5(json_encode([
             static::categories()->keys()->all(),
-            static::cookies()->pluck('name')->sort()->values()->all(),
+            static::cookies()
+                ->pluck('name')
+                ->map(fn (string $name): string => $name === (string) config('session.cookie') ? '*-session' : $name)
+                ->sort()
+                ->values()
+                ->all(),
         ])), 0, 8);
     }
 
