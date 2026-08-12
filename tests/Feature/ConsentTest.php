@@ -101,6 +101,51 @@ class ConsentTest extends TestCase
         $this->assertStringNotContainsString('init()', $html);
     }
 
+    /**
+     * The accept button may read differently once the panel is open.
+     *
+     * Closed it is the only way to say yes. Open it stands next to "save choice", and
+     * which of the two ignores the switches is the entire question — a label that does
+     * not say "all" leaves it to be guessed. Optional, because a project whose accept
+     * label already says "all" has nothing to fix.
+     */
+    public function test_the_accept_button_can_carry_a_second_label_for_the_open_panel(): void
+    {
+        config()->set('leap.consent.granular', true);
+        config()->set('leap.consent.categories.analytics', ['services' => []]);
+
+        // Both keys ship, so out of the box the two states read the same and nothing is
+        // asked of a project that never knew this existed.
+        $html = view('leap::consent-banner')->render();
+        $this->assertStringContainsString('<span x-show="!settings">'.__('leap::consent.accept').'</span>', $html);
+        $this->assertStringContainsString('<span x-show="settings" x-cloak>'.__('leap::consent.accept_all').'</span>', $html);
+
+        // A project that shortens only `accept` keeps the shipped label in the panel:
+        // an override falls through to the package for the keys it does not define.
+        app('translator')->addLines(['consent.accept' => 'Allow'], app()->getLocale(), 'leap');
+
+        $html = view('leap::consent-banner')->render();
+        $this->assertStringContainsString('<span x-show="!settings">Allow</span>', $html);
+        $this->assertStringNotContainsString('<span x-show="settings" x-cloak>Allow</span>', $html);
+
+        // The label that is right before Alpine boots is the uncloaked one: settings
+        // starts false, so a cloak on the closed label would blank the button on load.
+        $this->assertStringNotContainsString('<span x-show="!settings" x-cloak>', $html);
+    }
+
+    public function test_the_accept_button_stays_a_plain_label_without_the_panel(): void
+    {
+        // No panel means no second state to tell apart, so the extra spans would be
+        // markup that can never differ from itself.
+        config()->set('leap.consent.granular', false);
+        config()->set('leap.consent.categories.analytics', ['services' => []]);
+
+        $html = view('leap::consent-banner')->render();
+
+        $this->assertStringContainsString('class="consent-button consent-accept"', $html);
+        $this->assertStringNotContainsString('x-show="settings" x-cloak>', $html);
+    }
+
     public function test_the_cookie_table_button_brings_its_own_scope(): void
     {
         // It used to borrow whatever x-data the host layout happened to put on <body>,

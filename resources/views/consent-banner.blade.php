@@ -71,8 +71,19 @@
             @endif
 
             <div class="consent-actions">
+                {{-- Two labels, because open the button stands next to "save choice" and
+                     has to say which of the two ignores the switches. See docs/template.md.
+
+                     No x-cloak on the first span: settings starts false, so that is the
+                     one that is right before Alpine boots, and cloaking it would leave
+                     the button blank until it does. --}}
                 <button type="button" class="consent-button consent-accept" x-on:click="accept()">
-                    @lang('leap::consent.accept')
+                    @if (Consent::granular())
+                        <span x-show="!settings">@lang('leap::consent.accept')</span>
+                        <span x-show="settings" x-cloak>@lang('leap::consent.accept_all')</span>
+                    @else
+                        @lang('leap::consent.accept')
+                    @endif
                 </button>
 
                 <button type="button" class="consent-button consent-refuse" x-show="!settings" x-on:click="refuse()">

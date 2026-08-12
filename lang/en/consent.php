@@ -5,6 +5,7 @@ return [
     'body' => 'We use cookies the site needs to work at all. Beyond that we would like to place cookies for the purposes below — only if you agree.',
 
     'accept' => 'Accept all',
+    'accept_all' => 'Accept all',
     'refuse' => 'Refuse',
     'settings' => 'Settings',
     'save' => 'Save choice',

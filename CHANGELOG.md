@@ -5,6 +5,27 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-08-12
+
+### Added
+
+- **`accept_all`: the accept button reads differently once the preferences panel is open.**
+  Closed, the button is the only way to say yes and a project is free to shorten its label.
+  Open, it stands next to "save choice", and the difference between the two is the whole
+  reason the panel exists: one grants everything regardless of the switches, the other grants
+  what the switches say. "Toestaan" and "Keuze opslaan" side by side do not tell anyone that.
+
+  Both keys ship, reading the same out of the box, so nothing changes for a site that upgrades
+  and leaves the labels alone. The point is the site that shortens `accept`: a translation
+  override falls through to the package for the keys it does not define, so the panel keeps
+  saying "Alles accepteren" without anyone having to think of it. The state you were not
+  looking at fixes itself, which is the state where this goes wrong.
+
+  The two labels are two `<span>`s in the same button, switched on `settings`, and only
+  rendered when `granular` is on — without the panel there is no second state to tell apart.
+  The one that shows first carries no `x-cloak`: `settings` starts false, so cloaking the
+  closed label would leave the button blank until Alpine boots.
+
 ## [1.6.1] — 2026-08-10
 
 ### Fixed

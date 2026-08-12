@@ -294,6 +294,24 @@ This is not a free pass: cookieless Matomo also needs IP anonymisation on, no sh
 third parties, and a processing agreement. Those are settings in Matomo and paperwork, not
 code.
 
+### Shortening the accept label
+
+The shipped labels say "Alles accepteren" and "Accept all". Shorten that to "Toestaan" or
+"Allow" and the closed banner reads better, but the preferences panel stops making sense:
+"Toestaan" and "Keuze opslaan" side by side say nothing about which of the two ignores the
+switches you just set.
+
+So the open panel may use a label of its own. Add `accept_all` to the project's override in
+`lang/vendor/leap/{locale}/consent.php` and the button reads it once the panel is open:
+
+```php
+'accept' => 'Toestaan',      // closed: the only way to say yes
+'accept_all' => 'Alles toestaan', // open: next to "Opslaan", so it has to say "alles"
+```
+
+Leave the key out and both states read `accept`, which is right for a label that already
+says "all".
+
 ### The banner is a bar, never a wall
 
 No backdrop, no focus trap, no scroll lock: a visitor who ignores it can read and use the

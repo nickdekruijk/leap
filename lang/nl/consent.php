@@ -5,6 +5,7 @@ return [
     'body' => 'We gebruiken cookies die nodig zijn om de site te laten werken. Daarnaast willen we graag cookies plaatsen voor de doelen hieronder — alleen als je daarmee akkoord gaat.',
 
     'accept' => 'Alles accepteren',
+    'accept_all' => 'Alles accepteren',
     'refuse' => 'Weigeren',
     'settings' => 'Instellingen',
     'save' => 'Keuze opslaan',
