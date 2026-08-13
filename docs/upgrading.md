@@ -3,6 +3,34 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.9 — media links follow the model
+
+`composer update` handles it, and nothing has to change in your own code. Deleting a model
+now deletes the rows in `leap_mediables` pointing at it, but only when the record really
+goes: a soft deleted record keeps its media and comes back with it, and only a
+`forceDelete()` takes the links along. See
+[Media links follow the model](images.md#media-links-follow-the-model).
+
+**Run `leap:media` once on every existing site.** Nothing cleaned up before this release, so
+a site that has ever hard-deleted content or reimported its database is carrying links to
+records that are gone. Those keep files "in use" in the file manager forever, and after a
+`migrate:fresh` they hand the previous record's pictures to whatever new record takes its
+id.
+
+```bash
+php artisan leap:media                    # what is there, and what is orphaned
+php artisan leap:media --prune --dry-run  # report what would be deleted
+php artisan leap:media --prune            # delete them
+```
+
+Links whose `mediable_type` names a class the application does not have are reported and
+kept, because a renamed or moved model reads exactly like a deleted one. Check that list
+before reaching for `--unknown`.
+
+If something in your project relied on links surviving a hard delete — an import that
+deletes a record and writes it back under the same id — it has to attach the media again,
+or delete with `$model->delete()` on a soft deleting model instead.
+
 ## 1.8 — the cookie table says what the browser says
 
 `composer update` handles it, and nobody is asked for consent again: the fingerprint that

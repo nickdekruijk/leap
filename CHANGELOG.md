@@ -5,6 +5,47 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] — 2026-08-13
+
+### Fixed
+
+- **Media links no longer outlive the model carrying them.** `HasMedia` had no delete hook at
+  all, so hard-deleting a record left its rows in `leap_mediables` behind with a `mediable_id`
+  pointing at nothing. Two things followed. The file manager decides whether a file is still
+  in use by counting those rows, so one orphan made that file undeletable forever, and the
+  editor saw `media_in_use` with no way to find out whose link it was, because that record no
+  longer existed. And ids restart at 1 after a `migrate:fresh`, so the next record to be given
+  number 12 inherited the pictures of the one that had it before: 566 orphaned rows on one site
+  after a single reimport.
+
+  A model now takes its links along when it goes, but only when it really goes. Nearly every
+  content model soft deletes, and a deleted record can be restored, so detaching on a plain
+  `delete()` would empty the gallery of a record that is coming back. The links go on a
+  `forceDelete()`, and on a plain `delete()` of a model that does not soft delete at all.
+
+  The Media row itself is left standing on purpose: the file is still on disk, and a media row
+  with no links left is exactly what the file manager needs in order to be allowed to delete
+  it, which is the thing that did not work before.
+
+  A project that relied on links surviving a hard delete — an import that deletes a record and
+  writes it back under the same id — has to attach the media again.
+
+### Added
+
+- **`php artisan leap:media`**, for the links deleting a model never saw: everything left
+  behind before this release, and what happens out of leap's sight — a mass
+  `Model::where(...)->delete()`, a truncate, an import that renumbers. It reports by default
+  and deletes with `--prune`, with `--dry-run` in between.
+
+  The only question it asks is whether the record is still there, and it asks without a single
+  scope: a soft deleted record counts as in use, and so does one hidden behind a project's own
+  global scope. Media rows are never touched. A `mediable_type` naming a class the application
+  does not have is reported and kept, because a renamed or moved model reads exactly like a
+  deleted one; `--unknown` prunes those too, once you are sure.
+
+- **`HasMedia::detachAllMedia()`**, the same cleanup by hand, for the deletes model events
+  cannot reach.
+
 ## [1.8.1] — 2026-08-13
 
 ### Fixed

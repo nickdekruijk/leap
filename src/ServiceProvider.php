@@ -18,6 +18,7 @@ use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\ImageResizer;
 use NickDeKruijk\Leap\Classes\NotFoundLog;
 use NickDeKruijk\Leap\Commands\ImageCommand;
+use NickDeKruijk\Leap\Commands\MediaCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Jobs\GenerateImageDerivatives;
@@ -171,6 +172,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ImageCommand::class,
+                MediaCommand::class,
                 ModuleCommand::class,
                 UserCommand::class,
             ]);

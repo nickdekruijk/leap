@@ -50,6 +50,36 @@ Everything falls back to the URL of the file itself when there is nothing to res
 feature turned off, an SVG, a preset that does not exist. Printing one of these is always
 safe.
 
+## Media links follow the model
+
+What `mediaFor()` reads is a row in `leap_mediables` linking a model to a file. `HasMedia`
+deletes those links when the model itself is deleted, so nothing is left pointing at a
+record that is gone.
+
+A soft deleted record keeps its links, because it can be restored and has to come back with
+the gallery it was deleted with. They go on a `forceDelete()`, and on a plain `delete()` of
+a model that does not soft delete at all.
+
+```php
+$page->delete();      // soft deleting model: links stay, restore() brings them back
+$page->forceDelete(); // links go
+$tag->delete();       // no soft deletes on this model: links go
+```
+
+The Media row itself stays either way. The file is still on disk, and a media row with no
+links left is exactly what the file manager needs in order to let you delete it.
+
+A mass delete fires no model events, so nothing can see it:
+
+```php
+Page::where('archived', true)->delete();               // links stay behind
+Page::where('archived', true)->cursor()->each->delete(); // links go
+$page->detachAllMedia();                                 // or by hand
+```
+
+The same goes for a truncate, a raw query, and an import that renumbers. `leap:media`
+cleans up after all of them.
+
 ## How a URL works
 
 ```
@@ -319,6 +349,33 @@ Check with `php -m | grep -i imagick`, and if it is missing there but the site i
 name the version: `php8.5 artisan leap:images --prune`. On Forge, the site's PHP version
 and the server's CLI version are set in two different places, and a scheduled job runs on
 whichever `php` resolves to. `update-alternatives --display php` shows which one that is.
+
+## leap:media
+
+```bash
+php artisan leap:media                    # what is there, and what is orphaned
+php artisan leap:media --prune --dry-run  # report what would be deleted
+php artisan leap:media --prune            # delete links whose model is gone
+```
+
+A link whose model no longer exists is worse than untidy. The file manager counts the links
+on a file to decide whether it is still in use, so an orphan makes that file undeletable
+forever, with nothing on the screen able to say whose it is. And ids restart at 1 after a
+`migrate:fresh`, so the next record to be given number 12 inherits the pictures of the one
+that had it before.
+
+The question it asks is only ever "is that record still there", asked without a single
+scope: a soft deleted record counts as in use, and so does one hidden behind a global scope
+of your own. Media rows are never touched.
+
+A `mediable_type` naming a class this application does not have is reported and left alone,
+because a renamed or moved model reads exactly like a deleted one:
+
+```
+App\Models\OldNews    12 links, no such model in this application
+```
+
+Rename it in the table, or, once you are sure the model really is gone, add `--unknown`.
 
 ## Remote disks
 
