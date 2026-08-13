@@ -54,7 +54,7 @@ return [
     'image_expired' => 'De gegenereerde afbeelding is verlopen, genereer opnieuw',
     'image_failed' => 'Afbeelding genereren mislukt',
     'set_alt_text' => 'Alt-tekst instellen',
-    'set_focus_point' => 'Focuspunt instellen',
+    'set_focus_point' => 'Focuspunt: houd dit deel in beeld als de foto wordt bijgesneden',
     'clear_focus_point' => 'Focuspunt wissen',
     'size' => 'Grootte',
     'title' => 'Bestandsbeheer',

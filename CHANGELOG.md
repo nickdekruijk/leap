@@ -46,6 +46,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`HasMedia::detachAllMedia()`**, the same cleanup by hand, for the deletes model events
   cannot reach.
 
+## [Unreleased]
+
+### Changed
+
+- **The focus point says what it does.** Its label in the file manager read "Set focus
+  point", which editors reasonably take to mean "this part comes to the middle". It does
+  not: `object-position` aligns the chosen point of the image with the same point of the
+  frame, so a focus at 20% ends up 20% down the frame, and only 50% centres, by coincidence
+  of being the midpoint.
+
+  That behaviour is the useful one and stays: a point near an edge stays near that edge, so
+  the subject is never pushed out of frame and no empty band appears. Centring a point
+  exactly is not possible in CSS regardless, since it depends on the height of the frame,
+  which only the browser knows at render time. So the wording changed rather than the
+  behaviour, to "keep this part in view when the image is cropped", and
+  `Media::focusPosition()` now spells the same out for whoever reads the code first.
+
 ## [1.8.1] — 2026-08-13
 
 ### Fixed

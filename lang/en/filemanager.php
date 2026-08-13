@@ -54,7 +54,11 @@ return [
     'image_expired' => 'The generated image has expired, please generate it again',
     'image_failed' => 'Could not generate an image',
     'set_alt_text' => 'Set alt text',
-    'set_focus_point' => 'Set focus point',
+    // Says what it does rather than what it is called. object-position aligns the
+    // chosen point with the same point of the frame, so a spot near an edge stays
+    // near that edge: it keeps the subject in view, it does not centre it. Editors
+    // read "focus point" as "this comes to the middle" and are then surprised.
+    'set_focus_point' => 'Focus point: keep this part in view when the image is cropped',
     'clear_focus_point' => 'Clear focus point',
     'size' => 'Size',
     'title' => 'File Manager',

@@ -318,6 +318,17 @@ class Media extends Model
      * (0-100), or null when none is set. Pair with object-fit: cover and
      * object-position: {x}% {y}% to keep the focus point visible when the image
      * is cropped by its container's aspect ratio.
+     *
+     * Worth being precise about what that does, because it is not what the name
+     * suggests. object-position aligns the chosen point of the image with the
+     * same point of the frame: a focus at 20% ends up 20% down the frame, not in
+     * the middle. Only 50% centres, by coincidence of being the midpoint.
+     *
+     * That is the useful behaviour and not a shortcoming. A point near an edge
+     * stays near that edge, so the subject is never pushed out of frame and no
+     * empty band appears. Centring a point exactly is impossible in CSS anyway:
+     * it depends on the height of the frame, which only the browser knows at
+     * render time.
      */
     public function focusPosition(): ?array
     {
