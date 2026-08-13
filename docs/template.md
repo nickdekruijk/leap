@@ -236,6 +236,21 @@ free — just add `implements Sitemapable`. Missing or non-`Sitemapable` classes
 config are skipped. When the config is empty the sitemap route falls back to a
 page-tree-only sitemap, so existing sites are unaffected.
 
+## Preview
+
+The `Page` module and every generated content module implement
+[`Previewable`](modules-and-resources.md#previewing-a-record-on-the-frontend), so the
+editor's preview button renders their records through the same views their live routes use:
+`page` for a page, `item` for a content item (via `PageController::previewItem()`, which
+recovers the type from the class and hands the item its overview page as `$parent`).
+
+`HeadServiceProvider` adds `noindex, nofollow` to a preview on top of the
+`X-Robots-Tag` on the response.
+
+A preview relaxes no scope: the record is fetched by id, so a switched-off page still
+answers 404 on its own URL, stays out of the menu and stays out of the sitemap while its
+preview is open. `tests/Feature/PreviewTest.php` asserts that.
+
 ## Cookie consent
 
 Configured under `leap.consent`. The banner, the cookie table, the CSS and the JS all

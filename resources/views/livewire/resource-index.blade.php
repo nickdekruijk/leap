@@ -37,7 +37,7 @@
             </div>
         @endif
         <li @if ($this->sortable()) x-on:mouseover="sortGroup = false" x-sort:item="{{ $row['id'] }}" @endif wire:key="row-{{ $row['id'] }}">
-            <div x-on:click="$dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})})" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row{{ $this->active && !$row[$this->active] ? ' leap-index-row-inactive' : '' }}" data-depth="{{ $depth }}">
+            <div x-on:click="selectedRow == {{ $row['id'] }} ? true : $store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (ok) $dispatch('openEditor',{id:(selectedRow={{ $row['id'] }})}) })" x-bind:class="selectedRow == {{ $row['id'] }} ? 'leap-index-row-selected' : ''" class="leap-index-row{{ $this->active && !$row[$this->active] ? ' leap-index-row-inactive' : '' }}" data-depth="{{ $depth }}">
                 @foreach ($this->indexAttributes() as $attribute)
                     <span class="leap-index-column">
                         @if ($loop->first)

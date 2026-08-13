@@ -104,6 +104,18 @@ language switcher and `hreflang` alternates. Per-locale slugs come from
 [`HasSlug`](template.md); a missing translated slug falls back to the default locale so
 a page is never unreachable.
 
+## Reading a language before it is published
+
+`leap.locales_published` decides which languages the frontend serves. A language that is
+being written but not published has no addresses at all: its prefix is not consumed, so
+`/de/…` falls through to a 404 like any unknown path. That is the point: half a
+translated site is worse than none.
+
+The way to read it before then is the editor's preview button, which opens the record in
+the language tab you are on and stays behind the same permission as the module. See
+[modules-and-resources.md](modules-and-resources.md#previewing-a-record-on-the-frontend);
+`leap-template` ships the `Previewable` implementation it needs.
+
 ## Routing & URLs
 
 The routing primitives live in the package, so projects can build locale-aware URLs

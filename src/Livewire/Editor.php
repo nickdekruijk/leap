@@ -6,7 +6,6 @@ use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
@@ -15,10 +14,13 @@ use Livewire\Component;
 use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Classes\ImageGenerator;
+use NickDeKruijk\Leap\Classes\RecordDraft;
 use NickDeKruijk\Leap\Classes\Section;
+use NickDeKruijk\Leap\Contracts\Previewable;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
+use NickDeKruijk\Leap\Resource;
 use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\InteractsWithAiImages;
 use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
@@ -116,6 +118,22 @@ class Editor extends Component
     public int $randomSortSeed;
 
     /**
+     * The form as openEditor() loaded it, so the panel can tell a touched editor from
+     * an untouched one and warn before the changes are thrown away.
+     *
+     * A hash rather than a copy of $data: the copy would ride along on every request
+     * the editor makes, and a page with sections is not a small array.
+     */
+    #[Locked]
+    public string $dataFingerprint = '';
+
+    /**
+     * Whether the form differs from what was loaded, for the browser to read.
+     */
+    #[Locked]
+    public bool $dirty = false;
+
+    /**
      * Cached parent module instance to avoid repeated decryption and instantiation
      */
     private ?Component $parentModuleInstance = null;
@@ -155,6 +173,91 @@ class Editor extends Component
     public function defaultLocale(): string
     {
         return array_key_first(config('leap.locales') ?? []) ?? app()->getLocale();
+    }
+
+    /**
+     * A hash of the current form values.
+     */
+    private function fingerprint(): string
+    {
+        return md5((string) json_encode($this->data, JSON_PARTIAL_OUTPUT_ON_ERROR));
+    }
+
+    /**
+     * Whether the form differs from what openEditor() loaded.
+     *
+     * Answered here rather than in the browser because most of what changes an
+     * editor never reaches the DOM as an input event: picking or reordering media,
+     * adding a section, toggling a pivot, letting the AI fill a translation. Those
+     * all go through a Livewire action, so the server is the only place that sees
+     * every one of them. The browser adds what the server cannot see yet, typing
+     * that has not been sent, in editor.blade.php.
+     */
+    public function isDirty(): bool
+    {
+        // isset(), because $editing is typed and has no default: on the very first render
+        // it has not been assigned at all, and reading it would be a fatal error.
+        if (! isset($this->editing) || ! $this->editing) {
+            return false;
+        }
+
+        return $this->dataFingerprint !== '' && $this->dataFingerprint !== $this->fingerprint();
+    }
+
+    /**
+     * Whether the form still differs from what was loaded, as an answer to a question.
+     *
+     * The panel asks this before it warns about losing changes. It is a method rather
+     * than the $dirty property because asking is what makes the answer true: wire:model
+     * is deferred, so the typing only reaches the server with a request, and this is that
+     * request. Typing that was undone again therefore comes back "no", and nobody is
+     * asked a question about changes that no longer exist.
+     */
+    public function stillDirty(): bool
+    {
+        return $this->isDirty();
+    }
+
+    /**
+     * The frontend preview URL for the record being edited, or null when there is
+     * nothing to preview: a record that was never saved, or a module that does not say
+     * how its records render.
+     */
+    public function previewUrl(): ?string
+    {
+        if (! $this->editing || $this->editing < 1) {
+            return null;
+        }
+
+        $module = $this->parentModule();
+
+        if (! $module instanceof Resource || ! $module instanceof Previewable || ! $module->getSlug()) {
+            return null;
+        }
+
+        return route('leap.preview', array_filter([
+            'module' => $module->getSlug(),
+            'id' => $this->editing,
+            // Preview what you are looking at: the tab the editor is on, which may
+            // well be a language the frontend does not serve yet.
+            'locale' => $this->editorLocales() ? $this->activeLocale : null,
+        ]));
+    }
+
+    /**
+     * Hand the current form to the preview tab.
+     *
+     * Every Livewire request carries the properties that changed, so calling this
+     * flushes the deferred wire:model values along with it, which is why the editor
+     * can stay deferred and still preview what you just typed.
+     */
+    public function stashPreview(): void
+    {
+        Leap::validatePermission('read');
+
+        if ($this->previewUrl()) {
+            RecordDraft::stash($this->parentModule()->getSlug(), $this->editing, $this->data);
+        }
     }
 
     /**
@@ -473,6 +576,12 @@ class Editor extends Component
 
         // Clear existing validation errors
         $this->resetValidation();
+
+        // Last, after checkSectionValues() has added its keys: anything taken earlier
+        // would count the editor's own setup as a change the user made. save() calls
+        // openEditor() again on success, so this reseeds itself once the changes are
+        // safely stored.
+        $this->dataFingerprint = $this->fingerprint();
     }
 
     /**
@@ -1224,50 +1333,10 @@ class Editor extends Component
 
     private function updateAttributes(Model &$model)
     {
-        // Update each attribute
-        foreach ($this->attributes() as $attribute) {
-            if ($attribute->type == 'password' && ! $this->data[$attribute->name]) {
-                // Ignore empty passwords
-            } elseif ($attribute->type == 'password') {
-                // The panel is where an administrator sets someone's password, so it
-                // cannot depend on the application's model remembering to cast it.
-                // A stock Laravel user model casts 'password' => 'hashed', and that
-                // cast is idempotent; leave those to the model so nothing changes for
-                // them, and hash here for a model that would otherwise have stored
-                // the value as typed.
-                $model->{$attribute->name} = ($model->getCasts()[$attribute->name] ?? null) === 'hashed'
-                    ? $this->data[$attribute->name]
-                    : Hash::make($this->data[$attribute->name]);
-            } elseif ($attribute->type == 'media') {
-                // Ignore media files
-            } elseif ($attribute->type == 'pivot') {
-                // Ignore pivot data
-            } elseif ($attribute->type == 'sortable') {
-                // Set sort value to highest current sort + 1
-                if ($model->{$attribute->name} === null) {
-                    $model->{$attribute->name} = $model::max($attribute->name) + 1;
-                }
-            } elseif ($attribute->isAccessor) {
-                // Ignore accessors
-            } elseif ($attribute->input == 'ace' && $attribute->options['mode'] == 'ace/mode/json') {
-                $this->data[$attribute->name] = $this->data[$attribute->name] ? json_encode(json_decode($this->data[$attribute->name]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : null;
-                $model->{$attribute->name} = $this->data[$attribute->name];
-            } else {
-                if ($attribute->type == 'sections') {
-                    // Extra treatment for each section
-                    foreach ($this->data[$attribute->name] ?? [] as $key => $section) {
-                        // Update section _view values
-                        $view = collect($attribute->sections)->where('name', $section['_name'])->first()?->view;
-                        if ($view) {
-                            $this->data[$attribute->name][$key]['_view'] = $view;
-                        }
-                        // Set empty values to null (use strict check to preserve boolean false)
-                        $this->data[$attribute->name][$key] = array_map(fn ($value) => $value === '' || $value === [] ? null : $value, $this->data[$attribute->name][$key]);
-                    }
-                }
-                $model->{$attribute->name} = $this->data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
-            }
-        }
+        // Shared with the preview controller, which fills a model the same way without
+        // saving it. One implementation, so a preview cannot show something saving
+        // would not have produced.
+        RecordDraft::apply($model, $this->attributes(), $this->data);
     }
 
     public function syncMedia(Model $model)
@@ -1584,6 +1653,13 @@ class Editor extends Component
         }
 
         $this->setRandomSortSeed();
+    }
+
+    public function dehydrate()
+    {
+        // Published as a property rather than called from the view so Alpine can watch
+        // it: $wire.dirty updates on every round trip, a method call would not.
+        $this->dirty = $this->isDirty();
     }
 
     public function render()

@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Module;
 use NickDeKruijk\Leap\Navigation\Logout;
 
 class ModuleController extends Controller
@@ -47,6 +48,17 @@ class ModuleController extends Controller
 
         // Return the modules
         return collect($modules);
+    }
+
+    /**
+     * Return the module with the given slug, or null if there is none.
+     *
+     * Says nothing about whether the current user may open it: that is the
+     * caller's permission check, exactly as it is for a module's own route.
+     */
+    public static function getModule(string $slug): ?Module
+    {
+        return static::getAllModules()->first(fn ($module): bool => $module->getSlug() === $slug);
     }
 
     /**

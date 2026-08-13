@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Collator;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +24,40 @@ class Leap
     public static function context(): LeapContext
     {
         return app(LeapContext::class);
+    }
+
+    /**
+     * Whether this request renders a record for the editor's preview button.
+     *
+     * For the frontend to say so on the page -- a preview bar, a noindex tag. It
+     * changes no query: a preview reaches its record by id, so nothing had to be
+     * unscoped for it, and a record that is invisible on its own URL stays that
+     * way while its preview is open.
+     */
+    public static function isPreview(): bool
+    {
+        return self::context()->isPreview();
+    }
+
+    /**
+     * The record being previewed, or null on any ordinary request.
+     */
+    public static function preview(): ?Model
+    {
+        return self::context()->preview();
+    }
+
+    /**
+     * Whether the previewed record shows unsaved editor values.
+     *
+     * True while the editor still has changes in it: the text fields come from the
+     * form, but images and linked records come from what is saved, because those
+     * only exist once they are written. Worth saying on the page, otherwise an old
+     * image next to new text reads as a bug.
+     */
+    public static function previewIsUnsaved(): bool
+    {
+        return self::context()->previewIsUnsaved();
     }
 
     /**

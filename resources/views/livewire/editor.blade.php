@@ -1,12 +1,33 @@
-<div>
+{{-- One half of "there is unsaved work here": typing the server has not been sent yet,
+     since wire:model is deferred. Only a trusted event counts, so a field filled in by
+     code cannot pass for someone typing. The other half (media picked, a section added, a
+     pivot toggled) is what the server answers, and it arrives through the commit hook
+     in layouts/app.blade.php rather than being read off $wire here. Both meet in
+     $store.leapEditor.dirty, which the index consults before it throws an editor away. --}}
+<div x-init="$store.leapEditor.setWire($wire)"
+    x-on:input="if ($event.isTrusted) $store.leapEditor.touched = true"
+    x-on:change="if ($event.isTrusted) $store.leapEditor.touched = true"
+    x-on:leap-editor-touched.window="$store.leapEditor.touched = true"
+    x-on:leap-editor-saved.window="$store.leapEditor.touched = false">
     @if ($editing)
-        <div class="leap-buttons" role="group" x-on:keydown.escape.window="if (!document.querySelector('.leap-filebrowser')) selectedRow=null">
+        <div class="leap-buttons" role="group" x-on:keydown.escape.window="if (!document.querySelector('.leap-filebrowser')) $store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (ok) selectedRow = null })">
             @can('leap::update')
                 <x-leap::button svg-icon="far-check-circle" wire:click="save" label="leap::resource.save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan
             @if ($editing > 0)
                 @can('leap::create')
                     <x-leap::button svg-icon="far-copy" wire:click="clone" label="leap::resource.save_copy" wire:loading.delay.shorter.attr="disabled" />
+                @endcan
+            @endif
+            @if ($editing > 0 && ($previewUrl = $this->previewUrl()))
+                @can('leap::read')
+                    {{-- The tab is opened inside the click itself and only then pointed at
+                         the preview: a window opened after an await is no longer part of a
+                         user gesture and Safari and Firefox block it. --}}
+                    <x-leap::button svg-icon="far-eye" :href="$previewUrl" :navigate="false" target="leap-preview" rel="noopener" label="leap::resource.preview"
+                        x-on:click="$event.preventDefault();
+                            const w = window.open('', 'leap-preview');
+                            $wire.stashPreview().then(() => { if (w) w.location = {{ Js::from($previewUrl) }} })" />
                 @endcan
             @endif
             @if ($this->editorLocales())
@@ -64,7 +85,9 @@
                     @endisset
                 @endforeach
             @endif
-            <x-leap::button svg-icon="fas-xmark" x-on:click="selectedRow=null" wire:click="close" label="leap::resource.cancel" />
+            {{-- close() is called from here rather than through wire:click so the warning
+                 can actually stop it; two separate listeners cannot cancel each other. --}}
+            <x-leap::button svg-icon="fas-xmark" x-on:click="$store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (!ok) return; selectedRow = null; $wire.close() })" label="leap::resource.cancel" />
             <span class="leap-editing-id">#{{ $editing }}</span>
         </div>
         <div class="leap-form" wire:key="editor-{{ $editing }}">

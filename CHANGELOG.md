@@ -5,6 +5,79 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] — 2026-08-13
+
+### Added
+
+- **A preview button in the editor.** It opens the frontend of the record being edited, without
+  looking its address up first, and it works on the records that have no address at all: one
+  that is switched off, one that is not published yet, one written in a language
+  `leap.locales_published` leaves out. The comment under that setting has promised this since
+  it was added; here it is.
+
+  A preview is not a public link. It answers to `Leap::validatePermission('read')` on the module
+  the record belongs to, the same check as opening that module, and 404 rather than 403 for the
+  same reason `Module::boot()` gives that answer. Nothing about it widens what the frontend
+  serves: the record is fetched by id, so no scope was relaxed anywhere, and a page that is
+  switched off still answers 404 on its own URL while its preview is open. The response carries
+  `X-Robots-Tag: noindex, nofollow, noarchive` and `Cache-Control: private, no-store`.
+
+  The application does the rendering, because only it knows how one of its records becomes a
+  page. The module says how, by implementing the new `NickDeKruijk\Leap\Contracts\Previewable`:
+
+  ```php
+  class Page extends Resource implements Previewable
+  {
+      public function previewResponse(Model $record): View
+      {
+          return view('page', ['page' => $record]);
+      }
+  }
+  ```
+
+  On the module rather than the model, because that is where a project already describes this
+  screen and the route is addressed by module slug, and it keeps the model free of it. Render
+  through the same view the live route uses, or the preview will slowly stop resembling the
+  page it previews. A module that does not implement it has no preview and no button, which is
+  what an existing project sees until it adds the method. `leap-template` 2.3.0 ships it on
+  the `Page` module and the generated content modules. `Leap::isPreview()`, `Leap::preview()` and
+  `Leap::previewIsUnsaved()` are there for a page that wants to say it is a preview; they
+  change no query.
+
+  What you see is the form as it stands, not the last save: the button stashes the editor's
+  values in your own session and the preview writes them onto the record without saving it,
+  through the same code saving uses. Images and linked records are the exception, because those
+  exist only once they are written, so those come from the saved version, and
+  `Leap::previewIsUnsaved()` is how a page can say so. Reloading the tab shows the form as it
+  is at that moment.
+
+  Nothing to configure: the contract is the switch, and a stash expires after half an hour so a
+  tab left open overnight shows the record rather than yesterday's typing. The stash holds the
+  form as it is, sections and all, which the `cookie` session driver is too small for.
+
+- **The editor warns before unsaved changes are thrown away.** Clicking another row, starting a
+  new record or leaving the page asks first. It was silent, and closing an editor by accident
+  cost whatever was in it.
+
+  Whether there is anything to lose is answered on the server, because most of what changes an
+  editor never reaches the browser as a typed character: media picked or reordered, a section
+  added, a pivot toggled, a translation filled in by the AI. The browser adds what the server
+  cannot see yet, typing that has not been sent, and rich text reports itself on change, since
+  TinyMCE lives in its own iframe and hands its content over on blur.
+
+  It asks only when there is really something to lose. "Something was typed" is not "something
+  is different", so every way out that can wait for an answer (the close button, escape, another
+  row, a new record) flushes the form to the server first and drops the question if
+  nothing changed after all. Only leaving the page cannot wait for that, so there it errs
+  towards asking.
+
+### Changed
+
+- **`x-leap::button` passes its attributes through on a link.** The `href` branch dropped them,
+  so `target` and `rel` could not be set, and it always added `wire:navigate`, right inside the
+  panel, wrong for a link that leaves it. The new `navigate` prop defaults to true, so nothing
+  changes for existing callers.
+
 ## [1.9.0] — 2026-08-13
 
 ### Fixed

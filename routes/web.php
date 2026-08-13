@@ -3,6 +3,7 @@
 use NickDeKruijk\Leap\Controllers\AssetController;
 use NickDeKruijk\Leap\Controllers\LogoutController;
 use NickDeKruijk\Leap\Controllers\ModuleController;
+use NickDeKruijk\Leap\Controllers\PreviewController;
 use NickDeKruijk\Leap\Livewire\Auth2FA as LivewireAuth2FA;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\ForgotPassword;
@@ -37,6 +38,15 @@ Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function ()
     Route::middleware([LeapAuth::class, RequireRole::class, Auth2FA::class, RequireTwoFactorEnrollment::class])->group(function () {
         // Home route to redirect to after login
         Route::get('/', [ModuleController::class, 'home'])->name('leap.home');
+
+        // Preview a record on the frontend. Registered before the modules so no module
+        // slug can shadow it, and inside this group so it answers to exactly the same
+        // authentication as the panel it is opened from.
+        Route::get('preview/{module}/{id}/{locale?}', PreviewController::class)
+            ->whereNumber('id')
+            ->where('module', '[A-Za-z0-9_-]+')
+            ->where('locale', '[A-Za-z_-]+')
+            ->name('leap.preview');
 
         // Register all modules routes
         foreach (ModuleController::getAllModules() as $module) {

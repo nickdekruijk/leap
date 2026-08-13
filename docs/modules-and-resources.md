@@ -126,6 +126,60 @@ the columns that are missing — typically after a column was added to the model
 migration. Your hand-written lines (custom labels, hints, ordering) are left
 untouched. Pass `--force` to discard the file and regenerate it from scratch instead.
 
+## Previewing a record on the frontend
+
+The editor can open the frontend of the record being edited, including the records that
+have no address a visitor could reach: one that is switched off, one that is not
+published yet, one written in a language `leap.locales_published` leaves out.
+
+Only the application knows how one of its records becomes a page, so the module says it:
+
+```php
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
+use NickDeKruijk\Leap\Contracts\Previewable;
+use NickDeKruijk\Leap\Resource;
+
+class Page extends Resource implements Previewable
+{
+    public function previewResponse(Model $record): View
+    {
+        // The same view the live route renders, so the preview cannot drift from it
+        return view('page', ['page' => $record]);
+    }
+}
+```
+
+That is the whole integration, and it sits on the module rather than the model: this is
+where a project already describes the screen, the preview route is addressed by module
+slug, and the model stays free of it. A module that does not implement `Previewable` has
+no preview and no button. By the time `previewResponse()` runs the record has been loaded
+without any active/published scope, the requested locale is applied, and any unsaved
+editor values have been written onto it, so it only has to render.
+
+What the preview does **not** do matters as much. It reaches its record by id, so no
+scope was relaxed anywhere: a switched-off page still answers 404 on its own URL, stays
+out of the menu and stays out of the sitemap while its preview is open. Access is
+`Leap::validatePermission('read')` on the module the record belongs to, the same check
+as opening that module, answering 404 rather than 403 for the same reason. The response
+carries `X-Robots-Tag: noindex, nofollow, noarchive` and `Cache-Control: private,
+no-store`.
+
+The page can say it is a preview with `Leap::isPreview()`, `Leap::preview()` (the record)
+and `Leap::previewIsUnsaved()`. None of them change a query.
+
+**Unsaved work.** The button stashes the editor's values in the user's own session and
+the preview writes them onto the record without saving, through the same code saving
+uses. Images and linked records are the exception, because those exist only once they
+are written, so a preview of unsaved work shows the saved ones, and
+`Leap::previewIsUnsaved()` is there for a page that wants to say so. Reloading the
+preview tab shows the form as it is at that moment.
+
+There is nothing to configure: `Previewable` is the switch, and a stash expires after
+half an hour so a tab left open overnight shows the record rather than yesterday's
+typing. The stash holds the form as it is, sections and all, so the `cookie` session
+driver is too small for it; `file`, `database` and `redis` are fine.
+
 ## Permissions
 
 Each module is subject to the current user's role permissions (`read`, `create`,

@@ -1,8 +1,17 @@
-<main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow || $wire.importing ? 'leap-editor-open' : ''">
+{{-- $store.leapEditor.dirty is kept by the editor (see livewire/editor.blade.php),
+     because the ways out of an open editor are here: clicking another row, starting a
+     new record, leaving the page. Each asks first rather than dropping the changes
+     silently. A store rather than a variable of our own on this element: Livewire owns
+     the Alpine scope of its root, and assigning a plain key on it throws. --}}
+<main class="leap-main" x-data="{ selectedRow: $wire.entangle('selectedRow') }" x-init="if (selectedRow) $dispatch('openEditor', { id: selectedRow })" x-bind:class="selectedRow || $wire.importing ? 'leap-editor-open' : ''"
+    {{-- The one guard that cannot ask the server: beforeunload gets no await, so it goes on
+         what is known here and errs towards asking. Typing that was undone again can still
+         raise the browser's own dialog; every other way out settles it first. --}}
+    x-on:beforeunload.window="if ($store.leapEditor?.dirty === true) $event.preventDefault()">
     <header class="leap-header">
         <h2>{{ $this->getTitle() }}</h2>
         @can('leap::create')
-            <x-leap::button svg-icon="fas-circle-plus" x-on:click="if ($wire.importing) $dispatch('closeImport');$dispatch('openEditor',{id:(selectedRow=-1)})" label="leap::resource.create_new" class="primary" />
+            <x-leap::button svg-icon="fas-circle-plus" x-on:click="$store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (!ok) return; if ($wire.importing) $dispatch('closeImport'); $dispatch('openEditor',{id:(selectedRow=-1)}) })" label="leap::resource.create_new" class="primary" />
         @endcan
         @can('leap::read')
             @isset($this->downloadCSV)

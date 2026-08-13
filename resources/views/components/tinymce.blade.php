@@ -96,13 +96,30 @@
                             },
                             setup: (editor) => {
                                 this.editor = editor;
+                                // Only once it was really typed in. TinyMCE rewrites the HTML
+                                // it is given -- tags closed, whitespace normalised -- so
+                                // syncing regardless would hand the form a different value
+                                // than it loaded, for a page nobody edited.
                                 editor.on('blur', (e) => {
-                                    this.value = editor.getContent();
+                                    if (editor.isDirty()) {
+                                        this.value = editor.getContent();
+                                    }
+                                });
+                                // Rich text lives in its own iframe and only syncs on blur,
+                                // so nothing else notices it was typed in. Say so, or the
+                                // editor thinks a rewritten page is untouched. Guarded by the
+                                // same flag: setting the content fires 'change' too, and
+                                // opening a page is not changing it.
+                                editor.on('input change', () => {
+                                    if (editor.isDirty()) {
+                                        window.dispatchEvent(new CustomEvent('leap-editor-touched'));
+                                    }
                                 });
                                 editor.on('init', (e) => {
                                     if (this.value != null) {
                                         editor.setContent(this.value);
                                     }
+                                    editor.setDirty(false);
                                 });
                                 this.$watch('value', (newValue) => {
                                     if (newValue !== editor.getContent()) {
@@ -110,6 +127,8 @@
                                         // Put cursor at the end
                                         editor.selection.select(editor.getBody(), true);
                                         editor.selection.collapse(false);
+                                        // The value came from the form, not from typing here
+                                        editor.setDirty(false);
                                     }
                                 });
                             },

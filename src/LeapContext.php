@@ -2,11 +2,13 @@
 
 namespace NickDeKruijk\Leap;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Context;
 
 /**
  * Per-request store for Leap's request-scoped state: the active module, the
- * current user's permission map and their role name.
+ * current user's permission map, their role name and, on a preview request,
+ * the record being previewed.
  *
  * Registered as a scoped binding (see ServiceProvider::register()), so it lives
  * for a single request / Livewire update and is flushed between them — unlike
@@ -36,6 +38,16 @@ class LeapContext
      * The current user's role name.
      */
     protected ?string $roleName = null;
+
+    /**
+     * The record this request is previewing, if it is a preview request at all.
+     */
+    protected ?Model $preview = null;
+
+    /**
+     * Whether that preview carries unsaved editor values.
+     */
+    protected bool $previewUnsaved = false;
 
     /**
      * Set the active module class name.
@@ -112,5 +124,53 @@ class LeapContext
     public function roleName(): ?string
     {
         return $this->roleName;
+    }
+
+    /**
+     * Mark this request as previewing the given record.
+     *
+     * Deliberately not mirrored to Laravel's Context the way the three above are.
+     * Those mirrors exist because their keys used to live there; this one never
+     * did, and Context is exactly the wrong place for it: it survives into queued
+     * jobs and log entries, where an Eloquent model is both a serialisation hazard
+     * and a way for one request's preview to colour something else entirely. This
+     * has to end when the request does, which is what a scoped binding gives us.
+     *
+     * @param  bool  $unsaved  Whether unsaved editor values were applied to it
+     */
+    public function setPreview(?Model $record, bool $unsaved = false): static
+    {
+        $this->preview = $record;
+        $this->previewUnsaved = $record ? $unsaved : false;
+
+        return $this;
+    }
+
+    /**
+     * The record being previewed, or null on any ordinary request.
+     */
+    public function preview(): ?Model
+    {
+        return $this->preview;
+    }
+
+    /**
+     * Whether this request is a preview.
+     *
+     * Nothing in Leap queries differently because of this: a preview reaches its
+     * record by id, so no scope had to be relaxed for it. It is here for the page
+     * itself to say so -- a preview bar, a noindex tag -- and for nothing else.
+     */
+    public function isPreview(): bool
+    {
+        return $this->preview !== null;
+    }
+
+    /**
+     * Whether the previewed record carries unsaved editor values.
+     */
+    public function previewIsUnsaved(): bool
+    {
+        return $this->previewUnsaved;
     }
 }
