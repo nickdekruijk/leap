@@ -130,4 +130,77 @@ class LocaleHelpersTest extends TestCase
         $this->assertSame(['contact'], $segments);
         $this->assertSame('nl', $this->app->getLocale());
     }
+
+    /**
+     * leap.locales is what the admin can hold; leap.locales_published is what the frontend
+     * serves. Unset, they are the same list, so a site that never heard of this is untouched.
+     */
+    public function test_every_configured_locale_is_published_by_default(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English'], 'leap.locales_published' => null]);
+
+        $this->assertSame(['nl' => 'Nederlands', 'en' => 'English'], Leap::localesPublished());
+    }
+
+    public function test_publishing_narrows_the_list_the_frontend_serves(): void
+    {
+        config(['leap.locales' => ['en' => 'English', 'nl' => 'Nederlands'], 'leap.locales_published' => ['en']]);
+
+        $this->assertSame(['en' => 'English'], Leap::localesPublished());
+    }
+
+    /**
+     * The unprefixed URLs have to answer in a language a visitor can read. On a site whose
+     * first language is being written but not yet served, the default is the first one that
+     * is, not the first one configured.
+     */
+    public function test_the_default_locale_is_the_first_published_one(): void
+    {
+        config(['leap.locales' => ['nl' => 'Nederlands', 'en' => 'English'], 'leap.locales_published' => ['en']]);
+
+        $this->assertSame('en', Leap::localeDefault());
+        $this->assertSame('', Leap::localePrefix('en'));
+    }
+
+    /**
+     * An unpublished prefix is left in the segments rather than consumed, so it is looked up
+     * as a page slug and answers 404 like any unknown path. Which is what it is: that
+     * language has no addresses yet.
+     */
+    public function test_detect_locale_ignores_a_prefix_that_is_not_published(): void
+    {
+        config(['leap.locales' => ['en' => 'English', 'nl' => 'Nederlands'], 'leap.locales_published' => ['en']]);
+
+        $segments = ['nl', 'over-ons'];
+        Leap::detectLocale($segments);
+
+        $this->assertSame(['nl', 'over-ons'], $segments, 'The prefix was consumed, so the page below it would answer.');
+        $this->assertSame('en', app()->getLocale());
+    }
+
+    /**
+     * And publishing it makes the very same URL work, which is the whole point: finishing a
+     * translation is one setting and no deploy.
+     */
+    public function test_publishing_a_locale_makes_its_prefix_route(): void
+    {
+        config(['leap.locales' => ['en' => 'English', 'nl' => 'Nederlands'], 'leap.locales_published' => ['en', 'nl']]);
+
+        $segments = ['nl', 'over-ons'];
+        Leap::detectLocale($segments);
+
+        $this->assertSame(['over-ons'], $segments);
+        $this->assertSame('nl', app()->getLocale());
+    }
+
+    /**
+     * A setting that matches nothing would leave the router with no language at all, so it
+     * falls back to the first configured locale rather than taking the site down.
+     */
+    public function test_a_published_list_matching_nothing_falls_back_rather_than_emptying(): void
+    {
+        config(['leap.locales' => ['en' => 'English'], 'leap.locales_published' => ['de']]);
+
+        $this->assertSame(['en' => 'English'], Leap::localesPublished());
+    }
 }

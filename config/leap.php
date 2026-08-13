@@ -508,6 +508,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | locales_published
+    |--------------------------------------------------------------------------
+    |
+    | Which of those languages the frontend serves. Null means all of them, so
+    | nothing changes for a site that does not set it.
+    |
+    | The two lists answer different questions. 'locales' is what an editor can
+    | write; 'locales_published' is what a visitor can read. A translation is
+    | typed page by page over weeks, and until it is finished half a translated
+    | site is worse than none: the prefix answers in a mixture of languages,
+    | Google indexes it, and hreflang says the two versions are equals.
+    |
+    | So a language is added to 'locales' the day someone starts writing it, and
+    | here the day it is finished. An unpublished locale keeps its editor, its
+    | per-locale storage and its admin tabs, and has no URL: its prefix is not
+    | consumed, so it falls through to a 404 like any unknown path.
+    |
+    | Reviewing one before it is published is not what this is for. That is the
+    | admin's preview, which stays behind the same permissions as the module.
+    |
+    | 'locales_published' => ['en'],
+    |
+    */
+    'locales_published' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | slug_follow_minutes
     |--------------------------------------------------------------------------
     |

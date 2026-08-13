@@ -118,12 +118,44 @@ class Leap
     }
 
     /**
-     * The default (first) configured locale, or null when the site is monolingual
+     * The languages the frontend serves, keyed as leap.locales is.
+     *
+     * leap.locales_published narrows it; null means all of them, so a site that never
+     * heard of this behaves exactly as before. Never narrows to nothing: an empty list
+     * would leave the router with no language at all, so an unusable setting falls back
+     * to the first configured locale rather than taking the site down.
+     *
+     * @return array<string, string>
+     */
+    public static function localesPublished(): array
+    {
+        $locales = config('leap.locales');
+
+        if (! $locales) {
+            return [];
+        }
+
+        $published = config('leap.locales_published');
+
+        if ($published === null) {
+            return $locales;
+        }
+
+        return array_intersect_key($locales, array_flip((array) $published))
+            ?: array_slice($locales, 0, 1, true);
+    }
+
+    /**
+     * The default (first) published locale, or null when the site is monolingual
      * (leap.locales is null/empty). This is the locale served without a URL prefix.
+     *
+     * Published rather than merely configured: on a site whose first language is being
+     * written but not yet served, the unprefixed URLs have to answer in a language a
+     * visitor can actually read.
      */
     public static function localeDefault(): ?string
     {
-        $locales = config('leap.locales');
+        $locales = self::localesPublished();
 
         return $locales ? array_key_first($locales) : null;
     }
@@ -181,12 +213,15 @@ class Leap
      */
     public static function detectLocale(array &$segments): void
     {
-        $locales = config('leap.locales');
+        $locales = self::localesPublished();
         if (! $locales) {
             return;
         }
 
         $default = self::localeDefault();
+        // Published, not merely configured. An unpublished prefix is left in the segments,
+        // where it is looked up as a page slug and answers 404 like any unknown path, which
+        // is what it is: that language has no addresses yet.
         if (isset($segments[0]) && $segments[0] !== '' && $segments[0] !== $default && array_key_exists($segments[0], $locales)) {
             app()->setLocale(array_shift($segments));
 

@@ -46,7 +46,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`HasMedia::detachAllMedia()`**, the same cleanup by hand, for the deletes model events
   cannot reach.
 
-## [Unreleased]
+- **`leap.locales_published`, the locales a visitor is served.** `leap.locales` decides what an
+  editor can write, which is a different question from what the site publishes: a translation is
+  usually entered long before it is finished, and until it is done it should be reachable from the
+  admin and from nowhere else. `locales_published` names the subset that gets URLs. A prefix that
+  is configured but not published falls through to a page lookup and 404s, `Leap::localeDefault()`
+  answers with the first published locale instead of the first configured one, and a language the
+  site does not serve yet cannot turn up in a sitemap or an hreflang set. Left at `null` it means
+  every configured locale, so nothing changes for a project that does not set it.
 
 ### Changed
 
