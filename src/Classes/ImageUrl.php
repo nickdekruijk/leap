@@ -115,10 +115,21 @@ class ImageUrl
     {
         $sources = [];
 
-        // Taken from the first rung, since 'format' is a per-preset option: a
+        // From the first rung that offers any, since 'format' is a per-preset option: a
         // named preset may offer a different set from the widths around it.
-        $ladder = self::ladder($widths);
-        $offered = ImagePreset::find(array_key_first($ladder))?->formats() ?? [];
+        //
+        // The first that *resolves*, not simply the first. A caller may pass a width this
+        // project does not have, a 300 where the ladder starts at 600, and srcset() already
+        // skips those without complaint. Reading the formats from that same rung meant
+        // find() returned null, "no formats at all" followed, and the component fell back
+        // to a bare <img>: no <picture>, no AVIF, and nothing anywhere saying so. The two
+        // halves have to agree on being tolerant.
+        //
+        // A preset is a config lookup and a ladder is a handful of rungs, so resolving all
+        // of them costs nothing worth saving.
+        $offered = collect(array_keys(self::ladder($widths)))
+            ->map(fn (string|int $rung): array => ImagePreset::find($rung)?->formats() ?? [])
+            ->first(fn (array $formats): bool => $formats !== []) ?? [];
 
         foreach (array_keys($offered) as $format) {
             if (! ImageResizer::supports($format)) {

@@ -10,7 +10,20 @@ trait HasMedia
 {
     public function media(): MorphToMany
     {
-        return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix').'mediables')->withPivot('mediable_attribute')->orderBy('mediable_attribute');
+        return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix').'mediables')
+            ->withPivot('mediable_attribute', 'sort')
+            ->orderBy('mediable_attribute')
+            // The order the editor dragged them into. Without it the order is whatever
+            // the database returns, which is by media id, and that is only the same
+            // thing while no two models share a file. They do: media rows are keyed on
+            // the file's sha256, so a photo also used by an older model keeps that
+            // model's lower id and jumps to the front. The first image is the one every
+            // card in the frontend shows, so a gallery that looks merely shuffled puts
+            // the wrong picture on the overview.
+            ->orderByPivot('sort')
+            // Two rows with the same sort still have to come out in a fixed order, or
+            // the same page renders differently on two requests.
+            ->orderByPivot('media_id');
     }
 
     /**

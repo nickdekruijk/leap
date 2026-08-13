@@ -184,6 +184,45 @@ class ImageFormatsTest extends ImageTestCase
         }
     }
 
+    /**
+     * A width this project does not have must not cost the whole <picture>.
+     *
+     * srcset() skips an unknown rung silently, so a ladder of [300, 600, 1200] on a
+     * project whose ladder starts at 600 still produces a usable srcset. sources() read
+     * the offered formats from the first rung only, and an unresolvable one meant "no
+     * formats at all": no <source>, no <picture>, and the component quietly fell back to
+     * a bare <img> in the default encoding. Nothing said so, and the page looked right.
+     *
+     * The two halves have to agree on being tolerant, or a single stray number in a
+     * template turns AVIF off for that element and nowhere else.
+     */
+    public function test_an_unknown_width_does_not_cost_the_other_formats(): void
+    {
+        $this->withFormats();
+
+        $media = $this->media();
+
+        $types = array_column(ImageUrl::sources($media, [300, 600, 1200]), 'type');
+
+        $this->assertContains('image/webp', $types);
+        $this->assertSame(
+            array_column(ImageUrl::sources($media, [600, 1200]), 'type'),
+            $types,
+            'An unknown rung in front should leave the offered formats exactly as they were.',
+        );
+    }
+
+    /**
+     * And a ladder with nothing recognisable in it offers nothing, rather than guessing.
+     * There is no preset to read the formats from, so there is no honest answer.
+     */
+    public function test_a_ladder_of_nothing_but_unknown_widths_offers_no_sources(): void
+    {
+        $this->withFormats();
+
+        $this->assertSame([], ImageUrl::sources($this->media(), [300, 450]));
+    }
+
     public function test_a_source_srcset_points_at_the_format_it_declares(): void
     {
         $this->withFormats();

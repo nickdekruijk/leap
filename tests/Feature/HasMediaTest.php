@@ -190,4 +190,47 @@ class HasMediaTest extends TestCase
         $this->assertSame($media->id, $pivot->media->id);
         $this->assertSame('header.png', $pivot->media->file_name);
     }
+
+    /**
+     * A gallery comes out in the order the editor dragged it into, not the order the
+     * database happens to return.
+     *
+     * The two are the same until two models share a file. Media rows are keyed on the
+     * file's sha256, so a photo already used by an older model keeps that model's lower
+     * id, and ordering by id alone floats it to the front. Here the second attachment
+     * reuses the first file, which is exactly that case: sort says it comes second and
+     * the id says it comes first.
+     *
+     * It matters beyond tidiness because the frontend shows the first image of a model
+     * as its card: a gallery that merely looks shuffled puts the wrong picture on every
+     * overview that lists it.
+     */
+    public function test_media_comes_back_in_the_order_it_was_sorted_in(): void
+    {
+        $model = MediaModel::create(['title' => 'Post']);
+
+        $shared = $this->attach($model, 'shared.png', 'gallery', 2);
+        $own = $this->attach($model, 'own.png', 'gallery', 1);
+
+        $this->assertTrue($model->mediaFor('gallery')->first()->is($own),
+            'The lower sort comes first, even though the other row has the lower media id.');
+        $this->assertTrue($model->mediaFor('gallery')->last()->is($shared));
+    }
+
+    /**
+     * Equal sorts still have to resolve to one settled order, or the same page renders
+     * differently on two requests and a card changes picture on reload. The media id
+     * breaks the tie, so the row attached first stays first.
+     */
+    public function test_an_equal_sort_still_has_a_settled_order(): void
+    {
+        $model = MediaModel::create(['title' => 'Post']);
+
+        $first = $this->attach($model, 'a.png', 'gallery');
+        $this->attach($model, 'b.png', 'gallery');
+
+        $this->assertSame('a.png', $model->mediaFor('gallery')->first()->file_name);
+        $this->assertSame('a.png', $model->fresh()->mediaFor('gallery')->first()->file_name);
+        $this->assertSame($first->id, $model->fresh()->mediaFor('gallery')->first()->id);
+    }
 }

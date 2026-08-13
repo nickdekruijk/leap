@@ -5,7 +5,7 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.8.1] — 2026-08-13
 
 ### Fixed
 
@@ -28,6 +28,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English-only site) has no configured locale among its keys and is left as it is, because
   nothing separates it from a data array whose keys happen to be two or three lowercase
   letters, such as `{"id": …, "url": …}`.
+
+- **A gallery comes back in the order it was sorted in.** `HasMedia::media()` ordered by
+  `mediable_attribute` alone and did not even load the pivot's `sort`, so within one
+  attribute the order was whatever the database returned, in practice by media id. That is
+  the same thing right up until two models share a file: media rows are keyed on the file's
+  sha256, so a photo already used by an older model keeps that model's lower id and floats
+  to the front. Since a frontend card shows a model's first image, a gallery that merely
+  looked shuffled put the wrong picture on every overview listing it. The relation now
+  loads `sort` and orders by it, with `media_id` breaking a tie so equal sorts do not
+  reshuffle between requests.
+
+- **An unknown width no longer costs an element its `<picture>`.** `ImageUrl::sources()`
+  read the offered formats from the first rung of the ladder only. A caller may pass a
+  width the project does not have, a 300 where `leap.images.widths` starts at 600, and
+  `srcset()` skips those without complaint, but `ImagePreset::find()` returned null for
+  that same rung, "no formats at all" followed, and the component fell back to a bare
+  `<img>` in the default encoding: no `<source>`, no AVIF, and nothing anywhere reporting
+  it. The formats now come from the first rung that resolves, so the two halves agree on
+  being tolerant. A ladder holding nothing recognisable still offers no sources, because
+  there is no preset to read an honest answer from.
 
 ## [1.8.0] — 2026-08-12
 
