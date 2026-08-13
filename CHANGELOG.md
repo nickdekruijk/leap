@@ -48,8 +48,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   values in your own session and the preview writes them onto the record without saving it,
   through the same code saving uses. Images and linked records are the exception, because those
   exist only once they are written, so those come from the saved version, and
-  `Leap::previewIsUnsaved()` is how a page can say so. Reloading the tab shows the form as it
-  is at that moment.
+  `Leap::previewIsUnsaved()` is how a page can say so.
+
+  The button is what updates a preview. It stashes on the click and reuses one named tab, so
+  clicking it again refreshes the page you are looking at. Reloading that tab yourself repeats
+  the stash instead, showing the form as it was at the last click.
 
   Nothing to configure: the contract is the switch, and a stash expires after half an hour so a
   tab left open overnight shows the record rather than yesterday's typing. The stash holds the

@@ -172,8 +172,12 @@ and `Leap::previewIsUnsaved()`. None of them change a query.
 the preview writes them onto the record without saving, through the same code saving
 uses. Images and linked records are the exception, because those exist only once they
 are written, so a preview of unsaved work shows the saved ones, and
-`Leap::previewIsUnsaved()` is there for a page that wants to say so. Reloading the
-preview tab shows the form as it is at that moment.
+`Leap::previewIsUnsaved()` is there for a page that wants to say so.
+
+**Refreshing a preview is the button, not the browser's reload.** The form is stashed
+by the click, and the tab is a named window, so clicking preview again reloads the tab
+you already have with what is in the editor now. Reloading that tab yourself replays the
+same stash, so it shows the form as it was at the last click rather than the current one.
 
 There is nothing to configure: `Previewable` is the switch, and a stash expires after
 half an hour so a tab left open overnight shows the record rather than yesterday's
