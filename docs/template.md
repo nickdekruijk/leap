@@ -238,6 +238,52 @@ free — just add `implements Sitemapable`. Missing or non-`Sitemapable` classes
 config are skipped. When the config is empty the sitemap route falls back to a
 page-tree-only sitemap, so existing sites are unaffected.
 
+### robots.txt
+
+Leap serves `/robots.txt` itself, from `resources/views/robots.blade.php` in the package
+(route `leap.robots`), because the line the file is really there for is the absolute URL
+of the sitemap and that address differs per environment. A file in git would have to
+hard-code one host and be wrong on the others.
+
+It says what `config('leap.robots')` says:
+
+| Key | Default | What it does |
+| --- | --- | --- |
+| `enabled` | `true` | `false` registers no route: `/robots.txt` is then whatever `public/` holds, or a 404. |
+| `disallow_all` | `APP_ENV !== 'production'` | `Disallow: /` and no `Sitemap:` line. Override with `LEAP_ROBOTS_DISALLOW_ALL`. |
+| `disallow` | `[]` | Paths kept out of the crawl. Repeated in every group. |
+| `sitemap` | `'sitemap'` | A route name, a literal URL, or `false`. A name nothing answers to leaves the line out rather than pointing at a 404. |
+| `ai_crawlers` | `'allow'` | The crawlers behind the answer engines, named in a group of their own. `'disallow'` keeps them out, `'omit'` leaves the group out. |
+
+Three things about this go wrong without a word, which is what `php artisan leap:robots`
+is for. It prints what a crawler gets and reports all of them:
+
+- **A file at `public/robots.txt` wins.** The web server answers it before PHP is
+  reached, so the route runs in your test suite and never in production. Laravel's
+  skeleton ships one; delete it.
+- **A route of your own on that address replaces leap's.** Not the way a catch-all
+  would: `/robots.txt` is matched before `{any}`, but a route collection is keyed on
+  method plus URI, so an identical address overwrites what was there and the project's
+  route is the one that answers. Nothing breaks, but only one of the two ever runs.
+  Remove one, or set `enabled` to `false`.
+- **`disallow_all` is on outside production.** A staging copy is the same site to a
+  crawler and gets picked as the canonical one often enough to matter, so it defaults to
+  closed. The other side of that: an `APP_ENV` that is not quite `production` takes the
+  live site out of the index, silently. `leap:robots --check` fails on that, on a file
+  in `public/` and on a second route, and is meant for a deploy.
+
+Note what `Disallow` does and does not do: it forbids crawling, not indexing. A URL that
+is linked to somewhere can still be listed without a snippet, and a crawler that may not
+fetch the page never sees an `X-Robots-Tag: noindex` either. To get a staging URL back
+out of an index, allow crawling and send that header. To keep people out, use HTTP auth
+in the web server.
+
+Publish the view to write the file by hand instead:
+
+```bash
+php artisan vendor:publish --provider="NickDeKruijk\Leap\ServiceProvider" --tag=leap-views
+```
+
 ## Preview
 
 The `Page` module and every generated content module implement

@@ -20,6 +20,7 @@ use NickDeKruijk\Leap\Classes\NotFoundLog;
 use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\MediaCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
+use NickDeKruijk\Leap\Commands\RobotsCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Jobs\GenerateImageDerivatives;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
@@ -54,9 +55,13 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         // legally. Publish them only to replace the markup outright — styling is meant
         // to happen from the project's own stylesheet, since the CSS carries structure
         // and reads the template's design tokens for everything else.
+        // robots.txt is published for the same reason and with the opposite intent: the
+        // config covers the rules a site is likely to want, and publishing is for the
+        // one that wants to write the file itself.
         $this->publishes([
             __DIR__.'/../resources/views/consent-banner.blade.php' => resource_path('views/vendor/leap/consent-banner.blade.php'),
             __DIR__.'/../resources/views/cookie-table.blade.php' => resource_path('views/vendor/leap/cookie-table.blade.php'),
+            __DIR__.'/../resources/views/robots.blade.php' => resource_path('views/vendor/leap/robots.blade.php'),
         ], 'leap-views');
 
         // Register all leap livewire components.
@@ -82,6 +87,15 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         $this->registerNotFoundLog();
+
+        // At the root of the site, and before the frontend's own routes: a package
+        // provider boots ahead of the one that loads routes/web.php, so a catch-all
+        // there cannot swallow /robots.txt, which is matched first. A route on that
+        // exact address is another matter: a route collection is keyed on method plus
+        // URI, so the project's replaces this one outright. leap:robots reports that.
+        if (config('leap.robots.enabled')) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/robots.php');
+        }
 
         // Public, unauthenticated, and outside the panel prefix: this is the
         // fallback that generates a resized copy the web server just failed to
@@ -174,6 +188,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 ImageCommand::class,
                 MediaCommand::class,
                 ModuleCommand::class,
+                RobotsCommand::class,
                 UserCommand::class,
             ]);
         }

@@ -584,6 +584,71 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | robots
+    |--------------------------------------------------------------------------
+    |
+    | /robots.txt, rendered by leap rather than served from public/. The one line
+    | it is really for is Sitemap:, and that has to be an absolute URL. A file in
+    | git would have to hard-code one host and be wrong on every other
+    | environment.
+    |
+    | It has one failure mode and it is silent: a file in public/robots.txt is
+    | answered by the web server without PHP being asked anything, so the route
+    | never runs and nothing says so. Delete that file. `php artisan leap:robots`
+    | prints what a crawler gets and reports it when something is in the way.
+    |
+    | Publish resources/views/vendor/leap/robots.blade.php (tag: leap-views) to
+    | write the file by hand instead.
+    |
+    */
+    'robots' => [
+
+        // Master switch. false = no route, and the site answers whatever is in
+        // public/, or a 404.
+        'enabled' => true,
+
+        // Everything out of the crawl, and no Sitemap line. On by default
+        // anywhere but production: a staging copy is the same site to a crawler,
+        // and the duplicate gets picked as the canonical one often enough to
+        // matter.
+        //
+        // Note what this does and does not do. It forbids crawling, not
+        // indexing: a URL that is linked to can still be listed, without a
+        // snippet, and a crawler that may not fetch the page never sees an
+        // X-Robots-Tag: noindex either. So to get a staging URL back out of an
+        // index, allow crawling and send that header instead. And to keep people
+        // out, use HTTP auth in the web server: robots.txt is a request, not a
+        // lock.
+        //
+        // APP_ENV is read straight from the environment rather than through
+        // app()->environment(), because a published copy of this file is loaded
+        // before the application knows what environment it is in.
+        'disallow_all' => env('LEAP_ROBOTS_DISALLOW_ALL', env('APP_ENV', 'production') !== 'production'),
+
+        // Paths kept out of the crawl: search results with a querystring, an
+        // export endpoint: real pages that are not worth a crawl budget. These
+        // are repeated in every group below, because a crawler obeys the most
+        // specific group that names it and ignores every other one. Without the
+        // repetition the list would apply to everyone except the crawlers named
+        // by ai_crawlers.
+        'disallow' => [],
+
+        // The Sitemap line: a route name, a literal URL, or false for none. The
+        // sitemap route belongs to the frontend and not to leap, so a name that
+        // does not resolve leaves the line out rather than pointing at a 404.
+        'sitemap' => 'sitemap',
+
+        // The crawlers behind the answer engines. 'allow' names them in a group
+        // of their own. What they may do does not change, allow-all already
+        // allowed them, but writing it down keeps a later blanket Disallow from
+        // taking them out along with everything else, and makes allowing them
+        // read as a decision rather than as an oversight. 'disallow' keeps them
+        // off the site, 'omit' leaves the group out.
+        'ai_crawlers' => 'allow',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | content
     |--------------------------------------------------------------------------
     |

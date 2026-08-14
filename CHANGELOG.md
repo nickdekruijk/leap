@@ -5,6 +5,49 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] — 2026-08-14
+
+### Added
+
+- **Leap serves `/robots.txt`.** The line that file is really there for is `Sitemap:`, and that
+  has to be an absolute URL, so it cannot live in git: the address differs per environment. It is
+  a route (`leap.robots`) rendered from `resources/views/robots.blade.php`, which means a fix
+  reaches every site through composer instead of leaving each one with its own frozen copy.
+
+  What it says comes from the new `leap.robots` config: `enabled`, `disallow` (paths, repeated in
+  every group, because a crawler obeys the group that names it and reads no other), `sitemap` (a
+  route name, a URL, or `false`; a name nothing answers to leaves the line out rather than
+  pointing at a 404) and `ai_crawlers` (the crawlers behind the answer engines, allowed in a
+  group of their own by default: what they may do does not change, but writing it down keeps a
+  later blanket `Disallow` from taking them out by accident). Publish the view with
+  `--tag=leap-views` to write the whole file by hand.
+
+  Two things to know. **A file at `public/robots.txt` wins over the route** and nothing says so:
+  the web server answers it without reaching PHP, so the route works in your test suite and never
+  in production. Laravel's skeleton ships one, so delete it. And on a site that already answers
+  `/robots.txt` from its own route, one of the two never runs: a route collection is keyed on
+  method plus URI, so the project's replaces leap's. Nothing is broken by that, but two routes
+  for one address is a thing to resolve rather than to keep. Set `leap.robots.enabled` to `false`
+  there, or drop the project's route.
+
+- **`php artisan leap:robots`** prints what a crawler gets and reports what is in the way of it: a
+  file in `public/`, a second route on the same address, a `Sitemap:` line left out because the
+  route it names does not exist, and a site closed to crawlers. `--check` says nothing when
+  nothing is wrong and fails when something is, for a deploy.
+
+### Changed
+
+- **Outside production, the site is closed to crawlers by default** (`leap.robots.disallow_all`,
+  overridable with `LEAP_ROBOTS_DISALLOW_ALL`). A staging copy is the same site to a crawler and
+  is picked as the canonical one often enough to matter. The other side of that default: an
+  `APP_ENV` that is not quite `production` takes the live site out of the index, silently, which
+  is why `leap:robots --check` fails on a production site that disallows everything.
+
+  Note that this forbids crawling and not indexing. A URL that is linked to can still be listed
+  without a snippet, and a crawler that may not fetch the page never sees an `X-Robots-Tag:
+  noindex` either. To get a staging URL back out of an index, allow crawling and send that
+  header; to keep people out, use HTTP auth in the web server.
+
 ## [1.11.0] — 2026-08-14
 
 ### Fixed

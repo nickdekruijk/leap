@@ -19,6 +19,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `table_prefix` | `leap_` | Prefix for the package's own tables. |
 | `locales` | `null` | `null` = monolingual; an assoc array enables per-locale editing. See [multilingual.md](multilingual.md). |
 | `sitemap` | `['models' => []]` | Extra models that contribute to `sitemap.xml` (each `Sitemapable`). The template also adds every `content` type automatically. |
+| `robots` | *(array)* | `/robots.txt`, served by leap. On by default, and closed to crawlers outside production. See [robots.txt](template.md#robotstxt). |
 | `content` | `[]` | The template's listed content types, `slug => Model::class`. Managed by `leap:content`. See [content-types.md](content-types.md). |
 | `images` | *(array)* | Resized copies of images on the filemanager disk. Off by default. See [images.md](images.md). |
 | `auth_2fa` | *(array)* | Two factor authentication settings. See [permissions-and-auth.md](permissions-and-auth.md). |
