@@ -370,14 +370,27 @@ return [
         // returns the original and <x-leap::responsive-image> emits a plain img.
         'enabled' => false,
 
-        // First URL segment and, for a local disk, the directory under public/.
-        // Must not collide with an application route or another package's.
+        // First URL segment, and the name of the symlink in public/ that points
+        // at the copies. Must not collide with an application route or another
+        // package's.
         'route' => 'img',
 
         // Where resized copies are written. Leap registers this disk itself,
-        // rooted at public_path() of the route above, unless filesystems.disks
-        // already defines the name -- so nothing has to be added to
-        // config/filesystems.php. Name another disk to override, but a disk the
+        // rooted at storage/app/leap-images, unless filesystems.disks already
+        // defines the name -- so nothing has to be added to
+        // config/filesystems.php. It also registers the link that
+        // `php artisan storage:link` makes from public/<route> to it, which is
+        // what lets the web server serve a copy without PHP; run that after
+        // installing, and on every deploy that builds a new public/. Forget it
+        // and nothing breaks, it is only slower, so `leap:images` says when the
+        // link is not there.
+        //
+        // In storage rather than in public because a release-based deploy
+        // replaces public/ wholesale, which would throw away every resized copy
+        // on the site each time. In its own directory rather than in
+        // storage/app/public because that one has a link of its own, and every
+        // copy would answer at /storage/<route>/... as well: one picture, two
+        // addresses. Name another disk to override, but a disk the
         // web server cannot serve statically (s3, or anything outside public/)
         // needs 'eager' below, since the fallback that generates on first
         // request only fires for a URL the web server tried and missed.

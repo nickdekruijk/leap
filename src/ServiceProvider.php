@@ -326,9 +326,30 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
     /**
      * Define the disk resized images are written to, so a project does not have
-     * to add one to config/filesystems.php to use the feature. Rooted inside
-     * public/ because the whole point is that the web server serves a generated
-     * copy directly on every request after the first.
+     * to add one to config/filesystems.php to use the feature.
+     *
+     * Rooted in storage/ and reached through a symlink from public/, the way
+     * Laravel's own public disk is. The whole point of the feature is that the
+     * web server serves a generated copy directly on every request after the
+     * first, and a symlink is served exactly like a directory. Writing into
+     * public/ itself would do that too, until the first deploy: a release-based
+     * deploy (Forge, Envoyer) builds a new public/ every time and the cache of
+     * every size of every image on the site is gone with the old release,
+     * regenerated one visitor at a time. storage/ is shared between releases,
+     * so what is there survives.
+     *
+     * In storage/app/leap-images rather than storage/app/public, which is where
+     * a first attempt at this put it: that directory already has a link of its
+     * own, so every copy would be reachable at /storage/img/... as well as at
+     * /img/..., and a search engine would find the same picture at two
+     * addresses. Its own directory has exactly one way in.
+     *
+     * The link is registered with `php artisan storage:link` rather than made
+     * here: it belongs to a deploy, not to a request, and a web request has no
+     * business writing into public/. A missing link is not fatal, only slow --
+     * every request then misses on disk and is answered by ImageController out
+     * of storage, which is what already happens for the first request of any
+     * URL. `leap:images` says so when it sees it, because nothing else would.
      *
      * Set from boot() rather than register(): a disk is only ever read when
      * Storage::disk() is called, and by boot() the configuration is settled
@@ -342,22 +363,72 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
     {
         $disk = config('leap.images.disk');
 
-        if (! $disk || config('filesystems.disks.'.$disk)) {
+        if (! $disk) {
             return;
         }
 
         $route = trim((string) config('leap.images.route'), '/');
 
-        config(['filesystems.disks.'.$disk => [
-            'driver' => 'local',
-            'root' => public_path($route),
-            'url' => '/'.$route,
-            'visibility' => 'public',
-            // Never reachable through Laravel's own /storage route: a resized
-            // copy is meant to be served by the web server, not by PHP.
-            'serve' => false,
-            'throw' => false,
-        ]]);
+        if (! config('filesystems.disks.'.$disk)) {
+            config(['filesystems.disks.'.$disk => [
+                'driver' => 'local',
+                'root' => static::imagesRoot(),
+                'url' => '/'.$route,
+                'visibility' => 'public',
+                // Never reachable through Laravel's own /storage route: a
+                // resized copy is served from public/<route> over the link,
+                // and one URL per copy is the whole point.
+                'serve' => false,
+                'throw' => false,
+            ]]);
+        }
+
+        $this->registerImagesLink($disk, $route);
+    }
+
+    /**
+     * Where the copies live when leap defines the disk itself.
+     *
+     * Static so the command that reports on the link can ask for it without
+     * repeating the path, which is the sort of thing that goes wrong once and
+     * then reads as a missing link forever.
+     */
+    public static function imagesRoot(): string
+    {
+        return storage_path('app/leap-images');
+    }
+
+    /**
+     * Tell `php artisan storage:link` about the link that makes public/<route>
+     * the copies, so nothing has to be added to config/filesystems.php.
+     *
+     * Registered for the project's own disk as well, not only for leap's:
+     * defining that disk is usually about a setting on it, not about giving up
+     * the link, and without one the site quietly serves every resized image
+     * through PHP. The two cases where there is nothing to link are left alone:
+     * a driver with no directory behind it (s3), and a disk already rooted
+     * inside public/, which the web server reaches where it stands.
+     *
+     * A path the project already lists is never touched. Saying where the link
+     * goes is exactly how a project overrides this.
+     */
+    protected function registerImagesLink(string $disk, string $route): void
+    {
+        $config = config('filesystems.disks.'.$disk);
+        $root = $config['root'] ?? null;
+
+        if (($config['driver'] ?? null) !== 'local' || ! $root || str_starts_with($root, public_path())) {
+            return;
+        }
+
+        // ?: rather than a default, because a project is free to have set this
+        // to null and config() would hand that straight back.
+        $links = config('filesystems.links') ?: [];
+
+        if (! isset($links[public_path($route)])) {
+            $links[public_path($route)] = $root;
+            config(['filesystems.links' => $links]);
+        }
     }
 
     /**

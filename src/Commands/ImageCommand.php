@@ -52,6 +52,8 @@ class ImageCommand extends Command
             return self::FAILURE;
         }
 
+        $this->warnAboutTheLink();
+
         if (($this->option('prune') || $this->option('warm')) && ($blind = $this->formatsThisDriverCannotWrite()) !== []) {
             $this->components->error(
                 'The image driver cannot encode '.implode(' or ', $blind).', which leap.images asks every preset for.'
@@ -143,6 +145,7 @@ class ImageCommand extends Command
             $this->components->twoColumnDetail('<fg=green>images</>', $this->images()->count().' on the '.(config('leap.images.source_disk') ?: config('leap.filemanager.disk')).' disk');
             $this->components->twoColumnDetail('<fg=green>copies</>', count($copies).' files, '.$this->readableSize($copies));
             $this->newLine();
+            $this->warnAboutTheLink();
         }
 
         // Rendered by Symfony from the option descriptions, so this and --help
@@ -166,6 +169,65 @@ class ImageCommand extends Command
         $out->writeln('');
         $out->writeln('  <fg=gray>Why any of this: vendor/nickdekruijk/leap/docs/images.md</>');
         $out->writeln('');
+    }
+
+    /**
+     * Say it when the link the copies are served over is not there.
+     *
+     * Nothing breaks without it, which is the problem: every request then misses
+     * on disk and is answered by PHP out of storage, for every size of every
+     * image on the site, and the only trace is a server that got slower. The one
+     * case that really bites is an upgrade from the release that wrote into
+     * public/ directly, where the old cache is still sitting in the way as a
+     * real directory and storage:link refuses to replace it.
+     */
+    private function warnAboutTheLink(): void
+    {
+        $problem = $this->linkProblem();
+
+        if (! $problem) {
+            return;
+        }
+
+        $this->components->warn($problem);
+        $this->line('  <fg=gray>Without it every resized image is served by PHP instead of by the web server.</>');
+        $this->line('  <fg=gray>Nothing is lost either way; it is only slower.</>');
+        $this->newLine();
+    }
+
+    /**
+     * What is wrong with that link, in a sentence, or null when there is nothing
+     * to say. A disk with no directory behind it (s3) and a disk rooted inside
+     * public/ both need no link at all.
+     */
+    private function linkProblem(): ?string
+    {
+        $config = config('filesystems.disks.'.config('leap.images.disk'));
+        $root = $config['root'] ?? null;
+
+        if (($config['driver'] ?? null) !== 'local' || ! $root || str_starts_with($root, public_path())) {
+            return null;
+        }
+
+        $link = public_path(trim((string) config('leap.images.route'), '/'));
+
+        if (is_link($link)) {
+            // Compared as written as well as resolved: the directory it points
+            // at only comes into being when the first copy is written, and
+            // realpath() answers false for both sides of a comparison it cannot
+            // resolve, which would call any two dangling links the same one.
+            $target = (string) readlink($link);
+            $points_at_it = rtrim($target, '/') === rtrim($root, '/')
+                || (realpath($target) !== false && realpath($target) === realpath($root));
+
+            return $points_at_it ? null : $link.' is a link to '.$target.', not to '.$root.'.';
+        }
+
+        if (is_dir($link)) {
+            return $link.' is a real directory, so the link cannot be made. Delete it and run php artisan storage:link.';
+        }
+
+        return $link.' is missing. Run php artisan storage:link, and add it to the deploy.';
     }
 
     /**

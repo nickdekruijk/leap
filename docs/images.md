@@ -12,8 +12,29 @@ It is **off by default**. Turn it on in `config/leap.php`:
 ],
 ```
 
-That is enough — leap defines its own `leap-images` disk (rooted at `public/img`), so
-nothing has to be added to `config/filesystems.php`.
+Then link the directory the copies are served from:
+
+```bash
+php artisan storage:link
+```
+
+That is enough — leap defines its own `leap-images` disk (rooted at
+`storage/app/leap-images`) and registers the link `storage:link` makes from `public/img`
+to it, so nothing has to be added to `config/filesystems.php`.
+
+The copies live in storage rather than in public because they are a cache that has to
+outlive a deploy. A release-based deploy builds a new `public/` every time, which would
+throw away every size of every image on the site and regenerate them one visitor at a
+time. In a directory of their own rather than in `storage/app/public`, because that one is
+already linked as `public/storage`, and every copy would then answer at
+`/storage/img/…` as well as at `/img/…`: one picture, two addresses.
+
+**A deploy therefore has to run `php artisan storage:link` as well**, since the new release
+needs the link. Without it nothing breaks: the web server misses, and `ImageController`
+answers out of storage, which is what happens for the first request of any URL anyway. It
+is only slower, and slower in a way nothing reports, so plain `php artisan leap:images`
+checks the link and says when it is missing or when something else is standing in its
+place.
 
 ## Using it
 

@@ -3,6 +3,56 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.11 — resized images live in storage
+
+The copies leap generates moved from `public/img` to `storage/app/leap-images`, reached
+through a symlink. They are a cache and were being thrown away on every deploy: a
+release-based deploy (Forge, Envoyer) builds a new `public/` each time, so every size of
+every image on the site was regenerated one visitor at a time after each release.
+
+**On every existing site, once:**
+
+```bash
+rm -rf public/img          # the old cache, and it has to go before the link can be made
+php artisan storage:link
+```
+
+`storage:link` refuses to touch a real directory, so the old one has to go first. Nothing
+is lost that cannot be made again; the originals are on the filemanager disk and untouched.
+
+**And add `storage:link` to the deploy script**, above `php artisan migrate`:
+
+```bash
+php artisan storage:link
+```
+
+A release builds a new `public/`, so the link has to be made in it every time. Without it
+nothing breaks: every request then misses on disk and is answered by PHP out of storage,
+which is what already happens for the first request of any URL. It is only slower. Plain
+`php artisan leap:images` reports on the link, so a site that skipped one of these steps
+says so the next time anyone looks.
+
+If the project points `leap.images.disk` at a disk of its own, that disk keeps deciding
+where the copies go. Leap now registers the `public/<route>` link for it too, unless the
+project already lists that path itself or the disk is one there is nothing to link to (s3,
+or a root already inside `public/`).
+
+**Media URLs are encoded now**, which needs nothing done to a site: the paths on disk are
+unchanged and only what is written into the page is different. Files whose names hold a
+space or a comma were producing a `srcset` the browser drops entirely, so on a site with
+such files the resized ladder starts working where it silently was not. `og:image`,
+`twitter:image` and the JSON-LD image the template builds from `ogImageUrl()` are covered
+too, and that one is now built from the disk the file lives on rather than a hardcoded
+`storage/`: a project that points `leap.filemanager.disk` somewhere else gets the right
+address where it used to get a guess. Views that build their own URLs with
+`asset('storage/'.$media->file_name)` still bypass all of it; `$media->url()`,
+`$model->mediaAsset()` and `<x-leap::responsive-image>` do not.
+
+**`leap.filemanager.slug_uploads` is new and on.** New files are stored under a slugged
+name, extension kept: `Zomer 2024, strand.jpg` becomes `zomer-2024-strand.jpg`. Nothing on
+the disk is renamed, and a project that wants the names people upload can set it to
+`false`.
+
 ## 1.9 — media links follow the model
 
 `composer update` handles it, and nothing has to change in your own code. Deleting a model

@@ -217,6 +217,53 @@ class ImageCommandTest extends ImageTestCase
             ->assertSuccessful();
     }
 
+    /**
+     * The link is what lets the web server answer a resized copy without PHP.
+     * Missing, nothing breaks and nothing complains: the site is simply slower
+     * for every size of every image on it. So the one command that looks at this
+     * feature at all has to say it.
+     */
+    public function test_it_says_so_when_the_link_is_missing(): void
+    {
+        config(['leap.images.route' => 'img-not-linked']);
+
+        $this->artisan('leap:images')
+            ->expectsOutputToContain('storage:link')
+            ->assertSuccessful();
+    }
+
+    /**
+     * The case that bites on upgrade: the old cache is still there as a real
+     * directory, and storage:link refuses to replace one.
+     */
+    public function test_it_says_so_when_a_real_directory_is_in_the_way(): void
+    {
+        config(['leap.images.route' => 'img-in-the-way']);
+        mkdir(public_path('img-in-the-way'));
+
+        try {
+            $this->artisan('leap:images')
+                ->expectsOutputToContain('is a real directory')
+                ->assertSuccessful();
+        } finally {
+            rmdir(public_path('img-in-the-way'));
+        }
+    }
+
+    public function test_it_says_nothing_when_the_link_is_there(): void
+    {
+        config(['leap.images.route' => 'img-linked']);
+        symlink(config('filesystems.disks.leap-images.root'), public_path('img-linked'));
+
+        try {
+            $this->artisan('leap:images')
+                ->doesntExpectOutputToContain('storage:link')
+                ->assertSuccessful();
+        } finally {
+            unlink(public_path('img-linked'));
+        }
+    }
+
     public function test_it_says_so_when_the_feature_is_off(): void
     {
         config(['leap.images.enabled' => false]);

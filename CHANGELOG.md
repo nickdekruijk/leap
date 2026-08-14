@@ -5,7 +5,7 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.11.0] — 2026-08-14
 
 ### Fixed
 
@@ -46,6 +46,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   getting in at all. Set it to `false` to keep the names people upload. Files already on the disk
   are never renamed, and a name that slugs away to nothing (one written entirely in a script
   `Str::slug` drops) is kept as it is.
+
+### Changed
+
+- **Resized images are written to `storage/app/leap-images` instead of `public/img`**, and served
+  from `public/img` through the symlink `php artisan storage:link` makes. They are a cache, and
+  in `public/` they were a cache that could not survive a deploy: a release-based deploy (Forge,
+  Envoyer) builds a new `public/` every time, so every size of every image on the site was
+  thrown away with the old release and regenerated one visitor at a time. `storage/` is shared
+  between releases.
+
+  In a directory of their own rather than in `storage/app/public`, which is already reachable as
+  `public/storage`: every copy would then answer at `/storage/img/…` as well as at `/img/…`, and
+  one picture at two addresses is a thing to explain to a search engine rather than a thing to
+  ship.
+
+  Leap registers the link itself, so nothing has to be added to `config/filesystems.php`. That
+  now includes a disk the project defined itself, since defining one is usually about a setting
+  on it and not about giving up the link; a path the project already lists is never touched, and
+  a disk there is nothing to link to (s3, or a root already inside `public/`) is left alone.
+
+  Existing sites: `rm -rf public/img` (`storage:link` refuses to replace a real directory), then
+  `php artisan storage:link`, and add that command to the deploy script. Without the link nothing
+  breaks; every request misses on disk and is answered by `ImageController` out of storage, which
+  is what already happens for the first request of any URL. It is only slower, and slower in a
+  way nothing reports, which is why plain `php artisan leap:images` now checks the link and says
+  when it is missing or when a real directory is standing where it should be. See
+  [upgrading.md](docs/upgrading.md).
 
 ## [1.10.0] — 2026-08-13
 
