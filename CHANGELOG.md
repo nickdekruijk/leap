@@ -5,6 +5,34 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] — 2026-08-14
+
+### Added
+
+- **`HasReadingTime`: how long an article takes to read, counted rather than stored.** Add
+  `NickDeKruijk\Leap\Traits\HasReadingTime` to a model with sections and it answers
+  `readingTime()` and `wordCount()`, both per locale.
+
+  Counting is the point. One `reading_time` integer per row is wrong the moment an article
+  exists in two languages that are not the same length (a real one measured 2209 words in
+  English against 2334 in Dutch), and it ages silently as soon as someone adds a paragraph.
+  A `reading_time` column still wins when a model has one, so the count is a default rather
+  than a verdict on someone else's reading speed. This package ships no migration for that
+  column: it stays a project's own choice, and the trait works with and without it.
+
+  What it counts is what the visitor sees: the same locale rules the frontend renders with,
+  which means `Leap::localize()` for section fields, including its fall back to the first
+  translation, and Spatie's own resolution for translatable attributes. A page showing
+  another locale's text therefore gets that text's reading time instead of none, and a
+  monolingual site (`leap.locales` null) counts one language rather than adding up every
+  locale the seeders wrote. Sections switched off in the editor are skipped, markup and
+  entities are stripped before counting, and the result is never rounded down to nothing.
+  `null` means there is nothing to read, so a view can leave the line out.
+
+  Two things to override per model: `readingTimeFields()` (`intro`, `head`, `body`, `text`
+  by default) and `wordsPerMinute()` (225, the middle of the 200 to 250 range usually quoted
+  for adult reading of ordinary prose). See [template.md](docs/template.md#hasreadingtime).
+
 ## [1.12.0] — 2026-08-14
 
 ### Added

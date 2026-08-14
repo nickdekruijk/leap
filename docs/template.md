@@ -109,6 +109,37 @@ The trait supplies the values; what turns them into tags is
 alternates, Open Graph image and JSON-LD. The layout renders one `@head` directive and
 nothing else between `<head>` and `</head>`.
 
+## HasReadingTime
+
+`NickDeKruijk\Leap\Traits\HasReadingTime` answers "how long does this take to read",
+counted rather than stored:
+
+- `readingTime(?string $locale = null, string $attribute = 'sections')` returns whole
+  minutes, or `null` when there is nothing to read in that locale, so a view leaves the
+  line out instead of promising "0 min". Never rounded down to nothing: a page with one
+  paragraph on it still takes a moment.
+- `wordCount(?string $locale = null, string $attribute = 'sections')` returns the words
+  behind that number: the model's own text fields plus every field of every **active** section
+  (a block switched off in the editor is not on the page and so is not read). Markup and
+  entities are stripped first, so `&nbsp;` is not a word and `caf&eacute;` is one.
+- a `reading_time` column, when the model has one, wins over the count. leap ships no
+  migration for it: the count is a useful default, not a fact about someone else's
+  reading speed, and an override nobody fills in is an empty column. On a model without
+  the column the trait simply counts.
+
+Counting instead of storing is the point. One integer per row is wrong the moment an
+article exists in two languages that are not the same length, and it ages silently as
+soon as someone adds a paragraph. The count follows the same locale rules the frontend
+renders with (`Leap::localize()` for section fields, Spatie's own resolution for
+translatable attributes), so the reading time describes the text the visitor is actually
+looking at, including the fallback one, and works the same monolingual or multilingual.
+
+Two things to override per model. `readingTimeFields()` lists the fields that hold text
+(`intro`, `head`, `body`, `text` by default, leap's own section conventions);
+`wordsPerMinute()` returns 225. That number is a convention rather than a measurement:
+Brysbaert (2019) puts silent reading of non-fiction around 238, screen reading sits
+lower, and 200 to 250 is the range usually quoted.
+
 ## Sections
 
 The template ships self-contained section types — `slide` (carousel), `default`

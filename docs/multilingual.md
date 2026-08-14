@@ -93,6 +93,11 @@ Spatie resolves translated attributes to the current app locale automatically, s
 `$page->title` returns the active-locale value. `HasSections` does the same for
 translatable section fields.
 
+Reading time is counted per locale for the same reason ([`HasReadingTime`](template.md#hasreadingtime)):
+the same article is rarely the same length in both languages, so one stored number is
+wrong for one of them. It follows the same fallback as the rendering, so a page showing
+another locale's text gets that text's reading time rather than none.
+
 The template's live search (`<livewire:search />`) is locale-aware too: title,
 description and section content are matched against the **active locale only**, so a
 term that exists only in another language's translation does not surface the page. It

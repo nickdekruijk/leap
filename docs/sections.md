@@ -50,6 +50,9 @@ Add `NickDeKruijk\Leap\Traits\HasSections` to the model whose column holds the b
   wrapping element, e.g. a carousel or a horizontal scroller), plus `_view` and
   `_name`.
 
+[`HasReadingTime`](template.md#hasreadingtime) reads the same blocks to count how long an
+article takes to read, per locale and skipping the ones switched off.
+
 ## Rendering
 
 The template's `page.blade.php` loops active sections and includes the partial:
