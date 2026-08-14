@@ -28,7 +28,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `css` | *(array)* | CSS files concatenated and served for the panel UI. See [Theming](#theming) below. |
 | `login_image` | `null` | Image on the login screen. `null` shows none; any URL or local path works (the config comment has a `picsum.photos` example). |
 | `logging` | *(array)* | Audit logging of admin actions (enable, skip actions/modules, IP anonymisation). |
-| `filemanager` | *(array)* | Allowed extensions, upload limits, and `image_crop_enabled`/`image_focus_enabled` (`true` = every bitmap format, an array for finer control, `false` to disable — both default to `true`). |
+| `filemanager` | *(array)* | Allowed extensions, upload limits, `slug_uploads` (default `true`: a new file is stored under a slugged name, extension kept, so a space or a comma never gets into a URL), and `image_crop_enabled`/`image_focus_enabled` (`true` = every bitmap format, an array for finer control, `false` to disable — both default to `true`). |
 | `ace` / `tinymce` | *(array)* | Options for the code and rich-text editors. Both load from a jsDelivr CDN by default; `ace.cdn` / `tinymce.cdn` take any URL, so point them at a self-hosted copy if you would rather not call out. `tinymce.lazy` / `tinymce.lazy_sections` toggle click-to-edit rich-text — see [attributes.md](attributes.md#lazy-rich-text). |
 | `ai` | *(array)* | AI providers + per-task config for alt-text generation and translation (disabled by default). See [ai.md](ai.md). |
 

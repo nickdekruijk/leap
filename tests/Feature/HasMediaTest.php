@@ -104,6 +104,18 @@ class HasMediaTest extends TestCase
     }
 
     /**
+     * A space or a comma in a file name has to come out as a URL that reads back
+     * as one, or the link is broken in the markup while the file is fine.
+     */
+    public function test_media_asset_encodes_the_file_name(): void
+    {
+        $model = MediaModel::create(['title' => 'Post']);
+        $this->attach($model, 'kop, met komma.png', 'header');
+
+        $this->assertSame(asset('storage/kop%2C%20met%20komma.png'), $model->mediaAsset('header'));
+    }
+
+    /**
      * A project storing its uploads elsewhere overrides the prefix on the model
      * rather than rewriting every template.
      */

@@ -5,6 +5,48 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Media URLs are encoded.** A storage path went into the markup exactly as it was stored, so a
+  file named `Luchtfoto Muiderpoort, Muiden.jpg` produced a `srcset` a browser cannot read: it
+  splits on commas first and on whitespace second, so two real candidates became three that do
+  not exist, the whole `<source>` was dropped, and the avif and webp ladder was off for that
+  picture with nothing logging, failing or otherwise saying so. The same unencoded URL went into
+  `og:image` and JSON-LD, where scrapers and validators choke on it.
+
+  Everything leap writes goes through `ImageUrl`, so `$media->url()`, `srcset()`, `sources()` and
+  `<x-leap::responsive-image>` are all covered, originals included. Encoding happens to the
+  finished URL and only where the driver put the path, so a driver that encodes on its own (S3)
+  is left alone and no query string is touched. The new
+  `NickDeKruijk\Leap\Classes\ImageUrl::encodePath()` is public and idempotent: a `%20` never
+  becomes `%2520`. The comma is encoded even though RFC 3986 allows it in a path, because
+  `srcset` separates on it. Accents are left as they are, so the bytes asked for stay the bytes
+  on the disk.
+
+  Nothing has to be re-uploaded or renamed, and no resized copy is invalidated: the paths on disk
+  are unchanged and only the URL written into the page is different.
+
+- **`ogImageUrl()` and `mediaAsset()` went around all of that.** Both composed a URL by hand out
+  of `storage/` plus the stored path, so `og:image`, `twitter:image` and the JSON-LD `image` the
+  template builds on top of them carried a raw space into the one tag a scraper reads on its own.
+  `HasDocumentMeta::ogImageUrl()` now goes through `ImageUrl` like everything else, which also
+  means it asks the disk the file actually lives on instead of assuming one, and it makes the
+  result absolute (a disk that answers with a host of its own is left as it is).
+  `HasMedia::mediaAsset()` keeps its `$mediaAssetPrefix`, which is the project's and not a file
+  name, and encodes the path after it.
+
+### Added
+
+- **`leap.filemanager.slug_uploads`**, on by default. A new file is stored under a slugged name
+  with its extension kept, so `Zomer 2024, strand.jpg` becomes `zomer-2024-strand.jpg`. It
+  applies to uploads, renames and crop-as-new, which are the three places a file name is chosen.
+  The fix above repairs the files that are already there; this keeps the next space or comma from
+  getting in at all. Set it to `false` to keep the names people upload. Files already on the disk
+  are never renamed, and a name that slugs away to nothing (one written entirely in a script
+  `Str::slug` drops) is kept as it is.
+
 ## [1.10.0] — 2026-08-13
 
 ### Added

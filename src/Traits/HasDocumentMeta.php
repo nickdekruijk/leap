@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap\Traits;
 
+use NickDeKruijk\Leap\Classes\ImageUrl;
+
 /**
  * Head/document metadata for a routable content model: the <title>, the meta
  * description and the Open Graph / Twitter image URL.
@@ -40,24 +42,35 @@ trait HasDocumentMeta
      * OG/Twitter image URL from the model's own image, then its first section
      * image or background. Null when there is none (the layout can then fall back
      * to a site-wide og_image setting).
+     *
+     * Built through ImageUrl like every other URL leap writes, so the disk the
+     * file actually lives on decides the address and the result is encoded. It
+     * used to compose "storage/" plus the stored path by hand, which put a raw
+     * space or comma in the tag Facebook, LinkedIn and the Schema Markup
+     * Validator read, and assumed a disk rather than asking.
      */
     public function ogImageUrl(): ?string
     {
-        $file = method_exists($this, 'mediaFor')
-            ? $this->mediaFor('images')->first()?->file_name
+        $media = method_exists($this, 'mediaFor')
+            ? $this->mediaFor('images')->first()
             : null;
 
-        if (! $file && method_exists($this, 'sections')) {
+        if (! $media && method_exists($this, 'sections')) {
             foreach ($this->sections() as $section) {
-                $file = ($section['image'] ?? null)?->first()?->file_name
-                    ?? ($section['background'] ?? null)?->first()?->file_name;
-                if ($file) {
+                $media = ($section['image'] ?? null)?->first()
+                    ?? ($section['background'] ?? null)?->first();
+                if ($media) {
                     break;
                 }
             }
         }
 
-        return $file ? url('storage/'.$file) : null;
+        $url = $media ? ImageUrl::original($media) : null;
+
+        // Absolute, always: a scraper reads this tag away from the page it came
+        // from and has nothing to resolve a relative path against. A disk that
+        // already answers with a host of its own (S3, a CDN) is left as it is.
+        return $url === null || preg_match('#^([a-z][a-z0-9+.-]*:)?//#i', $url) ? $url : url($url);
     }
 
     /**

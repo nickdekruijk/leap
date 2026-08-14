@@ -114,6 +114,26 @@ the scheduler is plenty.
 A URL whose hash does not match the file gets a 302 to the one that does, which covers a
 page rendered in the moment before a replacement.
 
+### What a filename can contain
+
+Every URL leap writes is encoded on the way out, so a file whose name holds a space, a
+comma, a `#` or a `?` still produces markup that reads back the way it was meant. That
+matters most in a `srcset`, which a browser splits on commas first and on whitespace
+second: one comma in a filename turns two real candidates into three that do not exist,
+the whole `<source>` is dropped, and the picture quietly falls back to the `<img>` with
+nothing anywhere saying so.
+
+The comma is encoded even though RFC 3986 allows it in a path, for exactly that reason.
+Accented characters are left as they are, so what is asked for is byte for byte what is on
+the disk. `NickDeKruijk\Leap\Classes\ImageUrl::encodePath()` does the work and is safe to
+call on a path that is already encoded.
+
+New files get a name that cannot cause it in the first place:
+`leap.filemanager.slug_uploads` (on by default) runs the name of an upload, a rename and a
+crop-as-new through `Str::slug`, keeping the extension, so `Zomer 2024, strand.jpg` is
+stored as `zomer-2024-strand.jpg`. Turn it off to keep the names people upload; the
+encoding above covers those either way, and nothing already on the disk is renamed.
+
 Uploading a new version of an image is what `leap.filemanager.upload_replace` is for. By
 default an upload with an existing name lands beside the old one as `name-1.jpg`, which is
 a habit from when a resized copy was addressed by file name alone and replacing a file

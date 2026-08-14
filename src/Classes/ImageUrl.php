@@ -47,7 +47,7 @@ class ImageUrl
             return self::original($file, $disk);
         }
 
-        return ImageResizer::disk()->url(ImageResizer::targetPath($path, $resolved, $hash));
+        return self::url(ImageResizer::disk(), ImageResizer::targetPath($path, $resolved, $hash));
     }
 
     /**
@@ -155,7 +155,7 @@ class ImageUrl
     {
         $path = self::path($file);
 
-        return $path ? self::disk($file, $disk)->url($path) : null;
+        return $path ? self::url(self::disk($file, $disk), $path) : null;
     }
 
     /**
@@ -215,6 +215,63 @@ class ImageUrl
             Media::TYPES['bitmap']['extensions'],
             true
         );
+    }
+
+    /**
+     * A storage path with everything a URL cannot carry literally
+     * percent-encoded, '/' left as the separator and existing %XX triplets left
+     * alone, so running this twice gives the same result and a %20 never
+     * becomes %2520.
+     */
+    public static function encodePath(string $path): string
+    {
+        // Kept as they are: the unreserved characters, the sub-delimiters, ':',
+        // '@' and '/'. Everything else is encoded, which covers the whole of
+        // what RFC 3986 does not allow in a path (the space, '"', '<', '>',
+        // '{', '}', '|', '\', '^', '`', '[', ']', '%' and the control
+        // characters) plus the two that cut a URL short at the character
+        // itself, '#' and '?'.
+        //
+        // The comma is encoded too, and that is a deliberate departure: RFC
+        // 3986 allows it as a sub-delimiter, but srcset separates its
+        // candidates on commas and this class writes srcsets. A comma in a
+        // filename turns two real candidates into three that do not exist, the
+        // browser drops the whole <source>, and the avif and webp ladder is off
+        // with nothing anywhere saying so. Leave it encoded.
+        //
+        // Bytes above \x7F are left as they are, so a name keeps its accents
+        // and stays byte for byte the name on disk. Encoding them would mean
+        // normalising to NFC first, and a file macOS stored decomposed would
+        // then be asked for composed and answer 404.
+        return (string) preg_replace_callback(
+            '#%[0-9A-Fa-f]{2}|[^A-Za-z0-9\-._~!$&\'()*+;=:@/\x80-\xFF]#',
+            fn (array $match): string => strlen($match[0]) === 3 ? $match[0] : rawurlencode($match[0]),
+            $path
+        );
+    }
+
+    /**
+     * The URL of $path on $disk, encoded.
+     *
+     * The encoding happens to the URL rather than to the path because url()
+     * differs per driver: S3 encodes already and the local driver does not, so
+     * encoding up front would escape twice on S3. The raw path is looked up in
+     * whatever the driver returned and swapped for the encoded one, which
+     * leaves scheme, host, port, query and fragment untouched by construction.
+     * A driver that encoded the path itself has no match and keeps its URL.
+     */
+    private static function url(FilesystemAdapter $disk, string $path): string
+    {
+        $url = $disk->url($path);
+        $encoded = self::encodePath($path);
+
+        if ($encoded === $path) {
+            return $url;
+        }
+
+        $position = strrpos($url, $path);
+
+        return $position === false ? $url : substr_replace($url, $encoded, $position, strlen($path));
     }
 
     private static function path(Media|string|null $file): ?string

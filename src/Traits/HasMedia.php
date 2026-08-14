@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
 
@@ -84,12 +85,16 @@ trait HasMedia
 
     /**
      * Return the asset for the first media for the given attribute
+     *
+     * The path is encoded, so a file whose name holds a space or a comma still
+     * produces a URL that reads back as one. The prefix is left alone: it comes
+     * from the project, not from a file name.
      */
     public function mediaAsset(string $attribute): ?string
     {
         $media = $this->mediaFor($attribute)->first();
 
-        return $media ? asset(($this->mediaAssetPrefix ?? 'storage/').$media->file_name) : null;
+        return $media ? asset(($this->mediaAssetPrefix ?? 'storage/').ImageUrl::encodePath($media->file_name)) : null;
     }
 
     /**

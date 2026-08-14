@@ -92,7 +92,9 @@ renders, so they are consistent (and fixable) across every routable model:
   skip the tag). Read without translation fallback, like `documentTitle()`. A page has
   no intro and simply gets its description.
 - `ogImageUrl()` — the model's own image, then its first section image/background, else
-  `null` (the layout can fall back to a site-wide `og_image` setting).
+  `null` (the layout can fall back to a site-wide `og_image` setting). Absolute, since a
+  scraper reads the tag away from the page, built from the disk the file lives on and
+  encoded like every other URL leap writes.
 
 It degrades gracefully: it works on any model, uses `HasTranslations` when present, and
 only inspects media/sections when the model uses `HasMedia` / `HasSections`. An

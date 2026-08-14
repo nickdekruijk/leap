@@ -8,6 +8,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
@@ -133,6 +134,11 @@ class FileManager extends Module
 
             return;
         }
+
+        // After the checks above, so a rejected upload is still named back to the
+        // uploader the way they know it, and before the exists check below, so the
+        // -1 suffix counts copies of the name the file is actually stored under.
+        $name = $this->slugFileName($name);
 
         // Check if uploaded file already exists
         $replacing = false;
@@ -573,6 +579,41 @@ class FileManager extends Module
     }
 
     /**
+     * A file name that cannot break a URL: the name slugged, the extension kept.
+     *
+     * "Zomer 2024, strand.JPG" becomes "zomer-2024-strand.JPG". Nothing here is
+     * about tidiness: a space or a comma in a filename is what quietly turns a
+     * srcset into candidates that do not exist. Encoding on the way out repairs
+     * what is already on the disk, this keeps the next one from arriving.
+     *
+     * Anything with a path in front of it is left to the caller: only the part
+     * after the last slash is touched, so a folder someone typed keeps its own
+     * name. And a name that slugs away to nothing, one written entirely in a
+     * script Str::slug drops, is kept as it is, because a file with an awkward
+     * name beats a file called "-.jpg".
+     *
+     * @param  string  $name  a file name, optionally with folders in front of it
+     */
+    protected function slugFileName(string $name): string
+    {
+        if (! config('leap.filemanager.slug_uploads', true)) {
+            return $name;
+        }
+
+        $directory = str_contains($name, '/') ? substr($name, 0, strrpos($name, '/') + 1) : '';
+        $file = substr($name, strlen($directory));
+
+        $extension = pathinfo($file, PATHINFO_EXTENSION);
+        $slug = Str::slug(pathinfo($file, PATHINFO_FILENAME));
+
+        if ($slug === '') {
+            return $name;
+        }
+
+        return $directory.$slug.($extension ? '.'.$extension : '');
+    }
+
+    /**
      * Validate the client-supplied path segments a destructive operation is about
      * to act on. $selectedFiles and $openFolders are public Livewire properties,
      * so they cannot be trusted: reject anything that starts with a slash or dot
@@ -667,6 +708,12 @@ class FileManager extends Module
 
             return;
         }
+
+        // Slugged after the path checks above, so "../" and the one folder deep
+        // form both survive: only the part after the last slash is touched. From
+        // here on $newFileName is the name the file really gets, which is what the
+        // rest of this method reports and selects.
+        $this->newFileName = $this->slugFileName($this->newFileName);
 
         // Get from and to file with full path
         $from = $this->full(reset($this->selectedFiles));
@@ -1071,6 +1118,7 @@ class FileManager extends Module
 
                 return;
             }
+            $newFileName = $this->slugFileName($newFileName);
             $newFull = $this->full($newFileName);
             if ($this->getStorage()->exists($newFull)) {
                 $base = pathinfo($newFileName, PATHINFO_FILENAME);

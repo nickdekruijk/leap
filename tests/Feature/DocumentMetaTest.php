@@ -2,9 +2,16 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use NickDeKruijk\Leap\Models\Media;
+use NickDeKruijk\Leap\Models\Mediable;
 use NickDeKruijk\Leap\Tests\Fixtures\Article;
+use NickDeKruijk\Leap\Tests\Fixtures\MediaModel;
 use NickDeKruijk\Leap\Tests\Fixtures\PageLikeModel;
 use NickDeKruijk\Leap\Tests\TestCase;
+use NickDeKruijk\Leap\Traits\HasDocumentMeta;
 
 class DocumentMetaTest extends TestCase
 {
@@ -100,5 +107,67 @@ class DocumentMetaTest extends TestCase
 
         $this->assertSame('Page description', $page->metaDescription());
         $this->assertSame('', (new PageLikeModel)->metaDescription());
+    }
+
+    /**
+     * A model with an image attached, the way a project's own page model is put
+     * together: the media trait plus the meta trait.
+     */
+    private function pageWithImage(string $file): MediaModel
+    {
+        Schema::create('media_models', function (Blueprint $table): void {
+            $table->id();
+            $table->string('title')->nullable();
+        });
+        Storage::fake('public');
+
+        $model = new class extends MediaModel
+        {
+            use HasDocumentMeta;
+
+            protected $table = 'media_models';
+        };
+        $model->title = 'Post';
+        $model->save();
+
+        $gd = imagecreatetruecolor(10, 10);
+        ob_start();
+        imagepng($gd);
+        Storage::disk('public')->put($file, ob_get_clean());
+
+        Mediable::create([
+            'media_id' => Media::forFile($file)->id,
+            'mediable_type' => $model->getMorphClass(),
+            'mediable_id' => $model->id,
+            'mediable_attribute' => 'images',
+            'sort' => 0,
+        ]);
+
+        return $model->fresh();
+    }
+
+    /**
+     * The tag a scraper reads on its own, so it has to be absolute, and it has
+     * to survive being parsed: Facebook, LinkedIn and the Schema Markup
+     * Validator all choke on the raw space this used to write.
+     */
+    public function test_the_og_image_url_is_absolute_and_encoded(): void
+    {
+        $url = $this->pageWithImage('articles/01-Vlaamse Westhoek, 33.png')->ogImageUrl();
+
+        $this->assertStringStartsWith('http', $url);
+        $this->assertStringContainsString('01-Vlaamse%20Westhoek%2C%2033.png', $url);
+
+        $parsed = parse_url($url);
+        $this->assertArrayNotHasKey('query', $parsed);
+        $this->assertSame('articles/01-Vlaamse Westhoek, 33.png', ltrim(rawurldecode(substr($parsed['path'], strrpos($parsed['path'], '/articles/'))), '/'));
+    }
+
+    public function test_the_og_image_url_of_an_ordinary_name_is_unchanged(): void
+    {
+        $this->assertSame(
+            url('storage/header.png'),
+            $this->pageWithImage('header.png')->ogImageUrl()
+        );
     }
 }
