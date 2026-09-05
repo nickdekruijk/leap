@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] — 2026-09-05
+
+### Fixed
+
+- **A section the resource no longer defines no longer takes the whole editor down.** A
+  record keeps whatever `_name` it was saved with, so a block that was renamed, removed, or
+  never defined in the first place still sits in the column. The editor has no fields to
+  draw for it and falls back to dumping the stored key/value pairs, which is the right call:
+  content nobody can see is content nobody can rescue.
+
+  That dump assumed every value was a string. Section fields are just as often arrays, a
+  translation set above all, and `e()` calls `htmlspecialchars()`, which does not take one:
+  `Argument #1 ($string) must be of type string, array given`, fatal, on every request that
+  opened the record. One orphaned block made a page unopenable in the panel. Arrays are now
+  shown as JSON, so the content is visible and the record can be edited again.
+
 ## [1.13.0] — 2026-08-14
 
 ### Added

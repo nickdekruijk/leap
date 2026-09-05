@@ -31,9 +31,12 @@
                                 <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'], $section)" :placeholder="$placeholder" />
                             @endforeach
                         @else
+                            {{-- No section definition matches _name: the section was renamed or removed
+                                 and this record still has it. Dump what is stored so it is not lost
+                                 silently; a value can be an array here, which e() cannot render. --}}
                             @foreach ($sectionContent as $key => $value)
                                 @if ($key != '_name' && $key != '_sort')
-                                    <div>{{ $key }}: {{ $value }}</div>
+                                    <div>{{ $key }}: {{ is_scalar($value) || $value === null ? $value : json_encode($value) }}</div>
                                 @endif
                             @endforeach
                         @endif
