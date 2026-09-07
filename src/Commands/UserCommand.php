@@ -99,7 +99,7 @@ class UserCommand extends Command
         // Update or create user
         if ($user) {
             // Existing user, update name and password
-            $user->name = $name;
+            $user->{config('leap.name_column') ?: 'name'} = $name;
 
             // Ask for password
             $password = $this->askPassword('Update password for '.$username.' ('.$name.') (blank to leave unchanged)');
@@ -115,7 +115,7 @@ class UserCommand extends Command
             $user = Leap::userModel();
 
             // Update name
-            $user->name = $name;
+            $user->{config('leap.name_column') ?: 'name'} = $name;
 
             // Set username/emailaddress
             $user->{$this->getUsernameColumn()} = $username;

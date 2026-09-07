@@ -50,8 +50,8 @@ class Profile extends Module
     {
         $this->log('read');
         $this->user = Auth::user();
-        $this->title = $this->user->name;
-        $this->data['name'] = $this->user->name;
+        $this->title = (string) $this->user->{$this->nameColumn()};
+        $this->data['name'] = $this->user->{$this->nameColumn()};
         $this->data['email'] = $this->user->email;
     }
 
@@ -253,9 +253,18 @@ class Profile extends Module
         }
     }
 
+    /**
+     * The user column that holds the name: config('leap.name_column'), 'name'
+     * unless a host says otherwise.
+     */
+    public function nameColumn(): string
+    {
+        return config('leap.name_column') ?: 'name';
+    }
+
     public function getTitle(): string
     {
-        return Auth::user()->name;
+        return (string) Auth::user()->{$this->nameColumn()};
     }
 
     public function rules()
@@ -273,7 +282,8 @@ class Profile extends Module
     {
         $attributes = [];
         foreach ($this->rules() as $field => $rule) {
-            $attributes[$field] = strtolower(__('leap::auth.'.explode('.', $field, 2)[1]));
+            $key = explode('.', $field, 2)[1];
+            $attributes[$field] = strtolower(__('leap::auth.'.($key === 'name' ? $this->nameColumn() : $key)));
         }
 
         return $attributes;
@@ -296,12 +306,13 @@ class Profile extends Module
             $validator->validate();
         } else {
             // Check if name is changed
-            if ($this->user->name != $this->data['name']) {
-                $this->user->name = $this->data['name'];
-                $this->log('update', ['name' => $this->user->name]);
+            $column = $this->nameColumn();
+            if ($this->data['name'] != $this->user->$column) {
+                $this->user->$column = $this->data['name'];
+                $this->log('update', [$column => $this->user->$column]);
                 $this->dispatch('toast', ucfirst($this->validationAttributes()['data.name']).' '.__('leap::resource.updated'))->to(Toasts::class);
                 // Update title and navigation to reflect name change
-                $this->title = $this->user->name;
+                $this->title = (string) $this->user->$column;
                 $this->dispatch('update-navigation')->to(Navigation::class);
             }
 

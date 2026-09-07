@@ -15,9 +15,13 @@ class Login extends Component
     use CanLog;
     use WithRateLimiting;
 
-    public $email;
-
-    public $password;
+    /**
+     * The login fields, keyed by column as listed in config('leap.credentials').
+     * An array rather than fixed $email/$password properties, so a host that
+     * authenticates on another column (username, say) can name it in config
+     * and the form follows.
+     */
+    public array $credentials = [];
 
     public $remember;
 
@@ -45,13 +49,23 @@ class Login extends Component
         $rules = [];
         foreach (config('leap.credentials') as $column) {
             if ($column == 'email') {
-                $rules[$column] = 'required|email:rfc,spoof,strict,filter'; // ,dns
+                $rules['credentials.'.$column] = 'required|email:rfc,spoof,strict,filter'; // ,dns
             } else {
-                $rules[$column] = 'required';
+                $rules['credentials.'.$column] = 'required';
             }
         }
 
         return $rules;
+    }
+
+    protected function validationAttributes()
+    {
+        $attributes = [];
+        foreach (config('leap.credentials') as $column) {
+            $attributes['credentials.'.$column] = __('leap::auth.'.$column);
+        }
+
+        return $attributes;
     }
 
     public function updated($propertyName)
@@ -64,7 +78,7 @@ class Login extends Component
         $this->validate();
         $credentials = [];
         foreach (config('leap.credentials') as $column) {
-            $credentials[$column] = $this->$column;
+            $credentials[$column] = $this->credentials[$column] ?? null;
         }
         try {
             $this->rateLimit(5);
@@ -76,11 +90,11 @@ class Login extends Component
                 return $this->redirectIntended(route('leap.home'));
             } else {
                 $this->log('login-failed', [array_key_first($credentials) => $credentials[array_key_first($credentials)]]);
-                $this->addError('password', trans('auth.failed'));
+                $this->addError('credentials.password', trans('auth.failed'));
             }
         } catch (TooManyRequestsException $exception) {
             $this->log('login-throttle', ['seconds' => $exception->secondsUntilAvailable, array_key_first($credentials) => $credentials[array_key_first($credentials)]]);
-            $this->addError('password', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
+            $this->addError('credentials.password', trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable]));
         }
     }
 

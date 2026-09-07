@@ -3,8 +3,8 @@
         <fieldset class="leap-fieldset">
             @foreach (config('leap.credentials') as $column)
                 <x-leap::input
-                    :wire:model.live.blur="$column"
-                    :name="$column"
+                    :wire:model.live.blur="'credentials.' . $column"
+                    :name="'credentials.' . $column"
                     :label="__('leap::auth.' . $column)"
                     :type="$column == 'password' ? 'password' : ($column == 'email' ? 'email' : 'text')"
                     :autocomplete="$column == 'password' ? 'current-password' : ($loop->first ? 'username' : '')"

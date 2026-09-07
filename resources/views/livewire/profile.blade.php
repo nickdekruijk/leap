@@ -15,7 +15,7 @@
                 @if (\NickDeKruijk\Leap\Leap::mustEnrollTwoFactor())
                     <div class="leap-notice-danger">{{ __('leap::auth.two_factor_required_notice') }}</div>
                 @endif
-                <x-leap::input wire:model.live.blur="data.name" name="data.name" label="{{ __('leap::auth.name') }}" autocomplete="name" />
+                <x-leap::input wire:model.live.blur="data.name" name="data.name" label="{{ __('leap::auth.' . $this->nameColumn()) }}" autocomplete="{{ $this->nameColumn() === 'name' ? 'name' : 'username' }}" />
                 <x-leap::input wire:model.live.blur="data.email" name="data.email" label="{{ __('leap::auth.email') }}" type="email" disabled />
             </fieldset>
         </form>

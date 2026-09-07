@@ -5,6 +5,19 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.2] — 2026-09-07
+
+### Fixed
+
+- **`leap.credentials` can name a column other than `email`.** The login form bound its
+  fields to fixed `$email` and `$password` properties, so a host that authenticates on
+  `username` (as the config comment suggested it could) got `No property found for
+  validation: [username]` on the first keystroke and could not log in at all. The
+  component now keeps the fields in a `credentials` array keyed by the configured
+  columns, so whatever `config('leap.credentials')` lists is what the form asks for and
+  what `Auth::attempt()` receives. Validation messages name the field by its
+  `leap::auth.<column>` label; `username` is added to the translations.
+
 ## [1.13.1] — 2026-09-05
 
 ### Fixed

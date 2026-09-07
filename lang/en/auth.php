@@ -33,6 +33,7 @@ return [
     'read' => 'Read',
     'remember_me' => 'Remember Me',
     'roles' => 'Roles',
+    'username' => 'Username',
     'two_factor' => 'Two Factor Authentication',
     'two_factor_confirm' => 'Confirm & activate',
     'two_factor_disable' => 'Disable',

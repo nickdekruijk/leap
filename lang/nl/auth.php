@@ -33,6 +33,7 @@ return [
     'read' => 'Lezen',
     'remember_me' => 'Onthoud mij',
     'roles' => 'Rollen',
+    'username' => 'Gebruikersnaam',
     'two_factor' => 'Tweestapsverificatie',
     'two_factor_confirm' => 'Bevestigen & activeren',
     'two_factor_disable' => 'Uitschakelen',

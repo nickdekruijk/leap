@@ -121,6 +121,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | name_column
+    |--------------------------------------------------------------------------
+    |
+    | The column on the user model that holds the name shown in the panel and
+    | edited on the Profile screen. A host without a name column can point
+    | this at another one, e.g. 'username'; the field is labelled by the
+    | matching leap::auth.<column> translation.
+    |
+    */
+    'name_column' => 'name',
+
+    /*
+    |--------------------------------------------------------------------------
     | default_modules
     |--------------------------------------------------------------------------
     |
