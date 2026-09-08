@@ -18,8 +18,9 @@ class User extends Authenticatable
 The `leap_roles` and `leap_role_user` tables are added by the package migrations (when
 `leap.migrations` is enabled). Roles are managed from the **Roles** module in the
 panel. Each role grants per-module `read` / `create` / `update` / `delete`, or
-`all_permissions` / `all_modules` wildcards. A user without `read` on a module does not
-see it and receives a 404 (so the module's existence stays hidden).
+`all_permissions` / `all_modules` wildcards. A user with several roles gets the union: an
+ability is granted when any accepted role grants it. A user without `read` on a module
+does not see it and receives a 404 (so the module's existence stays hidden).
 
 The resolved permission map and role name for the current request are available via
 `Leap::context()->permissionsFor($module)` and `Leap::context()->roleName()`.
@@ -68,6 +69,11 @@ the same trait/contract: that wrapper only arrived in Fortify `^1.37`, and Leap 
 The `passkeys` table is added by the package migrations. Users register passkeys from
 the **Profile** screen and then sign in with just their device biometrics/PIN — no
 password or 2FA challenge involved. A registered passkey satisfies the 2FA requirement.
+
+Adding or removing a passkey first asks for the current password (Laravel's
+`password.confirm` middleware, satisfied by the confirm step on the Profile screen for
+`auth.password_timeout`, three hours by default). The passkey routes are throttled
+(`passkeys.throttle`, `throttle:6,1` unless Fortify configures a limiter).
 
 ## Password reset
 

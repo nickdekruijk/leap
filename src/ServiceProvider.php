@@ -151,13 +151,15 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             // in its register(), regardless of provider order) touched these
             // same keys first.
             config(['passkeys.guard' => config('leap.guard')]);
-            // Leap has no password.confirm route/flow, so drop the package's
-            // default 'password.confirm' management middleware: passkey
-            // management routes are already gated by leap's own auth stack
-            // (LeapAuth/RequireRole/Auth2FA) plus Leap::validatePermission('update')
-            // in Profile, the same protection level as enabling/disabling
-            // TOTP two factor.
-            config(['passkeys.management_middleware' => []]);
+            // Managing passkeys is the strongest credential change there is, so
+            // it needs a freshly confirmed password: Laravel's password.confirm
+            // middleware, satisfied by the confirmation step on the Profile
+            // screen. The routes live at the site root, outside leap's own
+            // middleware, so this is the only gate every site user meets.
+            config(['passkeys.management_middleware' => ['password.confirm:leap.module.profile']]);
+            // Fortify rewrites passkeys.throttle from its own limiter and leaves
+            // null when none is configured; the package default is the floor.
+            config(['passkeys.throttle' => config('passkeys.throttle') ?: 'throttle:6,1']);
             $authProvider = config('auth.guards.'.config('leap.guard').'.provider');
             Passkeys::useUserModel(config('auth.providers.'.$authProvider.'.model'));
 

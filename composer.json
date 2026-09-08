@@ -18,7 +18,8 @@
 		"owenvoke/blade-fontawesome": "^3.2.2",
 		"spatie/laravel-translatable": "^6.10",
 		"laravel/fortify": "^1.31",
-		"laravel/passkeys": "^0.2.1"
+		"laravel/passkeys": "^0.2.1",
+		"enshrined/svg-sanitize": "^0.22"
 	},
 	"suggest": {
 		"nickdekruijk/leap-template": "Frontend website template scaffolding (leap:template, leap:content) — install with composer require --dev"

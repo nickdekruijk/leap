@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use Carbon\Carbon;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
+use enshrined\svgSanitize\Sanitizer;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -709,6 +710,14 @@ class FileManager extends Module
             return;
         }
 
+        // The same allowlist as uploads. Without it a valid upload could be
+        // renamed to .php and, on a disk inside the web root, executed.
+        if (! $this->hasExtension($this->newFileName, config('leap.filemanager.allowed_extensions'))) {
+            $this->dispatch('toast-error', __('leap::filemanager.rename_invalid_extension', ['attribute' => $this->newFileName]))->to(Toasts::class);
+
+            return;
+        }
+
         // Slugged after the path checks above, so "../" and the one folder deep
         // form both survive: only the part after the last slash is touched. From
         // here on $newFileName is the name the file really gets, which is what the
@@ -834,19 +843,18 @@ class FileManager extends Module
     }
 
     /**
-     * Strip active content from an uploaded SVG: script and foreignObject blocks,
-     * inline event handlers and javascript: URLs. Regex-based on purpose — no XML
-     * parser dependency — and deliberately coarse: a false positive costs a
-     * decorative attribute, a false negative costs an admin session.
+     * Strip active content from an uploaded SVG. A real XML-aware sanitiser
+     * (enshrined/svg-sanitize): the regex this replaced missed SMIL attribute
+     * injection (<set attributeName="onload">, <animate attributeName="href"
+     * values="javascript:...">), and a false negative costs an admin session.
+     * Unparseable input comes back empty rather than passed through.
      */
     public static function sanitizeSvg(string $svg): string
     {
-        $svg = preg_replace('/<\s*(script|foreignObject)\b[^>]*>.*?<\s*\/\s*\1\s*>/is', '', $svg);
-        $svg = preg_replace('/<\s*(script|foreignObject)\b[^>]*\/\s*>/i', '', $svg);
-        $svg = preg_replace('/\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $svg);
-        $svg = preg_replace('/\s(href|xlink:href)\s*=\s*(["\']?)\s*(?:javascript|data)\s*:[^"\'>\s]*\2/i', '', $svg);
+        $sanitizer = new Sanitizer;
+        $sanitizer->removeRemoteReferences(true);
 
-        return $svg;
+        return (string) $sanitizer->sanitize($svg);
     }
 
     public function hasExtension(string $file, array|string $extensions): bool

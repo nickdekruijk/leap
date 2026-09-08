@@ -41,6 +41,7 @@ return [
     'new_ai_image' => 'AI-afbeelding',
     'new_folder' => 'Nieuwe map',
     'rename_file' => 'Bestand hernoemen',
+    'rename_invalid_extension' => ':attribute heeft een extensie die niet is toegestaan',
     'rename_invalid_path' => ':attribute bevat een ongeldig pad',
     'rename_success' => ':attribute hernoemd',
     'save' => 'Opslaan',

@@ -73,7 +73,7 @@ class FileManagerHardeningTest extends TestCase
         Storage::disk('public')->assertExists('logo.svg');
         $stored = Storage::disk('public')->get('logo.svg');
         $this->assertStringNotContainsString('<script', $stored);
-        $this->assertStringContainsString('<circle r="5"/>', $stored);
+        $this->assertStringContainsString('<circle r="5"', $stored);
     }
 
     public function test_delete_refuses_a_client_supplied_traversal_path(): void

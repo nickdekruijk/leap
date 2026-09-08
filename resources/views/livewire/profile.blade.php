@@ -124,21 +124,42 @@
                         <span class="leap-label">{{ __('leap::auth.passkeys_intro') }}</span>
                     </label>
 
-                    @if ($this->passkeys->isNotEmpty())
-                        <ul class="leap-passkeys">
-                            @foreach ($this->passkeys as $passkey)
-                                <li>
-                                    <span>{{ $passkey->name }}</span>
-                                    <span>{{ $passkey->last_used_at ? $passkey->last_used_at->diffForHumans() : __('leap::auth.passkey_never_used') }}</span>
-                                    <x-leap::button type="button" svg-icon="fas-trash" class="secondary" label="leap::auth.delete" onclick="if (confirm('{{ __('leap::auth.passkey_delete_confirm') }}')) leapPasskeyDelete({{ $passkey->id }})" />
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
+                    @if ($this->passwordConfirmed)
+                        @if ($this->passkeys->isNotEmpty())
+                            <ul class="leap-passkeys">
+                                @foreach ($this->passkeys as $passkey)
+                                    <li>
+                                        <span>{{ $passkey->name }}</span>
+                                        <span>{{ $passkey->last_used_at ? $passkey->last_used_at->diffForHumans() : __('leap::auth.passkey_never_used') }}</span>
+                                        <x-leap::button type="button" svg-icon="fas-trash" class="secondary" label="leap::auth.delete" onclick="if (confirm('{{ __('leap::auth.passkey_delete_confirm') }}')) leapPasskeyDelete({{ $passkey->id }})" />
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
 
-                    <div class="leap-fieldset-buttons">
-                        <x-leap::button type="button" svg-icon="fas-key" label="leap::auth.passkey_add" onclick="var name = prompt('{{ __('leap::auth.passkey_add_prompt') }}'); if (name) leapPasskeyRegister(name)" />
-                    </div>
+                        <div class="leap-fieldset-buttons">
+                            <x-leap::button type="button" svg-icon="fas-key" label="leap::auth.passkey_add" onclick="var name = prompt('{{ __('leap::auth.passkey_add_prompt') }}'); if (name) leapPasskeyRegister(name)" />
+                        </div>
+                    @else
+                        @if ($this->passkeys->isNotEmpty())
+                            <ul class="leap-passkeys">
+                                @foreach ($this->passkeys as $passkey)
+                                    <li>
+                                        <span>{{ $passkey->name }}</span>
+                                        <span>{{ $passkey->last_used_at ? $passkey->last_used_at->diffForHumans() : __('leap::auth.passkey_never_used') }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        <label class="leap-label">
+                            <span class="leap-label">{{ __('leap::auth.passkey_confirm_password_intro') }}</span>
+                        </label>
+                        <x-leap::input wire:model="confirmationPassword" name="confirmationPassword" label="{{ __('leap::auth.password') }}" type="password" autocomplete="current-password" wire:keydown.enter.prevent="confirmPassword" />
+                        <div class="leap-fieldset-buttons">
+                            <x-leap::button type="button" svg-icon="fas-unlock" wire:click="confirmPassword" label="leap::auth.confirm_password" />
+                        </div>
+                    @endif
                 </fieldset>
             </form>
         @endif

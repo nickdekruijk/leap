@@ -1005,7 +1005,9 @@ class Resource extends Module
             $handle = fopen('php://output', 'w');
             fputcsv($handle, array_keys($keys), escape: '');
             foreach ($data as $line) {
-                fputcsv($handle, $line, escape: '');
+                // A cell starting with = + - @ or a tab/CR is a formula to Excel, and
+                // self-registered users write these cells; a leading quote keeps it text.
+                fputcsv($handle, array_map(fn ($cell) => is_string($cell) && preg_match('/^[=+\-@\t\r]/', $cell) ? "'".$cell : $cell, $line), escape: '');
             }
             fclose($handle);
         }, 200, $headers);

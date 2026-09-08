@@ -41,6 +41,7 @@ return [
     'new_ai_image' => 'AI image',
     'new_folder' => 'New folder',
     'rename_file' => 'Rename file',
+    'rename_invalid_extension' => ':attribute has an extension that is not allowed',
     'rename_invalid_path' => ':attribute contains an invalid path',
     'rename_success' => ':attribute renamed',
     'save' => 'Save',

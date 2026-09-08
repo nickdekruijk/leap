@@ -23,24 +23,30 @@ class RequireRole
             $query->where('user_id', Auth::getUser()->id)->where('accepted', true);
         })->get();
 
-        // Find the user's role
-        $role = $roles->first();
-
-        // Set the role as context so we can use it during the request
-        Leap::context()->setRoleName($role?->name);
+        // Set the role as context so we can use it during the request. The first
+        // role names the user; every accepted role counts for permissions below.
+        Leap::context()->setRoleName($roles->first()?->name);
 
         // If no role was found, return 403
-        abort_if(! $role, 403, 'No role found for this user');
+        abort_if($roles->isEmpty(), 403, 'No role found for this user');
 
-        // Make permissions collection for easier access
-        $permissions_collection = collect($role->permissions);
-
-        // Determine permissions for each module
-        foreach (ModuleController::getAllModules() as $module) {
-            $permissions[$module::class]
-                = $permissions_collection->where('_name', $module::class)->first()
-                ?? $permissions_collection->where('_name', 'all_modules')->first()
-                ?? $module->getDefaultPermissions();
+        // Determine permissions for each module: a permission is granted when any
+        // of the user's roles grants it, so a second role can only add access.
+        $modules = ModuleController::getAllModules();
+        $permissions = [];
+        foreach ($roles as $role) {
+            $permissions_collection = collect($role->permissions);
+            foreach ($modules as $module) {
+                $granted = $permissions_collection->where('_name', $module::class)->first()
+                    ?? $permissions_collection->where('_name', 'all_modules')->first()
+                    ?? $module->getDefaultPermissions();
+                foreach ($granted as $ability => $allowed) {
+                    if ($ability === '_name') {
+                        continue;
+                    }
+                    $permissions[$module::class][$ability] = ($permissions[$module::class][$ability] ?? false) || (bool) $allowed;
+                }
+            }
         }
 
         // Set the permissions as context so we can use it during the request

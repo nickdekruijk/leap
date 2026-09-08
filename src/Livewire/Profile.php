@@ -7,6 +7,7 @@ use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
@@ -40,6 +41,8 @@ class Profile extends Module
     public $confirmCode;
 
     public $showRecoveryCodes = false;
+
+    public $confirmationPassword = '';
 
     protected $default_permissions = [
         'read' => true,
@@ -257,6 +260,38 @@ class Profile extends Module
      * The user column that holds the name: config('leap.name_column'), 'name'
      * unless a host says otherwise.
      */
+    /**
+     * Whether the user confirmed their password recently enough for the
+     * passkey management routes (Laravel's password.confirm middleware).
+     */
+    #[Computed]
+    public function passwordConfirmed(): bool
+    {
+        $confirmedAt = session('auth.password_confirmed_at');
+
+        return $confirmedAt && (time() - $confirmedAt) < config('auth.password_timeout', 10800);
+    }
+
+    /**
+     * Confirm the current password before passkeys can be added or removed.
+     * Sets the same session key Laravel's password.confirm middleware reads.
+     */
+    public function confirmPassword()
+    {
+        try {
+            $this->rateLimit(5);
+        } catch (TooManyRequestsException $exception) {
+            throw ValidationException::withMessages(['confirmationPassword' => trans('auth.throttle', ['seconds' => $exception->secondsUntilAvailable])]);
+        }
+
+        $this->validate(['confirmationPassword' => 'required|current_password:'.config('leap.guard')], [], ['confirmationPassword' => __('leap::auth.password')]);
+
+        session(['auth.password_confirmed_at' => time()]);
+        $this->confirmationPassword = '';
+        unset($this->passwordConfirmed);
+        $this->log('password-confirmed');
+    }
+
     public function nameColumn(): string
     {
         return config('leap.name_column') ?: 'name';
@@ -269,8 +304,15 @@ class Profile extends Module
 
     public function rules()
     {
+        // A name column that doubles as the login name must stay unique; without
+        // this the database index answers, which is a 500 and a username oracle.
+        $name = ['required', 'min:3'];
+        if (in_array($this->nameColumn(), config('leap.credentials'))) {
+            $name[] = Rule::unique($this->user->getTable(), $this->nameColumn())->ignore($this->user->getKey());
+        }
+
         return [
-            'data.name' => 'required|min:3',
+            'data.name' => $name,
             'data.email' => 'required|email:rfc,spoof,strict,filter', // ,dns
             'data.password_current' => 'nullable|current_password:'.config('leap.guard').'|required_with:data.password_new',
             'data.password_new' => ['nullable', 'different:data.password_current', Password::min(8)->letters()->mixedCase()->numbers()->symbols()->uncompromised()],

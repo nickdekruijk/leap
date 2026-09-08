@@ -5,6 +5,47 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.3] — 2026-09-08
+
+### Security
+
+- **Renaming a file in the filemanager now checks the extension allowlist.** Uploads did,
+  renames did not: a valid PDF with PHP inside could be renamed to `.php`, and on a disk
+  inside the web root that is remote code execution for anyone with update permission on
+  the filemanager. The rename goes through the same `hasExtension()` gate as an upload and
+  is refused with `leap::filemanager.rename_invalid_extension`.
+
+- **Adding or removing a passkey requires a freshly confirmed password.** The management
+  routes (`/user/passkeys`) sit at the site root, outside leap's own middleware, so every
+  authenticated user on the guard could reach them, and leap had switched the package's
+  `password.confirm` middleware off. A borrowed session could register a permanent
+  passwordless credential on any account. The Profile screen now has a confirm-password
+  step (rate limited, logged as `password-confirmed`) that satisfies Laravel's
+  `password.confirm` middleware for `auth.password_timeout`; the passkey buttons appear
+  after it. Also restores a throttle on every passkey route: Fortify rewrites
+  `passkeys.throttle` from its own limiter and leaves `null` when a host has none.
+
+- **SVG uploads are sanitised by `enshrined/svg-sanitize` instead of a regex.** The regex
+  missed SMIL attribute injection (`<set attributeName="onload">`,
+  `<animate attributeName="href" values="javascript:...">`), which is stored XSS in an
+  admin's session because SVGs are served same-origin. New dependency.
+
+- **CSV export neutralises spreadsheet formulas.** A cell starting with `=`, `+`, `-`, `@`,
+  tab or CR gets a leading quote, so a self-registered name such as `=HYPERLINK(...)`
+  opens as text in Excel.
+
+### Fixed
+
+- **Every accepted role counts.** `RequireRole` honoured only the first role by id; a user
+  with two roles had the second silently ignored. Permissions are now combined: an ability
+  is granted when any of the user's roles grants it, so a second role can only add access.
+  `Leap::context()->roleName()` still names the first role.
+
+- **A name column that doubles as the login name stays unique.** With
+  `leap.name_column` set to a credential column (`username`), the Profile screen validates
+  uniqueness instead of letting the database index answer with a 500, which was also a
+  username oracle for panel users.
+
 ## [1.13.2] — 2026-09-07
 
 ### Fixed

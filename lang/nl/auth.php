@@ -21,6 +21,8 @@ return [
     'password_reset_sent' => 'Als het e-mailadres bestaat, is er een resetlink verstuurd.',
     'password_reset_submit' => 'Wachtwoord opnieuw instellen',
     'password_reset_success' => 'Je wachtwoord is opnieuw ingesteld. Je kunt nu inloggen.',
+    'passkey_confirm_password_intro' => 'Bevestig je wachtwoord om passkeys toe te voegen of te verwijderen.',
+    'confirm_password' => 'Wachtwoord bevestigen',
     'passkey_add' => 'Passkey toevoegen',
     'passkey_add_prompt' => 'Geef deze passkey een naam (bijv. "MacBook" of "iPhone"):',
     'passkey_delete_confirm' => 'Deze passkey verwijderen? Je kunt er dan niet meer mee inloggen.',
