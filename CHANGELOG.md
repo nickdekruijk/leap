@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] — 2026-09-08
+
+### Added
+
+- **`leap.allowed_ips`: an address allowlist for the panel.** IPs and CIDR ranges from
+  `LEAP_ALLOWED_IPS`, comma separated; everyone else gets a 404 on every panel route,
+  the login screen and the panel's own Livewire updates included, so the panel stays
+  invisible from outside the office or VPN. Empty means no restriction, which is the
+  default. What an nginx allowlist did before, now in the application where it travels
+  with the deploy and needs no server configuration.
+
 ## [1.13.3] — 2026-09-08
 
 ### Security

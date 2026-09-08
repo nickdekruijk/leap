@@ -27,6 +27,7 @@ use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
+use NickDeKruijk\Leap\Middleware\RestrictIp;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
 use NickDeKruijk\Leap\Models\Media;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -78,6 +79,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         // Leap middleware should be persistent for all livewire requests
         Livewire::addPersistentMiddleware([
+            RestrictIp::class,
             Auth2FA::class,
             LeapAuth::class,
             RequireRole::class,

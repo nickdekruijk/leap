@@ -26,6 +26,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `auth_passkeys` | *(array)* | Passkey settings. |
 | `password_reset` | `true` | Enable the forgot/reset password flow. |
 | `credentials` | `['email', 'password']` | Login fields. |
+| `allowed_ips` | `[]` | IPs/CIDR ranges that may reach the panel (from `LEAP_ALLOWED_IPS`, comma separated). Empty = everyone. See [permissions-and-auth.md](permissions-and-auth.md#address-allowlist). |
 | `css` | *(array)* | CSS files concatenated and served for the panel UI. See [Theming](#theming) below. |
 | `login_image` | `null` | Image on the login screen. `null` shows none; any URL or local path works (the config comment has a `picsum.photos` example). |
 | `logging` | *(array)* | Audit logging of admin actions (enable, skip actions/modules, IP anonymisation). |

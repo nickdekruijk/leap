@@ -111,6 +111,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | allowed_ips
+    |--------------------------------------------------------------------------
+    |
+    | Addresses that may reach the panel, login screen included; anyone else
+    | gets a 404. IPs and CIDR ranges, comma separated in LEAP_ALLOWED_IPS
+    | (e.g. "203.0.113.4,198.51.100.0/24"). Empty = no restriction. Behind a
+    | proxy or load balancer the trusted proxies must be configured, or the
+    | client address seen here is the proxy's.
+    |
+    */
+    'allowed_ips' => array_values(array_filter(array_map('trim', explode(',', (string) env('LEAP_ALLOWED_IPS', ''))))),
+
+    /*
+    |--------------------------------------------------------------------------
     | credentials
     |--------------------------------------------------------------------------
     |

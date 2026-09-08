@@ -13,8 +13,9 @@ use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
 use NickDeKruijk\Leap\Middleware\RequireRole;
 use NickDeKruijk\Leap\Middleware\RequireTwoFactorEnrollment;
+use NickDeKruijk\Leap\Middleware\RestrictIp;
 
-Route::middleware('web')->prefix(config('leap.route_prefix'))->group(function () {
+Route::middleware(['web', RestrictIp::class])->prefix(config('leap.route_prefix'))->group(function () {
     // Assets, this way we don't need to publish them to public
     Route::get('leap.css', [AssetController::class, 'css'])->name('leap.css');
     if (config('leap.auth_passkeys.enabled')) {

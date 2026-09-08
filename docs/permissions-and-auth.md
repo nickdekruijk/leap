@@ -80,3 +80,12 @@ Adding or removing a passkey first asks for the current password (Laravel's
 The forgot/reset password flow is enabled by default (`leap.password_reset`) and uses
 Laravel's password broker, so a `password_reset_tokens` table (part of the default
 Laravel schema) and a configured mailer are required.
+
+## Address allowlist
+
+`leap.allowed_ips` limits who can reach the panel at all. Set `LEAP_ALLOWED_IPS` to a
+comma separated list of IPs and CIDR ranges (`203.0.113.4,198.51.100.0/24`); any other
+address gets a 404 on every panel route, the login screen and the panel's Livewire
+updates included, so the panel does not reveal itself. Leave it empty for no
+restriction. Behind a proxy or load balancer configure Laravel's trusted proxies first,
+otherwise the address checked is the proxy's.
