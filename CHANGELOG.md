@@ -5,6 +5,34 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] — 2026-09-09
+
+### Added
+
+- **A slug is checked for shape, and the field shapes what is typed into it.** Nothing
+  checked this before, so whatever was typed was stored: a site running Leap ended up
+  with a page whose slug was "flora en fauna", and the spaces made its `sitemap.xml`
+  invalid XML — every address in the file, not only that one. It was not a one-off
+  either; the same site had "Dry needling" and "Manuele therapie" before an editor
+  cleaned them up.
+
+  Lowercase letters, digits and single hyphens between them. An accent is allowed, since
+  a Dutch or German word reads better with one and a sitemap encodes it anyway; an
+  uppercase letter is not, because a URL path is case sensitive and a site with both
+  `/Praktijk` and `/praktijk` collects redirects it did not mean to need. `/` stays the
+  homepage's, and empty still means "derive one from the title" — or, in a locale nobody
+  has translated yet, that the page has no address there.
+
+  The input shapes the value while you type: a space becomes a hyphen, a capital becomes
+  lowercase, and the caret stays where it was. That is what makes correcting it polite
+  rather than presumptuous — you watch it happen instead of finding out later — and it
+  is why the server does not quietly rewrite a slug someone typed, which would go
+  against `Editor`'s own "offer it, never overwrite".
+
+  It applies to any field declared with `slugFrom()` or named by `slugify()`, in every
+  project, and per locale for a translatable one. An existing slug that does not fit
+  keeps working until someone saves that record.
+
 ## [1.16.1] — 2026-09-09
 
 ### Fixed

@@ -3,6 +3,23 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.17 — a slug is checked for shape
+
+Lowercase letters, digits and single hyphens between them; an accent is allowed, an
+uppercase letter is not. `/` is still the homepage's and empty is still fine.
+
+**Nothing breaks on upgrade.** An existing slug that does not fit keeps working, and
+keeps its URL; the rule only speaks up when someone saves that record, and then it says
+what it wants. Worth a look before handing the panel back to an editor:
+
+```php
+Page::get()->reject(fn ($page) => $page->slug === '/' || $page->slug === Str::slug($page->slug));
+```
+
+Anything that turns up there is a record whose slug an editor cannot save again without
+changing it. Renaming a slug changes the page's address, so it wants a redirect — which
+[redirects.md](redirects.md) is for.
+
 ## 1.16 — the 404 worklist moved to a table of its own
 
 1.15 wrote a captured missing address into the redirects table as a rule with no

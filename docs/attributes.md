@@ -57,6 +57,24 @@ whichever reads better for your module.
 The template's `HasSlug` trait does the actual persistence and uniqueness on save; see
 [template.md](template.md).
 
+**What a slug may contain:** lowercase letters, digits, and single hyphens between them.
+An accent is allowed — a Dutch or German word reads better with one, and a sitemap or a
+link encodes it anyway. An uppercase letter is not: a URL path is case sensitive, so
+`/Praktijk` and `/praktijk` are two addresses, and a site that has both collects
+redirects it did not mean to need. `/` is the homepage's, and only a page without a
+parent may use it. Empty is fine too: it means "derive one from the title", and in a
+locale nobody has translated yet it means the page has no address there.
+
+The field shapes what is typed into it as you go — a space becomes a hyphen, a capital
+becomes lowercase — so the correction is something you watch happen rather than
+something that turns up later. That is a convenience; the rule is what enforces it, and
+it runs per locale.
+
+One asymmetry worth knowing: the suggestion offered for an empty slug comes from
+Laravel's `Str::slug()`, which strips accents, so a title "Cliëntroute" suggests
+`clientroute`. Typing `cliëntroute` yourself is accepted. The suggestion is deliberately
+the conservative one.
+
 ## Per-locale labels, placeholders and hints
 
 `->label()`, `->placeholder()` and `->hint()` accept a per-locale array, resolved to

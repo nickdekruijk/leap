@@ -53,6 +53,16 @@ class Attribute
 
     public ?string $slugFrom = null;
 
+    /**
+     * Whether this field holds a slug, set by the editor from the resource's slug map.
+     *
+     * A field declared with slugFrom() says so itself, but the older slugify() form puts
+     * the declaration on the source field, so the slug field cannot be recognised on its
+     * own. The editor knows both and marks the target here, which is what lets the input
+     * shape what is typed into it.
+     */
+    public bool $isSlug = false;
+
     public ?int $step = null;
 
     public string $type = 'text';

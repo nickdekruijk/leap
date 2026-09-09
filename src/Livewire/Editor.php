@@ -27,6 +27,22 @@ use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 
 class Editor extends Component
 {
+    /**
+     * What a slug may look like.
+     *
+     * Lowercase letters, digits and single hyphens between them. Accented letters are
+     * allowed — \p{Ll} covers ë and é — because a Dutch or German word reads better
+     * with them and the sitemap encodes them anyway. Uppercase is not: a URL path is
+     * case sensitive, so /Praktijk and /praktijk are two addresses, and a site that
+     * mixes them collects redirects it did not mean to need.
+     *
+     * "/" is the homepage's own slug, which HasSlug leaves alone; a child page is
+     * refused it separately, by not_in. Empty passes too: it means "derive one from the
+     * title", and in a locale nobody has translated yet it means the page simply has no
+     * address there. A field that must be filled says so with required.
+     */
+    public const SLUG_FORMAT = 'regex:/^$|^\/$|^[\p{Ll}\p{N}]+(?:-[\p{Ll}\p{N}]+)*$/u';
+
     use CanLog;
     use InteractsWithAiImages;
     use ToastsValidationErrors;
@@ -437,6 +453,25 @@ class Editor extends Component
             }
         }
 
+        // Mark the slug fields, so the input can shape what is typed into it. Both
+        // declarations end up here: slugify() names its target from the source field,
+        // which the field itself has no way of knowing.
+        //
+        // Worked out here rather than through slugMap(), which reads attributes() and
+        // would call this method right back.
+        $slugTargets = [];
+        foreach ($attributes as $attribute) {
+            if ($attribute->slugify) {
+                $slugTargets[] = $attribute->slugify;
+            }
+            if ($attribute->slugFrom) {
+                $slugTargets[] = $attribute->name;
+            }
+        }
+        foreach ($attributes as $attribute) {
+            $attribute->isSlug = in_array($attribute->name, $slugTargets, true);
+        }
+
         return $attributes;
     }
 
@@ -731,6 +766,10 @@ class Editor extends Component
         foreach (array_values($this->slugMap()) as $target) {
             $messages['data.'.$target.'.not_in'] = __('leap::resource.slug_root_only');
             $messages['data.'.$target.'.*.not_in'] = __('leap::resource.slug_root_only');
+            // Laravel's own regex message says only "format is invalid", which for a
+            // slug leaves the reader guessing at which character was the problem.
+            $messages['data.'.$target.'.regex'] = __('leap::resource.slug_format');
+            $messages['data.'.$target.'.*.regex'] = __('leap::resource.slug_format');
         }
 
         return $messages;
@@ -812,8 +851,11 @@ class Editor extends Component
         $slugTargets = array_values($this->slugMap());
 
         foreach ($this->attributes() as $attribute) {
-            // Walk thru the validation rules of each attribute
-            if ($attribute->validate) {
+            $isSlug = in_array($attribute->name, $slugTargets, true);
+
+            // Walk thru the validation rules of each attribute. A slug is checked for
+            // shape whether or not the project gave it rules of its own.
+            if ($attribute->validate || $isSlug) {
                 // Replace placeholders
                 foreach ($replace as $old => $new) {
                     foreach ($attribute->validate as $key => $value) {
@@ -827,7 +869,10 @@ class Editor extends Component
                 // way the placeholder replacement above is, and $attribute->validate would
                 // collect a second scope on the next rules() call.
                 $validate = $attribute->validate;
-                if ($siblingColumn && in_array($attribute->name, $slugTargets, true)) {
+                if ($isSlug) {
+                    $validate[] = self::SLUG_FORMAT;
+                }
+                if ($siblingColumn && $isSlug) {
                     $validate = array_map(fn ($rule) => $this->siblingScopedRule($rule, $siblingColumn), $validate);
 
                     // "/" is the reserved homepage slug (see HasSlug) and only means anything at
