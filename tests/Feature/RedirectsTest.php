@@ -8,7 +8,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Livewire\Editor;
+use NickDeKruijk\Leap\Livewire\NotFounds as NotFoundsScreen;
 use NickDeKruijk\Leap\Livewire\Redirects as RedirectsScreen;
+use NickDeKruijk\Leap\Models\NotFound;
 use NickDeKruijk\Leap\Models\Redirect;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
@@ -149,13 +153,6 @@ class RedirectsTest extends TestCase
         $this->get('/oud')->assertNotFound();
     }
 
-    public function test_a_rule_without_a_destination_does_nothing(): void
-    {
-        $this->rule('oud', null);
-
-        $this->get('/oud')->assertNotFound();
-    }
-
     public function test_the_whole_feature_can_be_switched_off(): void
     {
         config(['leap.redirects.enabled' => false]);
@@ -225,12 +222,10 @@ class RedirectsTest extends TestCase
 
         $this->get('/kwijt')->assertNotFound();
 
-        $redirect = Redirect::firstWhere('path', 'kwijt');
+        $redirect = NotFound::firstWhere('path', 'kwijt');
 
         $this->assertNotNull($redirect);
         $this->assertNull($redirect->destination);
-        $this->assertFalse($redirect->active);
-        $this->assertTrue($redirect->detected);
         $this->assertSame(1, $redirect->hits);
     }
 
@@ -238,7 +233,7 @@ class RedirectsTest extends TestCase
     {
         $this->get('/kwijt')->assertNotFound();
 
-        $this->assertSame(0, Redirect::count());
+        $this->assertSame(0, NotFound::count());
     }
 
     public function test_the_same_address_is_noted_once_per_window(): void
@@ -248,17 +243,30 @@ class RedirectsTest extends TestCase
         $this->get('/kwijt');
         $this->get('/kwijt');
 
-        $this->assertSame(1, Redirect::firstWhere('path', 'kwijt')->hits);
+        $this->assertSame(1, NotFound::firstWhere('path', 'kwijt')->hits);
     }
 
-    public function test_a_detected_address_finished_by_hand_starts_redirecting(): void
+    public function test_answering_a_missing_address_turns_it_into_a_rule(): void
+    {
+        // Filling in the destination is the whole promotion: the rule is created and
+        // the question stops being asked.
+        config(['leap.redirects.capture.enabled' => true]);
+        $this->get('/kwijt');
+
+        NotFound::firstWhere('path', 'kwijt')->update(['destination' => '/gevonden']);
+
+        $this->assertNull(NotFound::firstWhere('path', 'kwijt'));
+        $this->get('/kwijt')->assertRedirect('/gevonden');
+    }
+
+    public function test_writing_a_rule_by_hand_clears_it_from_the_worklist(): void
     {
         config(['leap.redirects.capture.enabled' => true]);
         $this->get('/kwijt');
 
-        Redirect::firstWhere('path', 'kwijt')->update(['destination' => '/gevonden', 'active' => true]);
+        $this->rule('kwijt', '/gevonden');
 
-        $this->get('/kwijt')->assertRedirect('/gevonden');
+        $this->assertNull(NotFound::firstWhere('path', 'kwijt'));
     }
 
     public function test_it_notes_which_pages_carried_the_dead_link(): void
@@ -272,7 +280,7 @@ class RedirectsTest extends TestCase
         $this->assertSame([
             'https://example.com/een' => 2,
             'https://example.com/twee' => 1,
-        ], Redirect::firstWhere('path', 'kwijt')->referers);
+        ], NotFound::firstWhere('path', 'kwijt')->referers);
     }
 
     public function test_the_newest_referer_is_never_crowded_out_by_older_ones(): void
@@ -289,7 +297,7 @@ class RedirectsTest extends TestCase
         $this->assertSame([
             'https://example.com/een' => 2,
             'https://example.com/drie' => 1,
-        ], Redirect::firstWhere('path', 'kwijt')->referers);
+        ], NotFound::firstWhere('path', 'kwijt')->referers);
     }
 
     public function test_it_says_nothing_about_the_visitor_unless_a_project_asks(): void
@@ -301,7 +309,7 @@ class RedirectsTest extends TestCase
 
         $this->get('/kwijt', ['user-agent' => 'SomeBot/2.1']);
 
-        $redirect = Redirect::firstWhere('path', 'kwijt');
+        $redirect = NotFound::firstWhere('path', 'kwijt');
 
         $this->assertNull($redirect->user_agents);
         $this->assertNull($redirect->ip_addresses);
@@ -317,7 +325,7 @@ class RedirectsTest extends TestCase
 
         $this->get('/kwijt', ['user-agent' => 'SomeBot/2.1']);
 
-        $redirect = Redirect::firstWhere('path', 'kwijt');
+        $redirect = NotFound::firstWhere('path', 'kwijt');
 
         $this->assertSame(['SomeBot/2.1' => 1], $redirect->user_agents);
         $this->assertSame(['127.0.0.xxx' => 1], $redirect->ip_addresses);
@@ -333,17 +341,17 @@ class RedirectsTest extends TestCase
 
         $this->get('/kwijt');
 
-        $this->assertSame(['127.0.0.1' => 1], Redirect::firstWhere('path', 'kwijt')->ip_addresses);
+        $this->assertSame(['127.0.0.1' => 1], NotFound::firstWhere('path', 'kwijt')->ip_addresses);
     }
 
     public function test_the_panel_reads_the_sets_back_as_lines(): void
     {
-        $redirect = $this->rule('kwijt', null);
-        $redirect->forceFill(['referers' => ['https://example.com/een' => 3, 'https://example.com/twee' => 1]])->saveQuietly();
+        $notFound = NotFound::create(['path' => 'kwijt']);
+        $notFound->forceFill(['referers' => ['https://example.com/een' => 3, 'https://example.com/twee' => 1]])->saveQuietly();
 
         $this->assertSame(
             "https://example.com/een (3x)\nhttps://example.com/twee",
-            $redirect->refresh()->referer_list
+            $notFound->refresh()->referer_list
         );
     }
 
@@ -389,7 +397,28 @@ class RedirectsTest extends TestCase
             $this->get($path);
         }
 
-        $this->assertSame(0, Redirect::count());
+        $this->assertSame(0, NotFound::count());
+    }
+
+    public function test_it_writes_down_nothing_for_a_path_carrying_control_characters(): void
+    {
+        // A scanner probing for /kinderfysiotherapie%00sftp-config.json, which is the
+        // real one this came from. Decoding is what makes an accented address match
+        // whether it arrived encoded or not, and it is also how a null byte gets in.
+        config(['leap.redirects.capture.enabled' => true, 'leap.redirects.capture.throttle_minutes' => 0]);
+
+        $this->get('/kinderfysiotherapie%00sftp-config.json');
+        $this->get('/oud%0Apad');
+
+        $this->assertSame(0, NotFound::count());
+    }
+
+    public function test_a_rule_typed_with_control_characters_keeps_none_of_them(): void
+    {
+        $rule = $this->rule("oud\x00pad", "/nieuw\x0Apad");
+
+        $this->assertSame('oudpad', $rule->path);
+        $this->assertSame('/nieuwpad', $rule->destination);
     }
 
     public function test_it_never_writes_down_the_panels_own_addresses(): void
@@ -401,7 +430,7 @@ class RedirectsTest extends TestCase
 
         $this->get('/'.config('leap.route_prefix').'/iets-dat-niet-bestaat');
 
-        $this->assertSame(0, Redirect::count());
+        $this->assertSame(0, NotFound::count());
     }
 
     /**
@@ -468,8 +497,11 @@ class RedirectsTest extends TestCase
         $this->assertStringContainsString('x-ref="importCSV"', $html);
     }
 
-    public function test_it_stops_writing_once_the_ceiling_is_reached(): void
+    public function test_the_ceiling_holds_but_makes_room_for_the_newest(): void
     {
+        // Refusing instead would let a scanner with a long wordlist switch the capture
+        // off for good, which is the wrong way to fail: the addresses this exists to
+        // find would be the ones turned away.
         config([
             'leap.redirects.capture.enabled' => true,
             'leap.redirects.capture.throttle_minutes' => 0,
@@ -480,6 +512,134 @@ class RedirectsTest extends TestCase
             $this->get($path);
         }
 
-        $this->assertSame(2, Redirect::where('detected', true)->count());
+        $this->assertSame(2, NotFound::count());
+        $this->assertNotNull(NotFound::firstWhere('path', 'drie'));
+    }
+
+    public function test_room_is_made_by_dropping_the_least_asked_for(): void
+    {
+        config([
+            'leap.redirects.capture.enabled' => true,
+            'leap.redirects.capture.throttle_minutes' => 0,
+            'leap.redirects.capture.max' => 2,
+        ]);
+
+        $this->get('/populair');
+        $this->get('/populair');
+        $this->get('/eenmalig');
+        $this->get('/nieuw');
+
+        $this->assertNotNull(NotFound::firstWhere('path', 'populair'));
+        $this->assertNull(NotFound::firstWhere('path', 'eenmalig'));
+        $this->assertNotNull(NotFound::firstWhere('path', 'nieuw'));
+    }
+
+    public function test_a_rule_is_never_touched_to_make_room(): void
+    {
+        // The ceiling is the worklist's; rules are not part of it however many there
+        // are, and however quiet.
+        config([
+            'leap.redirects.capture.enabled' => true,
+            'leap.redirects.capture.throttle_minutes' => 0,
+            'leap.redirects.capture.max' => 1,
+        ]);
+
+        $this->rule('stil', '/ergens');
+        $this->get('/een');
+        $this->get('/twee');
+
+        $this->assertNotNull(Redirect::firstWhere('path', 'stil'));
+        $this->assertSame(1, NotFound::count());
+    }
+
+    public function test_a_captured_address_gone_quiet_for_long_enough_is_dropped(): void
+    {
+        config([
+            'leap.redirects.capture.enabled' => true,
+            'leap.redirects.capture.throttle_minutes' => 0,
+            'leap.redirects.capture.max' => 2,
+            'leap.redirects.capture.retention_days' => 90,
+        ]);
+
+        $this->get('/oud');
+        $this->get('/recent');
+        NotFound::firstWhere('path', 'oud')->forceFill(['last_used_at' => now()->subDays(91)])->saveQuietly();
+
+        $this->get('/nieuw');
+
+        $this->assertNull(NotFound::firstWhere('path', 'oud'));
+        $this->assertNotNull(NotFound::firstWhere('path', 'recent'));
+        $this->assertNotNull(NotFound::firstWhere('path', 'nieuw'));
+    }
+
+    public function test_a_switched_off_rule_is_shown_struck_through(): void
+    {
+        // Not an index column of its own: the column is fetched for this alone, so the
+        // row can say it does nothing without spending a column on saying so.
+        $this->rule('uit', '/ergens', ['active' => false]);
+
+        $html = Livewire::actingAs($this->superuser())->test(RedirectsScreen::class)->html();
+
+        $this->assertStringContainsString('leap-index-row-inactive', $html);
+    }
+
+    public function test_the_worklist_will_not_let_the_new_address_be_left_empty(): void
+    {
+        // The button says it creates a redirect, and there is nothing else on the screen
+        // to save, so pressing it with this empty has to say so rather than do nothing.
+        $notFound = NotFound::create(['path' => 'kwijt']);
+
+        $this->actingAs($this->superuser());
+        Leap::context()->setModule(NotFoundsScreen::class);
+        Leap::context()->setPermissions([
+            NotFoundsScreen::class => ['read' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        Livewire::test(Editor::class)
+            ->call('openEditor', $notFound->id)
+            ->set('data.destination', '')
+            ->call('save')
+            ->assertHasErrors(['data.destination' => 'required']);
+
+        $this->assertNotNull(NotFound::find($notFound->id));
+        $this->assertSame(0, Redirect::count());
+    }
+
+    public function test_the_worklist_says_what_its_button_does(): void
+    {
+        // Saving there creates the rule and takes the row away, which is not what
+        // "Save" leads anyone to expect.
+        $notFound = NotFound::create(['path' => 'kwijt']);
+
+        $this->actingAs($this->superuser());
+        Leap::context()->setModule(NotFoundsScreen::class);
+        Leap::context()->setPermissions([
+            NotFoundsScreen::class => ['read' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        $html = Livewire::test(Editor::class)->call('openEditor', $notFound->id)->html();
+
+        $this->assertStringContainsString(__('leap::redirects.make_redirect'), $html);
+        $this->assertStringNotContainsString('>'.__('leap::resource.save').'<', $html);
+
+        // And no "save as copy": the screen offers no create, so a second row for the
+        // same address — which the unique path would refuse anyway — cannot be made.
+        $this->assertStringNotContainsString(__('leap::resource.save_copy'), $html);
+    }
+
+    public function test_the_panel_keeps_the_rules_and_the_worklist_apart(): void
+    {
+        $this->rule('werkt', '/ergens');
+        config(['leap.redirects.capture.enabled' => true]);
+        $this->get('/gevangen');
+
+        // Two screens, two lists: the rules that work and the questions still open.
+        $rules = Livewire::actingAs($this->superuser())->test(RedirectsScreen::class)->html();
+        $this->assertStringContainsString('werkt', $rules);
+        $this->assertStringNotContainsString('gevangen', $rules);
+
+        $worklist = Livewire::actingAs($this->superuser())->test(NotFoundsScreen::class)->html();
+        $this->assertStringContainsString('gevangen', $worklist);
+        $this->assertStringNotContainsString('werkt', $worklist);
     }
 }

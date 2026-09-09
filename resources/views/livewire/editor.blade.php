@@ -12,9 +12,9 @@
     @if ($editing)
         <div class="leap-buttons" role="group" x-on:keydown.escape.window="if (!document.querySelector('.leap-filebrowser')) $store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (ok) selectedRow = null })">
             @can('leap::update')
-                <x-leap::button svg-icon="far-check-circle" wire:click="save" label="leap::resource.save" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
+                <x-leap::button svg-icon="far-check-circle" wire:click="save" label="{{ $this->parentModule()->saveLabel ?: 'leap::resource.save' }}" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan
-            @if ($editing > 0)
+            @if ($editing > 0 && $this->parentModule()->allowClone)
                 @can('leap::create')
                     <x-leap::button svg-icon="far-copy" wire:click="clone" label="leap::resource.save_copy" wire:loading.delay.shorter.attr="disabled" />
                 @endcan

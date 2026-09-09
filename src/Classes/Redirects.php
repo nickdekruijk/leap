@@ -6,8 +6,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
-use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Models\Redirect;
 
 /**
@@ -42,11 +40,6 @@ class Redirects
         return (bool) config('leap.redirects.enabled', true);
     }
 
-    public static function captureEnabled(): bool
-    {
-        return static::enabled() && (bool) config('leap.redirects.capture.enabled', false);
-    }
-
     /**
      * The response for an address that has somewhere to go, or null to let the 404
      * carry on being a 404.
@@ -77,62 +70,22 @@ class Redirects
     }
 
     /**
-     * Write down an address that was asked for and has nowhere to go, so the list of
-     * what to fix builds itself instead of being copied out of a log by hand.
+     * Write down an address that has nowhere to go.
      *
-     * Off by default. Switched on it is a table anyone can walk down and finish, and
-     * the guards below are what keep it that way rather than a transcript of every
-     * wordlist on the internet.
+     * @deprecated 1.16 The worklist has a table of its own; use NotFounds::record().
+     *             Kept because 1.15 shipped this as public API, removed in 2.0.
      */
     public static function capture(Request $request): void
     {
-        if (! static::captureEnabled() || ! $request->isMethodSafe()) {
-            return;
-        }
+        NotFounds::record($request);
+    }
 
-        $path = Redirect::normalizePath($request->path());
-
-        if ($path === '' || static::ignored($path)) {
-            return;
-        }
-
-        // add() is the atomic half of the cache contract: it returns false when the
-        // key is already there, so two requests for the same missing path in the same
-        // second cannot both decide they are the first.
-        $window = (int) config('leap.redirects.capture.throttle_minutes', 60);
-
-        if ($window > 0 && ! Cache::add('leap:redirect-capture:'.sha1($path), true, now()->addMinutes($window))) {
-            return;
-        }
-
-        $redirect = Redirect::query()->where('path', $path)->first();
-
-        if ($redirect) {
-            // A row that exists but did not match is one somebody switched off, or one
-            // still waiting for a destination. Either way this is another visitor who
-            // wanted it, which is worth knowing.
-            static::countHit($redirect);
-            static::remember($redirect, $request);
-
-            return;
-        }
-
-        $max = (int) config('leap.redirects.capture.max', 1000);
-
-        if ($max > 0 && Redirect::query()->where('detected', true)->count() >= $max) {
-            return;
-        }
-
-        $redirect = Redirect::create([
-            'path' => $path,
-            'destination' => null,
-            'active' => false,
-            'detected' => true,
-            'hits' => 1,
-            'last_used_at' => now(),
-        ]);
-
-        static::remember($redirect, $request);
+    /**
+     * @deprecated 1.16 Use NotFounds::enabled(). Removed in 2.0.
+     */
+    public static function captureEnabled(): bool
+    {
+        return NotFounds::enabled();
     }
 
     /**
@@ -212,117 +165,5 @@ class Redirects
             'hits' => $redirect->getRawOriginal('hits') + 1,
             'last_used_at' => now(),
         ]);
-    }
-
-    /**
-     * Note who asked for this address, in the three ways that answer a question.
-     *
-     * The pages that carried the dead link say where to go and fix it, rather than
-     * only papering over it with a redirect. The user agent and the address say
-     * whether this is a visitor following a stale link or a crawler working through a
-     * wordlist, which decides whether there is anything to fix at all. The counts are
-     * what separate the newsletter that went to five thousand people from one link on
-     * a forum.
-     *
-     * The last two are off by default, and not by oversight: they describe the visitor
-     * rather than the site, and this table is open to everyone with panel access. The
-     * address is anonymized unless that is switched off too.
-     *
-     * One write, whatever is switched on.
-     */
-    protected static function remember(Redirect $redirect, Request $request): void
-    {
-        $changes = [];
-
-        if (config('leap.redirects.capture.referer', true) && $referer = $request->headers->get('referer')) {
-            $changes['referers'] = static::tally($redirect->referers, $referer);
-        }
-
-        if (config('leap.redirects.capture.user_agent', false) && $agent = $request->userAgent()) {
-            $changes['user_agents'] = static::tally($redirect->user_agents, $agent);
-        }
-
-        if (config('leap.redirects.capture.ip_address', false) && $ip = $request->ip()) {
-            $changes['ip_addresses'] = static::tally($redirect->ip_addresses, config('leap.redirects.capture.ip_address_anonymized', true)
-                ? Leap::anonymizeIp($ip)
-                : $ip);
-        }
-
-        if ($changes) {
-            $redirect->forceFill($changes)->saveQuietly();
-        }
-    }
-
-    /**
-     * Add one to a value's count, keeping the set to a workable size.
-     *
-     * At most `values_max` distinct entries, the ones seen most often, each trimmed to
-     * 200 characters, which with the ceiling on captured rows is what bounds this —
-     * every one of these is chosen by whoever made the request, so their length is
-     * decided at this end rather than that one. The counts themselves are not capped,
-     * and `values_max` of 0 lifts the cap on the set as well.
-     *
-     * There is a cap by default because this is written from an address anyone can
-     * ask for. Uncapped, one visitor sending a different value each time grows the
-     * column for as long as they care to, and it is read and rewritten on every
-     * capture. The throttle slows that to once per path per window, but
-     * throttle_minutes of 0 removes even that.
-     *
-     * The last slot always goes to the value from this request, whatever its count.
-     * Keeping purely the top N looks right and is not: once the slots are full a new
-     * value arrives on 1, is dropped in the same breath, and can never climb — so the
-     * link that broke this week, the one actually worth knowing about, is the one that
-     * never appears.
-     *
-     * @param  array<string, int>|null  $tally
-     * @return array<string, int>
-     */
-    protected static function tally(?array $tally, string $value): array
-    {
-        $value = Str::limit($value, 200);
-        $tally = $tally ?? [];
-        $tally[$value] = ($tally[$value] ?? 0) + 1;
-
-        arsort($tally);
-
-        $max = (int) config('leap.redirects.capture.values_max', 100);
-
-        if ($max > 0 && count($tally) > $max) {
-            // Held aside first: the slice may well have dropped it, and it is the one
-            // entry that has to survive.
-            $count = $tally[$value];
-
-            $tally = array_slice($tally, 0, $max - 1, true);
-            $tally[$value] = $count;
-
-            arsort($tally);
-        }
-
-        return $tally;
-    }
-
-    /**
-     * The addresses not worth writing down.
-     *
-     * The panel's own prefix is always skipped, and not as a nicety: a module denies
-     * a role without read permission with a 404 rather than a 403, precisely so the
-     * module's existence stays hidden. Capturing those would fill the table with the
-     * panel's own screens and undo that.
-     */
-    protected static function ignored(string $path): bool
-    {
-        $prefix = trim((string) config('leap.route_prefix'), '/');
-
-        if ($prefix !== '' && ($path === $prefix || str_starts_with($path, $prefix.'/'))) {
-            return true;
-        }
-
-        foreach ((array) config('leap.redirects.capture.ignore', []) as $pattern) {
-            if (Str::is(mb_strtolower((string) $pattern), $path)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

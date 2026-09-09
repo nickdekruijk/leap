@@ -38,6 +38,32 @@ class Resource extends Module
      *
      * @var string|null
      */
+    /**
+     * Whether the editor offers "save as copy".
+     *
+     * A copy is meaningful for most records and meaningless for some: a second row for
+     * the same missing address is a duplicate a unique column would refuse anyway. The
+     * button is otherwise gated on the create permission, which a superuser has for
+     * every module through all_permissions, so narrowing $default_permissions does not
+     * hide it and this says so directly.
+     *
+     * @var bool
+     */
+    #[Locked]
+    public $allowClone = true;
+
+    /**
+     * Translation key for the save button, when "Save" is not what pressing it means.
+     *
+     * A screen where saving does something specific — turning a missing address into a
+     * redirect, say, after which the row is gone — is better off saying so on the
+     * button than leaving the reader to find out. Null keeps leap::resource.save.
+     *
+     * @var string|null
+     */
+    #[Locked]
+    public $saveLabel = null;
+
     #[Locked]
     public $orderBy;
 

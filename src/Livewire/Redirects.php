@@ -11,29 +11,27 @@ class Redirects extends Resource
     public function attributes()
     {
         return [
+            Attribute::make('active')->switch()->default(true)->label(__('leap::redirects.active')),
             Attribute::make('path')->index(1)->searchable()->required()->unique()
                 ->label(__('leap::redirects.path'))->placeholder(__('leap::redirects.path_placeholder')),
-            Attribute::make('destination')->index(2)->searchable()
+            Attribute::make('destination')->index(2)->searchable()->required()
                 ->label(__('leap::redirects.destination'))->placeholder(__('leap::redirects.destination_placeholder')),
             Attribute::make('status')->select()->values([
                 301 => __('leap::redirects.status_301'),
                 302 => __('leap::redirects.status_302'),
             ])->default(301)->label(__('leap::redirects.status')),
-            Attribute::make('active')->index(3)->switch()->default(true)->label(__('leap::redirects.active')),
             Attribute::make('hits')->indexOnly(4)->label(__('leap::redirects.hits')),
             Attribute::make('last_used_at')->indexOnly(5)->label(__('leap::redirects.last_used_at')),
-            Attribute::make('detected')->index(6)->switch()->readonly()->default(false)->label(__('leap::redirects.detected')),
-            // The half of a detected address that says where to go and fix the link,
-            // rather than only papering over it with a redirect.
-            Attribute::make('referer_list')->accessor('referers')->textarea()->label(__('leap::redirects.referers')),
-            // Off unless the project asks for them, so usually empty. Together they
-            // answer whether a dead address still has people on it or only a crawler.
-            Attribute::make('user_agent_list')->accessor('user_agents')->textarea()->label(__('leap::redirects.user_agents')),
-            Attribute::make('ip_address_list')->accessor('ip_addresses')->textarea()->label(__('leap::redirects.ip_addresses')),
         ];
     }
 
     public $model = Redirect::class;
+
+    /**
+     * A switched-off rule is struck through in the index rather than hidden, so it is
+     * clear the path is spoken for even while it does nothing.
+     */
+    public $active = 'active';
 
     /**
      * Fixed rather than derived, because the default is a slug of the translated

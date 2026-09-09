@@ -2,6 +2,7 @@
 
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
+use NickDeKruijk\Leap\Livewire\NotFounds;
 use NickDeKruijk\Leap\Livewire\Profile;
 use NickDeKruijk\Leap\Livewire\Redirects;
 use NickDeKruijk\Leap\Livewire\Roles;
@@ -163,6 +164,7 @@ return [
         FileManager::class,
         Profile::class,
         Logout::class,
+        NotFounds::class,
         Redirects::class,
         Roles::class,
         User::class,
@@ -308,9 +310,16 @@ return [
     | addresses nobody is going to redirect — the panel's own prefix is always
     | skipped, whatever is set here. 'throttle_minutes' is how long the same path
     | stays quiet after it has been noted once, so a scanner writes one row rather
-    | than one per guess, and 'max' is the ceiling on captured rows, so it cannot
-    | be made to fill a disk by someone else's crawler. Delete what you have dealt
-    | with and the room comes back.
+    | than one per guess.
+    |
+    | 'max' is the ceiling on captured rows. Reaching it does not stop the capture:
+    | the table makes room instead, first by dropping what has gone quiet for
+    | 'retention_days' and then, if that was not enough, the captured address with
+    | the fewest hits. A one-off probe sits at one and goes; an address Google
+    | keeps crawling climbs and stays. Refusing to write instead would mean a
+    | scanner with a long wordlist could switch the feature off for good, which is
+    | the wrong way round. Nothing with a destination is ever dropped, however
+    | quiet: what somebody typed or finished stays.
     |
     | Three things are noted about who asked, each as a set with a count.
     | 'referer' is the pages that carried the dead link, which is what tells an
@@ -346,6 +355,7 @@ return [
             'enabled' => env('LEAP_REDIRECTS_CAPTURE', false),
             'throttle_minutes' => 60,
             'max' => 1000,
+            'retention_days' => 90, // Drop a captured address unasked for this long
             'referer' => true, // Note the pages that carried the dead link
             'user_agent' => false, // Note the user agents that asked — a visitor or a bot
             'ip_address' => false, // Note the addresses that asked

@@ -21,24 +21,16 @@ class Redirect extends Model
         'destination',
         'status',
         'active',
-        'detected',
         'hits',
         'last_used_at',
-        'referers',
-        'user_agents',
-        'ip_addresses',
     ];
 
     protected $casts = [
         'status' => 'integer',
         'active' => 'boolean',
         'wildcard' => 'boolean',
-        'detected' => 'boolean',
         'hits' => 'integer',
         'last_used_at' => 'datetime',
-        'referers' => 'array',
-        'user_agents' => 'array',
-        'ip_addresses' => 'array',
     ];
 
     /**
@@ -75,49 +67,21 @@ class Redirect extends Model
         // whether this particular row was in it.
         static::saved(fn () => Redirects::forgetWildcards());
         static::deleted(fn () => Redirects::forgetWildcards());
+
+        // However the rule arrived — typed, imported, or promoted from the worklist —
+        // the question it answers is settled, so it stops being asked.
+        static::saved(function (Redirect $redirect): void {
+            NotFound::where('path', $redirect->path)->delete();
+        });
     }
 
     /**
-     * The pages that linked here, most followed first, one per line.
-     *
-     * The columns behind these are maps of value to count, which is the right shape to
-     * merge into and the wrong one to read. This is what the panel shows.
-     */
-    public function getRefererListAttribute(): string
-    {
-        return static::tallyToLines($this->referers);
-    }
-
-    public function getUserAgentListAttribute(): string
-    {
-        return static::tallyToLines($this->user_agents);
-    }
-
-    public function getIpAddressListAttribute(): string
-    {
-        return static::tallyToLines($this->ip_addresses);
-    }
-
-    /**
-     * @param  array<string, int>|null  $tally
-     */
-    protected static function tallyToLines(?array $tally): string
-    {
-        $lines = [];
-
-        foreach ($tally ?? [] as $value => $count) {
-            $lines[] = $count > 1 ? $value.' ('.$count.'x)' : $value;
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * A rule that can actually send someone somewhere.
+     * A rule that is switched on. Every rule has a destination now: one without was the
+     * captured address, and those live in leap_not_founds.
      */
     public function scopeUsable(Builder $query): Builder
     {
-        return $query->where('active', true)->whereNotNull('destination');
+        return $query->where('active', true);
     }
 
     /**
@@ -147,7 +111,22 @@ class Redirect extends Model
             $path = (string) parse_url($path, PHP_URL_PATH);
         }
 
-        return mb_strtolower(trim(rawurldecode($path), '/'));
+        return mb_strtolower(trim(self::withoutControlCharacters(rawurldecode($path)), '/'));
+    }
+
+    /**
+     * Control characters out, whatever they were encoded as.
+     *
+     * Decoding is what makes an accented address match whether the browser sent it
+     * encoded or not, and it is also how %00 and %0A get in. A scanner probing for
+     * /kinderfysiotherapie%00sftp-config.json is the ordinary case: capture wrote that
+     * down as one path with a null byte in the middle of it, which reads in the panel
+     * as a word nobody typed. A newline is the one that matters beyond tidiness, since
+     * these values are written back out into headers and logs.
+     */
+    private static function withoutControlCharacters(string $value): string
+    {
+        return preg_replace('/[\x00-\x1F\x7F]/u', '', $value) ?? '';
     }
 
     /**
@@ -158,7 +137,7 @@ class Redirect extends Model
      */
     public static function normalizeDestination(?string $destination): ?string
     {
-        $destination = trim((string) $destination);
+        $destination = trim(self::withoutControlCharacters((string) $destination));
 
         if ($destination === '') {
             return null;

@@ -18,6 +18,7 @@ use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\ImageResizer;
 use NickDeKruijk\Leap\Classes\NotFoundLog;
+use NickDeKruijk\Leap\Classes\NotFounds;
 use NickDeKruijk\Leap\Classes\Redirects;
 use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\MediaCommand;
@@ -249,8 +250,8 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      * failed to find anything, so a working page never asks the database whether it
      * should have been a redirect. Middleware runs on everything.
      *
-     * The capture is the other half. It runs when nothing matched, which is exactly
-     * the moment there is something worth writing down, and it returns null so the
+     * Writing the address down is the other half. It runs when nothing matched, which
+     * is exactly the moment there is something worth noting, and it returns null so the
      * error page still renders.
      *
      * Registered whether or not the feature is on, with Redirects asking that
@@ -268,7 +269,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                     return $redirect;
                 }
 
-                Redirects::capture($request);
+                NotFounds::record($request);
 
                 return null;
             });

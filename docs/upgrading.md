@@ -3,6 +3,32 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.16 — the 404 worklist moved to a table of its own
+
+1.15 wrote a captured missing address into the redirects table as a rule with no
+destination. It is `leap_not_founds` now, with a screen of its own, and the migration
+moves what is there: every redirect without a destination, captured or typed, becomes a
+row on the worklist. Nothing is lost and nothing is asked of you beyond
+`php artisan migrate`.
+
+**A project that published `config/leap.php` has to add the new module itself**, for the
+same reason as below: `default_modules` is a list, and lists are replaced rather than
+merged.
+
+```php
+use NickDeKruijk\Leap\Livewire\NotFounds;
+
+'default_modules' => [
+    // ...
+    NotFounds::class,   // add this
+    Redirects::class,
+    // ...
+],
+```
+
+`Redirects::capture()` and `Redirects::captureEnabled()` still work and now forward to
+`NotFounds::record()` and `NotFounds::enabled()`. They go in 2.0.
+
 ## 1.15 — redirects, and a published config will not see the screen
 
 The new [redirects](redirects.md) feature ships a table and a panel screen. The table

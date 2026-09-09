@@ -54,7 +54,11 @@ class PageResource extends Resource
 - `attributes()` returns an ordered array of [`Attribute`](attributes.md)s. Those with
   `->index()` become sortable list columns; all non-`indexOnly` attributes appear in
   the editor form.
-- The index shows search, sort, filter, pagination and CSV import/export based on the
+- `$saveLabel` names the save button when "Save" is not what pressing it means, and
+  `$allowClone` hides "save as copy" where a copy means nothing. Note that narrowing
+  `$default_permissions` does not hide the copy button by itself: it is gated on the
+  create permission, and a superuser holds every permission for every module.
+- The index shows search, sort, filter and CSV import/export based on the
   attribute flags.
 
 ## Generating a resource: `leap:module`

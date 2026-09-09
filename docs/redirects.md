@@ -104,24 +104,43 @@ finished.
 
 ## Catching what is missing
 
-Switch on `leap.redirects.capture` and an address that was asked for and matched
-nothing is written into the same table, with no destination and switched off: an
-unfinished redirect. Someone says where it should go, switches it on, and it starts
-working. That turns "which links are broken" from something you read out of a log into
-a list you can work down until it is empty.
+Switch on `leap.redirects.capture` and an address that was asked for and matched nothing
+is written into `leap_not_founds`, its own table with its own screen. Open a row, fill in
+the new address and press **Create redirect**: the rule is created and the row is gone,
+because the question has been answered. The button says what it does rather than "Save",
+and the new address is required, since there is nothing else on that screen to save. That turns "which links are broken" from something you read out of a log
+into a list you work down until it is empty.
+
+A separate table rather than a redirect without a destination, which is what 1.15 did.
+The two look alike and behave nothing alike: a rule is written by a person and stays,
+while this is written by whoever knocked on the door and is disposable. Sharing a table
+meant a screen where the handful of rules drowned in a week of crawler noise, and columns
+that meant something for only half the rows.
 
 It is off by default, because on a site with nothing to fix it collects other people's
-wordlists. Four things keep it usable when it is on:
+wordlists. Five things keep it usable when it is on:
 
 - **The panel's own addresses are never written down.** A module answers a role without
   read permission with a 404 rather than a 403, so the module's existence stays hidden;
   capturing those would fill the table with the panel's own screens and undo that.
 - **`ignore`** holds glob patterns for what nobody is going to redirect: `*.php`,
   `wp-*`, `.well-known/*` and the rest of the scanner's vocabulary.
+- **A path carrying a control character is never captured.** `%00` and `%0A` decode into
+  the path along with everything else, and a probe for `/something%00sftp-config.json`
+  would otherwise be written down as a word nobody typed.
 - **`throttle_minutes`** is how long the same path stays quiet after it has been noted,
   so a scanner writes one row rather than one per guess.
-- **`max`** is the ceiling on captured rows. Delete what you have dealt with and the
-  room comes back.
+- **`max`** is the ceiling, and reaching it does not stop the capture. The table makes
+  room instead: first by dropping what has gone unasked for `retention_days`, then the
+  address with the fewest hits and, between equals, the one longest quiet. A one-off
+  probe sits at one and goes; an address Google keeps crawling climbs and stays, so the
+  table sorts itself towards what is still being asked for. Rules are never touched:
+  the ceiling is the worklist's. Both only run at the ceiling, so the ordinary case
+  costs one count and no writes.
+
+The screen is sorted by hits, most asked for first, which is the one worth answering.
+Note that the index has no pagination, so a table at the ceiling is a heavy screen; that
+is what `max` and the dropping are there to keep in check.
 
 ### Who asked, and from where
 
@@ -138,8 +157,8 @@ Both are **off by default**: they describe the visitor rather than the site, and
 table is open to everyone with panel access. The address is anonymized to
 `198.51.100.xxx` unless `ip_address_anonymized` is switched off too.
 
-Each set is capped at `values_max`, a hundred by default, and the last slot always goes to the
-most recent value. Keeping purely the most seen looks right and is not: once the slots
+Each set is capped at `values_max`, a hundred by default, and the last slot always goes to
+the most recent value. Keeping purely the most seen looks right and is not: once the slots
 are full a new value arrives on a count of one, is dropped in the same breath, and can
 never climb, so the link that broke this week is the one you never see.
 
@@ -155,7 +174,7 @@ Both write down missing pages, and they answer different questions.
 
 | | `not_found_log` | `redirects.capture` |
 | --- | --- | --- |
-| Writes to | a logging channel | the `leap_redirects` table |
+| Writes to | a logging channel | the `leap_not_founds` table, with a screen |
 | Records | every missing address | what passes the ignore list, throttle and ceiling |
 | Also keeps | referer, anonymized IP, user agent | the same three, with counts; the last two off by default |
 | Answers | was this a visitor or a bot | which addresses still need a destination |
@@ -182,6 +201,7 @@ pipeline, or when you want the unfiltered picture.
         'enabled' => env('LEAP_REDIRECTS_CAPTURE', false),
         'throttle_minutes' => 60,
         'max' => 1000,
+        'retention_days' => 90,          // Quiet this long and a captured row may go
         'referer' => true,
         'user_agent' => false,           // A visitor or a bot
         'ip_address' => false,

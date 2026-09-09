@@ -5,6 +5,69 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] — 2026-09-09
+
+### Added
+
+- **A missing address is its own thing now: `leap_not_founds`, with a screen of its
+  own.** 1.15 wrote a captured 404 into the redirects table as a rule with no
+  destination, which was clever and wrong. The two look alike and behave nothing alike:
+  a rule is written by a person and stays, while a captured address is written by
+  whoever knocked on the door and is disposable. Sharing a table meant a screen where
+  the handful of rules drowned in a week of crawler noise, and columns that meant
+  something for only half the rows. Filling in the new address on the worklist is what
+  promotes one: the rule is created and the row is done, so the list only ever holds
+  what still needs an answer. The button on that screen says **Create redirect** rather
+  than Save, through a new optional `Resource::$saveLabel`, and the new address is
+  required, since there is nothing else there to save. The screen has no create: a
+  missing address arrives by being asked for. Writing a rule by hand or importing one clears the
+  matching row too. Existing captured rows are moved over by the migration.
+
+- **`leap.redirects.capture.retention_days`, and a ceiling that makes room instead of
+  refusing.** `max` used to simply stop the capture once reached, which is the wrong way
+  to fail: the throttle is per path, so a scanner walking a wordlist of ten thousand
+  addresses fills the table in minutes and from then on nothing is written down at all,
+  the dead links the feature exists to find included. A full table now drops what has
+  gone unasked for `retention_days` (90 by default), and if that was not enough, the
+  address with the fewest hits and, between equals, the one longest quiet. A one-off
+  probe sits at one and goes; an address Google keeps crawling climbs and stays. Rules
+  are never touched: the ceiling is the worklist's. Both only run at the ceiling, so the
+  ordinary case costs one count and no writes.
+
+### Changed
+
+- **`leap_redirects` keeps only what a rule needs.** `detected`, `referers`,
+  `user_agents` and `ip_addresses` describe a missing address rather than a rule and
+  moved with it, and `destination` is required now: a rule with nowhere to go was the
+  captured address, and that lives elsewhere. Any rule still without one is moved to the
+  worklist by the migration rather than deleted.
+
+- **`Resource::$saveLabel`** names the save button when "Save" is not what pressing it
+  means. Null keeps `leap::resource.save`, so nothing changes anywhere else.
+
+- **`Resource::$allowClone`** hides "save as copy" on a screen where a copy means
+  nothing. It defaults to true, so nothing changes anywhere else. Narrowing
+  `$default_permissions` does not hide that button on its own: it is gated on the create
+  permission, and a superuser has every permission for every module through
+  `all_permissions`.
+
+- **`Redirects::capture()` and `Redirects::captureEnabled()` are deprecated**, forwarding
+  to `NotFounds::record()` and `NotFounds::enabled()`. They still work and go in 2.0.
+
+### Fixed
+
+- **A captured 404 no longer keeps the control characters it arrived with.** Decoding
+  the path is what makes an accented address match whether the browser sent it encoded
+  or not, and it was also how `%00` and `%0A` got in: a scanner probing for
+  `/kinderfysiotherapie%00sftp-config.json` was written down as one path with a null
+  byte in the middle, which reads in the panel as a word nobody ever typed. Such a path
+  is a probe rather than an address anyone linked to, so it is not captured at all now,
+  and a rule typed or imported with control characters in it has them stripped on save.
+
+- **`docs/modules-and-resources.md` no longer claims the index paginates.** It does not;
+  `Resource::rows()` fetches the whole table. Worth knowing before pointing a resource
+  at something large.
+
 ## [1.15.0] — 2026-09-09
 
 ### Added
