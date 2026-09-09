@@ -18,8 +18,8 @@
                 },
             }"
             x-on:input="
-                const caret = this.clean($el.value.slice(0, $el.selectionStart)).length;
-                const cleaned = this.clean($el.value);
+                const caret = clean($el.value.slice(0, $el.selectionStart)).length;
+                const cleaned = clean($el.value);
                 if (cleaned !== $el.value) {
                     $el.value = cleaned;
                     $el.setSelectionRange(caret, caret);

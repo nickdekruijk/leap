@@ -10,6 +10,7 @@ use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\Editor;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\Article;
+use NickDeKruijk\Leap\Tests\Fixtures\SlugifyResource;
 use NickDeKruijk\Leap\Tests\Fixtures\SlugResource;
 use NickDeKruijk\Leap\Tests\Fixtures\TreeSlugResource;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
@@ -150,6 +151,32 @@ class EditorSlugFormatTest extends TestCase
         // word you have not finished, so eating it as you type would make
         // "onze-tarieven" impossible to write.
         $this->assertStringContainsString('x-on:blur', $html);
+    }
+
+    public function test_the_older_slugify_declaration_is_shaped_too(): void
+    {
+        // slugify() sits on the source field and names its target, so the slug field
+        // carries no sign of its own that it is one. A project written before
+        // slugFrom() existed looks like this, and is exactly where the bad slug came
+        // from.
+        $user = User::create([
+            'name' => 'Test User',
+            'email' => 'test'.uniqid().'@example.com',
+            'password' => bcrypt('password'),
+        ]);
+        $user->roles()->attach(Role::find(1));
+        $this->actingAs($user);
+
+        $article = Article::create(['title' => 'News', 'slug' => 'news']);
+
+        Leap::context()->setModule(SlugifyResource::class);
+        Leap::context()->setPermissions([
+            SlugifyResource::class => ['read' => true, 'create' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        $html = Livewire::test(Editor::class)->call('openEditor', $article->id)->html();
+
+        $this->assertSame(1, substr_count($html, 'clean(value)'));
     }
 
     public function test_a_slug_field_with_no_rules_of_its_own_is_still_checked(): void
