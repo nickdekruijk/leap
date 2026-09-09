@@ -3,6 +3,7 @@
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Livewire\FileManager;
 use NickDeKruijk\Leap\Livewire\Profile;
+use NickDeKruijk\Leap\Livewire\Redirects;
 use NickDeKruijk\Leap\Livewire\Roles;
 use NickDeKruijk\Leap\Livewire\User;
 use NickDeKruijk\Leap\Navigation\Logout;
@@ -162,6 +163,7 @@ return [
         FileManager::class,
         Profile::class,
         Logout::class,
+        Redirects::class,
         Roles::class,
         User::class,
     ],
@@ -283,6 +285,92 @@ return [
         'ip_address' => true, // Log IP address with each log entry
         'ip_address_anonymized' => false, // Anonymize IP address by replacing last part with .xxx (or :xxxx:xxxx for IPv6)
         'user_agent' => true, // Store user agent with each log entry
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | redirects
+    |--------------------------------------------------------------------------
+    | The old addresses of the site and where they go now, kept in a table and
+    | edited in the panel. On by default, and it costs nothing to have on: the
+    | lookup runs from the 404 handler, so a request that finds its page never
+    | asks. A rule is an exact path, or one ending in /* for everything below it.
+    |
+    | 'capture' is the other direction. Switched on, an address that was asked
+    | for and matched nothing is written into the same table with no destination
+    | and switched off — an unfinished redirect, waiting for someone to say where
+    | it should go. That turns "which links are broken" from something you read
+    | out of a log into a list you can work down, which is what you want in the
+    | weeks after a migration. Off by default, because on a site with nothing to
+    | fix it collects other people's wordlists.
+    |
+    | The guards are what make it usable. 'ignore' holds glob patterns for the
+    | addresses nobody is going to redirect — the panel's own prefix is always
+    | skipped, whatever is set here. 'throttle_minutes' is how long the same path
+    | stays quiet after it has been noted once, so a scanner writes one row rather
+    | than one per guess, and 'max' is the ceiling on captured rows, so it cannot
+    | be made to fill a disk by someone else's crawler. Delete what you have dealt
+    | with and the room comes back.
+    |
+    | Three things are noted about who asked, each as a set with a count.
+    | 'referer' is the pages that carried the dead link, which is what tells an
+    | internal broken link apart from a stale one somewhere else. 'user_agent' and
+    | 'ip_address' are the pair that says whether an address still has people on it
+    | or only a crawler — both off by default, because they describe the visitor
+    | rather than the site and this table is open to everyone with panel access.
+    | The address is anonymized to 198.51.100.xxx unless that is switched off too.
+    |
+    | 'values_max' caps how many distinct values are kept per set. The counts are
+    | not capped, and the last slot always goes to the most recent value so a link
+    | that broke this week is not crowded out by older ones. Each value is trimmed
+    | to 200 characters, so a full set is some 20kB and a row with all three around
+    | 63kB — against 'max' above, that is the ceiling on what this can occupy.
+    | Set it to 0 for no limit, knowing that all three are chosen by whoever made
+    | the request: with no cap, one visitor sending a different one each time
+    | decides how large that column gets.
+    |
+    | 'count_hits' records how often a rule was used and when it last was, which
+    | is what says whether an old address still has anyone on it. It costs one
+    | write per redirect — the number of people following an old link, which is
+    | small and shrinks. Switch it off for a site where that is not true.
+    |
+    | 'cache_minutes' applies to the wildcard rules only. The exact ones are found
+    | on a unique index and need no help.
+    |
+    */
+    'redirects' => [
+        'enabled' => env('LEAP_REDIRECTS', true),
+        'count_hits' => true,
+        'cache_minutes' => 1440,
+        'capture' => [
+            'enabled' => env('LEAP_REDIRECTS_CAPTURE', false),
+            'throttle_minutes' => 60,
+            'max' => 1000,
+            'referer' => true, // Note the pages that carried the dead link
+            'user_agent' => false, // Note the user agents that asked — a visitor or a bot
+            'ip_address' => false, // Note the addresses that asked
+            'ip_address_anonymized' => true, // Take the last part off it (192.168.1.xxx)
+            'values_max' => 100, // Distinct values to keep per set; 0 is no limit
+            'ignore' => [
+                '*.php',
+                '*.asp*',
+                '*.env*',
+                '*.git*',
+                '*.sql',
+                '*.yml',
+                'wp-*',
+                '*/wp-*',
+                'wordpress*',
+                'vendor/*',
+                'storage/*',
+                'livewire*',
+                '.well-known/*',
+                'apple-touch-icon*',
+                'favicon.ico',
+                'robots.txt',
+                'sitemap*.xml',
+            ],
+        ],
     ],
 
     /*

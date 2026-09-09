@@ -23,6 +23,7 @@ Full docs ship with the package at `vendor/nickdekruijk/leap/docs/`:
 - `permissions-and-auth.md` — roles, `HasRoles`, 2FA, passkeys, password reset
 - `multilingual.md` — per-locale content, locale-aware routing, `hreflang`/sitemap
 - `sections.md` — repeatable JSON section blocks
+- `redirects.md` — old addresses and where they go, and catching the ones that 404
 - `configuration.md` — `config/leap.php` options
 - `caching.md` — what Leap caches and how to bust it
 - `template.md` — the optional public-site frontend scaffold (`php artisan leap:template`)

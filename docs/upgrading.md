@@ -3,6 +3,40 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.15 — redirects, and a published config will not see the screen
+
+The new [redirects](redirects.md) feature ships a table and a panel screen. The table
+arrives on the next `php artisan migrate`, and nothing else is required: with no rules
+in it the feature does nothing, and it is only consulted once a request has already
+404'd.
+
+**A project that published `config/leap.php` has to add the module itself.** The config
+merge is recursive, so the new `redirects` block reaches every site whether it published
+or not — but `default_modules` is a list, and lists are replaced rather than merged. A
+published config still holds the list as it was, without the new screen:
+
+```php
+use NickDeKruijk\Leap\Livewire\Redirects;
+
+'default_modules' => [
+    Dashboard::class,
+    FileManager::class,
+    Profile::class,
+    Logout::class,
+    Redirects::class,   // add this
+    Roles::class,
+    User::class,
+],
+```
+
+`php artisan config:show leap.default_modules` says what a site is actually running.
+Without it the redirects still work, there is just no screen to edit them from.
+
+**The 404 capture is off.** Switch on `leap.redirects.capture.enabled` and a missing
+address writes itself into the same table as an unfinished rule, which is what makes the
+list after a migration build itself. It is off by default because on a site with nothing
+to fix it collects other people's wordlists.
+
 ## 1.11 — resized images live in storage
 
 The copies leap generates moved from `public/img` to `storage/app/leap-images`, reached

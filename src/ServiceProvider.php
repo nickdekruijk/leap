@@ -6,6 +6,7 @@ use Closure;
 use Composer\InstalledVersions;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -17,6 +18,7 @@ use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\ImageResizer;
 use NickDeKruijk\Leap\Classes\NotFoundLog;
+use NickDeKruijk\Leap\Classes\Redirects;
 use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\MediaCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
@@ -87,6 +89,11 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         ]);
 
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+
+        // Before registerNotFoundLog, and that order is the feature: Laravel stops at
+        // the first render callback that returns a response, so an address with a rule
+        // redirects instead of being written down as a broken link.
+        $this->registerRedirects();
 
         $this->registerNotFoundLog();
 
@@ -234,6 +241,40 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      * question when it is called. Reading the config here instead would decide it once,
      * at boot, before a test or a runtime override has had a chance to say otherwise.
      */
+    /**
+     * Send the old addresses of the site to their replacement.
+     *
+     * On the same render() hook as the 404 log, and for the same reason it is not
+     * middleware: this way the lookup happens only on a request that has already
+     * failed to find anything, so a working page never asks the database whether it
+     * should have been a redirect. Middleware runs on everything.
+     *
+     * The capture is the other half. It runs when nothing matched, which is exactly
+     * the moment there is something worth writing down, and it returns null so the
+     * error page still renders.
+     *
+     * Registered whether or not the feature is on, with Redirects asking that
+     * question when it is called, so a test or a runtime override still decides.
+     */
+    protected function registerRedirects(): void
+    {
+        $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {
+            if (! method_exists($handler, 'renderable')) {
+                return;
+            }
+
+            $handler->renderable(function (NotFoundHttpException $e, Request $request): ?RedirectResponse {
+                if ($redirect = Redirects::resolve($request)) {
+                    return $redirect;
+                }
+
+                Redirects::capture($request);
+
+                return null;
+            });
+        });
+    }
+
     protected function registerNotFoundLog(): void
     {
         $this->callAfterResolving(ExceptionHandler::class, function (ExceptionHandler $handler): void {

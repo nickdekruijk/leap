@@ -5,6 +5,50 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] — 2026-09-09
+
+### Added
+
+- **Redirects: the old addresses of a site, and where they go now.** A `leap_redirects`
+  table and a panel screen for it, so a site that moves can send its previous addresses
+  to their replacement instead of handing every visitor and every search result an error
+  page. A rule is a path and a destination, or a path ending in `/*` for everything
+  below it; exact beats wildcard, and between wildcards the longest prefix wins. Paths
+  are normalized on save, so `/Praktijk/` and `praktijk` are one rule and the unique
+  index says so, and a destination is made absolute — without the leading slash a
+  browser resolves it against the directory the old address was in, which is the kind of
+  mistake that only surfaces on the one rule that happened to be nested. The query
+  string comes along. 301 by default, 302 for a rule that might be reversed. The screen
+  takes a CSV, because a redirect map arrives as a spreadsheet far more often than it is
+  typed.
+
+  Resolved from the 404 handler rather than from middleware, and that is the whole
+  design: a request that finds its page never asks the database whether it should have
+  been a redirect, so a working site pays nothing for having this on. Registered ahead
+  of the 404 log, so an address with a rule is sent on its way instead of also being
+  written down as a broken link — what redirects is not a 404.
+
+- **`leap.redirects.capture`: 404s that write down their own to-do.** Off by default.
+  Switched on, an address that was asked for and matched nothing is written into the
+  same table with no destination and switched off: an unfinished redirect. Someone says
+  where it should go, switches it on, and it works. That turns "which links are broken"
+  from something you read out of a log into a list you work down until it is empty,
+  which is what the weeks after a migration actually need.
+
+  Four guards keep it a worklist rather than a transcript of other people's wordlists:
+  the panel's own prefix is never captured (a module answers a role without read
+  permission with a 404 precisely so its existence stays hidden), an `ignore` list of
+  glob patterns covers the rest of the scanner vocabulary, the same path is noted once
+  per `throttle_minutes`, and `max` caps how many captured rows there can be.
+
+  A captured address also keeps who asked: the pages that carried the dead link, and
+  optionally the user agents and addresses, each as a set with a count. The last two are
+  off by default — they describe the visitor rather than the site, and this table is
+  open to everyone with panel access; the address is anonymized unless that is switched
+  off too. Each set is capped, and the last slot always goes to the most recent value,
+  because keeping purely the most seen means a link that broke this week arrives on a
+  count of one, is dropped in the same breath, and is the one you never find out about.
+
 ## [1.14.0] — 2026-09-08
 
 ### Added
