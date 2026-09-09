@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.1] — 2026-09-09
+
+### Fixed
+
+- **A record that takes itself away on save no longer leaves the editor asking for it.**
+  `save()` reopened the record it had just written, which is right until saving removes
+  it: answering a missing address turns it into a redirect and the worklist row is done,
+  and the panel met a `ModelNotFoundException` on the one action that screen exists for.
+  The editor closes on a record that answered its own question.
+
+- **A zero survives a save.** Writing an attribute used `?:`, which catches `0` and
+  `"0"` as well as `""`, so an integer column holding zero was nulled on every save and
+  a `NOT NULL` one refused the write outright. Strict now, the way the section values
+  beside it already were. Also why the worklist's counters are index-only: they are
+  counted, not edited.
+
 ## [1.16.0] — 2026-09-09
 
 ### Added

@@ -22,8 +22,10 @@ class NotFounds extends Resource
             // else here to save: pressing it with this empty would quietly do nothing.
             Attribute::make('destination')->index(2)->searchable()->required()
                 ->label(__('leap::redirects.destination'))->placeholder(__('leap::redirects.destination_placeholder')),
-            Attribute::make('hits')->index(3)->readonly()->label(__('leap::redirects.hits')),
-            Attribute::make('last_used_at')->index(4)->readonly()->label(__('leap::redirects.last_used_at')),
+            // indexOnly: counted, not edited, and keeping them out of the editor keeps
+            // the form to the one field that does something.
+            Attribute::make('hits')->indexOnly(3)->label(__('leap::redirects.hits')),
+            Attribute::make('last_used_at')->indexOnly(4)->label(__('leap::redirects.last_used_at')),
             // The half that says where to go and fix the link, rather than only
             // papering over it with a redirect.
             Attribute::make('referer_list')->accessor('referers')->textarea()->label(__('leap::redirects.referers')),

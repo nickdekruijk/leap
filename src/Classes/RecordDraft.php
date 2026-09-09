@@ -85,7 +85,13 @@ final class RecordDraft
                         $data[$attribute->name][$key] = array_map(fn ($value) => $value === '' || $value === [] ? null : $value, $data[$attribute->name][$key]);
                     }
                 }
-                $model->{$attribute->name} = $data[$attribute->name] ?: ($attribute->type == 'checkbox' ? false : null);
+                // Strict, the way the section values above already are: ?: also caught 0
+                // and "0", so an integer column holding zero was nulled on every save —
+                // and a NOT NULL one refused the write outright.
+                $value = $data[$attribute->name];
+                $model->{$attribute->name} = $value === '' || $value === [] || $value === null
+                    ? ($attribute->type == 'checkbox' ? false : null)
+                    : $value;
             }
         }
     }

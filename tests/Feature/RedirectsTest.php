@@ -583,6 +583,49 @@ class RedirectsTest extends TestCase
         $this->assertStringContainsString('leap-index-row-inactive', $html);
     }
 
+    public function test_answering_from_the_panel_closes_the_editor_it_emptied(): void
+    {
+        // Saving takes the row away, and the editor used to reload the record it had
+        // just saved: a ModelNotFoundException in the panel, on the one action the
+        // screen exists for.
+        $notFound = NotFound::create(['path' => 'kwijt']);
+
+        $this->actingAs($this->superuser());
+        Leap::context()->setModule(NotFoundsScreen::class);
+        Leap::context()->setPermissions([
+            NotFoundsScreen::class => ['read' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        $editor = Livewire::test(Editor::class)
+            ->call('openEditor', $notFound->id)
+            ->set('data.destination', '/gevonden')
+            ->call('save');
+
+        $this->assertNull($editor->get('editing'));
+        $this->assertNull(NotFound::find($notFound->id));
+        $this->assertSame('/gevonden', Redirect::firstWhere('path', 'kwijt')->destination);
+    }
+
+    public function test_a_counter_of_zero_survives_a_save(): void
+    {
+        // ?: caught 0 as well as "", so an integer column holding zero was nulled on
+        // every save, and a NOT NULL one refused the write outright.
+        $notFound = NotFound::create(['path' => 'kwijt', 'hits' => 0]);
+
+        $this->actingAs($this->superuser());
+        Leap::context()->setModule(NotFoundsScreen::class);
+        Leap::context()->setPermissions([
+            NotFoundsScreen::class => ['read' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        Livewire::test(Editor::class)
+            ->call('openEditor', $notFound->id)
+            ->set('data.destination', '/gevonden')
+            ->call('save');
+
+        $this->assertSame('/gevonden', Redirect::firstWhere('path', 'kwijt')->destination);
+    }
+
     public function test_the_worklist_will_not_let_the_new_address_be_left_empty(): void
     {
         // The button says it creates a redirect, and there is nothing else on the screen

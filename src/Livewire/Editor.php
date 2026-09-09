@@ -1410,8 +1410,16 @@ class Editor extends Component
                     $this->log('update', ['id' => $this->editing]);
                     $this->dispatch('updateIndex', $model->id);
                 }
-                // Force reload of editor data
-                $this->openEditor($model->id);
+                if ($model->exists) {
+                    // Force reload of editor data
+                    $this->openEditor($model->id);
+                } else {
+                    // Saving took the record away. A row that exists to be dealt with can
+                    // do that — the missing address that becomes a redirect is one — and
+                    // reopening it would ask the database for something that is gone, so
+                    // the editor closes on a record that answered its own question.
+                    $this->close();
+                }
             } else {
                 $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
