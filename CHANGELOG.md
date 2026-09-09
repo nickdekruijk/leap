@@ -5,6 +5,23 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.1] — 2026-09-09
+
+### Fixed
+
+- **A record that takes itself away on save no longer comes back with the address.**
+  The index keeps the open row in `?id=`, and saving wrote that id there even when the
+  save had removed the record: the row that becomes a redirect, on the screen that
+  exists to answer it. Reloading the page, or opening the address again later, asked the
+  database for a record that was gone. The index is now told to select nothing when the
+  save emptied it.
+
+- **An address naming a record that is no longer there closes the editor instead of
+  failing.** `?id=` outlives the row in a bookmark and in a shared link, and asking for
+  it threw a `ModelNotFoundException` inside a Livewire request, which the panel could
+  only show as an error over the screen. The editor closes and the id leaves the address
+  bar, so it does not happen again on the next load.
+
 ## [1.17.0] — 2026-09-09
 
 ### Added

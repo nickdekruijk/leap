@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
@@ -546,7 +547,19 @@ class Editor extends Component
         $attributes = $this->attributes()->pluck('name')->toArray();
 
         // Get the model data
-        $model = $this->getModel($id);
+        try {
+            $model = $this->getModel($id);
+        } catch (ModelNotFoundException) {
+            // The address names a record that is not there any more: a bookmark, a link
+            // someone shared, or a row that took itself away on save. Asking for it in a
+            // Livewire request throws, and the panel can only show that as an error over
+            // the screen. Close instead, and let the index drop its selection with it, so
+            // the id leaves the address bar rather than doing this again on every load.
+            $this->close();
+            $this->dispatch('updateIndex');
+
+            return;
+        }
         $this->data = $model->only($attributes);
 
         // Multilingual: initialise the active locale and load translatable fields as per-locale arrays
@@ -1437,7 +1450,7 @@ class Editor extends Component
 
                     $this->log('create', ['id' => $model->id]);
                     $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.created'))->to(Toasts::class);
-                    $this->dispatch('updateIndex', $model->id);
+                    $this->dispatch('updateIndex', $model->exists ? $model->id : null);
                     $this->editing = $model->id;
                 } else {
                     $updated = count($dirty) + count($this->mediaUpdated) + count($pivotDirty);
@@ -1453,7 +1466,7 @@ class Editor extends Component
                     $this->syncPivot($model);
 
                     $this->log('update', ['id' => $this->editing]);
-                    $this->dispatch('updateIndex', $model->id);
+                    $this->dispatch('updateIndex', $model->exists ? $model->id : null);
                 }
                 if ($model->exists) {
                     // Force reload of editor data
@@ -1463,6 +1476,10 @@ class Editor extends Component
                     // do that — the missing address that becomes a redirect is one — and
                     // reopening it would ask the database for something that is gone, so
                     // the editor closes on a record that answered its own question.
+                    //
+                    // The index is told to select nothing, above. That matters beyond the
+                    // highlight: selectedRow is the ?id in the address bar, and a stale
+                    // one reopens the record that is gone on the next load of the page.
                     $this->close();
                 }
             } else {

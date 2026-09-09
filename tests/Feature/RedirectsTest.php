@@ -604,6 +604,31 @@ class RedirectsTest extends TestCase
         $this->assertNull($editor->get('editing'));
         $this->assertNull(NotFound::find($notFound->id));
         $this->assertSame('/gevonden', Redirect::firstWhere('path', 'kwijt')->destination);
+
+        // The index is told to select nothing. selectedRow is the ?id in the address
+        // bar, so a leftover one reopens the answered row on the next load of the page.
+        $editor->assertDispatched('updateIndex', fn ($event, $params) => $params === [null]);
+    }
+
+    public function test_opening_an_answered_row_by_its_address_closes_instead_of_throwing(): void
+    {
+        // ?id= survives in a bookmark and in a link someone shared, and the row it names
+        // is gone the moment it is answered. findOrFail threw inside a Livewire request,
+        // which the panel could only show as an error over the screen.
+        $notFound = NotFound::create(['path' => 'kwijt']);
+        $gone = $notFound->id;
+        $notFound->delete();
+
+        $this->actingAs($this->superuser());
+        Leap::context()->setModule(NotFoundsScreen::class);
+        Leap::context()->setPermissions([
+            NotFoundsScreen::class => ['read' => true, 'update' => true, 'delete' => true],
+        ]);
+
+        $editor = Livewire::test(Editor::class)->call('openEditor', $gone);
+
+        $this->assertNull($editor->get('editing'));
+        $editor->assertDispatched('updateIndex', fn ($event, $params) => $params === []);
     }
 
     public function test_a_counter_of_zero_survives_a_save(): void
