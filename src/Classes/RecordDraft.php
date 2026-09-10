@@ -70,7 +70,10 @@ final class RecordDraft
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
             } elseif ($attribute->input == 'ace' && $attribute->options['mode'] == 'ace/mode/json') {
-                $data[$attribute->name] = $data[$attribute->name] ? json_encode(json_decode($data[$attribute->name]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : null;
+                // Unescaped slashes, for the same reason as unescaped unicode: this is
+                // read back in the editor by the person who typed it, and "https:\/\/"
+                // is a URL nobody wrote. Both are the same JSON either way.
+                $data[$attribute->name] = $data[$attribute->name] ? json_encode(json_decode($data[$attribute->name]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
                 $model->{$attribute->name} = $data[$attribute->name];
             } else {
                 if ($attribute->type == 'sections') {
