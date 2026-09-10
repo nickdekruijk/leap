@@ -57,6 +57,10 @@ class FileManagerUploadReferenceTest extends TestCase
     public function test_a_signed_temporary_file_reference_is_stored_like_an_uploaded_file(): void
     {
         // Livewire 4.4 and later send the reference as "livewire-file:<token>:<name>".
+        if (! method_exists(TemporaryUploadedFile::class, 'signPath')) {
+            $this->markTestSkipped('This Livewire version does not sign temporary upload references.');
+        }
+
         FileUploadConfiguration::storage()->put(FileUploadConfiguration::path('tmp-photo.jpg'), 'jpeg-bytes');
 
         $this->uploadDoneWith('livewire-file:'.TemporaryUploadedFile::signPath('tmp-photo.jpg'));
