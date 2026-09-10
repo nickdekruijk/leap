@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\AiTask;
 use NickDeKruijk\Leap\Classes\ImageGenerator;
@@ -114,6 +115,21 @@ class FileManager extends Module
             return;
         }
 
+        // Livewire hands the upload back as a TemporaryUploadedFile, but when the
+        // client resends uploads[$id] as a whole (its JS diff does that as soon as
+        // the key order differs, which progress updates racing the upload can
+        // cause) the synth meta is lost and the file arrives as the bare string
+        // "livewire-file:<name>". That string is client input, so only accept a
+        // plain filename that actually exists in the temporary upload directory.
+        if (is_string($uploaded)) {
+            $uploaded = $this->temporaryUploadFromReference($uploaded);
+            if (! $uploaded) {
+                $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => basename((string) ($this->uploads[$id]['name'] ?? ''))]))->to(Toasts::class);
+
+                return;
+            }
+        }
+
         // $this->uploads is a public (client-controllable) Livewire property, so the
         // name/path/size/error set in uploadStart cannot be trusted here — the upload
         // gate must be re-enforced server-side. Take the name as a bare basename (no
@@ -196,6 +212,36 @@ class FileManager extends Module
         } else {
             $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $name]))->to(Toasts::class);
         }
+    }
+
+    /**
+     * Turn a "livewire-file:<name>" reference back into the temporary upload it
+     * points at, or null when it is not a plain existing temporary file.
+     */
+    protected function temporaryUploadFromReference(string $reference): ?TemporaryUploadedFile
+    {
+        if (! str_starts_with($reference, 'livewire-file:')) {
+            return null;
+        }
+
+        $filename = substr($reference, strlen('livewire-file:'));
+
+        // Livewire 4.4 and later sign the reference as "<token>:<name>", older
+        // versions send the bare name. A signed reference that fails the check is
+        // a forgery, not an old-style name, so it is refused outright.
+        if (method_exists(TemporaryUploadedFile::class, 'extractPathFromSignedPath') && str_contains($filename, ':')) {
+            $filename = TemporaryUploadedFile::extractPathFromSignedPath($filename);
+        }
+
+        if ($filename === false || $filename === '' || basename($filename) !== $filename) {
+            return null;
+        }
+
+        if (! FileUploadConfiguration::storage()->exists(FileUploadConfiguration::path($filename, false))) {
+            return null;
+        }
+
+        return TemporaryUploadedFile::createFromLivewire($filename);
     }
 
     public function uploadFailed($id)

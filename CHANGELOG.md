@@ -5,6 +5,21 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.4] - 2026-09-10
+
+### Fixed
+
+- **An upload in the filemanager no longer crashes when Livewire hands the file back
+  as a string.** `uploadDone` expects `uploads[$id]['file']` to be a
+  `TemporaryUploadedFile`, but when the client resends `uploads[$id]` as a whole (the
+  Livewire JS diff does that as soon as the key order differs, which progress updates
+  racing the upload can cause) the synth meta is lost and the file arrives as the bare
+  `livewire-file:<name>` string, and `getSize()` on it threw a 500. The reference is
+  now turned back into the temporary upload it names, but only when it is a plain
+  filename that exists in the temporary upload directory, and only after Livewire's
+  HMAC check on the signed form Livewire 4.4 sends; anything else is reported as a
+  failed upload instead of crashing. Seen as SEDATE-39.
+
 ## [1.17.3] — 2026-09-10
 
 ### Fixed
