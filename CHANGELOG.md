@@ -5,6 +5,25 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.6] - 2026-09-21
+
+### Fixed
+
+- **A tag between two words no longer welds them together in the reading time.**
+  `strip_tags()` takes the tag out and puts nothing in its place, so an address written
+  as `Vrijheidscolleges<br>Vlampijpstraat 84` counted as one word. Tags now become a
+  space, script and style blocks are dropped contents and all (`strip_tags()` keeps what
+  is inside them, and nobody reads a line of JavaScript), and the no-break space
+  `&nbsp;` decodes to is turned into an ordinary one before the words are counted.
+- **A quote section now counts towards the reading time.** The fields behind
+  `wordCount()` were `intro`, `head`, `body` and `text` for the model and its sections
+  alike, so a page built out of quotes read as empty. Section text is taken from the new
+  `readingTimeSectionFields()`, which adds `quote`, `name` and `description`; the model's
+  own columns keep the narrow list, because a `name` column on the model is a title the
+  layout prints once rather than part of the article.
+
+  Both fixes make reading times a little higher on pages that were undercounted.
+
 ## [1.17.5] - 2026-09-21
 
 ### Fixed

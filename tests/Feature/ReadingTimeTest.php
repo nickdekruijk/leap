@@ -233,4 +233,44 @@ class ReadingTimeTest extends TestCase
 
         $this->assertSame(2, $model->readingTime());
     }
+
+    /**
+     * strip_tags() takes the tag out and puts nothing in its place, so an address
+     * written with line breaks used to count as one long word.
+     */
+    public function test_a_tag_between_two_words_is_a_word_boundary(): void
+    {
+        $model = ReadingTimeModel::create([
+            'sections' => [['_name' => 'text', '_sort' => 1, 'body' => ['nl' => '<p>Stichting Vrijheidscolleges<br />Vlampijpstraat 84</p><p>Utrecht</p>']]],
+        ]);
+
+        $this->assertSame(5, $model->wordCount());
+    }
+
+    /**
+     * strip_tags() keeps what is inside a script tag, so an embed pasted into the
+     * content added its JavaScript to the reading time.
+     */
+    public function test_a_script_block_is_not_read(): void
+    {
+        $model = ReadingTimeModel::create([
+            'sections' => [['_name' => 'text', '_sort' => 1, 'body' => ['nl' => '<p>Aanmelden</p><script>var x = "gratis brochure";</script>']]],
+        ]);
+
+        $this->assertSame(1, $model->wordCount());
+    }
+
+    /**
+     * A quote is read off the page like any other line. The old field list stopped at
+     * intro, head, body and text, so a page built out of quotes read as empty.
+     */
+    public function test_it_counts_a_quote_and_the_name_under_it(): void
+    {
+        $model = ReadingTimeModel::create([
+            'sections' => [['_name' => 'quote', '_sort' => 1, 'quote' => ['nl' => $this->words(200)], 'name' => ['nl' => 'Iemand']]],
+        ]);
+
+        $this->assertSame(201, $model->wordCount());
+        $this->assertSame(1, $model->readingTime());
+    }
 }

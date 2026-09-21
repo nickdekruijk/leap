@@ -72,7 +72,7 @@ trait HasReadingTime
                 continue;
             }
 
-            foreach ($this->readingTimeFields() as $field) {
+            foreach ($this->readingTimeSectionFields() as $field) {
                 // Leap::localize() is the exact rule HasSections uses to bring a field to
                 // the view, including its fall back to the first translation. Using it here
                 // keeps the count equal to what the visitor sees, multilingual and
@@ -86,22 +86,56 @@ trait HasReadingTime
             }
         }
 
-        // Tags out, then entities, then tags again, or "&nbsp;" would be counted as a word
-        // and "caf&eacute;" as two. Words are runs of letters and digits, which keeps the
-        // count the same in Dutch and English and does not turn an em-rule into a word.
-        return preg_match_all('/[\p{L}\p{N}]+/u', strip_tags(html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5)));
+        // Words are runs of letters and digits, which keeps the count the same in Dutch
+        // and English and does not turn an em-rule into a word.
+        return preg_match_all('/[\p{L}\p{N}]+/u', $this->readingTimePlainText($text));
     }
 
     /**
-     * The fields that hold text, both on the model itself and in each section. These are
-     * this package's own section conventions (head/body); a model that names them
-     * differently overrides this method.
+     * The fields that hold text on the model itself. A model that names them differently
+     * overrides this method.
      *
      * @return array<int, string>
      */
     protected function readingTimeFields(): array
     {
         return ['intro', 'head', 'body', 'text'];
+    }
+
+    /**
+     * The fields that hold text inside a section. A wider list than the model's own: a
+     * quote and the name under it are read off the page like any other line, while a
+     * column called name on the model itself is a title the layout prints once, not part
+     * of the article.
+     *
+     * @return array<int, string>
+     */
+    protected function readingTimeSectionFields(): array
+    {
+        return ['intro', 'head', 'body', 'text', 'quote', 'name', 'description'];
+    }
+
+    /**
+     * The words inside the collected HTML.
+     *
+     * Tags become a space rather than nothing, because strip_tags() alone glues the
+     * words on either side of a <br> into one, and an address written as
+     * "Vrijheidscolleges<br>Vlampijpstraat 84" then counts as a single word. Script and
+     * style blocks go first, contents and all, since strip_tags() keeps what is inside
+     * them and nobody reads a line of JavaScript.
+     *
+     * Then entities, then tags again, or "&nbsp;" counts as the word "nbsp" and
+     * "caf&eacute;" as two. The no-break space an entity decodes to is a space to a
+     * reader but not to \s, so it is turned into one.
+     */
+    private function readingTimePlainText(string $html): string
+    {
+        $text = preg_replace('#<(script|style)\b[^>]*>.*?</\1\s*>#is', ' ', $html);
+
+        $text = html_entity_decode(strip_tags(str_replace('<', ' <', $text)), ENT_QUOTES | ENT_HTML5);
+        $text = strip_tags(str_replace('<', ' <', $text));
+
+        return trim(preg_replace('/\s+/u', ' ', str_replace("\u{a0}", ' ', $text)));
     }
 
     /**
