@@ -5,6 +5,24 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.5] - 2026-09-21
+
+### Fixed
+
+- **Picking the empty option above the section list no longer takes the editor down.**
+  The select opens on a placeholder with an empty value, and `wire:model.live` sends
+  that value like any other, so `addSection()` looked up a section named `''`, found
+  nothing and read `->attributes` on null. It now resets the field and leaves the data
+  alone, which also covers a section name the module no longer declares, as a stale
+  browser tab still offers. Seen as VRIJHEIDSCOLLEGES-1A.
+- **A `json()` field inside a section no longer throws "Undefined variable $value".**
+  `sections.blade.php` passed the attribute alone while `editor.blade.php` passes the
+  stored value too, and a Blade prop declared without a default is undefined rather
+  than null when it is not passed, so the json component broke on the first section
+  that had one. Sections now pass the value the same way, with a translatable field
+  resolved to the locale being edited and a data array such as a json field's handed
+  over whole.
+
 ## [1.17.4] - 2026-09-10
 
 ### Fixed

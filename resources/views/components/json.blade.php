@@ -1,4 +1,4 @@
-@props(['attribute', 'placeholder', 'name', 'value'])
+@props(['attribute', 'placeholder' => null, 'name' => null, 'value' => null])
 
 <x-leap::label>
     @if (is_array($value))

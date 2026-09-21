@@ -28,7 +28,7 @@
                     <fieldset class="leap-fieldset">
                         @if ($section)
                             @foreach ($section->attributes as $sectionAttribute)
-                                <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'], $section)" :placeholder="$placeholder" />
+                                <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'], $section)" :placeholder="$placeholder" :value="$this->sectionValue($sectionContent, $sectionAttribute)" />
                             @endforeach
                         @else
                             {{-- No section definition matches _name: the section was renamed or removed

@@ -1047,6 +1047,16 @@ class Editor extends Component
         $field = substr($field, 0, -4);
         $attribute = $this->attributes()->where('name', substr($field, 5))->first();
 
+        // The select opens on an empty placeholder option, so picking that one (or
+        // a section name the module no longer declares) arrives here with nothing
+        // to add. Reset the field and leave the data untouched.
+        $sectionDefinition = $attribute ? collect($attribute->sections)->where('name', $name)->first() : null;
+        if (! $sectionDefinition) {
+            $this->data[substr($field, 5).':add'] = null;
+
+            return;
+        }
+
         // Determine the highest sort value currently in use
         $sort = 0;
         foreach ($this->data[$attribute->name] ?? [] as $section) {
@@ -1062,7 +1072,7 @@ class Editor extends Component
         ];
 
         // Add default values
-        foreach (collect(collect($attribute->sections)->where('name', $name)->first()->attributes)->where('default') as $default) {
+        foreach (collect($sectionDefinition->attributes)->where('default') as $default) {
             $data[$default->name] = $default->default;
         }
 
@@ -1079,6 +1089,25 @@ class Editor extends Component
      * @param  Section|null  $section  The section this field belongs to, needed to resolve
      *                                 a showIf() trigger to a sibling field
      */
+    /**
+     * The stored value of one section field, for the input to render.
+     *
+     * The counterpart of what editor.blade.php does for a top level field: a
+     * translatable one is stored per locale and the input wants the one being edited.
+     *
+     * @param  array<string, mixed>  $sectionContent  The section block as it is stored
+     */
+    public function sectionValue(array $sectionContent, Attribute $sectionAttribute): mixed
+    {
+        $value = $sectionContent[$sectionAttribute->name] ?? null;
+
+        if (is_array($value) && $sectionAttribute->translatable && $this->editorLocales()) {
+            return $value[$this->activeLocale ?: $this->defaultLocale()] ?? null;
+        }
+
+        return $value;
+    }
+
     public function sectionAttribute(Attribute $sectionAttribute, string $name, int $index, $sectionName, ?Section $section = null): Attribute
     {
         $newAttribute = clone $sectionAttribute;
