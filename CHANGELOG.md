@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.7] - 2026-09-25
+
+### Fixed
+
+- **A treeview index is one query again, not one per row.** The index renders every
+  level by asking `indexRows()` for the children of each row it shows, and each of those
+  asks ran a query of its own, so a site with forty pages opened its page index with
+  forty-one. `indexRows()` now fetches the whole tree once, groups it by parent and hands
+  it out from there for the rest of the request. Order, search and filters come out the
+  same. Seen as PHAFF-3D.
+- **The CSV export of a treeview resource includes its subpages.** `downloadCSVfile()`
+  called `rows()` without a parent, which in a treeview means the root rows only, so
+  every page below the top level was missing from the file. The same went for the
+  values a filter offers, which now come from every level too. `rows()` takes a new
+  `wholeTree` argument for this, off by default.
+
 ## [1.17.6] - 2026-09-21
 
 ### Fixed

@@ -155,7 +155,7 @@ class Resource extends Module
             return array_filter($attribute->getValues(), fn ($id) => in_array($id, $used), ARRAY_FILTER_USE_KEY);
         }
 
-        return $this->rows(index: true, filtered: false)->pluck($attribute->name, $attribute->name)->unique()->toArray();
+        return $this->rows(index: true, filtered: false, wholeTree: true)->pluck($attribute->name, $attribute->name)->unique()->toArray();
     }
 
     /**
@@ -208,6 +208,16 @@ class Resource extends Module
      * @var array<string, bool>
      */
     protected array $indexGroupableCache = [];
+
+    /**
+     * Memoised treeview index rows, grouped by parent id with the root rows under ''.
+     * The index renders every level by asking indexRows() for the children of each
+     * row, which was one query per row; now the whole tree is one query. Protected,
+     * so Livewire neither persists nor restores it and it lives for one request.
+     *
+     * @var Collection<string, Collection>|null
+     */
+    protected ?Collection $indexRowsByParent = null;
 
     /**
      * Whether the current ordering groups into letters at all.
@@ -817,7 +827,13 @@ class Resource extends Module
      */
     public function indexRows(?int $parent_id = null): Collection
     {
-        return $this->rows($parent_id, true);
+        if (! $this->treeview()) {
+            return $this->rows($parent_id, true);
+        }
+
+        $this->indexRowsByParent ??= $this->rows(index: true, wholeTree: true)->groupBy($this->treeview()->name);
+
+        return $this->indexRowsByParent->get($parent_id ?? '', new Collection);
     }
 
     /**
@@ -826,12 +842,13 @@ class Resource extends Module
      * @param  int|null  $parent_id  The parent id for the treeview
      * @param  bool  $index  Only return index attributes
      * @param  bool  $filtered  Apply filters if true
+     * @param  bool  $wholeTree  Return the rows of every parent in a treeview, ignoring $parent_id
      */
-    public function rows(?int $parent_id = null, bool $index = false, bool $filtered = true): Collection
+    public function rows(?int $parent_id = null, bool $index = false, bool $filtered = true, bool $wholeTree = false): Collection
     {
         $data = $this->getModel();
 
-        if ($this->treeview()) {
+        if ($this->treeview() && ! $wholeTree) {
             $data = $data->where($this->treeview()->name, $parent_id);
         }
 
@@ -984,7 +1001,7 @@ class Resource extends Module
     {
         $data = [];
         $keys = [];
-        foreach ($this->rows()->toArray() as $row) {
+        foreach ($this->rows(wholeTree: true)->toArray() as $row) {
             $line = [];
             foreach ($this->allAttributes() as $attribute) {
                 if (is_array($row[$attribute->name] ?? null)) {
