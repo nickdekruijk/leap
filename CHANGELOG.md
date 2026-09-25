@@ -5,6 +5,20 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.8] - 2026-09-25
+
+### Fixed
+
+- **An image stored without an extension is served as it is, not as a 404.** A copy's
+  address carries the original's extension and `ImageController` reads the original back
+  from it, so `photo` became `photo-a1b2c3d4.webp`, which reads back as `photo.webp`: a
+  file that is not there. Whether a Media row was resizable was decided by its mime type
+  alone, so leap wrote those addresses anyway. `ImageUrl::isResizable()` now also asks
+  for a bitmap extension on the file name, the same test the controller makes, and such
+  an image gets the URL of the original. `leap:images --warm` and eager generation skip
+  it for the same reason, instead of making copies nothing can ask for. Renaming the file
+  in the file manager to give it an extension brings the resized copies back.
+
 ## [1.17.7] - 2026-09-25
 
 ### Fixed

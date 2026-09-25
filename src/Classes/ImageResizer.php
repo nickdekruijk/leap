@@ -281,7 +281,7 @@ class ImageResizer
         $storage = self::sourceDisk();
         $hash = ImageUrl::hash($media);
 
-        if (! $hash || ! $media->isBitmap() || ! $storage->exists($media->file_name)) {
+        if (! $hash || ! ImageUrl::isResizable($media) || ! $storage->exists($media->file_name)) {
             return $result;
         }
 

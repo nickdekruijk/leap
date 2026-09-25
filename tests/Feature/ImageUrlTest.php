@@ -66,6 +66,24 @@ class ImageUrlTest extends ImageTestCase
         $this->assertSame('', $media->srcset([600, 1200]));
     }
 
+    /**
+     * The copy's address carries the original's extension, and the controller
+     * reads the original back from it. Without one, photo-a1b2c3d4.webp read back
+     * as photo.webp and every such image on the page was a 404, so an original
+     * stored without an extension is served as it is.
+     */
+    public function test_an_original_without_an_extension_is_not_resized(): void
+    {
+        $this->fakeDisks();
+        Storage::disk('public')->put('photos/pic', $this->jpegBytes(2000, 1000));
+        $media = Media::forFile('photos/pic');
+
+        $this->assertTrue($media->isBitmap());
+        $this->assertStringNotContainsString('/img/', $media->url(1200));
+        $this->assertStringContainsString('photos/pic', $media->url(1200));
+        $this->assertSame('', $media->srcset([600, 1200]));
+    }
+
     public function test_an_unknown_preset_falls_back_to_the_original(): void
     {
         $media = $this->media();

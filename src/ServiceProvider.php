@@ -17,6 +17,7 @@ use Laravel\Passkeys\Events\PasskeyVerified;
 use Laravel\Passkeys\Passkeys;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\ImageResizer;
+use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Classes\NotFoundLog;
 use NickDeKruijk\Leap\Classes\NotFounds;
 use NickDeKruijk\Leap\Classes\Redirects;
@@ -142,7 +143,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 // row, so this one listener covers uploads, crops, AI images and
                 // anything an application adds later.
                 Media::saved(function (Media $media): void {
-                    if ($media->isBitmap() && $media->sha256) {
+                    if (ImageUrl::isResizable($media) && $media->sha256) {
                         GenerateImageDerivatives::dispatch($media->id, $media->sha256);
                     }
                 });

@@ -201,11 +201,17 @@ class ImageUrl
     /**
      * Whether this is a bitmap leap can resize. SVG is not — it is vector, it
      * scales by itself, and rasterising it would be a downgrade.
+     *
+     * A Media row also needs a bitmap extension on its file name, not only a
+     * bitmap mime type. The copy's address carries the original's extension and
+     * ImageController reads it back from there, so an original stored without one
+     * got an address the controller could not answer: photo-a1b2c3d4.webp reads
+     * back as photo.webp, which is not the file. Those get the original instead.
      */
     public static function isResizable(Media|string|null $file): bool
     {
-        if ($file instanceof Media) {
-            return $file->isBitmap();
+        if ($file instanceof Media && ! $file->isBitmap()) {
+            return false;
         }
 
         $path = self::path($file);
