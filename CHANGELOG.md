@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.9] - 2026-09-25
+
+### Fixed
+
+- **The file manager shows files in a folder with a space in its name again.** It
+  previews every image through its download route with a path it percent-encodes
+  itself, and since Laravel 12.69.2 and 13.x `route()` escapes the `%` in a parameter
+  too (laravel/framework#61475). The path was encoded twice, a space arrived as `%2520`,
+  and every such file was a 404: the thumbnails, the preview and the download. Laravel
+  13 added `EncodedParameter` to opt out, 12 did not get it, so the route is now built
+  around a placeholder no version encodes and the encoded path goes in afterwards.
+
 ## [1.17.8] - 2026-09-25
 
 ### Fixed
