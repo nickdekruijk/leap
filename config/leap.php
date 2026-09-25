@@ -712,24 +712,20 @@ return [
     | robots
     |--------------------------------------------------------------------------
     |
-    | /robots.txt, rendered by leap rather than served from public/. The one line
-    | it is really for is Sitemap:, and that has to be an absolute URL. A file in
-    | git would have to hard-code one host and be wrong on every other
-    | environment.
-    |
-    | It has one failure mode and it is silent: a file in public/robots.txt is
-    | answered by the web server without PHP being asked anything, so the route
-    | never runs and nothing says so. Delete that file. `php artisan leap:robots`
-    | prints what a crawler gets and reports it when something is in the way.
+    | php artisan optimize writes public/robots.txt from these settings. Put
+    | /public/robots.txt in .gitignore: the one line it is really for is
+    | Sitemap:, an absolute URL that differs per environment. A hand-written file
+    | there is left alone. `php artisan leap:robots` prints what a crawler gets
+    | and reports it when something is in the way.
     |
     | Publish resources/views/vendor/leap/robots.blade.php (tag: leap-views) to
-    | write the file by hand instead.
+    | change what is written.
     |
     */
     'robots' => [
 
-        // Master switch. false = no route, and the site answers whatever is in
-        // public/, or a 404.
+        // Master switch. false = optimize writes nothing and removes a file it
+        // wrote earlier; /robots.txt is then whatever public/ has, or a 404.
         'enabled' => true,
 
         // Everything out of the crawl, and no Sitemap line. On by default

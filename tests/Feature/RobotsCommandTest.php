@@ -4,14 +4,15 @@ namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use NickDeKruijk\Leap\Classes\RobotsFile;
 use NickDeKruijk\Leap\Tests\TestCase;
 use Symfony\Component\Console\Command\Command;
 
 /**
- * leap:robots exists for the two ways this feature fails without a word: a file in
- * public/ that the web server answers before PHP is reached, and a whole site
- * disallowed because APP_ENV is not what somebody thought it was. Neither shows up in
- * a test suite, a log or an error page, so something has to go looking.
+ * leap:robots exists for the ways this feature fails without a word: a hand-written file
+ * in public/ that leap leaves alone, a deploy that never writes leap's, and a whole site
+ * disallowed because APP_ENV is not what somebody thought it was. None of them shows up
+ * in a test suite, a log or an error page, so something has to go looking.
  */
 class RobotsCommandTest extends TestCase
 {
@@ -20,6 +21,13 @@ class RobotsCommandTest extends TestCase
         parent::defineEnvironment($app);
 
         $app['config']->set('leap.robots.disallow_all', false);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        File::ensureDirectoryExists(public_path());
     }
 
     protected function tearDown(): void
@@ -36,27 +44,46 @@ class RobotsCommandTest extends TestCase
             ->assertSuccessful();
     }
 
-    public function test_a_file_in_public_shadows_the_route_and_fails_the_check(): void
+    public function test_a_hand_written_file_fails_the_check(): void
     {
-        File::ensureDirectoryExists(public_path());
-        File::put(public_path('robots.txt'), "User-agent: *\n");
+        File::put(public_path('robots.txt'), "User-agent: *\nDisallow: /private\n");
 
         $this->artisan('leap:robots --check')
-            ->expectsOutputToContain('shadows the route')
+            ->expectsOutputToContain('is in the way')
             ->assertExitCode(Command::FAILURE);
     }
 
     /**
-     * One of the two never runs. Only a command can see that there are two: when leap's
-     * route is registered the project's routes are not loaded yet.
+     * Said and not failed on: --check may run in a deploy before optimize has.
      */
-    public function test_a_second_route_on_the_same_address_fails_the_check(): void
+    public function test_no_file_yet_is_reported_but_passes(): void
+    {
+        $this->artisan('leap:robots --check')
+            ->expectsOutputToContain('not leap\'s yet')
+            ->assertSuccessful();
+    }
+
+    public function test_the_skeleton_file_is_reported_but_passes(): void
+    {
+        File::put(public_path('robots.txt'), "User-agent: *\nDisallow:\n");
+
+        $this->artisan('leap:robots --check')
+            ->expectsOutputToContain('not leap\'s yet')
+            ->assertSuccessful();
+    }
+
+    /**
+     * The project answers robots.txt itself and leap stays out of the way, which is
+     * worth saying but not broken.
+     */
+    public function test_a_route_of_the_projects_own_is_reported_but_passes(): void
     {
         Route::get('robots.txt', fn () => 'mine')->name('site.robots');
 
         $this->artisan('leap:robots --check')
             ->expectsOutputToContain('site.robots')
-            ->assertExitCode(Command::FAILURE);
+            ->doesntExpectOutputToContain('not leap\'s yet')
+            ->assertSuccessful();
     }
 
     /**
@@ -97,6 +124,7 @@ class RobotsCommandTest extends TestCase
     public function test_it_says_so_when_nothing_is_wrong(): void
     {
         Route::get('sitemap.xml', fn () => 'xml')->name('sitemap');
+        File::put(public_path('robots.txt'), RobotsFile::render());
 
         $this->artisan('leap:robots --check')
             ->expectsOutputToContain('nothing is in the way')
@@ -104,16 +132,6 @@ class RobotsCommandTest extends TestCase
 
         $this->artisan('leap:robots')
             ->expectsOutputToContain('Sitemap: '.route('sitemap'))
-            ->assertSuccessful();
-    }
-
-    public function test_the_feature_being_off_is_reported_rather_than_rendered(): void
-    {
-        config()->set('leap.robots.enabled', false);
-
-        $this->artisan('leap:robots')
-            ->expectsOutputToContain('leap.robots.enabled is false')
-            ->doesntExpectOutputToContain('GPTBot')
             ->assertSuccessful();
     }
 }

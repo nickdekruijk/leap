@@ -52,12 +52,25 @@ The panel is served under the `leap.route_prefix` prefix (default `admin`), e.g.
 `https://your-app.test/admin`. Create a user and assign a role from the **Roles**
 module, or use `php artisan leap:user` (below) to create one from the command line.
 
+## Deploying
+
+Run `php artisan optimize` in the deploy script (most already do). Besides caching config
+and routes, it writes `public/robots.txt` for leap, so add that file to `.gitignore`:
+
+```gitignore
+/public/robots.txt
+```
+
+See [robots.txt](template.md#robotstxt).
+
 ## Artisan commands
 
 | Command | What it does |
 |---|---|
 | `php artisan leap:user {username?} {name?} {--role[=NAME]}` | Create or update a user. Prompts for whatever isn't passed as an argument (the username column defaults to `email`, per `leap.credentials`). Leave the password prompt blank to get a random one printed to the console. Updating an existing user only touches the name/password you provide. If the user has no role yet, it offers to attach the first available one; `--role` attaches one without asking (bare for the first role, or `--role=superuser` / `--role=1` by name or id), which is what a scripted or `--no-interaction` run needs — without a role the panel 403s. |
 | `php artisan leap:module <Model>` | Generate (or update) an `App\Leap\<Model>` resource from an Eloquent model's schema — field types, required/unique, labels, icon and more, auto-detected. See [modules-and-resources.md](modules-and-resources.md#generating-a-resource-leapmodule). |
+| `php artisan leap:robots {--check}` | Print the `robots.txt` leap writes and report what is in the way of it. `--check` prints only problems and fails on them, for a deploy. See [template.md](template.md#robotstxt). |
+| `php artisan leap:robots-write` | Write `public/robots.txt`. `php artisan optimize` runs it. |
 
 Run any command with `--help` for its full list of arguments and options.
 

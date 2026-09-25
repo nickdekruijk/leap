@@ -3,6 +3,46 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.18, robots.txt is a file that optimize writes
+
+Leap served `/robots.txt` from a route. Behind the nginx config Forge, Herd and Valet
+ship, that route went out with a 404, which a crawler reads as "everything allowed":
+`disallow_all` outside production, the `disallow` paths and the `Sitemap:` line counted
+for nothing. The route is gone. `php artisan optimize` now writes `public/robots.txt`,
+which the web server serves with a 200 whatever its config.
+
+Per project, **in the same commit as the upgrade**:
+
+```bash
+echo "/public/robots.txt" >> .gitignore
+git rm --cached public/robots.txt    # only if the skeleton's file is still in git
+```
+
+The same commit, because on a server without zero-downtime deploys leap overwrites a
+tracked file in place, and a later commit that removes it then stops `git pull` on the
+local change.
+
+A deploy script that runs `optimize` needs nothing else. One that does not gets
+`php artisan leap:robots-write`. Until either has run, `/robots.txt` is a 404; on a
+default Forge site it already was.
+
+A site without a file goes from a 404 to leap's text, and a site with Laravel's skeleton
+file goes from "allow everything, no sitemap" to leap's text. That is the point, but
+check it once after the deploy:
+
+```bash
+curl -i https://example.com/robots.txt
+```
+
+It should be a 200, `Disallow:` with nothing after it on production, and a `Sitemap:`
+line on the site's own address. The file is written from the console, so that address
+comes from `APP_URL`, and a production `APP_ENV` that is not `production` now closes the
+site to crawlers for real. A hand-written `public/robots.txt` is left alone, and
+`php artisan leap:robots --check` fails on it.
+
+Nothing referred to the route `leap.robots` or `RobotsController` outside leap; if a
+project did, render `view('leap::robots')` instead.
+
 ## 1.17 — a slug is checked for shape
 
 Lowercase letters, digits and single hyphens between them; an accent is allowed, an

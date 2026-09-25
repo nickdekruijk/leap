@@ -5,6 +5,36 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-09-25
+
+### Fixed
+
+- **`/robots.txt` answers with a 200 on Forge, Herd and Valet.** Their nginx config has an
+  exact `location = /robots.txt` that only looks for a file, and `error_page 404 /index.php`
+  without `=`. Without a file in `public/`, nginx handed the request to PHP, let Laravel
+  render leap's text and sent it out with the 404 it had already decided on. A crawler
+  reads a 404 on robots.txt as "everything allowed", so `disallow_all` outside production,
+  the `disallow` paths and the `Sitemap:` line silently counted for nothing. PHP cannot
+  change that status, so leap now writes a file instead. Seen on vrijheidscolleges.nl.
+
+### Changed
+
+- **robots.txt is a file that `php artisan optimize` writes.** The new `leap:robots-write`
+  renders the same view and config into `public/robots.txt` and is registered with
+  Laravel's `optimizes()`, so a deploy script that runs `optimize` needs no change. The
+  first line marks the file as leap's. Only that file, a missing one or the one Laravel's
+  skeleton ships is overwritten; a hand-written `robots.txt` is left alone, and a project
+  with a route of its own on `/robots.txt` gets no file, so that route keeps answering. Put
+  `/public/robots.txt` in `.gitignore`; see [upgrading.md](docs/upgrading.md).
+- **`leap:robots` checks the file instead of the route.** A hand-written file fails
+  `--check`; a missing or skeleton file is a notice to run `optimize`, and so is a route
+  of the project's own on `/robots.txt`, which leap now leaves to answer.
+
+### Removed
+
+- **The `leap.robots` route and `RobotsController`.** On the default Forge setup the route
+  never got through with a 200, and with the file in place it would never run.
+
 ## [1.17.9] - 2026-09-25
 
 ### Fixed

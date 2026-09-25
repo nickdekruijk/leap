@@ -25,6 +25,7 @@ use NickDeKruijk\Leap\Commands\ImageCommand;
 use NickDeKruijk\Leap\Commands\MediaCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\RobotsCommand;
+use NickDeKruijk\Leap\Commands\RobotsWriteCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
 use NickDeKruijk\Leap\Jobs\GenerateImageDerivatives;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
@@ -98,15 +99,6 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->registerRedirects();
 
         $this->registerNotFoundLog();
-
-        // At the root of the site, and before the frontend's own routes: a package
-        // provider boots ahead of the one that loads routes/web.php, so a catch-all
-        // there cannot swallow /robots.txt, which is matched first. A route on that
-        // exact address is another matter: a route collection is keyed on method plus
-        // URI, so the project's replaces this one outright. leap:robots reports that.
-        if (config('leap.robots.enabled')) {
-            $this->loadRoutesFrom(__DIR__.'/../routes/robots.php');
-        }
 
         // Public, unauthenticated, and outside the panel prefix: this is the
         // fallback that generates a resized copy the web server just failed to
@@ -202,8 +194,14 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 MediaCommand::class,
                 ModuleCommand::class,
                 RobotsCommand::class,
+                RobotsWriteCommand::class,
                 UserCommand::class,
             ]);
+
+            // php artisan optimize writes public/robots.txt (see RobotsFile). No clear
+            // command on purpose: optimize:clear on a server would leave the site
+            // without one until the next deploy.
+            $this->optimizes(optimize: 'leap:robots-write', key: 'leap-robots');
         }
 
         Gate::define('leap::create', function ($user, ?Module $module = null) {

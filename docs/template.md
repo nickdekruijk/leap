@@ -271,37 +271,52 @@ page-tree-only sitemap, so existing sites are unaffected.
 
 ### robots.txt
 
-Leap serves `/robots.txt` itself, from `resources/views/robots.blade.php` in the package
-(route `leap.robots`), because the line the file is really there for is the absolute URL
-of the sitemap and that address differs per environment. A file in git would have to
-hard-code one host and be wrong on the others.
+`php artisan optimize` writes `public/robots.txt` from `config('leap.robots')` and
+`resources/views/robots.blade.php` in the package. Not a file in git, because the line
+it is really there for is the absolute URL of the sitemap, and that address differs per
+environment. A file, because a web server serves a file with a 200 whatever its config
+does with PHP.
 
-It says what `config('leap.robots')` says:
+So a deploy script that runs `optimize` needs nothing more, and the file belongs in
+`.gitignore`:
+
+```gitignore
+/public/robots.txt
+```
+
+A deploy that does not run `optimize` runs `php artisan leap:robots-write` instead. The
+file's first line marks it as leap's. Only that file, a missing one, or the
+`User-agent: *` / `Disallow:` file Laravel's skeleton ships is ever overwritten; a
+`robots.txt` written by hand is left alone. So is a project with a route of its own on
+`/robots.txt`: a file would be served before PHP is reached and that route would never
+run, so leap writes none.
+
+It says what the config says:
 
 | Key | Default | What it does |
 | --- | --- | --- |
-| `enabled` | `true` | `false` registers no route: `/robots.txt` is then whatever `public/` holds, or a 404. |
+| `enabled` | `true` | `false`: `optimize` writes nothing and removes a file it wrote earlier. `/robots.txt` is then whatever `public/` holds, or a 404. |
 | `disallow_all` | `APP_ENV !== 'production'` | `Disallow: /` and no `Sitemap:` line. Override with `LEAP_ROBOTS_DISALLOW_ALL`. |
 | `disallow` | `[]` | Paths kept out of the crawl. Repeated in every group. |
 | `sitemap` | `'sitemap'` | A route name, a literal URL, or `false`. A name nothing answers to leaves the line out rather than pointing at a 404. |
 | `ai_crawlers` | `'allow'` | The crawlers behind the answer engines, named in a group of their own. `'disallow'` keeps them out, `'omit'` leaves the group out. |
 
-Three things about this go wrong without a word, which is what `php artisan leap:robots`
-is for. It prints what a crawler gets and reports all of them:
+A few things about this go wrong without a word, which is what `php artisan leap:robots`
+is for. It prints what a crawler gets and reports these:
 
-- **A file at `public/robots.txt` wins.** The web server answers it before PHP is
-  reached, so the route runs in your test suite and never in production. Laravel's
-  skeleton ships one; delete it.
-- **A route of your own on that address replaces leap's.** Not the way a catch-all
-  would: `/robots.txt` is matched before `{any}`, but a route collection is keyed on
-  method plus URI, so an identical address overwrites what was there and the project's
-  route is the one that answers. Nothing breaks, but only one of the two ever runs.
-  Remove one, or set `enabled` to `false`.
+- **A hand-written `public/robots.txt`.** Leap leaves it alone, so nothing it renders is
+  served. Delete it and run `optimize`.
+- **No file of leap's yet.** Said, not failed on, because `--check` may run in a deploy
+  before `optimize` has. If it stays that way, the deploy does not run `optimize`.
+- **A route of your own on `/robots.txt`.** Leap then writes no file and your route
+  answers. Set `enabled` to `false` to say that is what you meant.
 - **`disallow_all` is on outside production.** A staging copy is the same site to a
   crawler and gets picked as the canonical one often enough to matter, so it defaults to
   closed. The other side of that: an `APP_ENV` that is not quite `production` takes the
-  live site out of the index, silently. `leap:robots --check` fails on that, on a file
-  in `public/` and on a second route, and is meant for a deploy.
+  live site out of the index, silently.
+
+`leap:robots --check` fails on a hand-written file and on a production site that
+disallows everything, and is meant for a deploy.
 
 Note what `Disallow` does and does not do: it forbids crawling, not indexing. A URL that
 is linked to somewhere can still be listed without a snippet, and a crawler that may not
@@ -309,7 +324,7 @@ fetch the page never sees an `X-Robots-Tag: noindex` either. To get a staging UR
 out of an index, allow crawling and send that header. To keep people out, use HTTP auth
 in the web server.
 
-Publish the view to write the file by hand instead:
+Publish the view to change what leap writes:
 
 ```bash
 php artisan vendor:publish --provider="NickDeKruijk\Leap\ServiceProvider" --tag=leap-views
