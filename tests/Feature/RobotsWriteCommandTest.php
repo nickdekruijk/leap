@@ -2,6 +2,8 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Routing\Route as RoutingRoute;
+use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -32,7 +34,7 @@ class RobotsWriteCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::delete(public_path('robots.txt'));
+        File::delete([public_path('robots.txt'), $this->app->getCachedRoutesPath(), $this->app->getCachedConfigPath()]);
 
         parent::tearDown();
     }
@@ -106,6 +108,38 @@ class RobotsWriteCommandTest extends TestCase
         File::put(public_path('robots.txt'), RobotsFile::render());
         $this->artisan('leap:robots-write')->assertSuccessful();
         $this->assertFileDoesNotExist(public_path('robots.txt'));
+    }
+
+    /**
+     * Under optimize the process booted from the previous deploy's route cache, which
+     * after an upgrade from 1.17 still held leap's own route on /robots.txt. route:cache
+     * has just written the new one, and that is the one that counts.
+     */
+    public function test_under_optimize_it_reads_the_route_cache_that_was_just_written(): void
+    {
+        Route::get('robots.txt', fn () => 'old')->name('leap.robots');
+
+        $fresh = new RouteCollection;
+        $fresh->add(new RoutingRoute(['GET', 'HEAD'], 'sitemap.xml', ['uses' => 'SitemapController@index', 'as' => 'sitemap']));
+        File::put($this->app->getCachedRoutesPath(), "<?php\n\napp('router')->setCompiledRoutes(".var_export($fresh->compile(), true).');');
+
+        $this->artisan('leap:robots-write')->assertSuccessful();
+
+        $this->assertStringContainsString('Sitemap: '.url('sitemap.xml')."\n", File::get(public_path('robots.txt')));
+    }
+
+    /**
+     * The same for config:cache: a change to leap.robots goes out with the deploy that
+     * brings it, not with the one after.
+     */
+    public function test_under_optimize_it_reads_the_config_cache_that_was_just_written(): void
+    {
+        $robots = array_merge(config('leap.robots'), ['disallow' => ['/fresh']]);
+        File::put($this->app->getCachedConfigPath(), '<?php return '.var_export(['leap' => ['robots' => $robots]], true).';');
+
+        $this->artisan('leap:robots-write')->assertSuccessful();
+
+        $this->assertStringContainsString("Disallow: /fresh\n", File::get(public_path('robots.txt')));
     }
 
     /**

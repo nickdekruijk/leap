@@ -33,6 +33,8 @@ class RobotsWriteCommand extends Command
                 return self::SUCCESS;
             }
 
+            $this->readFreshCaches();
+
             // See leap:robots: without this every named route is invisible from the
             // console, and the Sitemap line would be left out.
             Route::getRoutes()->refreshNameLookups();
@@ -60,5 +62,34 @@ class RobotsWriteCommand extends Command
         $this->components->info('Written '.RobotsFile::path().'.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Read the route and config caches again, when there are any.
+     *
+     * Under optimize this command runs in the process that booted from the caches of
+     * the previous deploy. route:cache and config:cache have just written new ones in
+     * that same run, but the router and the config in memory are still the old ones.
+     * On the first deploy after upgrading from 1.17, that old router still had leap's
+     * own route on /robots.txt, so no file was written and the address stayed a 404
+     * until the next deploy; a sitemap route added in the same deploy was missing
+     * from the Sitemap line the same way.
+     *
+     * The files themselves are asked, not routesAreCached() or configurationIsCached():
+     * those remember what was there when the process booted.
+     */
+    protected function readFreshCaches(): void
+    {
+        if (is_file($routes = $this->laravel->getCachedRoutesPath())) {
+            require $routes;
+        }
+
+        if (is_file($configPath = $this->laravel->getCachedConfigPath())) {
+            $config = require $configPath;
+
+            if (isset($config['leap']['robots'])) {
+                config(['leap.robots' => $config['leap']['robots']]);
+            }
+        }
     }
 }

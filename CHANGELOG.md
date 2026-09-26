@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.1] - 2026-09-26
+
+### Fixed
+
+- **The first deploy after upgrading from 1.17 writes robots.txt.** `optimize` runs
+  `leap:robots-write` in the process that booted from the previous deploy's caches.
+  `route:cache` had just written a new route cache, but the router in memory was the
+  old one, which still held leap 1.17's own route on `/robots.txt`. The command took
+  that for a route of the project's, wrote no file, and `optimize` showed `DONE`
+  because it runs its tasks silently. `/robots.txt` stayed a 404 until the next
+  deploy. A `sitemap` route added in the same deploy was missing from the `Sitemap:`
+  line the same way, and so was a change to `leap.robots`. The command now reads the
+  route and config caches again when they exist. A site already deployed with 1.18.0
+  gets its file from `php artisan leap:robots-write` or the next deploy. Seen on
+  phaff.com.
+
 ## [1.18.0] - 2026-09-25
 
 ### Fixed
