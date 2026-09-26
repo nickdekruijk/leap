@@ -30,15 +30,25 @@
     } elseif (! str_starts_with($sitemap, 'http')) {
         $sitemap = Route::has($sitemap) ? route($sitemap) : null;
     }
+
+    // The file holds directives and nothing else. A comment in it is readable by
+    // anyone, and says things about the site better kept out of sight: which software
+    // wrote it, or that this is not the production site. Why each group is there is
+    // written down here instead.
+    //
+    // disallow_all: a copy of a site is the same site to a crawler, and the copy is
+    // picked as the canonical one often enough to matter, so nothing is to be crawled.
+    // That forbids crawling and not indexing: a URL that is linked to somewhere can
+    // still be listed. Getting one back out of an index takes an X-Robots-Tag, which a
+    // crawler only ever sees on a page it is allowed to fetch.
+    //
+    // The answer engine group: with 'allow' it says the same as the group above, so it
+    // changes nothing today. It is there so that a later "Disallow: /" added in a hurry
+    // does not take these crawlers out along with everything else, and so that
+    // allowing them reads as a decision rather than as an oversight. Google-Extended
+    // and Applebot-Extended are the two that also cover training, not only answering.
 @endphp
 @if ($disallowAll)
-# This is not the production site. A copy of a site is the same site to a crawler,
-# and the copy is picked as the canonical one often enough to matter, so nothing here
-# is to be crawled.
-#
-# Note that this forbids crawling and not indexing: a URL that is linked to somewhere
-# can still be listed. Getting one back out of an index takes an X-Robots-Tag, which
-# a crawler only ever sees on a page it is allowed to fetch.
 User-agent: *
 Disallow: /
 @else
@@ -46,16 +56,6 @@ User-agent: *
 {!! $rules !!}
 @if ($aiCrawlers !== 'omit')
 
-# The crawlers behind the answer engines.
-@if ($aiCrawlers === 'allow')
-# This group says the same as the one above, so it changes nothing today: it is here
-# so that a later "Disallow: /" added in a hurry does not take them out along with
-# everything else, and so that allowing them reads as a decision rather than as an
-# oversight.
-#
-# Google-Extended and Applebot-Extended are the two that also cover training, not
-# only answering.
-@endif
 @foreach ($agents as $agent)
 User-agent: {{ $agent }}
 @endforeach

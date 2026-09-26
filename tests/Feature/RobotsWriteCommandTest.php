@@ -34,7 +34,7 @@ class RobotsWriteCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::delete([public_path('robots.txt'), $this->app->getCachedRoutesPath(), $this->app->getCachedConfigPath()]);
+        File::delete([public_path('robots.txt'), public_path('.gitignore'), $this->app->getCachedRoutesPath(), $this->app->getCachedConfigPath()]);
 
         parent::tearDown();
     }
@@ -45,8 +45,27 @@ class RobotsWriteCommandTest extends TestCase
 
         $written = File::get(public_path('robots.txt'));
 
-        $this->assertStringStartsWith(RobotsFile::MARKER."\n", $written);
-        $this->assertStringContainsString("User-agent: *\nDisallow:\n", $written);
+        $this->assertStringStartsWith("User-agent: *\nDisallow:\n", $written);
+    }
+
+    /**
+     * Anyone can read robots.txt, so it names nothing a visitor has no business knowing:
+     * not the software behind the site, and not that this is a copy of it.
+     */
+    public function test_it_says_nothing_about_the_site_beyond_the_directives(): void
+    {
+        File::put(public_path('.gitignore'), "/robots.txt\n");
+
+        foreach ([false, true] as $disallowAll) {
+            config()->set('leap.robots.disallow_all', $disallowAll);
+
+            $this->artisan('leap:robots-write')->assertSuccessful();
+
+            $written = File::get(public_path('robots.txt'));
+
+            $this->assertDoesNotMatchRegularExpression('/leap|laravel|artisan|production/i', $written);
+            $this->assertDoesNotMatchRegularExpression('/^#/m', $written);
+        }
     }
 
     /**
@@ -65,7 +84,7 @@ class RobotsWriteCommandTest extends TestCase
 
     public function test_it_replaces_its_own_file(): void
     {
-        File::put(public_path('robots.txt'), RobotsFile::MARKER."\nUser-agent: *\nDisallow: /old\n");
+        File::put(public_path('robots.txt'), RobotsFile::LEGACY_MARKER."\nUser-agent: *\nDisallow: /old\n");
 
         $this->artisan('leap:robots-write')->assertSuccessful();
 
@@ -79,6 +98,30 @@ class RobotsWriteCommandTest extends TestCase
         $this->artisan('leap:robots-write')->assertSuccessful();
 
         $this->assertSame(RobotsFile::render(), File::get(public_path('robots.txt')));
+    }
+
+    /**
+     * The .gitignore line is what says the file is leap's: a hand-written robots.txt is
+     * in git, and this one never is.
+     */
+    public function test_with_the_gitignore_line_it_replaces_whatever_is_there(): void
+    {
+        File::put(public_path('.gitignore'), "/robots.txt\n");
+        File::put(public_path('robots.txt'), "User-agent: *\nDisallow: /written-by-an-older-config\n");
+
+        $this->artisan('leap:robots-write')->assertSuccessful();
+
+        $this->assertSame(RobotsFile::render(), File::get(public_path('robots.txt')));
+    }
+
+    /**
+     * Without the .gitignore line a file leap wrote is still recognised as long as it
+     * says what leap would write, so a second deploy with the same config passes.
+     */
+    public function test_without_the_gitignore_line_its_unchanged_file_is_still_its_own(): void
+    {
+        $this->artisan('leap:robots-write')->assertSuccessful();
+        $this->artisan('leap:robots-write')->assertSuccessful();
     }
 
     public function test_it_leaves_a_hand_written_file_alone(): void

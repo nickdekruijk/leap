@@ -284,10 +284,17 @@ So a deploy script that runs `optimize` needs nothing more, and the file belongs
 /public/robots.txt
 ```
 
-A deploy that does not run `optimize` runs `php artisan leap:robots-write` instead. The
-file's first line marks it as leap's. Only that file, a missing one, or the
-`User-agent: *` / `Disallow:` file Laravel's skeleton ships is ever overwritten; a
-`robots.txt` written by hand is left alone. So is a project with a route of its own on
+A deploy that does not run `optimize` runs `php artisan leap:robots-write` instead.
+
+That `.gitignore` line is also what tells leap the file is its own, because a
+`robots.txt` written by hand is in git and leap's never is. With it, leap replaces
+whatever is there. Without it, only a missing file, the `User-agent: *` / `Disallow:`
+file Laravel's skeleton ships, or one that already says what leap would write; a
+`robots.txt` written by hand is left alone.
+
+The file holds directives and nothing else. Anyone can read it, so it names no software
+and says nothing about the site beyond what crawlers need: a staging copy gets
+`Disallow: /`, not a comment explaining why. So is a project with a route of its own on
 `/robots.txt`: a file would be served before PHP is reached and that route would never
 run, so leap writes none.
 

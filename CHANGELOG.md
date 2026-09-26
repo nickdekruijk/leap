@@ -5,6 +5,23 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.2] - 2026-09-26
+
+### Changed
+
+- **robots.txt no longer gives the site away.** 1.18.0 and 1.18.1 started the file with
+  a line naming `php artisan leap:robots-write`, which told anyone who looked that the
+  site runs Laravel and leap. The view also rendered its explanations as `#` comments,
+  one of them saying outright that a site was not the production one. The file now
+  holds directives and nothing else; the explanations moved into the view's PHP.
+- **Leap knows its own robots.txt by the `.gitignore` line, not by a marker.** A
+  `robots.txt` written by hand is in git and leap's never is, so with
+  `/public/robots.txt` in `.gitignore` (or `/robots.txt` in `public/.gitignore`) leap
+  replaces whatever is there. Without that line it replaces only a missing file,
+  Laravel's skeleton, a file from 1.18.0 or 1.18.1, or one that already says what it
+  would write, and otherwise asks for the line. Files from 1.18.0 and 1.18.1 are
+  replaced on the next `optimize`.
+
 ## [1.18.1] - 2026-09-26
 
 ### Fixed

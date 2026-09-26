@@ -32,7 +32,7 @@ class RobotsCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::delete(public_path('robots.txt'));
+        File::delete([public_path('robots.txt'), public_path('.gitignore')]);
 
         parent::tearDown();
     }
@@ -125,6 +125,7 @@ class RobotsCommandTest extends TestCase
     {
         Route::get('sitemap.xml', fn () => 'xml')->name('sitemap');
         File::put(public_path('robots.txt'), RobotsFile::render());
+        File::put(public_path('.gitignore'), "/robots.txt\n");
 
         $this->artisan('leap:robots --check')
             ->expectsOutputToContain('nothing is in the way')

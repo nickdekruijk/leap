@@ -23,7 +23,7 @@ class RobotsDisabledTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::delete(public_path('robots.txt'));
+        File::delete([public_path('robots.txt'), public_path('.gitignore')]);
 
         parent::tearDown();
     }
@@ -36,7 +36,7 @@ class RobotsDisabledTest extends TestCase
     {
         File::ensureDirectoryExists(public_path());
 
-        File::put(public_path('robots.txt'), RobotsFile::MARKER."\nUser-agent: *\n");
+        File::put(public_path('robots.txt'), RobotsFile::LEGACY_MARKER."\nUser-agent: *\n");
         $this->artisan('leap:robots-write')->assertSuccessful();
         $this->assertFileDoesNotExist(public_path('robots.txt'));
 

@@ -27,8 +27,6 @@ class RobotsTest extends TestCase
         $robots = $this->robots();
 
         $this->assertStringContainsString("User-agent: *\nDisallow:\n", $robots);
-
-        // A line of its own, not the one quoted in the comment below it.
         $this->assertDoesNotMatchRegularExpression('#^Disallow: /$#m', $robots);
     }
 
@@ -160,6 +158,20 @@ class RobotsTest extends TestCase
         } finally {
             unlink($path.'/robots.blade.php');
             rmdir($path);
+        }
+    }
+
+    /**
+     * Directives and nothing else, in every setting: a comment is readable by anyone and
+     * would say which software wrote the file, or that this is not the production site.
+     */
+    public function test_it_holds_no_comments(): void
+    {
+        foreach ([[false, 'allow'], [false, 'disallow'], [false, 'omit'], [true, 'allow']] as [$disallowAll, $aiCrawlers]) {
+            config()->set('leap.robots.disallow_all', $disallowAll);
+            config()->set('leap.robots.ai_crawlers', $aiCrawlers);
+
+            $this->assertDoesNotMatchRegularExpression('/^#/m', $this->robots());
         }
     }
 

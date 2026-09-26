@@ -12,16 +12,25 @@ use Illuminate\Support\Facades\Route;
  * serves a file with a 200 whatever its config does with PHP, and the nginx config Forge
  * and Herd ship does not let a route at /robots.txt through with one.
  *
- * What it says is resources/views/robots.blade.php, driven by config('leap.robots').
- * Written from the console, so its URLs come from APP_URL. The first line marks the file
- * as leap's: only that file, a missing one, or the one Laravel's skeleton ships is ever
- * overwritten. A robots.txt somebody wrote by hand is left alone, and so is a project
+ * What it says is resources/views/robots.blade.php, driven by config('leap.robots'):
+ * directives only. Nothing in it names leap or Laravel, because anyone can read it.
+ * Written from the console, so its URLs come from APP_URL.
+ *
+ * The /public/robots.txt line in .gitignore is what makes the file leap's: a robots.txt
+ * somebody wrote by hand is in git, leap's never is. With that line leap replaces
+ * whatever is there. Without it, only a missing file, Laravel's skeleton, one from
+ * 1.18.0 or 1.18.1, or one that already says what leap would write. A robots.txt
+ * somebody wrote by hand is left alone, and so is a project
  * that answers /robots.txt from a route of its own: a file would be served before PHP is
  * reached and that route would never run.
  */
 class RobotsFile
 {
-    public const MARKER = '# Written by php artisan leap:robots-write, which php artisan optimize runs. Edit config/leap.php or the published robots view, not this file.';
+    /**
+     * The first line 1.18.0 and 1.18.1 wrote, so those files are still recognised and
+     * replaced by one that does not give the site away.
+     */
+    public const LEGACY_MARKER = '# Written by php artisan leap:robots-write, which php artisan optimize runs. Edit config/leap.php or the published robots view, not this file.';
 
     public const MISSING = 'missing';
 
@@ -38,7 +47,7 @@ class RobotsFile
 
     public static function render(): string
     {
-        return self::MARKER."\n".view('leap::robots')->render();
+        return view('leap::robots')->render();
     }
 
     /**
@@ -52,7 +61,7 @@ class RobotsFile
 
         $contents = (string) file_get_contents(self::path());
 
-        if (str_starts_with($contents, self::MARKER)) {
+        if ($contents === self::render()) {
             return self::OURS;
         }
 
@@ -60,6 +69,10 @@ class RobotsFile
         // everything and says nothing. Replacing it takes nothing away from anyone.
         if (preg_replace('/\s+/', ' ', trim($contents)) === 'User-agent: * Disallow:') {
             return self::SKELETON;
+        }
+
+        if (self::gitignored() || str_starts_with($contents, self::LEGACY_MARKER)) {
+            return self::OURS;
         }
 
         return self::FOREIGN;
@@ -77,6 +90,27 @@ class RobotsFile
         file_put_contents(self::path(), self::render());
 
         return true;
+    }
+
+    /**
+     * Whether .gitignore, at the root or in public/, names public/robots.txt. Read from
+     * the files rather than asked of git: a server need not have git, and the release
+     * directory of a zero-downtime deploy has the .gitignore all the same.
+     */
+    public static function gitignored(): bool
+    {
+        $patterns = [
+            base_path('.gitignore') => '#^\s*/?public/robots\.txt\s*$#m',
+            public_path('.gitignore') => '#^\s*/?robots\.txt\s*$#m',
+        ];
+
+        foreach ($patterns as $gitignore => $pattern) {
+            if (is_file($gitignore) && preg_match($pattern, (string) file_get_contents($gitignore))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

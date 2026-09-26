@@ -49,7 +49,7 @@ class RobotsWriteCommand extends Command
             }
 
             if (! RobotsFile::write()) {
-                $this->components->error('A hand-written file at '.RobotsFile::path().' was left alone. Delete it to have leap write one, or publish the robots view (tag: leap-views) to change what leap writes.');
+                $this->components->error('A file at '.RobotsFile::path().' that leap did not write was left alone. Delete it, or add /public/robots.txt to .gitignore so leap may replace it.');
 
                 return self::FAILURE;
             }

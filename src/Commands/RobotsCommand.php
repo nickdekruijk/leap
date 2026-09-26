@@ -89,7 +89,7 @@ class RobotsCommand extends Command
         $problems = [];
 
         if (RobotsFile::state() === RobotsFile::FOREIGN) {
-            $problems[] = 'A hand-written file at '.RobotsFile::path().' is in the way: leap leaves it alone, so nothing below is served. Delete it and run php artisan optimize.';
+            $problems[] = 'A file at '.RobotsFile::path().' that leap did not write is in the way: leap leaves it alone, so nothing below is served. Delete it and run php artisan optimize, or add /public/robots.txt to .gitignore if it is leap\'s.';
         }
 
         // The default derives disallow_all from APP_ENV, so true on production means
