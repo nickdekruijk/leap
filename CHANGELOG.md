@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.3] - 2026-09-26
+
+### Changed
+
+- **No answer engine group in robots.txt unless it keeps them out.** With
+  `leap.robots.ai_crawlers` on `'allow'`, the default, the file named sixteen crawlers in
+  a group of their own that said exactly what `*` says. For a crawler that changes
+  nothing, and to a reader it was noise, as well as a list every leap site had in common.
+  They now fall under `*`. `'disallow'` still names them, with `Disallow: /`; `'omit'`
+  is now the same as `'allow'`.
+
 ## [1.18.2] - 2026-09-26
 
 ### Changed

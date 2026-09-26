@@ -306,7 +306,7 @@ It says what the config says:
 | `disallow_all` | `APP_ENV !== 'production'` | `Disallow: /` and no `Sitemap:` line. Override with `LEAP_ROBOTS_DISALLOW_ALL`. |
 | `disallow` | `[]` | Paths kept out of the crawl. Repeated in every group. |
 | `sitemap` | `'sitemap'` | A route name, a literal URL, or `false`. A name nothing answers to leaves the line out rather than pointing at a 404. |
-| `ai_crawlers` | `'allow'` | The crawlers behind the answer engines, named in a group of their own. `'disallow'` keeps them out, `'omit'` leaves the group out. |
+| `ai_crawlers` | `'allow'` | The crawlers behind the answer engines (GPTBot, ClaudeBot and the like). `'allow'` gives them no group of their own: `*` already lets them in. `'disallow'` names them in a group with `Disallow: /`, which keeps them out while search engines stay. `'omit'` is the same as `'allow'`. |
 
 A few things about this go wrong without a word, which is what `php artisan leap:robots`
 is for. It prints what a crawler gets and reports these:

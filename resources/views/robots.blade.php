@@ -2,9 +2,6 @@
     $disallowAll = (bool) config('leap.robots.disallow_all');
     $paths = array_values(array_filter((array) config('leap.robots.disallow', []), 'strlen'));
 
-    // Every group repeats the same rules, because a crawler obeys the most specific
-    // group that names it and reads no other one: a rule written only under * does
-    // not reach a bot that finds itself listed further down.
     $rules = $paths
         ? implode("\n", array_map(fn (string $path): string => 'Disallow: '.$path, $paths))
         : 'Disallow:';
@@ -42,11 +39,10 @@
     // still be listed. Getting one back out of an index takes an X-Robots-Tag, which a
     // crawler only ever sees on a page it is allowed to fetch.
     //
-    // The answer engine group: with 'allow' it says the same as the group above, so it
-    // changes nothing today. It is there so that a later "Disallow: /" added in a hurry
-    // does not take these crawlers out along with everything else, and so that
-    // allowing them reads as a decision rather than as an oversight. Google-Extended
-    // and Applebot-Extended are the two that also cover training, not only answering.
+    // The answer engine crawlers are named only to keep them out. Allowed, they fall
+    // under * like everyone else, and a group repeating that would only be noise.
+    // 'omit' is what 'allow' is now, kept for configs that set it. Google-Extended and
+    // Applebot-Extended are the two that also cover training, not only answering.
 @endphp
 @if ($disallowAll)
 User-agent: *
@@ -54,18 +50,12 @@ Disallow: /
 @else
 User-agent: *
 {!! $rules !!}
-@if ($aiCrawlers !== 'omit')
+@if ($aiCrawlers === 'disallow')
 
 @foreach ($agents as $agent)
 User-agent: {{ $agent }}
 @endforeach
-@if ($aiCrawlers === 'disallow')
 Disallow: /
-@elseif ($paths)
-{!! $rules !!}
-@else
-Allow: /
-@endif
 @endif
 @if ($sitemap)
 

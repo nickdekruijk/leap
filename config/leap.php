@@ -759,12 +759,10 @@ return [
         // does not resolve leaves the line out rather than pointing at a 404.
         'sitemap' => 'sitemap',
 
-        // The crawlers behind the answer engines. 'allow' names them in a group
-        // of their own. What they may do does not change, allow-all already
-        // allowed them, but writing it down keeps a later blanket Disallow from
-        // taking them out along with everything else, and makes allowing them
-        // read as a decision rather than as an oversight. 'disallow' keeps them
-        // off the site, 'omit' leaves the group out.
+        // The crawlers behind the answer engines (GPTBot, ClaudeBot and the like).
+        // 'allow' gives them no group of their own: the * group already lets them
+        // in. 'disallow' keeps them off the site while search engines stay.
+        // 'omit' is the same as 'allow'.
         'ai_crawlers' => 'allow',
     ],
 

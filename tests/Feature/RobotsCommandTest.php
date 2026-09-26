@@ -40,7 +40,7 @@ class RobotsCommandTest extends TestCase
     public function test_it_prints_what_a_crawler_gets(): void
     {
         $this->artisan('leap:robots')
-            ->expectsOutputToContain('User-agent: GPTBot')
+            ->expectsOutputToContain('User-agent: *')
             ->assertSuccessful();
     }
 
@@ -63,8 +63,13 @@ class RobotsCommandTest extends TestCase
             ->assertSuccessful();
     }
 
+    /**
+     * With the defaults and no sitemap leap writes exactly what the skeleton says, so
+     * this needs a config that says more.
+     */
     public function test_the_skeleton_file_is_reported_but_passes(): void
     {
+        config()->set('leap.robots.disallow', ['/zoeken']);
         File::put(public_path('robots.txt'), "User-agent: *\nDisallow:\n");
 
         $this->artisan('leap:robots --check')
@@ -124,6 +129,7 @@ class RobotsCommandTest extends TestCase
     public function test_it_says_so_when_nothing_is_wrong(): void
     {
         Route::get('sitemap.xml', fn () => 'xml')->name('sitemap');
+        Route::getRoutes()->refreshNameLookups();
         File::put(public_path('robots.txt'), RobotsFile::render());
         File::put(public_path('.gitignore'), "/robots.txt\n");
 

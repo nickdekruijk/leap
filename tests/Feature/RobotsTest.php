@@ -31,18 +31,12 @@ class RobotsTest extends TestCase
     }
 
     /**
-     * Allowing the answer engines is a decision, and a decision that is not written
-     * down is one that gets reversed by accident.
+     * Allowed, the answer engine crawlers fall under * like everyone else. A group of
+     * their own saying the same would only be noise, and a list every site shares.
      */
-    public function test_it_names_the_answer_engine_crawlers(): void
+    public function test_allowed_answer_engine_crawlers_are_not_named(): void
     {
-        $robots = $this->robots();
-
-        foreach (['GPTBot', 'OAI-SearchBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'Applebot-Extended'] as $agent) {
-            $this->assertStringContainsString('User-agent: '.$agent, $robots, "{$agent} is not mentioned.");
-        }
-
-        $this->assertStringContainsString('Allow: /', $robots);
+        $this->assertSame("User-agent: *\nDisallow:\n", $this->robots());
     }
 
     /**
@@ -116,21 +110,11 @@ class RobotsTest extends TestCase
         $this->assertStringNotContainsString('GPTBot', $robots);
     }
 
-    /**
-     * Groups in robots.txt inherit nothing: a crawler obeys the one that names it and
-     * reads no other. Without repeating the paths, a disallow list would apply to
-     * everyone except the crawlers listed by name, which is the opposite of what
-     * writing it down was for.
-     */
-    public function test_disallowed_paths_are_repeated_in_every_group(): void
+    public function test_disallowed_paths_go_under_the_one_group(): void
     {
         config()->set('leap.robots.disallow', ['/zoeken', '/export']);
 
-        $robots = $this->robots();
-
-        $this->assertSame(2, substr_count($robots, 'Disallow: /zoeken'));
-        $this->assertSame(2, substr_count($robots, 'Disallow: /export'));
-        $this->assertStringNotContainsString('Allow: /', $robots);
+        $this->assertSame("User-agent: *\nDisallow: /zoeken\nDisallow: /export\n", $this->robots());
     }
 
     public function test_the_answer_engines_can_be_kept_out_or_left_unmentioned(): void
@@ -141,7 +125,10 @@ class RobotsTest extends TestCase
         $this->assertStringContainsString("User-agent: Diffbot\nDisallow: /\n", $robots);
 
         config()->set('leap.robots.ai_crawlers', 'omit');
-        $this->assertStringNotContainsString('GPTBot', $this->robots());
+        $omitted = $this->robots();
+        config()->set('leap.robots.ai_crawlers', 'allow');
+        $this->assertSame($this->robots(), $omitted);
+        $this->assertStringNotContainsString('GPTBot', $omitted);
     }
 
     /**
