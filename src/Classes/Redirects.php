@@ -4,7 +4,6 @@ namespace NickDeKruijk\Leap\Classes;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use NickDeKruijk\Leap\Models\Redirect;
 
@@ -25,15 +24,19 @@ use NickDeKruijk\Leap\Models\Redirect;
  * A rule is a path and a destination, and matching is deliberately dull: an exact
  * lookup on a unique index, then the wildcard rules with the longest prefix first.
  * The exact lookup is an index hit whether the table holds ten rules or ten thousand,
- * so there is nothing to cache; the wildcards cannot be found by equality and are
- * cached as a set, which is invalidated whenever a rule is saved.
+ * so there is nothing to cache; the wildcards cannot be found by equality and their
+ * paths are cached as a set, which is invalidated whenever a rule is saved.
  */
 class Redirects
 {
     /**
      * Where the wildcard rules are kept between requests.
+     *
+     * Not 'leap:redirects:wildcards', which is where 1.18.3 and earlier kept the models
+     * themselves. A new name means a set left behind by one of those is never read, only
+     * left to expire.
      */
-    public const WILDCARD_CACHE_KEY = 'leap:redirects:wildcards';
+    public const WILDCARD_CACHE_KEY = 'leap:redirects:wildcard-paths';
 
     public static function enabled(): bool
     {
@@ -112,10 +115,16 @@ class Redirects
             return $exact;
         }
 
-        foreach (static::wildcards() as $redirect) {
-            $prefix = substr($redirect->path, 0, -2);
+        foreach (static::wildcards() as $id => $wildcard) {
+            $prefix = substr($wildcard, 0, -2);
 
-            if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
+            if ($path !== $prefix && ! str_starts_with($path, $prefix.'/')) {
+                continue;
+            }
+
+            // Fetched fresh rather than trusted from the cache: a rule switched off or
+            // deleted since then is passed over, and the next one down gets its turn.
+            if ($redirect = Redirect::query()->usable()->find($id)) {
                 return $redirect;
             }
         }
@@ -124,27 +133,43 @@ class Redirects
     }
 
     /**
-     * The wildcard rules, longest prefix first.
+     * The paths of the wildcard rules keyed by id, longest prefix first.
      *
      * Cached because these are the ones an equality lookup cannot find, and there are
      * never many: a wildcard stands for a whole section of a previous site.
      *
-     * @return Collection<int, Redirect>
+     * Ids and strings, never the models. Laravel 13 ships 'serializable_classes' =>
+     * false, and every store that serializes (redis, file, database) then hands a
+     * cached model back as __PHP_Incomplete_Class. The first 404 filled the cache and
+     * every 404 after it was a 500, until the entry expired a day later.
+     *
+     * @return array<int, string>
      */
-    protected static function wildcards()
+    protected static function wildcards(): array
     {
         $ttl = (int) config('leap.redirects.cache_minutes', 1440);
 
-        $load = fn () => Redirect::query()
+        $load = fn (): array => Redirect::query()
             ->usable()
             ->where('wildcard', true)
-            ->get()
-            ->sortByDesc(fn (Redirect $redirect): int => strlen($redirect->path))
-            ->values();
+            ->pluck('path', 'id')
+            ->sortByDesc(fn (string $path): int => strlen($path))
+            ->all();
 
-        return $ttl > 0
-            ? Cache::remember(static::WILDCARD_CACHE_KEY, now()->addMinutes($ttl), $load)
-            : $load();
+        if ($ttl <= 0) {
+            return $load();
+        }
+
+        $wildcards = Cache::remember(static::WILDCARD_CACHE_KEY, now()->addMinutes($ttl), $load);
+
+        // Whatever else ended up under this key, the answer is not to crash on a 404
+        if (! is_array($wildcards)) {
+            static::forgetWildcards();
+
+            return $load();
+        }
+
+        return $wildcards;
     }
 
     /**

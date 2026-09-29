@@ -201,6 +201,27 @@ class RedirectsTest extends TestCase
         $this->get('/oud/x')->assertRedirect('/daarna');
     }
 
+    /**
+     * Laravel 13 ships 'serializable_classes' => false, and every store that serializes
+     * (redis, file, database) then hands a cached model back as __PHP_Incomplete_Class.
+     * The array store only does that with serialize on, which is how it is set here. The
+     * first 404 filled the cache and every 404 after it was a 500.
+     */
+    public function test_the_wildcards_survive_a_cache_that_refuses_to_unserialize_objects(): void
+    {
+        config([
+            'cache.serializable_classes' => false,
+            'cache.stores.array.serialize' => true,
+        ]);
+        Cache::forgetDriver('array');
+
+        $this->rule('oud/*', '/nieuw');
+
+        $this->get('/oud/x')->assertRedirect('/nieuw');
+        $this->get('/oud/y')->assertRedirect('/nieuw');
+        $this->get('/iets-anders')->assertNotFound();
+    }
+
     public function test_an_address_that_is_not_in_the_list_is_left_alone(): void
     {
         $this->rule('oud', '/nieuw');

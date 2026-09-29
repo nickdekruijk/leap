@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.4] - 2026-09-29
+
+### Fixed
+
+- **A second 404 no longer becomes a 500 on Laravel 13.** The wildcard redirects were
+  cached as models, and Laravel 13 ships `'serializable_classes' => false` in
+  `config/cache.php`. Every store that serializes (redis, file, database) then hands a
+  cached model back as `__PHP_Incomplete_Class`, so the first 404 filled the cache and
+  every 404 after it failed on `Attempt to read property "path" on string`, until the
+  entry expired a day later. Tests never saw it: the array store does not serialize.
+
+  The cache now holds the paths keyed by id, and a rule is fetched from the database
+  only once its path matches. It also moved to a new key,
+  `leap:redirects:wildcard-paths`, so a set left behind by an earlier leap is never read,
+  only left to expire. Nothing to do after upgrading.
+
 ## [1.18.3] - 2026-09-26
 
 ### Changed
