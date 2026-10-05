@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Classes;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -41,7 +42,7 @@ class NotFounds
         // Before normalizing, because normalizing is what hides this: a path carrying a
         // control character is a probe, not an address anyone linked to. /a%00b.json
         // sanitizes into a word nobody ever typed, and writing that down helps no one.
-        if (preg_match('/[\x00-\x1F\x7F]/u', rawurldecode($request->path()))) {
+        if (preg_match('/[\x00-\x1F\x7F]/u', Redirect::decodePath($request->path()))) {
             return;
         }
 
@@ -75,11 +76,18 @@ class NotFounds
             return;
         }
 
-        $notFound = NotFound::create([
-            'path' => $path,
-            'hits' => 1,
-            'last_used_at' => now(),
-        ]);
+        // The throttle keeps two requests for one path apart, unless it is switched off
+        // and they arrive together. Losing that race costs one hit on the counter, and
+        // that is the right price: a 404 that is being written down must stay a 404.
+        try {
+            $notFound = NotFound::create([
+                'path' => $path,
+                'hits' => 1,
+                'last_used_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            return;
+        }
 
         static::remember($notFound, $request);
     }

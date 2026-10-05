@@ -5,6 +5,23 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.5] - 2026-10-05
+
+### Fixed
+
+- **A doubly encoded 404 no longer becomes a 500 on the not-found worklist.** A scanner
+  asking for `/awsconfig.csv` and then for `/awsConfig%252ecsv` hit a unique index:
+  capture looked up `awsconfig%2ecsv`, found nothing, and the saving hook normalized the
+  path a second time into `awsconfig.csv`, a row that was already there.
+  `Redirect::normalizePath()` now repeats until nothing changes, so a normalized path
+  stays the same when it is normalized again. The same mismatch kept a rule for
+  `oud.html` from matching `/oud%252ehtml`; it matches now.
+
+  The control character guard looks through every layer of encoding as well, so
+  `/oud%2500pad` is skipped like `/oud%00pad`. And two simultaneous requests for one new
+  path, possible with `capture.throttle_minutes` at 0, now lose a hit instead of
+  answering 500. Nothing to do after upgrading.
+
 ## [1.18.4] - 2026-09-29
 
 ### Fixed

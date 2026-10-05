@@ -101,10 +101,55 @@ class Redirect extends Model
      * The cost is that two rules differing only in case cannot both exist. The
      * destination is deliberately left alone, since what is redirected *to* may
      * well be case-sensitive.
+     *
+     * Repeated until nothing changes, because a normalized path has to survive being
+     * normalized again: the saving hooks do exactly that to a value that already went
+     * through here. One pass is not enough for that. /awsConfig%252ecsv decodes to
+     * awsconfig%2ecsv and on the second pass to awsconfig.csv, so the lookup asked for
+     * one path and the insert wrote another, onto a row that was already there.
      */
     public static function normalizePath(?string $path): string
     {
-        $path = trim((string) $path);
+        $path = (string) $path;
+
+        // Bounded, so a value built to keep changing cannot keep a request busy.
+        for ($pass = 0; $pass < 10; $pass++) {
+            $normalized = self::normalizePathOnce($path);
+
+            if ($normalized === $path) {
+                break;
+            }
+
+            $path = $normalized;
+        }
+
+        return $path;
+    }
+
+    /**
+     * The path with every layer of percent-encoding taken off, as far as it goes.
+     *
+     * What a guard looking for control characters wants to see: %2500 is a %00 in
+     * one more envelope, and checking only the outer one lets it through.
+     */
+    public static function decodePath(string $path): string
+    {
+        for ($pass = 0; $pass < 10; $pass++) {
+            $decoded = rawurldecode($path);
+
+            if ($decoded === $path) {
+                break;
+            }
+
+            $path = $decoded;
+        }
+
+        return $path;
+    }
+
+    private static function normalizePathOnce(string $path): string
+    {
+        $path = trim($path);
 
         // Tolerate a whole URL being pasted in as the old address.
         if (preg_match('#^https?://#i', $path)) {

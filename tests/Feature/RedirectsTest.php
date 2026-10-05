@@ -430,8 +430,39 @@ class RedirectsTest extends TestCase
 
         $this->get('/kinderfysiotherapie%00sftp-config.json');
         $this->get('/oud%0Apad');
+        $this->get('/oud%2500pad');
 
         $this->assertSame(0, NotFound::count());
+    }
+
+    public function test_a_doubly_encoded_address_is_noted_on_the_row_it_decodes_to(): void
+    {
+        // The scanner that found this asked for /awsconfig.csv and then for
+        // /awsConfig%252ecsv. The lookup searched for one path, the saving hook wrote
+        // another, and the 404 became a 500 on the unique index.
+        config(['leap.redirects.capture.enabled' => true, 'leap.redirects.capture.throttle_minutes' => 0]);
+
+        $this->get('/awsconfig.csv')->assertNotFound();
+        $this->get('/awsConfig%252ecsv')->assertNotFound();
+
+        $this->assertSame(1, NotFound::count());
+        $this->assertSame(2, NotFound::firstWhere('path', 'awsconfig.csv')->hits);
+    }
+
+    public function test_a_normalized_path_survives_being_normalized_again(): void
+    {
+        foreach (['awsConfig%252ecsv', 'x%2525y', '%20/oud/', 'https://example.com/Oud%252FPad'] as $path) {
+            $normalized = Redirect::normalizePath($path);
+
+            $this->assertSame($normalized, Redirect::normalizePath($normalized), $path);
+        }
+    }
+
+    public function test_a_doubly_encoded_address_finds_its_rule(): void
+    {
+        $this->rule('oud.html', 'nieuw');
+
+        $this->get('/oud%252ehtml')->assertRedirect('/nieuw');
     }
 
     public function test_a_rule_typed_with_control_characters_keeps_none_of_them(): void
