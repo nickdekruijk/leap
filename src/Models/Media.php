@@ -15,6 +15,7 @@ use Intervention\Image\Interfaces\DriverInterface;
 use Intervention\Image\Interfaces\ImageManagerInterface;
 use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Leap;
+use NickDeKruijk\Leap\Livewire\FileManager;
 
 class Media extends Model
 {
@@ -271,12 +272,7 @@ class Media extends Model
     public function getDownloadUrlAttribute(): string
     {
         // This should only be used by Leap editor so needs to move to Leap class somehow...
-        return route(
-            'leap.module.filemanager.download',
-            [
-                'name' => str_replace('%2F', '/', rawurlencode($this->file_name)),
-            ]
-        );
+        return FileManager::downloadRoute('filemanager', str_replace('%2F', '/', rawurlencode($this->file_name)));
     }
 
     /**

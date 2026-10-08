@@ -698,24 +698,36 @@ class FileManager extends Module
     /**
      * Generate an url to download a file
      *
-     * The path is percent-encoded here, and since Laravel 12.69.2 and 13.x route()
-     * escapes the % in a parameter as well, which turned every space into %2520 and
-     * every file in a folder with a space in its name into a 404. Laravel 13 has
-     * EncodedParameter to say a value is encoded already, 12 does not, so the route
-     * is built around a placeholder that no version encodes and the path goes in
-     * afterwards.
-     *
      * @param  string  $file  the file including full path
      * @return string the full url
      */
     public function downloadUrl(string $file): string
     {
+        return static::downloadRoute($this->getSlug(), $this->encode($file));
+    }
+
+    /**
+     * The download route of a file manager module for a percent-encoded path
+     *
+     * Since Laravel 12.69.2 and 13.x route() escapes the % in a parameter as well,
+     * which turned every space into %2520 and every file in a folder with a space in
+     * its name into a 404. Laravel 13 has EncodedParameter to say a value is encoded
+     * already, 12 does not, so the route is built around a placeholder that no
+     * version encodes and the path goes in afterwards. Media::getDownloadUrlAttribute
+     * uses this too, so every download url is built the same way.
+     *
+     * @param  string  $slug  the slug of the file manager module
+     * @param  string  $encodedPath  the full path, percent-encoded except for slashes
+     * @return string the full url
+     */
+    public static function downloadRoute(string $slug, string $encodedPath): string
+    {
         $placeholder = 'leap-download-name';
 
         return str_replace(
             $placeholder,
-            $this->encode($file),
-            route('leap.module.'.$this->getSlug().'.download', ['name' => $placeholder]),
+            $encodedPath,
+            route('leap.module.'.$slug.'.download', ['name' => $placeholder]),
         );
     }
 
