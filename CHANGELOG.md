@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.6] - 2026-10-08
+
+### Fixed
+
+- **Media with a space in its path previews again in the editor.** 1.17.9 stopped the
+  file manager from encoding its download URLs twice, but the media field builds the
+  same URL in `Media::getDownloadUrlAttribute()` and still passed an encoded path to
+  `route()`. Laravel 12.69.2 and 13.x escape the `%` in a route parameter, so a space
+  arrived as `%2520`, the download route answered 404 and the image showed as broken.
+  Both now go through `FileManager::downloadRoute()`. Nothing to do after upgrading.
+
 ## [1.18.5] - 2026-10-05
 
 ### Fixed
