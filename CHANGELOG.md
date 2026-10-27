@@ -5,6 +5,16 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.1] - 2026-10-27
+
+### Security
+
+- **`enshrined/svg-sanitize` raised to `^1.1.1`.** 0.22.0 and older have a stored XSS
+  through a DTD entity colliding with an HTML5 named character reference
+  (CVE-2026-107380), and it is what cleans every SVG uploaded through the file manager.
+  Composer now refuses to install 0.22.0, which also stopped leap's own test run.
+  1.x keeps the `Sanitizer` API leap uses, so nothing to do after upgrading.
+
 ## [1.19.0] - 2026-10-27
 
 ### Added
