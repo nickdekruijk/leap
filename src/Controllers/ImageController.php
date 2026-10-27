@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Controllers;
 
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -104,7 +105,21 @@ class ImageController extends Controller
                 return redirect(ImageUrl::for($media ?: $source, $preset), 302);
             }
 
-            $encoded = ImageResizer::encode($contents, $resolved, pathinfo($source, PATHINFO_EXTENSION));
+            // The lock above is per URL, so a page of cold images still starts
+            // one encode per image, and on a small server a page of twenty is
+            // enough to run it out of memory. Past the limit the visitor gets
+            // the original: heavier on the wire, but the same picture.
+            $slot = $this->encodeSlot();
+
+            if ($slot === false) {
+                return $this->original($contents, (string) $storage->mimeType($source));
+            }
+
+            try {
+                $encoded = ImageResizer::encode($contents, $resolved, pathinfo($source, PATHINFO_EXTENSION));
+            } finally {
+                $slot?->release();
+            }
 
             // Nothing to resize, or nothing that should be: an animated GIF, an
             // original too large to decode safely, a file GD cannot read. The
@@ -119,6 +134,52 @@ class ImageController extends Controller
         } finally {
             $lock?->release();
         }
+    }
+
+    /**
+     * One of the leap.images.max_concurrent encode slots, waiting up to
+     * leap.images.concurrency_wait seconds for one to come free. Null when
+     * there is no limit, false when every slot stayed taken.
+     */
+    private function encodeSlot(): Lock|false|null
+    {
+        $slots = config('leap.images.max_concurrent', 2);
+
+        if (! $slots) {
+            return null;
+        }
+
+        $deadline = microtime(true) + (float) config('leap.images.concurrency_wait', 3);
+
+        do {
+            for ($i = 0; $i < $slots; $i++) {
+                $lock = Cache::lock('leap.image.slot.'.$i, (int) config('leap.images.slot_seconds', 60));
+
+                if ($lock->get()) {
+                    return $lock;
+                }
+            }
+
+            if (microtime(true) >= $deadline) {
+                return false;
+            }
+
+            usleep(250_000);
+        } while (true);
+    }
+
+    /**
+     * The original in place of a copy that was not made. Never cached: this URL
+     * is immutable once the copy exists, and a browser or CDN holding on to the
+     * original would serve it at this address for a year.
+     */
+    private function original(string $contents, string $mimeType): Response
+    {
+        return new Response($contents, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Length' => strlen($contents),
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     private function isBitmapPath(string $path): bool

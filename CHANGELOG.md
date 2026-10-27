@@ -5,6 +5,20 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-10-27
+
+### Added
+
+- **At most two resized copies are encoded at once, across all URLs.** The lock in the
+  image route was per URL, so a page with twenty new photographs started twenty encodes
+  at the first visit. An AVIF of a camera photo takes several hundred MB in Imagick,
+  outside `memory_limit`, and on a 4 GB server that was enough for the oom-killer to take
+  out PHP-FPM workers and MySQL. A request that finds every slot taken now waits up to
+  three seconds for one, then gets the original with `Cache-Control: no-store`, so the
+  copy is made on a later request and the picture is never cached at the wrong size.
+  Tune with `leap.images.max_concurrent` (null turns it off), `concurrency_wait` and
+  `slot_seconds`. A published `config/leap.php` without the keys gets the limit as well.
+
 ## [1.18.6] - 2026-10-08
 
 ### Fixed

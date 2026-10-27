@@ -539,6 +539,17 @@ return [
         // waits for it rather than decoding the same original all over again.
         'lock_seconds' => 10,
 
+        // How many copies may be encoded at once, across all URLs. An AVIF of a
+        // camera photo takes hundreds of MB outside memory_limit, and a page of
+        // cold images asks for all of them at once. A request that finds every
+        // slot taken waits concurrency_wait seconds for one, then serves the
+        // original uncached, so the copy is made on a later request. A slot is
+        // held for at most slot_seconds, in case a worker dies mid-encode.
+        // null disables the limit.
+        'max_concurrent' => 2,
+        'concurrency_wait' => 3,
+        'slot_seconds' => 60,
+
         // Refuse to decode an original above this many pixels and serve it
         // as-is, rather than let GD blow past memory_limit and take the worker
         // down with it (GD needs roughly width * height * 4 bytes). null

@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use NickDeKruijk\Leap\Classes\ImagePreset;
 use NickDeKruijk\Leap\Models\Media;
@@ -118,6 +119,63 @@ class ImageRouteTest extends ImageTestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    public function test_with_every_encode_slot_taken_the_original_is_served_uncached(): void
+    {
+        config(['leap.images.max_concurrent' => 2, 'leap.images.concurrency_wait' => 0]);
+        $media = $this->media();
+        $held = [Cache::lock('leap.image.slot.0', 60), Cache::lock('leap.image.slot.1', 60)];
+        array_map(fn ($lock) => $lock->get(), $held);
+
+        $response = $this->get($media->url(1200));
+
+        // The same picture, at full size, and not remembered: once a slot is
+        // free this URL has to reach PHP again to get its copy.
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/jpeg');
+        $this->assertSame(Storage::disk('public')->get('photos/pic.jpg'), $response->getContent());
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+        $this->assertSame([], Storage::disk('leap-images')->allFiles());
+
+        array_map(fn ($lock) => $lock->release(), $held);
+
+        $this->get($media->url(1200))->assertOk()->assertHeader('Content-Type', 'image/webp');
+    }
+
+    public function test_one_free_slot_is_enough_to_encode(): void
+    {
+        config(['leap.images.max_concurrent' => 2, 'leap.images.concurrency_wait' => 0]);
+        $media = $this->media();
+        $held = Cache::lock('leap.image.slot.0', 60);
+        $held->get();
+
+        $this->get($media->url(1200))->assertOk()->assertHeader('Content-Type', 'image/webp');
+
+        // Released after the encode, not kept until it expires.
+        $this->assertTrue(Cache::lock('leap.image.slot.1', 60)->get());
+        $held->release();
+    }
+
+    public function test_a_published_config_without_the_key_still_gets_the_limit(): void
+    {
+        $images = config('leap.images');
+        unset($images['max_concurrent']);
+        config(['leap.images' => $images + ['concurrency_wait' => 0]]);
+        $media = $this->media();
+        Cache::lock('leap.image.slot.0', 60)->get();
+        Cache::lock('leap.image.slot.1', 60)->get();
+
+        $this->get($media->url(1200))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    public function test_without_a_limit_the_slots_are_ignored(): void
+    {
+        config(['leap.images.max_concurrent' => null]);
+        $media = $this->media();
+        Cache::lock('leap.image.slot.0', 60)->get();
+
+        $this->get($media->url(1200))->assertOk()->assertHeader('Content-Type', 'image/webp');
     }
 
     public function test_the_preset_segment_takes_one_dot_and_no_more(): void
