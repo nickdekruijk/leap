@@ -20,6 +20,8 @@ use NickDeKruijk\Leap\Livewire\Toasts;
 use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 use Spatie\Translatable\HasTranslations;
 
+use function Illuminate\Support\enum_value;
+
 class Resource extends Module
 {
     use ToastsValidationErrors;
@@ -138,6 +140,10 @@ class Resource extends Module
      * string ("Update, Announcement"), which as a filter option can never be matched by
      * a single value. Only the ids actually in use are offered, so no option can return
      * an empty index.
+     *
+     * A select or radio is offered by its label from values(), the way the index cell
+     * shows it, in the order values() lists them. A column cast to an enum holds enum
+     * objects, which cannot be an array key, so every value is read as enum_value().
      */
     #[Computed()]
     public function filterData(Attribute $attribute): array
@@ -155,7 +161,16 @@ class Resource extends Module
             return array_filter($attribute->getValues(), fn ($id) => in_array($id, $used), ARRAY_FILTER_USE_KEY);
         }
 
-        return $this->rows(index: true, filtered: false, wholeTree: true)->pluck($attribute->name, $attribute->name)->unique()->toArray();
+        $used = $this->rows(index: true, filtered: false, wholeTree: true)
+            ->map(fn (Model $row) => enum_value($row->{$attribute->name}))
+            ->unique();
+        $used = $used->combine($used)->toArray();
+
+        if (in_array($attribute->input, ['select', 'radio'], true) && $attribute->values) {
+            return array_intersect_key($attribute->values, $used) + $used;
+        }
+
+        return $used;
     }
 
     /**

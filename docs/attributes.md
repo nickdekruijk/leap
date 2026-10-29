@@ -32,8 +32,9 @@ Attribute::make('title')->index(1)->searchable()->required();
 | `->indexOnly()` | list column only, not in the editor |
 | `->searchable()` | include in the index search |
 | `->sortable()` | user-sortable column |
-| `->filterable()` | add a column filter, on a `foreign` or `pivot` by the id of the related record and only offering values that are in use |
-| `->required()` | validation `required` |
+| `->filterable()` | add a column filter that only offers values in use: a `foreign` or `pivot` by the id of the related record, a `select` or `radio` by its label from `values()` |
+| `->required()` | validation `required`; without it an empty `date()` or `datetime()` saves as null |
+| `->readonly()` | shown but not editable: not validated and not written on save |
 | `->unique()` | validation `unique` on the table |
 | `->default($value)` | default value for new records |
 | `->validate([...])` | extra validation rules |

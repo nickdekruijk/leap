@@ -69,6 +69,10 @@ final class RecordDraft
                 }
             } elseif ($attribute->isAccessor) {
                 // Ignore accessors
+            } elseif ($attribute->disabled) {
+                // Ignore readonly fields: disabled only stops the browser from editing
+                // them, the value in $data could still have been changed by hand. A new
+                // record keeps its default, getModel() sets that on the model.
             } elseif ($attribute->input == 'ace' && $attribute->options['mode'] == 'ace/mode/json') {
                 // Unescaped slashes, for the same reason as unescaped unicode: this is
                 // read back in the editor by the person who typed it, and "https:\/\/"

@@ -7,6 +7,8 @@ use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 
+use function Illuminate\Support\enum_value;
+
 class Attribute
 {
     public string $dataName;
@@ -319,6 +321,21 @@ class Attribute
         } else {
             return $this->values;
         }
+    }
+
+    /**
+     * Return the label from values() for a value, or the value itself when there is none
+     *
+     * A column cast to an enum holds an enum object, which cannot be an array key, so it
+     * is looked up by its backing value (or its name for an enum without one).
+     *
+     * @internal Leap rendering helper; not part of the public API.
+     */
+    public function valueLabel(mixed $value): mixed
+    {
+        $value = enum_value($value);
+
+        return is_int($value) || is_string($value) ? ($this->values[$value] ?? $value) : $value;
     }
 
     /**

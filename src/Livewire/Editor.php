@@ -26,6 +26,8 @@ use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\InteractsWithAiImages;
 use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 
+use function Illuminate\Support\enum_value;
+
 class Editor extends Component
 {
     /**
@@ -560,7 +562,9 @@ class Editor extends Component
 
             return;
         }
-        $this->data = $model->only($attributes);
+        // A column cast to an enum is edited by its backing value: the select's options
+        // are keyed by it, and Livewire would carry the enum object around otherwise.
+        $this->data = array_map(enum_value(...), $model->only($attributes));
 
         // Multilingual: initialise the active locale and load translatable fields as per-locale arrays
         if ($this->editorLocales()) {
@@ -864,6 +868,12 @@ class Editor extends Component
         $slugTargets = array_values($this->slugMap());
 
         foreach ($this->attributes() as $attribute) {
+            // A readonly field is not saved (see RecordDraft::apply()), and nobody can
+            // correct it in the form, so it must not be able to block a save either.
+            if ($attribute->disabled) {
+                continue;
+            }
+
             $isSlug = in_array($attribute->name, $slugTargets, true);
 
             // Walk thru the validation rules of each attribute. A slug is checked for
@@ -882,6 +892,14 @@ class Editor extends Component
                 // way the placeholder replacement above is, and $attribute->validate would
                 // collect a second scope on the next rules() call.
                 $validate = $attribute->validate;
+
+                // date() and datetime() add the date rule, which fails on null: an empty
+                // date field that was never required could not be saved. Required still
+                // refuses null, being an implicit rule that nullable does not skip.
+                if (in_array($attribute->type, ['date', 'datetime-local'], true) && ! in_array('required', $validate, true) && ! in_array('nullable', $validate, true)) {
+                    array_unshift($validate, 'nullable');
+                }
+
                 if ($isSlug) {
                     $validate[] = self::SLUG_FORMAT;
                 }

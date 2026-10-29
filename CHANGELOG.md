@@ -5,6 +5,29 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.2] - 2026-10-29
+
+### Fixed
+
+- **A column cast to an enum no longer breaks the index.** A `select()` on a column
+  the model casts to an enum, with `filterable()`, threw "Cannot access offset of type
+  ... on array" as soon as the index had a row: the filter used the enum object as an
+  array key, and the index cell looked its label up the same way. Leap now reads such a
+  value as its backing value (or its name, for an enum without one) in the filter, the
+  index cell and the editor, and saving goes through the cast as before.
+- **A select or radio filter offers its labels.** The options were the raw values in
+  the column, now they are the labels from `values()` in that order, still only the
+  ones in use. A value in the column that `values()` does not know is offered as itself.
+- **A readonly field is no longer validated or saved.** `readonly()` and `disabled()`
+  only kept the browser from editing the field, the value still went back to the model
+  on save, so one changed by hand got through. And it was validated, so an empty
+  `datetime()->readonly()` blocked the save with "must be a valid date", in a field
+  nobody could fill in.
+- **An empty `date()` or `datetime()` that is not required saves as null.** Both add
+  the `date` rule, which fails on null, so the field needed an explicit `nullable()`.
+  `required()` still refuses an empty one. Nothing to do after upgrading; a
+  `nullable()` added for this can stay.
+
 ## [1.19.1] - 2026-10-27
 
 ### Security
