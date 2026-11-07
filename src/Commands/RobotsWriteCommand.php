@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Foundation\Bootstrap\SetRequestForConsole;
 use Illuminate\Support\Facades\Route;
 use NickDeKruijk\Leap\Classes\RobotsFile;
 use Throwable;
@@ -75,6 +76,11 @@ class RobotsWriteCommand extends Command
      * until the next deploy; a sitemap route added in the same deploy was missing
      * from the Sitemap line the same way.
      *
+     * APP_URL too: the Sitemap line is written on it, and the console request every
+     * URL in this process is made from was built from the old one at boot. Setting
+     * app.url alone is not enough, so the request is built again the way Laravel's own
+     * SetRequestForConsole does it, and the URL generator picks it up when it is bound.
+     *
      * The files themselves are asked, not routesAreCached() or configurationIsCached():
      * those remember what was there when the process booted.
      */
@@ -89,6 +95,11 @@ class RobotsWriteCommand extends Command
 
             if (isset($config['leap']['robots'])) {
                 config(['leap.robots' => $config['leap']['robots']]);
+            }
+
+            if (isset($config['app']['url']) && $config['app']['url'] !== config('app.url')) {
+                config(['app.url' => $config['app']['url']]);
+                (new SetRequestForConsole)->bootstrap($this->laravel);
             }
         }
     }

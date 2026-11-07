@@ -5,6 +5,17 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.3] - 2026-11-07
+
+### Fixed
+
+- **robots.txt names the sitemap on the `APP_URL` that was just cached.** `optimize`
+  runs `leap:robots-write` in the process that booted from the previous config cache,
+  and 1.18.1 only read `leap.robots` from the new one. The console request every URL
+  is made from still held the old `APP_URL`, so a change from http to https left the
+  `Sitemap:` line on http until the next `optimize`. Zero-downtime deploys were not
+  affected: a new release has no cache to boot from. Seen on nickdekruijk.nl.
+
 ## [1.19.2] - 2026-10-29
 
 ### Fixed

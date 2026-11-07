@@ -186,6 +186,24 @@ class RobotsWriteCommandTest extends TestCase
     }
 
     /**
+     * And for APP_URL, which the Sitemap line is written on. The console request, and
+     * with it every URL the process makes, was built from the old one when it booted.
+     * Seen on nickdekruijk.nl, where http became https and the file kept saying http.
+     */
+    public function test_under_optimize_it_writes_the_sitemap_on_the_app_url_just_cached(): void
+    {
+        Route::get('sitemap.xml', fn () => 'xml')->name('sitemap');
+        File::put($this->app->getCachedConfigPath(), '<?php return '.var_export([
+            'app' => ['url' => 'https://fresh.test'],
+            'leap' => ['robots' => config('leap.robots')],
+        ], true).';');
+
+        $this->artisan('leap:robots-write')->assertSuccessful();
+
+        $this->assertStringContainsString("Sitemap: https://fresh.test/sitemap.xml\n", File::get(public_path('robots.txt')));
+    }
+
+    /**
      * What makes this work without anybody changing a deploy script.
      */
     public function test_optimize_runs_it(): void
