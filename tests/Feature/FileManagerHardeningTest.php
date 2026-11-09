@@ -101,4 +101,34 @@ class FileManagerHardeningTest extends TestCase
 
         $this->assertFalse($fm->deleteDirectory(1));
     }
+
+    /**
+     * The upload methods are called from the browser with an id and name it
+     * picks, and $uploads is public, so a bot must not get a 500 from them.
+     */
+    public function test_upload_methods_ignore_an_id_or_name_they_cannot_use(): void
+    {
+        $fm = Livewire::test(FileManager::class);
+
+        $fm->call('uploadStart', ['x'], 'a.png', 10)
+            ->call('uploadStart', 'u1', ['x'], 10)
+            ->call('uploadDone', ['x'])
+            ->call('uploadFailed', ['x'])
+            ->call('uploadFailed', 'missing')
+            ->call('uploadClear', ['x'])
+            ->call('uploadClear', 'missing')
+            ->assertOk();
+
+        $this->assertSame([], $fm->get('uploads'));
+    }
+
+    public function test_upload_failed_names_only_a_string_name(): void
+    {
+        $fm = Livewire::test(FileManager::class)->instance();
+        $fm->uploads = ['u1' => ['name' => ['x']]];
+
+        $fm->uploadFailed('u1');
+
+        $this->assertSame(['u1'], array_keys($fm->uploads));
+    }
 }

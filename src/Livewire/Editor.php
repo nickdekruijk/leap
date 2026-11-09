@@ -1398,6 +1398,12 @@ class Editor extends Component
      */
     public function updatedActiveLocale()
     {
+        // The browser sets this property, and it ends up in data paths (data.{name}.{locale})
+        // and in the JavaScript of several inputs. Only a configured locale is accepted.
+        if (! array_key_exists($this->activeLocale, $this->editorLocales())) {
+            $this->activeLocale = $this->editorLocales() ? $this->defaultLocale() : '';
+        }
+
         $this->refreshSlugPlaceholders();
 
         // Section titles (shown when a section is collapsed) are built from

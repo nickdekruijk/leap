@@ -55,7 +55,7 @@
                             <label>@lang('leap::resource.translate_from')</label>
                             <select class="leap-select" x-model="from">
                                 @foreach ($this->editorLocales() as $code => $name)
-                                    <option value="{{ $code }}" x-bind:disabled="'{{ $code }}' === '{{ $activeLocale }}'">{{ $name }}</option>
+                                    <option value="{{ $code }}" x-bind:disabled="{{ Js::from((string) $code) }} === {{ Js::from($activeLocale) }}">{{ $name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -64,7 +64,7 @@
                             <label class="leap-translate-scope"><input type="radio" value="all" x-model="scope"> @lang('leap::resource.translate_all')</label>
                         </div>
                         <div class="leap-modal-actions">
-                            <button type="button" class="leap-modal-btn leap-modal-save" :class="{ 'leap-alt-generating': busy }" :disabled="busy || from === '{{ $activeLocale }}'"
+                            <button type="button" class="leap-modal-btn leap-modal-save" :class="{ 'leap-alt-generating': busy }" :disabled="busy || from === {{ Js::from($activeLocale) }}"
                                 x-on:click="busy = true; $wire.translateAll(from, scope === 'empty').then(() => open = false).finally(() => busy = false)">
                                 @svg('fas-language', 'svg-icon') @lang('leap::resource.translate')
                             </button>

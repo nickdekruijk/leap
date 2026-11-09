@@ -50,7 +50,7 @@
                                 {{ $this->currentDirectory($depth) }}
                             @else
                                 @can('leap::create')
-                                    <button x-on:click="$wire.createDirectory({{ $depth }},prompt('@lang('leap::filemanager.new_folder')'))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('leap::filemanager.new_folder')</span></button>
+                                    <button x-on:click="$wire.createDirectory({{ $depth }},prompt({{ Js::from(__('leap::filemanager.new_folder')) }}))" class="leap-button">@svg('fas-folder-plus', 'svg-icon')<span> @lang('leap::filemanager.new_folder')</span></button>
                                     <button x-on:click="document.getElementById('leap-filemanager-upload').click()" @if ($this->uploading) disabled @endif class="leap-button">
                                         @svg('fas-upload', 'svg-icon')
                                         <span>@lang('Upload') <small>(max {{ $this->humanFileSize($this->maxUploadSize(), 0) }})</small></span>
@@ -86,7 +86,7 @@
                 </tr>
                 @foreach ($uploads as $id => $upload)
                     @if ($upload['depth'] == $depth && $upload['currentDirectory'] == $this->currentDirectory($depth))
-                        <tr wire:click="uploadClear({{ $id }})" class="leap-index-row leap-filemanager-uploading @if ($upload['progress'] >= 100) leap-filemanager-uploading-done @endif @if ($upload['error']) leap-filemanager-uploading-error @endif">
+                        <tr wire:click="uploadClear({{ Js::from($id) }})" class="leap-index-row leap-filemanager-uploading @if ($upload['progress'] >= 100) leap-filemanager-uploading-done @endif @if ($upload['error']) leap-filemanager-uploading-error @endif">
                             <td>
                                 @svg('fas-upload', 'svg-icon') {{ $upload['name'] }}
                                 <progress value="{{ $upload['progress'] }}" max="100">Test</progress>
@@ -268,7 +268,7 @@
                                              }"
                                             x-on:mouseup.window="if (croppingMode && cropStart && !cropConfirm) {
                                                  const r = getCropRect();
-                                                 if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = '{{ $cropDefaultName }}'; $nextTick(() => { const i = $root.querySelector('.leap-crop-input'); if(i){ i.select(); i.focus(); } }); }
+                                                 if (r.w > 1 && r.h > 1) { cropConfirm = true; cropNewName = {{ Js::from($cropDefaultName) }}; $nextTick(() => { const i = $root.querySelector('.leap-crop-input'); if(i){ i.select(); i.focus(); } }); }
                                                  else { cropStart = null; cropCurrent = null; }
                                              }" @endif>
                                             <img src="{{ $this->downloadUrl($file) }}" alt="">
@@ -335,7 +335,7 @@
                                                 <span class="leap-modal-spacer"></span>
                                                 @if ($aiAltEnabled)
                                                     <button type="button" class="leap-modal-btn leap-alt-generate-btn" :class="{ 'leap-alt-generating': generatingAlt }" :disabled="generatingAlt"
-                                                        x-on:click="generatingAlt = true; $wire.generateAltTexts('{{ $file }}').then(r => { if (r) altTexts = { ...altTexts, ...r }; }).finally(() => generatingAlt = false);">
+                                                        x-on:click="generatingAlt = true; $wire.generateAltTexts({{ Js::from($file) }}).then(r => { if (r) altTexts = { ...altTexts, ...r }; }).finally(() => generatingAlt = false);">
                                                         @svg('fas-wand-magic-sparkles', 'svg-icon') @lang('leap::filemanager.generate_alt_text')
                                                     </button>
                                                 @endif

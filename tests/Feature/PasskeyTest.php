@@ -117,4 +117,33 @@ class PasskeyTest extends TestCase
 
         Livewire::test(Login::class)->assertDontSee(__('leap::auth.passkey_login'));
     }
+
+    public function test_passkey_buttons_keep_an_apostrophe_in_a_translation_inside_the_js_string(): void
+    {
+        app('translator')->addLines([
+            'auth.passkey_delete_confirm' => "Supprimer l'accès ?",
+            'auth.passkey_add_prompt' => "Nom de l'appareil :",
+        ], app()->getLocale(), 'leap');
+
+        $user = $this->createUser();
+        $user->passkeys()->create([
+            'name' => 'Test device',
+            'credential_id' => 'fake-credential-id',
+            'credential' => ['type' => 'public-key'],
+        ]);
+        $this->actingAs($user);
+        $this->grantProfilePermissions();
+        session(['auth.password_confirmed_at' => time()]);
+
+        // The browser decodes the attribute before the script runs, so check
+        // what the script sees: the apostrophe as a JSON escape (backslash
+        // u0027), never a bare quote that ends the JS string.
+        $html = html_entity_decode(Livewire::test(Profile::class)->html(), ENT_QUOTES);
+        $bs = chr(92);
+
+        $this->assertStringContainsString("confirm('Supprimer l{$bs}u0027acc", $html);
+        $this->assertStringContainsString("prompt('Nom de l{$bs}u0027appareil :')", $html);
+        $this->assertStringNotContainsString("l'accès", $html);
+        $this->assertStringNotContainsString("l'appareil", $html);
+    }
 }

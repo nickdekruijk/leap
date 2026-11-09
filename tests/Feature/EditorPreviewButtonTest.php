@@ -183,4 +183,32 @@ class EditorPreviewButtonTest extends TestCase
         $this->assertSame(2, session('leap.preview')['id']);
         $this->assertSame('second', session('leap.preview')['data']['title']);
     }
+
+    /**
+     * activeLocale is a public property, so the browser can set it to anything,
+     * and it goes into data paths (data.{name}.{locale}) and into the JavaScript
+     * of the translate dialog, showIf, ace and tinymce. Only a configured locale
+     * is accepted; anything else falls back to the default.
+     */
+    public function test_an_active_locale_from_the_browser_must_be_configured(): void
+    {
+        config([
+            'leap.locales' => ['nl' => 'Nederlands', 'en' => 'English'],
+            'leap.ai.translate.provider' => 'claude',
+            'leap.ai.providers.claude.api_key' => 'k',
+        ]);
+        $this->grantAll(PreviewableResource::class);
+        $record = $this->record();
+
+        $editor = Livewire::test(Editor::class)
+            ->call('openEditor', $record->id)
+            ->set('activeLocale', 'en')
+            ->assertSet('activeLocale', 'en');
+
+        foreach (["x'||alert(1)||'", 'nl.foo'] as $value) {
+            $editor->set('activeLocale', 'en')->set('activeLocale', $value)->assertOk()->assertSet('activeLocale', 'nl');
+        }
+
+        $this->assertStringNotContainsString('alert(1)', html_entity_decode($editor->html(), ENT_QUOTES));
+    }
 }

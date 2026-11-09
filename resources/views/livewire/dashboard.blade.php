@@ -4,7 +4,7 @@
     </header>
     <article>
         <hgroup>
-            <h3 x-init="$el.innerHTML = greeting()">&nbsp;</h3>
+            <h3 x-init="$el.textContent = greeting()">&nbsp;</h3>
             <h4>
                 @lang('leap::dashboard.logged_in_as', ['role' => \NickDeKruijk\Leap\Leap::context()->roleName()])
             </h4>
@@ -13,10 +13,10 @@
             function greeting() {
                 const hour = new Date().getHours();
                 let greeting = '';
-                if (hour < 12) greeting = '@lang('leap::dashboard.good_morning')'
-                else if (hour < 18) greeting = '@lang('leap::dashboard.good_afternoon')'
-                else greeting = '@lang('leap::dashboard.good_evening')';
-                return greeting + ' {{ Auth::user()->name }}';
+                if (hour < 12) greeting = {{ Js::from(__('leap::dashboard.good_morning')) }}
+                else if (hour < 18) greeting = {{ Js::from(__('leap::dashboard.good_afternoon')) }}
+                else greeting = {{ Js::from(__('leap::dashboard.good_evening')) }};
+                return greeting + ' ' + {{ Js::from((string) Auth::user()->name) }};
             }
         </script>
     </article>

@@ -87,6 +87,11 @@ class FileManager extends Module
     {
         Leap::validatePermission('create');
 
+        // Called from the browser: an array as id or name would throw further on.
+        if (! $this->isUploadKey($id) || ! is_string($name)) {
+            return;
+        }
+
         $this->uploads[$id] = [
             'name' => $name,
             'size' => $size,
@@ -110,6 +115,10 @@ class FileManager extends Module
     {
         Leap::validatePermission('create');
 
+        if (! $this->isUploadKey($id)) {
+            return;
+        }
+
         $uploaded = $this->uploads[$id]['file'] ?? null;
         if (! $uploaded) {
             return;
@@ -124,7 +133,7 @@ class FileManager extends Module
         if (is_string($uploaded)) {
             $uploaded = $this->temporaryUploadFromReference($uploaded);
             if (! $uploaded) {
-                $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => basename((string) ($this->uploads[$id]['name'] ?? ''))]))->to(Toasts::class);
+                $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $this->uploadName($id)]))->to(Toasts::class);
 
                 return;
             }
@@ -135,7 +144,7 @@ class FileManager extends Module
         // gate must be re-enforced server-side. Take the name as a bare basename (no
         // path segments), rebuild the target directory from the open folders, and
         // re-check the extension and size against the actual uploaded file.
-        $name = basename((string) ($this->uploads[$id]['name'] ?? ''));
+        $name = $this->uploadName($id);
         if (! $this->validatePath()) {
             return;
         }
@@ -246,14 +255,38 @@ class FileManager extends Module
 
     public function uploadFailed($id)
     {
-        $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $this->uploads[$id]['name']]))->to(Toasts::class);
+        if (! $this->isUploadKey($id) || ! isset($this->uploads[$id])) {
+            return;
+        }
+
+        $this->dispatch('toast-error', __('leap::filemanager.upload_failed', ['attribute' => $this->uploadName($id)]))->to(Toasts::class);
     }
 
     public function uploadClear($id)
     {
-        if ($this->uploads[$id]['error']) {
+        if ($this->isUploadKey($id) && ($this->uploads[$id]['error'] ?? false)) {
             unset($this->uploads[$id]);
         }
+    }
+
+    /**
+     * The upload methods are called from the browser with an id it picked, so it
+     * is outside input: only an int or a string can be a key of $uploads.
+     */
+    private function isUploadKey($id): bool
+    {
+        return is_int($id) || is_string($id);
+    }
+
+    /**
+     * The name uploadStart() stored, as a bare file name. $uploads is public, so
+     * the browser can resend it with anything in place of the name.
+     */
+    private function uploadName($id): string
+    {
+        $name = $this->uploads[$id]['name'] ?? '';
+
+        return is_string($name) ? basename($name) : '';
     }
 
     /**

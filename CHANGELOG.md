@@ -5,6 +5,61 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.4] - 2026-11-09
+
+### Security
+
+- **A file name can no longer run script in the file manager's crop dialog.** The
+  default name of a crop comes from the file name and went into the mouseup handler
+  as a quoted JavaScript string. Blade writes a quote as `&#039;`, and the browser
+  turns that back into a quote before the handler runs, so a file with a name such as
+  `x');alert(1);x.png` ran script for whoever cropped it. Uploads through the panel
+  are slugged by default, but a file put in storage another way, or uploaded with
+  `slug_uploads` off, was not. The name now goes in through `Js::from()`, and so does
+  the file name the alt text generator is called with.
+- **The editor only accepts a configured locale as its active locale.** It is a
+  public property, so the browser could set it to anything, and it ends up in the
+  data paths of translatable fields (`data.{name}.{locale}`) and in the JavaScript of
+  the translate dialog, `showIf()`, ace and tinymce. A quote in it ran script in the
+  visitor's own session. Anything that is not a key of `leap.locales` now falls back
+  to the default locale.
+- **The upload methods of the file manager check the id the browser sends.** The id
+  went into `uploadClear()` without quotes, and an id or name that was an array, or
+  an id that did not exist, made `uploadStart()`, `uploadDone()`, `uploadFailed()` and
+  `uploadClear()` throw. The id now goes in through `Js::from()` and is checked first.
+
+### Fixed
+
+- **A number as toast message or focus works again.** 1.19.3 only took a string, so
+  `$this->dispatch('toast', $count)` or a numeric field key as focus silently showed
+  nothing. Any int or float is cast to a string again, and focus `0` gets its click
+  as well; an array, an object or a bool is still skipped, and an empty focus gets
+  no click. A `Stringable` works when
+  a listener is called directly from PHP. Through `dispatch()` it travels as JSON, so
+  cast it to a string there.
+- **Translations with an apostrophe no longer break inline scripts.** The passkey
+  buttons in the profile, the new folder button in the file manager and the page
+  expired dialog put a translation in a quoted JavaScript string. In an attribute the
+  decoded quote ended the string, so a text such as "Supprimer l'accès ?" left the
+  button doing nothing, and in a `<script>` the `&#039;` showed literally. They now go
+  in through `Js::from()`. A test now fails on any value echoed into an inline script
+  or a JavaScript attribute that does not go through `Js::from()` and is not on its
+  short list of developer defined names and numbers.
+- **The dashboard greeting no longer goes through `innerHTML`.** It only showed
+  right because `innerHTML` decoded Blade's entities again. The texts and the user's
+  name now go in through `Js::from()` and the greeting is set as `textContent`.
+- **The state of the toasts is capped.** Every toast event can be triggered from the
+  browser, and expired toasts were only cleared when the editor opened or closed. A
+  new toast now clears the ones that expired more than 2 seconds ago first (expiry is
+  counted in whole seconds, so one that is still fading stays), a message is cut at
+  2000 characters (an ellipsis included), and at most 50 toasts are kept. An import
+  can send more than that, one per error per row; the import table still marks every
+  invalid cell.
+- **A new toast always shows.** Once the expired toasts were cleared, the next toast
+  got id 0 again and with it the `wire:key` of an expired toast whose element was
+  still in the page, so Livewire reused that element with its animation already
+  finished. Ids now only go up.
+
 ## [1.19.3] - 2026-11-09
 
 ### Security
