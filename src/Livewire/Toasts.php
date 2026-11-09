@@ -15,7 +15,9 @@ class Toasts extends Component
     /*
      * The listeners are called with whatever params __dispatch brings, as named
      * arguments. Defaults and the variadic keep a missing message or an unknown
-     * key from throwing; add() then skips a message that is not a string.
+     * named key from throwing; add() then skips a message that is not a string.
+     * Numeric keys or a non-array payload fail while Livewire unpacks them,
+     * before a listener runs, so a component cannot catch those.
      */
     #[On('toast-error')]
     public function error($message = null, $focus = null, ...$ignored)

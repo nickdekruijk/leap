@@ -21,7 +21,8 @@ state, so this was self-XSS and 500s from bots, nothing that reached other users
   input. An array as message made the view throw in `htmlspecialchars()`; such a toast
   is now skipped. A focus that is not a string is ignored, and so is a `close()` with
   an id that cannot be an array key, which threw as well. An event without a message
-  or with a parameter the listener does not know adds no toast and no longer throws.
+  adds no toast, and a named parameter the listener does not know is ignored. Neither
+  throws any more.
 - **The focus of a toast goes into its `onclick` through `Js::from()`.** It sat in a
   quoted JavaScript string, and the browser turns Blade's `&#039;` back into a quote
   before the script runs, so a focus sent with `toast-error` could break out of the
