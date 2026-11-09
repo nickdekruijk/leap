@@ -122,12 +122,12 @@ class InlineScriptStringsTest extends TestCase
 
     public function test_the_page_expired_confirm_keeps_an_apostrophe(): void
     {
-        app('translator')->addLines(['auth.page_expired' => "La page a expiré, l'actualiser ?"], app()->getLocale(), 'leap');
+        app('translator')->addLines(['auth.page_expired' => "Page perdue, l'actualiser ?"], app()->getLocale(), 'leap');
         $this->actingAsPanelUser();
 
         $html = $this->followingRedirects()->get(route('leap.home'))->assertOk()->getContent();
 
-        $this->assertStringContainsString("confirm('La page a expiré, l\\u0027actualiser ?')", $html);
+        $this->assertStringContainsString("confirm('Page perdue, l\\u0027actualiser ?')", $html);
         $this->assertStringNotContainsString('l&#039;actualiser', $html);
     }
 
