@@ -123,11 +123,11 @@ class PanelScreensTest extends TestCase
      */
     public function test_expired_toasts_are_swept_and_current_ones_kept(): void
     {
-        $component = Livewire::test(Toasts::class);
+        $component = Livewire::test(Toasts::class)
+            ->dispatch('toast', message: 'stale')
+            ->dispatch('toast', message: 'fresh');
 
-        $component->instance()->add('stale');
         $component->instance()->toasts[0]['expires'] = time() - 1;
-        $component->instance()->add('fresh');
 
         $component->instance()->clearExpired();
 
@@ -137,10 +137,10 @@ class PanelScreensTest extends TestCase
 
     public function test_closing_a_toast_removes_only_that_one(): void
     {
-        $component = Livewire::test(Toasts::class);
+        $component = Livewire::test(Toasts::class)
+            ->dispatch('toast', message: 'first')
+            ->dispatch('toast', message: 'second');
 
-        $component->instance()->add('first');
-        $component->instance()->add('second');
         $component->instance()->close(0);
 
         $messages = array_column($component->instance()->toasts, 'message');
