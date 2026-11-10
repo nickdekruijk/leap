@@ -5,6 +5,31 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.5] - 2026-11-10
+
+### Fixed
+
+- **With consent switched off, `has()` answers with the configured default.**
+  `window.leapConsent` was only printed together with the banner, so with
+  `leap.consent.enabled` false `consent.js` fell back to a default of false and
+  `has()` answered false for every category, also with `'default' => 'granted'`.
+  `leap::consent-banner` now prints a minimal config when consent is off (`enabled`
+  false and the default), and still no banner markup. A site with consent off and the
+  default on `granted` therefore starts loading its `scripts_*` slots and Matomo's
+  cookies after this update, which is what the docs said it did. A project that
+  published its own `consent-banner.blade.php` keeps its copy and does not get the fix
+  until it takes the new `@elseif` branch. With consent on, the output of the view is
+  unchanged.
+- **With consent switched off, `grant()` and `revoke()` store nothing.** They wrote the
+  `consent` cookie regardless, a cookie `has()` never looked at while consent was off.
+  Both now return at once: no cookie, no `consent:change` event.
+
+### Changed
+
+- **A Vimeo embed asks not to be tracked.** `Video::embedUrl()` adds `dnt=1` for Vimeo,
+  so its player sets no cookies and collects no session analytics. YouTube already
+  loaded from `youtube-nocookie.com` and is unchanged.
+
 ## [1.19.4] - 2026-11-09
 
 ### Security

@@ -464,6 +464,52 @@ worthless, and the site no better off than with no banner at all.
 `window.consent.has('embeds')` answers in every configuration, banner or no banner, so
 gated code stays on a single path and never has to ask whether consent exists at all.
 
+### Switched off
+
+With `enabled` false, for a site without trackers or one whose banner comes from
+somewhere else (a tag manager, say), `leap::consent-banner` renders no markup and prints
+one line:
+
+```html
+<script>window.leapConsent = {"enabled":false,"default":true,"categories":[]};</script>
+```
+
+That is how `consent.js` learns the configured default. `has()` answers with it for every
+category, so with `default` set to `granted` the `scripts_*` slots and Matomo's cookies
+load for everyone, and with `denied` nothing gated ever loads.
+
+`grant()` and `revoke()` do nothing while consent is off: no cookie is written, no
+`consent:change` is sent. There is no choice to store, because `has()` would not look at
+it.
+
+Two things to know:
+
+- A project that published its own `consent-banner.blade.php` before 1.19.5 does not print
+  that line, and `has()` answers `false` there whatever the default is. Add the `@elseif`
+  branch from the package's view, or publish it again.
+- The line is an inline script. Under a Content-Security-Policy without `'unsafe-inline'`
+  it needs the same allowance as the one the banner prints when consent is on.
+
+### Video
+
+The template's `video` section never contacts YouTube or Vimeo before a visitor asks to
+watch. The poster is fetched from the provider once, on the server, and stored on the
+public disk; the player is an `<iframe>` built in the click handler. YouTube loads from
+`youtube-nocookie.com`, Vimeo with `dnt=1`.
+
+What a click on the poster does depends on `enabled`:
+
+| `enabled` | |
+|---|---|
+| `true` | With `embeds` granted the video plays. Without it a notice names the provider and offers "Load video" (this one video) and "Always allow" (grants `embeds`). |
+| `false` | The video plays, on that one click. The notice is not rendered: "Always allow" would have nothing to remember. A line under the video names the provider (`Video from YouTube`), so it is clear where the video comes from before the click on the play button, which is the informed act. |
+
+The `false` row and the line under the video come with leap-template 2.5. The template
+also offers its `cookies` section (the cookie table) only while `enabled` is true: the
+registry describes this consent system, and on a site that arranges consent elsewhere the
+table would describe something the visitor never sees. A page that already has the
+section keeps rendering it.
+
 ### Public API
 
 The banner's markup and class names, and `window.consent` (`has`, `grant`, `revoke`,

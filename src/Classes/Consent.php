@@ -171,4 +171,20 @@ class Consent
             'categories' => static::optionalCategories()->keys()->all(),
         ];
     }
+
+    /**
+     * What the browser needs when nobody is asked: only the default every category
+     * falls back to. There is no banner to drive and no stored choice to match, so
+     * there is no fingerprint and no category list.
+     *
+     * @return array<string, mixed>
+     */
+    public static function disabledArray(): array
+    {
+        return [
+            'enabled' => false,
+            'default' => static::defaultState(),
+            'categories' => [],
+        ];
+    }
 }

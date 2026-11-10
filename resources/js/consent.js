@@ -31,6 +31,11 @@
  *   consent.open()             → reopen the banner
  *
  * and a 'consent:change' event on document, so anything gated can react without polling.
+ *
+ * With consent switched off (leap.consent.enabled false) the page still prints
+ * window.leapConsent, with only the configured default in it. has() then answers with
+ * that default for every category, and grant() and revoke() do nothing: no cookie is
+ * written and no event is sent.
  */
 window.consent = (function () {
     const COOKIE = 'consent';
@@ -110,7 +115,16 @@ window.consent = (function () {
             return state !== null;
         },
 
+        /**
+         * With consent switched off there is no choice to store: has() answers with the
+         * default whatever is granted here, so a cookie would record something nothing
+         * ever reads. grant() and revoke() then do nothing at all.
+         */
         grant(category) {
+            if (!config.enabled) {
+                return;
+            }
+
             state = state || { v: config.version };
             (category ? [category] : config.categories).forEach((c) => (state[c] = true));
             state.t = Math.floor(Date.now() / 1000);
@@ -119,6 +133,10 @@ window.consent = (function () {
         },
 
         revoke(category) {
+            if (!config.enabled) {
+                return;
+            }
+
             state = state || { v: config.version };
             (category ? [category] : config.categories).forEach((c) => (state[c] = false));
             state.t = Math.floor(Date.now() / 1000);

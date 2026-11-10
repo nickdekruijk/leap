@@ -45,6 +45,20 @@ class VideoTest extends TestCase
         $this->assertStringNotContainsString('//www.youtube.com', (new Video('abc'))->embedUrl());
     }
 
+    public function test_it_asks_vimeo_not_to_track_the_playback(): void
+    {
+        // dnt=1 keeps Vimeo's player from setting cookies and collecting session
+        // analytics. YouTube has no such parameter and its address stays as it was.
+        $this->assertSame(
+            'https://player.vimeo.com/video/1084537?autoplay=1&playsinline=1&dnt=1',
+            (new Video('1084537'))->embedUrl()
+        );
+        $this->assertSame(
+            'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0&playsinline=1',
+            (new Video('dQw4w9WgXcQ'))->embedUrl()
+        );
+    }
+
     public function test_it_stores_the_youtube_poster_locally(): void
     {
         Http::fake(['img.youtube.com/vi/*/maxresdefault.jpg' => Http::response('jpeg-bytes')]);

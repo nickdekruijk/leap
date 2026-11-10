@@ -54,11 +54,15 @@ class Video
      *
      * playsinline is a separate matter: without it, iPhones take the video fullscreen
      * the moment it plays.
+     *
+     * dnt=1 asks Vimeo not to track the playback: no cookies and no session analytics
+     * from its player. YouTube has no such switch, which is what youtube-nocookie.com
+     * is for.
      */
     public function embedUrl(): string
     {
         return $this->isVimeo()
-            ? 'https://player.vimeo.com/video/'.$this->id.'?autoplay=1&playsinline=1'
+            ? 'https://player.vimeo.com/video/'.$this->id.'?autoplay=1&playsinline=1&dnt=1'
             : 'https://www.youtube-nocookie.com/embed/'.$this->id.'?autoplay=1&rel=0&playsinline=1';
     }
 

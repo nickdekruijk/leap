@@ -71,6 +71,79 @@ class ConsentTest extends TestCase
         $this->assertFalse(Consent::defaultState());
     }
 
+    /**
+     * Switched off means no banner, not no answer.
+     *
+     * The config used to be printed only together with the banner, so with consent off
+     * consent.js fell back to a default of false and has() answered false on a site that
+     * had set the default to "granted".
+     */
+    public function test_switched_off_it_prints_the_default_and_no_banner(): void
+    {
+        config()->set('leap.consent.enabled', false);
+        config()->set('leap.consent.default', 'granted');
+
+        $html = view('leap::consent-banner')->render();
+
+        $this->assertStringContainsString('<script>window.leapConsent = {"enabled":false,"default":true,"categories":[]};</script>', $html);
+        $this->assertStringNotContainsString('class="consent', $html);
+        $this->assertStringNotContainsString('x-data', $html);
+        $this->assertStringNotContainsString('<button', $html);
+
+        config()->set('leap.consent.default', 'denied');
+
+        $this->assertStringContainsString(
+            '<script>window.leapConsent = {"enabled":false,"default":false,"categories":[]};</script>',
+            view('leap::consent-banner')->render()
+        );
+    }
+
+    public function test_switched_on_the_banner_still_gets_the_full_blob(): void
+    {
+        $html = view('leap::consent-banner')->render();
+
+        $this->assertStringContainsString('<script>window.leapConsent = '.json_encode(Consent::toArray()).';</script>', $html);
+        $this->assertSame(1, substr_count($html, 'window.leapConsent'));
+        $this->assertStringContainsString('class="consent"', $html);
+    }
+
+    public function test_switched_on_without_anything_to_refuse_it_prints_nothing(): void
+    {
+        // Nothing optional means nothing to ask, and this is how it always was: the
+        // switched-off config is for a site that turned consent off, not for this.
+        config()->set('leap.consent.categories', ['necessary' => ['necessary' => true]]);
+
+        $this->assertSame('', view('leap::consent-banner')->render());
+    }
+
+    /**
+     * Switched off, has() answers with the default and nothing is stored.
+     *
+     * grant() used to write the cookie regardless, so "always allow" on a video left a
+     * cookie behind that has() never looked at. Nothing here runs the script: this
+     * asserts that both guards are there and sit before anything is written. Verified
+     * in node against a fake document, for off with either default and for on.
+     */
+    public function test_consent_js_stores_nothing_while_switched_off(): void
+    {
+        $js = file_get_contents(__DIR__.'/../../resources/js/consent.js');
+
+        foreach (['grant', 'revoke'] as $method) {
+            $start = strpos($js, $method.'(category) {');
+            $this->assertNotFalse($start);
+
+            $body = substr($js, $start, strpos($js, 'announce();', $start) - $start);
+            $guard = strpos($body, 'if (!config.enabled) {');
+
+            $this->assertNotFalse($guard, $method.'() has no guard for consent being off');
+            $this->assertLessThan(strpos($body, 'state = '), $guard);
+            $this->assertLessThan(strpos($body, 'write();'), $guard);
+        }
+
+        // has() reads the default from the config the page printed.
+        $this->assertMatchesRegularExpression('/has\(category\) \{\s+if \(!config\.enabled\) \{\s+return config\.default;/', $js);
+    }
+
     public function test_it_hands_the_browser_everything_it_needs_in_one_blob(): void
     {
         $blob = Consent::toArray();

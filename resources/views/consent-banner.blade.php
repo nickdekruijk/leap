@@ -102,4 +102,9 @@
             </div>
         </div>
     </div>
+@elseif (! Consent::enabled())
+    {{-- Switched off: no banner, but consent.js still has to know the configured
+         default. Without this it only had its own fallback, and has() answered false
+         on a site that had set the default to "granted". --}}
+    <script>window.leapConsent = @json(Consent::disabledArray());</script>
 @endif
