@@ -333,6 +333,12 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         padding-left: 1.4em;
     }
 
+    /* The preview is a button: a link in the content (often around an image) would
+       otherwise take the click, and a middle click or cmd click open it in a new tab. */
+    a {
+        pointer-events: none;
+    }
+
     /* Pencil affordance, revealed on hover/focus */
     &::after {
         content: "";

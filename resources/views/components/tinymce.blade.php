@@ -148,7 +148,7 @@
         <div
             x-show="!editing"
             x-html="value"
-            @click="activate()"
+            @click.prevent="activate()"
             @keydown.enter.prevent="activate()"
             @keydown.space.prevent="activate()"
             class="leap-richtext-preview tinymce"

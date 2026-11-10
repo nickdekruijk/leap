@@ -5,6 +5,18 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.6] - 2026-11-10
+
+### Fixed
+
+- **A link in a rich-text preview no longer opens instead of the editor.** The
+  click-to-edit preview (`leap.tinymce.lazy_sections`, and `lazy` for top level fields)
+  renders the stored HTML as it is, so a link in it was a real link. A click on an image
+  with a link around it followed the link, and once the image filled the preview the
+  field could not be edited at all, also not through the pencil. The click now always
+  opens the editor, and links in the preview take no pointer events, so a middle click
+  or cmd click opens nothing in a new tab either. Nothing to do after upgrading.
+
 ## [1.19.5] - 2026-11-10
 
 ### Fixed
