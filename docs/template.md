@@ -43,6 +43,10 @@ See [content-types.md](content-types.md) for News/Event/generic archetypes, the
 - `public/css/tinymce.css` — rich-text editor styles that match the frontend.
 - Starter feature tests under `tests/Feature`.
 - Two routes appended to `routes/web.php`: `sitemap.xml` and the catch-all page route.
+- `app/Contracts/Content.php`, the interface the page and every content type implement
+  (see [Static analysis](#static-analysis)).
+- `phpstan.neon` and a `composer types:check` script, with `larastan/larastan` as a dev
+  dependency.
 
 It also offers to install the frontend packages the template uses
 (`nickdekruijk/settings`, `nickdekruijk/imageresize`, `nickdekruijk/vanilla-slider`,
@@ -213,6 +217,28 @@ The compiled result lands in `public/css/builds` and `public/js/builds`. That is
 output, not source: `leap:template` adds both to `.gitignore`, and they regenerate on the
 first request, directories and all. Committing them means every branch carries a rebuilt
 artifact that conflicts on merge, and a stale copy can mask a broken source.
+
+## Static analysis
+
+The template sets the project up for [Larastan](https://github.com/larastan/larastan) at
+level 5 over `app/`, and its own code passes that without a baseline, so whatever
+`composer types:check` reports on a fresh install is about code the project wrote:
+
+```bash
+composer types:check    # phpstan analyse --memory-limit=2G
+```
+
+`leap:template` copies `phpstan.neon`, adds the script to `composer.json` (one line, the
+rest of the file untouched) and runs `composer require --dev larastan/larastan`; with
+`--no-install` it prints that command instead. A `phpstan.neon` that is already there is
+never replaced, since that is where a project keeps its baseline and its own paths.
+
+PageController and the search handle the page and every content type without knowing the
+class. `App\Contracts\Content` describes what they read (`title`, `slug`, `sections`, the
+`active()` scope, `getTranslation()` and the rest), and the models implement it. It holds
+no code and nothing checks it at runtime, so a model generated before it existed keeps
+working. `leap:template --diff` names the models that do not implement it yet, and says
+when Larastan or the script is missing.
 
 ## Navigation
 

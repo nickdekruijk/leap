@@ -116,3 +116,8 @@ is generic in `template.scss`; the brand colours are tokens in `project.scss`
 Not everything has to be generated. Add `use App\Traits\HasTags;` (optional), a per-locale
 `title`/`slug`/`intro`/`description`/`sections` shape, a `scopeActive`, and register the
 class in `config('leap.content')`. Discovery does the rest.
+
+Let the model `implements App\Contracts\Content`, as a generated one does. The page engine
+does not check it at runtime, but it is how static analysis knows what PageController and
+the search read from the model; without it `composer types:check` reports each of those
+reads.
