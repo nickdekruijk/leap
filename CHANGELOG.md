@@ -5,6 +5,26 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.8] - 2026-11-11
+
+### Fixed
+
+- **A forgotten password can be reset again.** The forgot password screen sent Laravel's
+  own reset mail, which builds its link with `route('password.reset')`. Leap names that
+  route `leap.password.reset`, so with `leap.password_reset` switched on every request
+  ended in "Route [password.reset] not defined" and no mail went out. The tests faked the
+  notification and never built the link. The mail is now
+  `NickDeKruijk\Leap\Notifications\ResetPassword`: Laravel's mail with the same text and
+  translations, linking to the reset page of the panel. It has its own `createUrlUsing()`
+  and `toMailUsing()` callbacks, so a password reset of the host's own frontend and the
+  one of the panel no longer share them. A host that worked around this with
+  `ResetPassword::createUrlUsing()` can remove that.
+
+### Changed
+
+- **The docs say `password_reset` is off by default**, as `config/leap.php` has it. They
+  said it was on.
+
 ## [1.19.7] - 2026-11-11
 
 ### Fixed

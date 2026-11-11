@@ -4,9 +4,12 @@ namespace NickDeKruijk\Leap\Livewire;
 
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
+use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Livewire\Component;
+use NickDeKruijk\Leap\Notifications\ResetPassword as ResetPasswordNotification;
 use NickDeKruijk\Leap\Traits\CanLog;
 
 class ForgotPassword extends Component
@@ -35,9 +38,13 @@ class ForgotPassword extends Component
             return;
         }
 
-        // Send the reset link. We always show a generic confirmation to avoid
-        // leaking whether an email address exists.
-        Password::broker(config('leap.password_broker'))->sendResetLink(['email' => $this->email]);
+        // Send the reset link, with Leap's own notification so it links to Leap's reset
+        // page. We always show a generic confirmation to avoid leaking whether an email
+        // address exists.
+        Password::broker(config('leap.password_broker'))->sendResetLink(
+            ['email' => $this->email],
+            fn (CanResetPassword $user, string $token) => Notification::send($user, new ResetPasswordNotification($token)),
+        );
 
         $this->log('password-reset-request', ['email' => $this->email]);
 

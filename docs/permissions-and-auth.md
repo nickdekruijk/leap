@@ -77,9 +77,17 @@ Adding or removing a passkey first asks for the current password (Laravel's
 
 ## Password reset
 
-The forgot/reset password flow is enabled by default (`leap.password_reset`) and uses
-Laravel's password broker, so a `password_reset_tokens` table (part of the default
-Laravel schema) and a configured mailer are required.
+The forgot/reset password flow is off by default; switch it on with
+`leap.password_reset`. It uses Laravel's password broker, so a `password_reset_tokens`
+table (part of the default Laravel schema) and a configured mailer are required. Only
+switch it on when mail really goes out, otherwise the reset links never arrive.
+
+The mail is Laravel's own reset mail, with its text and translations, sent as
+`NickDeKruijk\Leap\Notifications\ResetPassword`, which links to the reset page of the
+panel (`leap.password.reset`). It keeps its own `createUrlUsing()` and `toMailUsing()`
+callbacks, so a site with a password reset of its own on the frontend can customise
+Laravel's `ResetPassword` without changing the mail of the panel, and the other way
+round.
 
 ## Address allowlist
 

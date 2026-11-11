@@ -24,7 +24,7 @@ All keys live in `config/leap.php`. The most-used ones:
 | `images` | *(array)* | Resized copies of images on the filemanager disk. Off by default. See [images.md](images.md). |
 | `auth_2fa` | *(array)* | Two factor authentication settings. See [permissions-and-auth.md](permissions-and-auth.md). |
 | `auth_passkeys` | *(array)* | Passkey settings. |
-| `password_reset` | `true` | Enable the forgot/reset password flow. |
+| `password_reset` | `false` | Enable the forgot/reset password flow. Needs a working mailer. |
 | `credentials` | `['email', 'password']` | Login fields. |
 | `allowed_ips` | `[]` | IPs/CIDR ranges that may reach the panel (from `LEAP_ALLOWED_IPS`, comma separated). Empty = everyone. See [permissions-and-auth.md](permissions-and-auth.md#address-allowlist). |
 | `css` | *(array)* | CSS files concatenated and served for the panel UI. See [Theming](#theming) below. |
