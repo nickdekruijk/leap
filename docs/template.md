@@ -265,7 +265,9 @@ For models outside that registry, `config('leap.sitemap.models')` still merges a
 
 `Page` implements `Sitemapable` out of the box. A model that uses
 [`HasLocaleRouting`](multilingual.md#haslocalerouting) gets a default implementation for
-free — just add `implements Sitemapable`. Missing or non-`Sitemapable` classes in the
+free — just add `implements Sitemapable`. A model that builds its own entries can use
+`Sitemap::entry($loc, $lastmod, $alternates)`, which returns the exact array shape, so
+static analysis accepts the collection as well. Missing or non-`Sitemapable` classes in the
 config are skipped. When the config is empty the sitemap route falls back to a
 page-tree-only sitemap, so existing sites are unaffected.
 

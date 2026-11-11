@@ -1,0 +1,61 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+        # The fixtures use the package traits the way a host model does, so the traits
+        # are analysed instead of being skipped as unused.
+        - tests/Fixtures
+    # Models declare their casts in $casts and casts(); read both.
+    parseModelCastsMethod: true
+
+    # Every entry below is a report that is wrong for a reason PHPStan can not see,
+    # with that reason next to it. A real error gets fixed, not listed here.
+    ignoreErrors:
+        # The traits check for an optional capability of the host model (Spatie's
+        # HasTranslations, an active() scope). The fixtures they are analysed in happen
+        # to have it, so the check reads as always true; in a host model without it,
+        # it is false and the trait takes the other branch.
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/Traits/HasDocumentMeta.php
+            count: 2
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/Traits/HasReadingTime.php
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/Traits/HasLocaleRouting.php
+        # Same: $translatable only exists on a model with HasTranslations, so the ?? is
+        # needed for every model that does not translate.
+        -
+            identifier: nullCoalesce.property
+            path: src/Traits/HasSlug.php
+            count: 2
+
+        # Livewire 4.4 added extractPathFromSignedPath(); on Livewire 3, which Leap
+        # still supports, the method_exists() is false. Only matched when the analysis
+        # runs against Livewire 4.
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/Livewire/FileManager.php
+            reportUnmatched: false
+
+        # Cache::remember() is typed after its closure, but the cache can hold anything
+        # that was put under that key before; the check is what keeps a 404 from crashing.
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/Classes/Redirects.php
+
+        # The second exists() runs after waiting for the lock, when another request may
+        # have written the file in the meantime. PHPStan remembers the first answer.
+        -
+            identifier: if.alwaysFalse
+            path: src/Controllers/ImageController.php
+
+        # The previewfixture:: view namespace is registered by the test at runtime.
+        -
+            identifier: argument.type
+            path: tests/Fixtures/PreviewableResource.php

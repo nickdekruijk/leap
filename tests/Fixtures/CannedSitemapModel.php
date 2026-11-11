@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Tests\Fixtures;
 
 use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Classes\Sitemap;
 use NickDeKruijk\Leap\Contracts\Sitemapable;
 
 /**
@@ -14,8 +15,8 @@ class CannedSitemapModel implements Sitemapable
     public static function sitemapEntries(): Collection
     {
         return collect([
-            ['loc' => 'https://example.test/one', 'lastmod' => null, 'alternates' => []],
-            ['loc' => 'https://example.test/two', 'lastmod' => null, 'alternates' => []],
+            Sitemap::entry('https://example.test/one'),
+            Sitemap::entry('https://example.test/two'),
         ]);
     }
 }

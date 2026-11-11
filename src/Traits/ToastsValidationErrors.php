@@ -13,8 +13,8 @@ trait ToastsValidationErrors
      */
     protected function toastValidationErrors(Validator $validator): void
     {
-        foreach ($validator->messages()->keys() as $fieldKey) {
-            $this->dispatch('toast-error', $validator->messages()->first($fieldKey), $fieldKey)->to(Toasts::class);
+        foreach ($validator->errors()->keys() as $fieldKey) {
+            $this->dispatch('toast-error', $validator->errors()->first($fieldKey), $fieldKey)->to(Toasts::class);
         }
     }
 }

@@ -11,6 +11,8 @@ class SendTwoFactorEmailCode
 {
     /**
      * Generate a new email two factor code, store it and mail it to the user.
+     *
+     * @param  Authenticatable&object{email: string}  $user
      */
     public function __invoke(Authenticatable $user): void
     {

@@ -5,6 +5,8 @@ namespace NickDeKruijk\Leap\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphPivot;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -17,6 +19,21 @@ use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\FileManager;
 
+/**
+ * @property int $id
+ * @property string $disk
+ * @property string $file_name
+ * @property int $size
+ * @property string $mime_type
+ * @property string $uuid
+ * @property string $sha256
+ * @property int|null $user_id
+ * @property array<string, mixed>|null $meta
+ * @property array<int, array<string, mixed>>|null $history
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read (MorphPivot&object{mediable_attribute: string|null, sort: int|null})|null $pivot Set when loaded through HasMedia::media()
+ */
 class Media extends Model
 {
     protected $casts = [
@@ -45,7 +62,7 @@ class Media extends Model
     /**
      * Get a Media model instance for a file, or create one if file exists
      *
-     * @param  string  $file  The file name including path
+     * @param  string  $file_name  The file name including path
      * @param  string|null  $disk  The storage disk to use, defaults from leap config
      * @return Media|false Returns Media model instance or false if file does not exist
      */

@@ -58,3 +58,28 @@ jobs:
 
       - name: Check code style
         run: vendor/bin/pint --test
+
+  types:
+    runs-on: ubuntu-latest
+    # One combination is enough for static analysis: the newest PHP with Laravel 13
+    # and the stable Livewire 4, instead of the whole matrix again.
+    name: types (PHP 8.5 - Laravel 13)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, gd
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:^13.0" --no-interaction --no-update
+          composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Run Larastan
+        run: composer types:check

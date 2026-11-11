@@ -7,6 +7,10 @@ use Livewire\Component;
 use NickDeKruijk\Leap\Traits\CanLog;
 use NickDeKruijk\Leap\Traits\NavigationItem;
 
+/**
+ * @property string $icon The navigation icon. Each module declares it itself, some with a
+ *                        native type, so it can not be declared here without breaking them.
+ */
 class Module extends Component
 {
     use CanLog;

@@ -8,6 +8,10 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * A flat model (no "parent" column) for testing HasSlug's global slug uniqueness.
+ *
+ * @property int $id
+ * @property string|null $title
+ * @property string|null $slug
  */
 class FlatSlugModel extends Model
 {

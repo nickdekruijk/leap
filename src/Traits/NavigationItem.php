@@ -38,9 +38,10 @@ trait NavigationItem
     }
 
     /**
-     * The title of the module
+     * The title of the module: a string, a 'leap::' translation key, or an array of
+     * titles per locale (['nl' => ..., 'en' => ...]).
      *
-     * @var string|null
+     * @var string|array<string, string>|null
      */
     public $title;
 

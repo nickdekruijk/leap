@@ -31,8 +31,6 @@ class Section
 
     /**
      * Override the default view of the section
-     *
-     * @param  string  $name
      */
     public function view(?string $view): Section
     {

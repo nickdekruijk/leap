@@ -1,0 +1,4 @@
+# Read by Larastan (composer types:check), which boots Testbench from this file.
+# PHPUnit does not read it: tests/TestCase.php sets the auth model itself.
+env:
+  AUTH_MODEL: NickDeKruijk\Leap\Tests\Fixtures\User

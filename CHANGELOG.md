@@ -5,6 +5,45 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.7] - 2026-11-11
+
+### Fixed
+
+- **A preview that returns a plain Symfony response works.** `Previewable::previewResponse()`
+  may return any Symfony `Response`, but the preview controller added its `noindex` and
+  `no-store` headers with Laravel's `header()` helper, which only Laravel's own responses
+  have, so a `StreamedResponse` or a bare `Response` ended in "Call to undefined method".
+  The headers now go through `$response->headers`, which every response has.
+- **`Leap::userModel()` says so when the auth provider is not Eloquent.** With the
+  `database` driver it failed on an undefined `getModel()`; it now throws a
+  `LogicException` that names the setting. Leap has always needed the Eloquent provider.
+- **The editor uses the model's own key and timestamp column.** Saving, cloning,
+  deleting and the media sync read `$model->id`, and the slug follow read `created_at`
+  by name. They now use `getKey()` and `getCreatedAtColumn()`, which is the same for the
+  usual `id` and `created_at`, and right for a model that names them differently.
+
+### Changed
+
+- **Docblocks that host projects see in their own static analysis.** A project that runs
+  Larastan on `app/` got reports caused by Leap. `$title` on a module is now documented as
+  `string|array<string, string>|null`, the per locale array every module may set (one
+  `property.defaultValue` report per module), and `Media`, `Mediable`, `Role`, `Redirect`,
+  `NotFound` and `Log` have `@property` for their columns (`$media->file_name`,
+  `$media->meta` and the like were "undefined property"). `HasMedia::media()` and
+  `mediaFor()` say they hold `Media`. Nothing changes at runtime. On one site with 14
+  modules this removed 21 of its 64 reports.
+- **`Sitemap::entry($loc, $lastmod, $alternates)`** builds one sitemap entry in the exact
+  shape `Sitemapable::sitemapEntries()` returns. Larastan reads the values of a Collection
+  invariantly, so a literal `['lastmod' => null, 'alternates' => []]` is reported against
+  the `?string` and `array<string, string>` of the contract; an entry from this helper is
+  not. `HasLocaleRouting` uses it.
+- **Larastan runs on Leap itself.** `composer types:check` analyses `src/` and the test
+  fixtures at level 5 without a baseline, and CI runs it in its own job (PHP 8.5,
+  Laravel 13). The few reports that are wrong for a reason Larastan can not see are listed
+  in `phpstan.neon` with that reason. Fixing what it found also cleaned up unparseable
+  `@param [type]` docblocks, `$validator->messages()` on the validator contract (now
+  `errors()`), a dead branch in the index sort, and a few more of that kind.
+
 ## [1.19.6] - 2026-11-10
 
 ### Fixed

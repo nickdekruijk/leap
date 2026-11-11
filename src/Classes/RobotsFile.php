@@ -124,7 +124,7 @@ class RobotsFile
     {
         $routes = [];
 
-        foreach (Route::getRoutes() as $route) {
+        foreach (Route::getRoutes()->getRoutes() as $route) {
             if (trim($route->uri(), '/') === 'robots.txt') {
                 $routes[] = $route->getName() ?: $route->getActionName();
             }

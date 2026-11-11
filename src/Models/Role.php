@@ -5,8 +5,17 @@ namespace NickDeKruijk\Leap\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 use NickDeKruijk\Leap\Leap;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property array<string, mixed>|null $settings
+ * @property array<string, mixed>|null $permissions
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Role extends Model
 {
     use HasFactory;

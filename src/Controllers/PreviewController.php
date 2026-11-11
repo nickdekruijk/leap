@@ -66,8 +66,12 @@ class PreviewController extends Controller
         // Set here rather than left to the frontend's <head>: a preview URL that gets
         // shared or crawled must stay out of an index whatever the template does with
         // its meta tags, and must not sit in a shared cache either.
-        return ($response instanceof Response ? $response : response($response))
-            ->header('X-Robots-Tag', 'noindex, nofollow, noarchive')
-            ->header('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+        // headers->set() rather than header(): the latter only exists on Laravel's own
+        // responses, and a resource may return a plain Symfony one (a StreamedResponse).
+        $response = $response instanceof Response ? $response : response($response);
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+        $response->headers->set('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+
+        return $response;
     }
 }

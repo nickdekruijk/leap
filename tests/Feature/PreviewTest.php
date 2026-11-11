@@ -9,6 +9,7 @@ use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Livewire\Dashboard;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\ArticleResource;
+use NickDeKruijk\Leap\Tests\Fixtures\PlainResponsePreviewResource;
 use NickDeKruijk\Leap\Tests\Fixtures\PreviewableModel;
 use NickDeKruijk\Leap\Tests\Fixtures\PreviewableResource;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
@@ -32,6 +33,7 @@ class PreviewTest extends TestCase
         $app['config']->set('leap.default_modules', [
             Dashboard::class,
             PreviewableResource::class,
+            PlainResponsePreviewResource::class,
             ArticleResource::class,
         ]);
     }
@@ -219,6 +221,23 @@ class PreviewTest extends TestCase
 
         $response = $this->get($this->url($record));
 
+        $response->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
+    }
+
+    /**
+     * Previewable allows any Symfony response, and those have no header() helper, so the
+     * controller sets the headers on the bag every response has.
+     */
+    public function test_a_plain_symfony_response_is_kept_out_of_indexes_too(): void
+    {
+        $record = $this->record();
+        $this->actingAsEditor();
+
+        $response = $this->get($this->url($record, module: 'plain-previews'));
+
+        $response->assertOk();
+        $response->assertSee('Plain preview of '.$record->id);
         $response->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
     }

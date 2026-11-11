@@ -25,4 +25,20 @@ class Sitemap
             ->flatMap(fn (string $model): Collection => $model::sitemapEntries())
             ->values();
     }
+
+    /**
+     * One sitemap entry, in the shape Sitemapable::sitemapEntries() returns.
+     *
+     * Building entries through this keeps their type exact for static analysis:
+     * Larastan reads the values of a Collection invariantly, so a literal
+     * ['lastmod' => null, 'alternates' => []] does not pass for ?string and
+     * array<string, string>, while the return type of this method does.
+     *
+     * @param  array<string, string>  $alternates  hreflang map of locale to absolute URL
+     * @return array{loc: string, lastmod: ?string, alternates: array<string, string>}
+     */
+    public static function entry(string $loc, ?string $lastmod = null, array $alternates = []): array
+    {
+        return ['loc' => $loc, 'lastmod' => $lastmod, 'alternates' => $alternates];
+    }
 }

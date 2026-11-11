@@ -13,7 +13,7 @@ class LeapAuth extends Authenticate
      * Handle an incoming request.
      *
      * @param  Request  $request
-     * @param  string[]  ...$guards
+     * @param  string  ...$guards
      * @return mixed
      *
      * @throws AuthenticationException

@@ -125,7 +125,7 @@ class UserCommand extends Command
 
             // Ask for password
             $password = $this->askPassword('Password for '.$username.' ('.$name.') (blank for '.$random_password.')');
-            $user->password = Hash::make($password ?: $random_password);
+            $user->setAttribute('password', Hash::make($password ?: $random_password));
 
             // Save the new user
             $user->save();

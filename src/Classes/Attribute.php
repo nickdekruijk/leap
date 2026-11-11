@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Classes;
 
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
@@ -346,7 +347,8 @@ class Attribute
     public function valuesFromModel(): array
     {
         $model = new $this->options['model'];
-        $values = $this->type == 'foreign' ? [null => $this->placeholder ?: null] : [];
+        // The empty key is the 'nothing selected' option (a null key would become '' anyway)
+        $values = $this->type == 'foreign' ? ['' => $this->placeholder ?: null] : [];
 
         // Apply scope and/or orderBy
         if ($this->options['orderBy']) {
@@ -375,11 +377,11 @@ class Attribute
     /**
      * Make the Attribute a foreign key, resulting in a select input element with all values from a foreign model
      *
-     * @param [type] $model The model to get the values from
-     * @param [type] $id_column The column to get the id from
-     * @param [type] $scope The scope to apply
-     * @param [type] $orderBy The column to order by
-     * @param [type] $index The columns to show in the select input element, defaults to the next 3 columns after the first (since first is usualy id)
+     * @param  class-string<Model>|null  $model  The model to get the values from
+     * @param  string|null  $id_column  The column to get the id from
+     * @param  string|null  $scope  The scope to apply
+     * @param  string|null  $orderBy  The column to order by
+     * @param  string|array<int, string>|null  $index  The columns to show in the select input element, defaults to the next 3 columns after the first (since first is usualy id)
      */
     public function foreign($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
     {
@@ -399,11 +401,11 @@ class Attribute
      * Make the Attribute a pivot, resulting in a multiple select input element with all values from a pivot model.
      * The belongsToMany relationship must be defined in the model with the same name.
      *
-     * @param [type] $model The model to get the values from
-     * @param [type] $id_column The column to get the id from
-     * @param [type] $scope The scope to apply
-     * @param [type] $orderBy The column to order by
-     * @param [type] $index The columns to show in the editor interface, defaults to the next 3 columns after the first (since first is usualy id)
+     * @param  class-string<Model>|null  $model  The model to get the values from
+     * @param  string|null  $id_column  The column to get the id from
+     * @param  string|null  $scope  The scope to apply
+     * @param  string|null  $orderBy  The column to order by
+     * @param  string|array<int, string>|null  $index  The columns to show in the editor interface, defaults to the next 3 columns after the first (since first is usualy id)
      */
     public function pivot($model = null, $id_column = null, $scope = null, $orderBy = null, $index = null): Attribute
     {

@@ -65,6 +65,11 @@ trait HasMedia
             ->delete();
     }
 
+    /**
+     * Every Media row attached to this model, with the attribute it belongs to on the pivot
+     *
+     * @return MorphToMany<Media, $this>
+     */
     public function media(): MorphToMany
     {
         return $this->morphToMany(Media::class, 'mediable', config('leap.table_prefix').'mediables')
@@ -128,6 +133,8 @@ trait HasMedia
 
     /**
      * Return the media for the given attribute
+     *
+     * @return Collection<int, Media>
      */
     public function mediaFor(string $attribute): Collection
     {

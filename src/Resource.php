@@ -22,15 +22,23 @@ use Spatie\Translatable\HasTranslations;
 
 use function Illuminate\Support\enum_value;
 
+/**
+ * Each resource defines attributes() itself. $allowImport switches on the CSV import and
+ * is declared only by a resource that wants it, so it is unset otherwise.
+ *
+ * @method array attributes()
+ *
+ * @property array{columns: array<int|string, mixed>, attributes: array<int|string, mixed>} $allowImport
+ */
 class Resource extends Module
 {
     use ToastsValidationErrors;
     use WithFileUploads;
 
     /**
-     * The model the module corresponds to.
+     * The model the module corresponds to, derived from the class name when unset.
      *
-     * @var string
+     * @var class-string<Model>|null
      */
     #[Locked]
     public $model;
@@ -320,7 +328,7 @@ class Resource extends Module
     /**
      * Open or close the file browser for the file(s) or media attribute
      *
-     * @param [type] $attribute
+     * @param  string|null  $attribute
      * @return void
      */
     public function fileBrowser($attribute = null, $files = null, $sectionName = '')
@@ -494,7 +502,7 @@ class Resource extends Module
             while (($row = fgetcsv($handle, null, $delimiter)) !== false) {
                 $this->importData[] = $row;
                 $this->importRows[] = true;
-                $this->importColumnCount = max($this->importColumnCount ?? 0, count($row));
+                $this->importColumnCount = max($this->importColumnCount, count($row));
             }
 
             fclose($handle);
@@ -976,11 +984,7 @@ class Resource extends Module
         }
 
         if ($sortForeign) {
-            if (is_array($data)) {
-                Leap::sortBy($data, $this->orderBy, $this->orderDesc);
-            } else {
-                $data = $data->sortBy($this->orderBy, SORT_NATURAL, $this->orderDesc);
-            }
+            $data = $data->sortBy($this->orderBy, SORT_NATURAL, $this->orderDesc);
         }
 
         foreach ($postFilters as $key => $value) {

@@ -23,6 +23,9 @@ use NickDeKruijk\Leap\Module;
 use NickDeKruijk\Leap\Traits\InteractsWithAiImages;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * @property-read array<int, array<string, mixed>> $columns The #[Computed] columns(), with folders and files
+ */
 class FileManager extends Module
 {
     use InteractsWithAiImages;
@@ -311,29 +314,30 @@ class FileManager extends Module
     }
 
     /**
-     * Return human readable maximum upload filesize
+     * Return the maximum upload filesize in bytes, the smallest of every limit that applies
+     *
+     * A numeric string, as the native return type has said since 1.0; humanFileSize()
+     * makes it readable.
      */
     public function maxUploadSize(): string
     {
         foreach (FileUploadConfiguration::rules() as $rule) {
             $rule = explode(':', $rule);
             if ($rule[0] == 'max') {
-                $livewireMax = $rule[1] * 1024;
+                $livewireMax = (int) $rule[1] * 1024;
             }
         }
 
-        return min($livewireMax ?? $this->bytes('12M'), $this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
+        return (string) min($livewireMax ?? $this->bytes('12M'), $this->bytes(config('leap.filemanager.upload_max_filesize')), $this->bytes(ini_get('upload_max_filesize')), $this->bytes(ini_get('post_max_size')));
     }
 
     /**
      * Convert a number into human readable format
-     *
-     * @param int decimals
      */
     public function humanFileSize(int $bytes, int $decimals = 1): string
     {
         $size = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-        $factor = floor((strlen($bytes) - 1) / 3);
+        $factor = (int) floor((strlen((string) $bytes) - 1) / 3);
         if ($factor == 0) {
             $decimals = 0;
         }
@@ -343,8 +347,6 @@ class FileManager extends Module
 
     /**
      * Get the disk storage from Laravel filesystems configuration
-     *
-     * @return Storage|Filesystem
      */
     private function getStorage(): Filesystem
     {
@@ -1043,7 +1045,7 @@ class FileManager extends Module
 
     public function focusPoint(string $file): ?array
     {
-        $meta = Media::findFile($this->full($file))?->meta ?? [];
+        $meta = Media::findFile($this->full($file))->meta ?? [];
 
         return $meta['image_focus'] ?? null;
     }

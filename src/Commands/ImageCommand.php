@@ -445,7 +445,7 @@ class ImageCommand extends Command
         $length = (int) config('leap.images.hash_length', 8);
 
         return $this->images()
-            ->filter(fn (Media $media) => $media->sha256)
+            ->filter(fn (Media $media) => $media->sha256 !== '')
             ->map(fn (Media $media) => substr($media->sha256, 0, $length))
             ->unique()
             ->values()

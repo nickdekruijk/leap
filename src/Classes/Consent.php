@@ -92,7 +92,7 @@ class Consent
         return static::categories()->flatMap(
             fn (array $category, string $key): array => collect($category['services'] ?? [])
                 ->flatMap(fn (array $service): array => collect($service['cookies'] ?? [])
-                    ->map(fn (array $cookie): array => ['name' => static::resolveName($cookie['name'] ?? '')] + $cookie + [
+                    ->map(fn (array $cookie) => ['name' => static::resolveName($cookie['name'] ?? '')] + $cookie + [
                         'category' => $key,
                         'service' => $service['name'] ?? '',
                         'provider' => $service['provider'] ?? '',

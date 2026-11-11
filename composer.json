@@ -35,7 +35,8 @@
 		}
 	},
 	"scripts": {
-		"test": "vendor/bin/phpunit"
+		"test": "vendor/bin/phpunit",
+		"types:check": "phpstan analyse --memory-limit=2G"
 	},
 	"minimum-stability": "stable",
 	"extra": {
@@ -51,6 +52,7 @@
 	"require-dev": {
 		"laravel/pint": "^1.18.1",
 		"orchestra/testbench": "^10.0|^11.0",
-		"phpunit/phpunit": "^11.0|^12.0"
+		"phpunit/phpunit": "^11.0|^12.0",
+		"larastan/larastan": "^3.14"
 	}
 }

@@ -9,6 +9,12 @@ use Laravel\Passkeys\Contracts\PasskeyUser;
 use Laravel\Passkeys\PasskeyAuthenticatable;
 use NickDeKruijk\Leap\Traits\HasRoles;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $password
+ */
 class User extends Authenticatable implements PasskeyUser
 {
     use HasRoles;

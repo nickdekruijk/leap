@@ -4,7 +4,19 @@ namespace NickDeKruijk\Leap\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $media_id
+ * @property string $mediable_type
+ * @property int $mediable_id
+ * @property string|null $mediable_attribute
+ * @property array<string, mixed>|null $meta
+ * @property int|null $sort
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Mediable extends Model
 {
     protected $casts = [

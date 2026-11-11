@@ -195,8 +195,8 @@ class AiTask
             return null;
         }
 
-        return ($usage['input'] ?? 0) / 1000000 * ($rates['input'] ?? 0)
-            + ($usage['output'] ?? 0) / 1000000 * ($rates['output'] ?? 0);
+        return $usage['input'] / 1000000 * ($rates['input'] ?? 0)
+            + $usage['output'] / 1000000 * ($rates['output'] ?? 0);
     }
 
     /**
@@ -230,7 +230,7 @@ class AiTask
      * them. Not billed amounts — check them against the provider's pricing page.
      * Checked 2026-07-21.
      *
-     * @var array<string, array<string, float>>
+     * @var array<string, array{input?: float, output?: float, estimate?: float|array<string, float>}>
      */
     private const DEFAULT_PRICING = [
         // Gemini has no quality setting: one image is one price.
@@ -264,7 +264,7 @@ class AiTask
      * dot-path because model names contain dots themselves ('gemini-2.5-flash-image'),
      * which dot notation would read as nesting.
      *
-     * @return array<string, float>
+     * @return array{input?: float, output?: float, estimate?: float|array<string, float>}
      */
     private function rates(): array
     {

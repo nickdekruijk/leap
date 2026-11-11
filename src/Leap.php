@@ -3,11 +3,13 @@
 namespace NickDeKruijk\Leap;
 
 use Collator;
+use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use LogicException;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Classes\ImageUrl;
 use NickDeKruijk\Leap\Classes\Section;
@@ -284,12 +286,22 @@ class Leap
     /**
      * Get the user model instance from leap config
      *
-     * @return Authenticatable;
+     * Leap expects an Eloquent user with a users table that has name, email and
+     * password columns, the Laravel default.
+     *
+     * @return Model&Authenticatable&object{name: string, email: string, password: string|null}
      */
     public static function userModel(): Authenticatable
     {
-        /** @disregard P1013 Prevent intelephense warning "Undefined method 'getModel'" */
-        $model = Auth::getProvider()->getModel();
+        $provider = Auth::getProvider();
+
+        // Only the Eloquent provider knows a model class; the database provider would
+        // otherwise fail on the undefined getModel() with a less helpful message.
+        if (! $provider instanceof EloquentUserProvider) {
+            throw new LogicException('Leap needs an Eloquent user provider (auth.providers.users.driver = eloquent).');
+        }
+
+        $model = $provider->getModel();
 
         return new $model;
     }

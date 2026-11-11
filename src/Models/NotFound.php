@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * An address that was asked for and is not there, kept until somebody says where it
@@ -16,6 +17,17 @@ use Illuminate\Database\Eloquent\Model;
  *
  * Filling in a destination is what promotes one: on save the rule is created and this
  * row is finished. See booted().
+ *
+ * @property int $id
+ * @property string $path
+ * @property string|null $destination
+ * @property int $hits
+ * @property Carbon|null $last_used_at
+ * @property array<string, int>|null $referers Tally of value to count
+ * @property array<string, int>|null $user_agents Tally of value to count
+ * @property array<string, int>|null $ip_addresses Tally of value to count
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 class NotFound extends Model
 {

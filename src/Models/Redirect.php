@@ -4,9 +4,22 @@ namespace NickDeKruijk\Leap\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use NickDeKruijk\Leap\Classes\Redirects;
 
+/**
+ * @property int $id
+ * @property string $path
+ * @property string $destination
+ * @property int $status
+ * @property bool $active
+ * @property bool $wildcard
+ * @property int $hits
+ * @property Carbon|null $last_used_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Redirect extends Model
 {
     public function __construct(array $attributes = [])

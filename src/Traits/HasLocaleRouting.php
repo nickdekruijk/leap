@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap\Traits;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use NickDeKruijk\Leap\Classes\Sitemap;
 
 /**
  * Per-locale URLs (and, optionally, sitemap entries) for a flat (non-tree)
@@ -110,6 +111,8 @@ trait HasLocaleRouting
     /**
      * The query of records to include in the sitemap. Uses the model's active()
      * scope when present, otherwise every record. Override to narrow it.
+     *
+     * @return Builder<static>
      */
     protected static function sitemapQuery(): Builder
     {
@@ -127,7 +130,7 @@ trait HasLocaleRouting
      */
     public function localeSitemapEntries(): Collection
     {
-        $lastmod = isset($this->updated_at) ? $this->updated_at?->toAtomString() : null;
+        $lastmod = isset($this->updated_at) ? $this->updated_at->toAtomString() : null;
         $urls = $this->localeUrls();
 
         // Monolingual: no per-locale URLs; emit a single entry for the active locale.
@@ -138,19 +141,13 @@ trait HasLocaleRouting
                 return collect();
             }
 
-            return collect([[
-                'loc' => url($this->resolveLocaleUrl($this->localeRouteName(), $locale, (string) $slug)),
-                'lastmod' => $lastmod,
-                'alternates' => [],
-            ]]);
+            return collect([
+                Sitemap::entry(url($this->resolveLocaleUrl($this->localeRouteName(), $locale, (string) $slug)), $lastmod),
+            ]);
         }
 
         $alternates = collect($urls)->mapWithKeys(fn (array $u, string $locale): array => [$locale => url($u['url'])])->all();
 
-        return collect($urls)->map(fn (array $u): array => [
-            'loc' => url($u['url']),
-            'lastmod' => $lastmod,
-            'alternates' => $alternates,
-        ])->values();
+        return collect($urls)->map(fn (array $u) => Sitemap::entry(url($u['url']), $lastmod, $alternates))->values();
     }
 }

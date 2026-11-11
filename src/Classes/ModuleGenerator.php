@@ -5,7 +5,6 @@ namespace NickDeKruijk\Leap\Classes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Spatie\Translatable\HasTranslations;
 
 /**
  * Detects a Leap Resource's `attributes()` plan from an Eloquent model's table
@@ -185,7 +184,8 @@ class ModuleGenerator
 
     protected function isTranslatable(string $column): bool
     {
-        if (! in_array(HasTranslations::class, class_uses_recursive($this->model))) {
+        // Spatie's HasTranslations is what provides this method.
+        if (! method_exists($this->model, 'getTranslatableAttributes')) {
             return false;
         }
 

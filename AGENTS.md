@@ -43,6 +43,7 @@ HTTP/browser caching.
 composer install
 vendor/bin/phpunit                       # whole suite
 vendor/bin/phpunit --filter SchemaTest   # one test
+composer types:check                     # Larastan, level 5
 ```
 
 Tests boot a minimal Testbench app against an in-memory SQLite database (see
@@ -51,6 +52,20 @@ do not introduce Pest without discussing the dependency change first.
 
 The whole suite passes, so treat any failure as something the current change caused
 rather than pre-existing noise.
+
+### Static analysis
+
+`composer types:check` runs Larastan at level 5 over `src/` and `tests/Fixtures` (see
+`phpstan.neon`). The fixtures are in there because the traits are only analysed in a
+class that uses them. Larastan boots Testbench from `testbench.yaml`, which points the
+auth model at `tests/Fixtures/User`; PHPUnit does not read that file. There is no
+baseline: fix what it reports. An entry under `ignoreErrors` is only for a report that
+is provably wrong, with the reason written next to it.
+
+Docblocks here end up in every host's analysis, so keep them true: `@property` on the
+models (their table names carry the prefix, so Larastan can not read the migrations),
+and generic types on what a host calls. A type that is more precise than the code can
+create new errors in hosts, so check it against what the code really returns.
 
 ## The stub template
 
@@ -63,5 +78,5 @@ drift between a host's copy and the current stubs.
 ## Releasing
 
 Update `CHANGELOG.md`, keep `docs/` in sync, and follow semver strictly from 1.0.
-CI runs the suite across PHP 8.2–8.4 × Laravel 12/13 × Livewire 3/4
-(`.github/workflows/tests.yml`).
+CI runs the suite across PHP 8.3, 8.4 and 8.5, Laravel 12 and 13, and Livewire 3 and 4,
+plus Pint and Larastan in one job each (`.github/workflows/tests.yml`).

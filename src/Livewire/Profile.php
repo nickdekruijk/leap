@@ -21,6 +21,9 @@ use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
 use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 
+/**
+ * @property-read bool $twoFactorEmailEnabled The #[Computed] twoFactorEmailEnabled()
+ */
 class Profile extends Module
 {
     use ToastsValidationErrors;

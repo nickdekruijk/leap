@@ -155,7 +155,7 @@ class Editor extends Component
     /**
      * Cached parent module instance to avoid repeated decryption and instantiation
      */
-    private ?Component $parentModuleInstance = null;
+    private ?Resource $parentModuleInstance = null;
 
     /**
      * Generate a new random sort seed number
@@ -168,9 +168,9 @@ class Editor extends Component
     }
 
     /**
-     * Returns the parent Livewire component
+     * Returns the parent resource, the module whose records this editor edits
      */
-    private function parentModule(): Component
+    private function parentModule(): Resource
     {
         return $this->parentModuleInstance ??= new (Leap::context()->module());
     }
@@ -250,7 +250,7 @@ class Editor extends Component
 
         $module = $this->parentModule();
 
-        if (! $module instanceof Resource || ! $module instanceof Previewable || ! $module->getSlug()) {
+        if (! $module instanceof Previewable || ! $module->getSlug()) {
             return null;
         }
 
@@ -481,7 +481,7 @@ class Editor extends Component
     /**
      * Return a model instance
      *
-     * @param [type] $id
+     * @param  int|string|null  $id
      */
     private function getModel($id = null): Model
     {
@@ -570,7 +570,7 @@ class Editor extends Component
         if ($this->editorLocales()) {
             $this->activeLocale = $this->activeLocale ?: $this->defaultLocale();
             foreach ($this->attributes() as $attribute) {
-                if ($this->parentModule()->hasTranslation($attribute)) {
+                if ($this->parentModule()->hasTranslation($attribute) && method_exists($model, 'getTranslations')) {
                     $this->data[$attribute->name] = $this->normalizeTranslations(
                         $model->getTranslations($attribute->name),
                         $model->getRawOriginal($attribute->name),
@@ -1178,7 +1178,9 @@ class Editor extends Component
     {
         // Check if :add field is used, if so add section
         if (str_ends_with($field, ':add')) {
-            return $this->addSection($field, $value);
+            $this->addSection($field, $value);
+
+            return;
         }
 
         $name = substr($field, 5);
@@ -1292,7 +1294,7 @@ class Editor extends Component
 
         $minutes = (int) config('leap.slug_follow_minutes', 60);
         $this->slugFresh = $minutes > 0
-            && (! $model->created_at || $model->created_at->gt(now()->subMinutes($minutes)));
+            && (! ($createdAt = $model->getAttribute($model->getCreatedAtColumn())) || $createdAt->gt(now()->subMinutes($minutes)));
 
         foreach ($this->slugMap() as $source => $target) {
             foreach ($this->slugLocales() as $locale) {
@@ -1453,12 +1455,12 @@ class Editor extends Component
     public function syncMedia(Model $model)
     {
         foreach ($this->mediaUpdated as $attribute) {
-            Mediable::where('mediable_type', $model::class)->where('mediable_id', $model->id)->where('mediable_attribute', $attribute)->delete();
+            Mediable::where('mediable_type', $model::class)->where('mediable_id', $model->getKey())->where('mediable_attribute', $attribute)->delete();
             foreach ($this->data[$attribute] ?? [] as $sort => $media_id) {
                 Mediable::create([
                     'media_id' => $media_id,
                     'mediable_type' => $model::class,
-                    'mediable_id' => $model->id,
+                    'mediable_id' => $model->getKey(),
                     'mediable_attribute' => $attribute,
                     'sort' => $sort,
                 ]);
@@ -1501,10 +1503,10 @@ class Editor extends Component
                     $this->syncMedia($model);
                     $this->syncPivot($model);
 
-                    $this->log('create', ['id' => $model->id]);
-                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.created'))->to(Toasts::class);
-                    $this->dispatch('updateIndex', $model->exists ? $model->id : null);
-                    $this->editing = $model->id;
+                    $this->log('create', ['id' => $model->getKey()]);
+                    $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->getKey().') '.__('leap::resource.created'))->to(Toasts::class);
+                    $this->dispatch('updateIndex', $model->exists ? $model->getKey() : null);
+                    $this->editing = $model->getKey();
                 } else {
                     $updated = count($dirty) + count($this->mediaUpdated) + count($pivotDirty);
                     if ($updated > 3) {
@@ -1519,11 +1521,11 @@ class Editor extends Component
                     $this->syncPivot($model);
 
                     $this->log('update', ['id' => $this->editing]);
-                    $this->dispatch('updateIndex', $model->exists ? $model->id : null);
+                    $this->dispatch('updateIndex', $model->exists ? $model->getKey() : null);
                 }
                 if ($model->exists) {
                     // Force reload of editor data
-                    $this->openEditor($model->id);
+                    $this->openEditor($model->getKey());
                 } else {
                     // Saving took the record away. A row that exists to be dealt with can
                     // do that — the missing address that becomes a redirect is one — and
@@ -1581,11 +1583,11 @@ class Editor extends Component
             $this->syncMedia($model);
             $this->syncPivot($model);
 
-            $this->log('create', ['clone' => $this->editing.' -> '.$model->id]);
+            $this->log('create', ['clone' => $this->editing.' -> '.$model->getKey()]);
             // Force reload of editor data
-            $this->openEditor($model->id);
-            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.created'))->to(Toasts::class);
-            $this->dispatch('updateIndex', $model->id);
+            $this->openEditor($model->getKey());
+            $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->getKey().') '.__('leap::resource.created'))->to(Toasts::class);
+            $this->dispatch('updateIndex', $model->getKey());
         }
     }
 
@@ -1598,7 +1600,7 @@ class Editor extends Component
     {
         Leap::validatePermission('delete');
         $model = $this->getModel($this->editing);
-        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->id.') '.__('leap::resource.deleted'))->to(Toasts::class);
+        $this->dispatch('toast', $model[$this->parentModule()->indexAttributes()->first()->name].' ('.$model->getKey().') '.__('leap::resource.deleted'))->to(Toasts::class);
         $this->log('delete', ['id' => $this->editing]);
         $model->delete();
         $this->editing = null;
@@ -1608,7 +1610,7 @@ class Editor extends Component
     /**
      * Add the selected files from the file browser to the attribute value
      *
-     * @param [type] $files
+     * @param  array<int, string>  $files
      * @return void
      */
     #[On('selectBrowsedFiles')]
@@ -1704,7 +1706,7 @@ class Editor extends Component
     /**
      * Add the selected media files from the file browser to the mediable attribute
      *
-     * @param [type] $files
+     * @param  array<int, string>  $files  File names, resolved to Media below
      * @return void
      */
     #[On('selectMediaFiles')]
