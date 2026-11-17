@@ -661,21 +661,32 @@ class Editor extends Component
                         ->first()
                         ?->attributes;
 
-                    // Make sure all section tinymce input values exist
+                    // Make sure all section tinymce input values exist. A translatable one
+                    // binds to data.sections.N.field.en, so it starts as one empty value
+                    // per locale: a key cannot be written into an empty string, neither
+                    // by Livewire nor in the browser, and the text typed into a new
+                    // section was lost on save while its plain inputs were kept.
                     $tinymceAttributes = collect($sectionAttributes)->where('input', 'tinymce');
                     foreach ($tinymceAttributes as $input) {
-                        $this->data[$sectionAttribute->name][$index][$input->name] = $this->data[$sectionAttribute->name][$index][$input->name] ?? '';
+                        $empty = $input->translatable && $this->editorLocales()
+                            ? array_fill_keys(array_keys($this->editorLocales()), '')
+                            : '';
+                        $this->data[$sectionAttribute->name][$index][$input->name] ??= $empty;
                     }
 
                     // Wrap legacy monolingual values in translatable section sub-fields
                     // ([field] stored as a plain string before it became translatable)
                     // into a per-locale array, so they survive editing instead of being
-                    // silently overwritten. Idempotent: already-wrapped arrays are skipped.
+                    // silently overwritten. An empty string, as an earlier version of the
+                    // loop above stored, becomes one empty value per locale for the same
+                    // reason. Idempotent: already-wrapped arrays are skipped.
                     if ($this->editorLocales()) {
                         foreach (collect($sectionAttributes)->where('translatable', true) as $sub) {
                             $value = $this->data[$sectionAttribute->name][$index][$sub->name] ?? null;
                             if (is_string($value) && trim($value) !== '') {
                                 $this->data[$sectionAttribute->name][$index][$sub->name] = [$this->defaultLocale() => $value];
+                            } elseif (is_string($value)) {
+                                $this->data[$sectionAttribute->name][$index][$sub->name] = array_fill_keys(array_keys($this->editorLocales()), '');
                             }
                         }
                     } elseif (! config('leap.locales')) {

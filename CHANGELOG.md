@@ -5,6 +5,20 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.9] - 2026-11-17
+
+### Fixed
+
+- **The text of a new section is saved again on a multilingual site.** A translatable
+  rich text field in a section binds to `data.sections.N.body.en`, but the editor filled
+  a missing value with an empty string. A key cannot be written into a string, neither by
+  Livewire ("No synthesizer found for key") nor in the browser, so what was typed in a new
+  FAQ or call to action never reached the server, while the heading, a plain input that
+  starts out missing, was saved. After saving only the heading remained. A missing
+  translatable rich text field now starts as one empty value per locale, and an empty or
+  whitespace string already stored that way is turned into the same when the record is
+  opened.
+
 ## [1.19.8] - 2026-11-11
 
 ### Fixed

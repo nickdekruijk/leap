@@ -70,7 +70,7 @@ class SectionLocaleSwitchTest extends TestCase
         $this->assertSame($translations, $sections[0]['head']);
     }
 
-    public function test_an_empty_field_is_not_wrapped(): void
+    public function test_an_empty_field_becomes_empty_in_every_locale(): void
     {
         $sections = $this->load([[
             '_name' => 'block',
@@ -78,9 +78,11 @@ class SectionLocaleSwitchTest extends TestCase
             'body' => '   ',
         ]]);
 
-        // Wrapping whitespace would create a translation that says nothing, and the field
-        // would then look filled in for a language nobody has written yet.
-        $this->assertSame('   ', $sections[0]['body']);
+        // Wrapping the whitespace as the Dutch text would create a translation that says
+        // nothing, and the field would look filled in for a language nobody has written
+        // yet. Leaving the string would break the field instead: it binds to body.nl and
+        // body.en, and a key cannot be written into a string, so whatever is typed is lost.
+        $this->assertSame(['nl' => '', 'en' => ''], $sections[0]['body']);
     }
 
     /**
