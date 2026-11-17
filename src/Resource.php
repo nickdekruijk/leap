@@ -238,7 +238,7 @@ class Resource extends Module
      * row, which was one query per row; now the whole tree is one query. Protected,
      * so Livewire neither persists nor restores it and it lives for one request.
      *
-     * @var Collection<string, Collection>|null
+     * @var Collection<array-key, Collection<int, mixed>>|null
      */
     protected ?Collection $indexRowsByParent = null;
 
