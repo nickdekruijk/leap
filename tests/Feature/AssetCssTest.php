@@ -3,6 +3,7 @@
 namespace NickDeKruijk\Leap\Tests\Feature;
 
 use Illuminate\Support\Facades\Cache;
+use NickDeKruijk\Leap\Classes\CssFlattener;
 use NickDeKruijk\Leap\Controllers\AssetController;
 use NickDeKruijk\Leap\Tests\TestCase;
 
@@ -39,7 +40,7 @@ class AssetCssTest extends TestCase
         $this->get(route('leap.css'))->assertOk();
 
         $this->assertNotNull(Cache::get('leap.css'));
-        $this->assertSame(AssetController::cssFilemtime(), Cache::get('leap.css.filemtime'));
+        $this->assertSame(AssetController::cssVersion(), Cache::get('leap.css.filemtime'));
     }
 
     public function test_filemanager_row_background_override_excludes_selected_rows(): void
@@ -53,7 +54,7 @@ class AssetCssTest extends TestCase
         $css = $this->get(route('leap.css'))->getContent();
 
         $this->assertMatchesRegularExpression(
-            '/\.leap-index-row:not\(\.leap-index-row-selected\)\s*\{\s*TD\s*\{\s*background-color:\s*transparent;/',
+            '/\.leap-index-row:not\(\.leap-index-row-selected\) TD\{background-color:\s*transparent\b/',
             $css
         );
     }
@@ -82,5 +83,47 @@ class AssetCssTest extends TestCase
                 'A @keyframes block is nested inside a selector, where browsers drop it.'
             );
         }
+    }
+
+    /**
+     * Safari before 16.5 knows no CSS nesting and before 17.2 none without a leading
+     * "&": it drops every nested rule and the panel comes out unstyled. The response
+     * must therefore hold plain rules only, whatever the source files look like.
+     */
+    public function test_css_response_contains_no_nesting(): void
+    {
+        // Without comments and strings, which may hold an "&" or a brace of their own
+        $css = (string) preg_replace(['#/\*.*?\*/#s', '/"[^"]*"|\'[^\']*\'/'], '', $this->get(route('leap.css'))->getContent());
+
+        $this->assertStringNotContainsString('&', $css);
+
+        // Inside a style rule there is never another block: only an at-rule may
+        // hold one.
+        $stack = [];
+        $prelude = '';
+        foreach (preg_split('/([{};])/', $css, -1, PREG_SPLIT_DELIM_CAPTURE) as $part) {
+            if ($part === '{') {
+                $this->assertNotSame('rule', end($stack), 'A block is nested inside a style rule: '.$prelude);
+                $stack[] = str_starts_with($prelude, '@') ? 'at' : 'rule';
+            } elseif ($part === '}') {
+                array_pop($stack);
+            } elseif ($part !== ';') {
+                $prelude = trim($part);
+            }
+        }
+        $this->assertSame([], $stack);
+    }
+
+    /**
+     * The css files alone do not say what the browser gets: the flattener decides
+     * that too. A fix there has to replace the cached and the browser's copy, even
+     * when no css file changed.
+     */
+    public function test_css_version_follows_the_flattener(): void
+    {
+        $flattener = (new \ReflectionClass(CssFlattener::class))->getFileName();
+
+        $this->assertSame(AssetController::cssFilemtime().'-'.filemtime($flattener), AssetController::cssVersion());
+        $this->assertStringContainsString('?'.AssetController::cssVersion().'"', AssetController::cssLink());
     }
 }

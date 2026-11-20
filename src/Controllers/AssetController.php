@@ -7,6 +7,7 @@ namespace NickDeKruijk\Leap\Controllers;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use NickDeKruijk\Leap\Classes\CssFlattener;
 
 class AssetController extends Controller
 {
@@ -57,24 +58,36 @@ class AssetController extends Controller
     }
 
     /**
+     * Return the version of the combined css: the filemtime of the css files plus
+     * that of the class that flattens them, so a change to either replaces both
+     * the cached copy and the browser's copy
+     */
+    public static function cssVersion(): string
+    {
+        return self::cssFilemtime().'-'.filemtime(__DIR__.'/../Classes/CssFlattener.php');
+    }
+
+    /**
      * Return all combined css files as single Response
      */
     public static function css(): Response
     {
-        // Get the filemtime of all css files combined
-        $filemtime = self::cssFilemtime();
+        // Get the version of all css files combined
+        $version = self::cssVersion();
 
         // Check if we need to recombine the css
-        if ($filemtime !== Cache::get('leap.css.filemtime') || ! Cache::get('leap.css')) {
-            // Combine all css files into a single string, with a comment noting the compile time
+        if ($version !== Cache::get('leap.css.filemtime') || ! Cache::get('leap.css')) {
+            // Combine all css files into a single string, with a comment noting the compile time.
+            // The files use native nesting, which Safari before 17.2 can not read, so each one
+            // is flattened into plain rules first.
             $css = '/* Compiled: '.now().'*/'.PHP_EOL;
             foreach (self::cssFiles() as $file) {
-                $css .= file_get_contents($file);
+                $css .= CssFlattener::flatten((string) file_get_contents($file));
             }
 
             // Cache it
             Cache::put('leap.css', $css, self::CACHE_DURATION);
-            Cache::put('leap.css.filemtime', $filemtime, self::CACHE_DURATION);
+            Cache::put('leap.css.filemtime', $version, self::CACHE_DURATION);
         } else {
             // Get the cached css
             $css = Cache::get('leap.css');
@@ -103,7 +116,7 @@ class AssetController extends Controller
      */
     public static function cssLink(): string
     {
-        return '<link rel="stylesheet" href="'.route('leap.css').'?'.self::cssFilemtime().'">';
+        return '<link rel="stylesheet" href="'.route('leap.css').'?'.self::cssVersion().'">';
     }
 
     /**

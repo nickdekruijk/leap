@@ -159,3 +159,14 @@ No recompile needed — this is plain CSS cascade. For structural overrides you 
 still replace an entire file: drop a same-named file in `resources/css/leap/` (e.g.
 `resources/css/leap/leap.css`) and it takes priority over the package's own copy, per
 the `css` array above.
+
+The files are written with native CSS nesting. When the panel serves them, the nesting
+is flattened into plain rules, so the panel also works in browsers that do not know
+nesting (Safari before 17.2). The rules keep the meaning nesting gives them: where a
+nested rule sits under a list of selectors, the list is written out as `:is(...)`, so
+specificity and matching stay the same. `:is()` needs Safari 14 or later.
+
+A file you put in `resources/css/leap/` goes through the same step, so you can nest
+there too. Keep `@keyframes` and `@scope` at the top level of the file: inside a rule
+they get no parent selector. A stylesheet you load yourself next to the panel is not
+flattened, so keep that one flat if the panel has to work in an older Safari.

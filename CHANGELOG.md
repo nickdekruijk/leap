@@ -5,6 +5,23 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.10] - 2026-11-20
+
+### Fixed
+
+- **The panel is styled again in Safari before 17.2.** Since the panel CSS became plain
+  CSS (0.9.5), its files use native CSS nesting. Safari 16 does not know nesting, and
+  Safari before 17.2 only knows it with a leading `&`, so it dropped every nested rule
+  and the panel showed up unstyled after logging in: huge icons, blue links, no layout.
+  `AssetController` now flattens the nesting into plain rules when it combines the
+  files, so every browser gets the same CSS. The rules keep the meaning nesting gives
+  them: a nested rule under a list of selectors is written with `:is()`, which Safari
+  knows from 14, so specificity and matching do not change for browsers that already
+  showed the panel correctly. The source files stay nested, and a file of your own in
+  `resources/css/leap/` goes through the same step. The query string of `cssLink()` now
+  also follows the class that does the flattening, so browsers and the cache pick up
+  the new CSS at once.
+
 ## [1.19.9] - 2026-11-17
 
 ### Fixed
