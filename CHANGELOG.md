@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`leap.search.page`, the switch for the template's search results page.** `false` by
   default, so nothing changes. `true` serves the page at `/search`, a string is its slug in
   every language, and an array gives one per locale (`['nl' => 'zoeken', 'en' =>
-  'search']`). The page itself comes with nickdekruijk/leap-template 2.8; the template
+  'search']`). The page itself comes with nickdekruijk/leap-template 2.7; the template
   reads the key with `false` as its fallback, so it also works before this release.
 
 ### Documentation

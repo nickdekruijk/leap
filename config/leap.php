@@ -812,7 +812,7 @@ return [
     | 'page' => ['nl' => 'zoeken', 'en' => 'search'],
     |
     | It answers before the page tree, so a page with the same slug is hidden by
-    | it. Needs nickdekruijk/leap-template 2.8 or later.
+    | it. Needs nickdekruijk/leap-template 2.7 or later.
     |
     */
     'search' => [
