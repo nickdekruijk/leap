@@ -262,6 +262,46 @@ All of it is driven by tokens in `project.scss`:
 Leave the `*-compact` tokens unset for a bar of fixed height. The animation is
 suppressed under `prefers-reduced-motion`.
 
+## Search
+
+The magnifier in the navigation opens the search popup (`App\Livewire\Search`): results
+while you type, over the pages and every content type in `leap.content`. What a term finds
+is decided in `App\Support\SiteSearch`, which the popup and the results page share: the
+title in the active locale outranks the intro and the description, which outrank the
+sections, and a match in another language does not count.
+
+The popup shows up to 30 results. For a site with more to find there is a results page,
+off by default:
+
+```php
+// config/leap.php
+'search' => [
+    'page' => true,                                 // at /search
+    // 'page' => 'zoeken',                          // one slug for every language
+    // 'page' => ['nl' => 'zoeken', 'en' => 'search'],  // a slug per locale
+],
+```
+
+With it on:
+
+- the popup shows the best 8, and under them "Show all 23 results" when there are more;
+- Enter in the popup goes to the page, whatever the number;
+- the page lists every match, 20 at a time, with pagination at the bottom. It is a plain
+  GET form and a plain list, so it works without JavaScript and every page of results
+  has an address of its own (`/zoeken?term=lantaarn&page=2`);
+- on a multilingual site each language has its own slug and prefix, and the language
+  switcher keeps the term;
+- it carries `noindex, follow`, and is not in the sitemap or robots.txt: a crawler may
+  follow it to what it lists, but should not list it.
+
+The term is in `?term=` rather than `?q=`, because Matomo reads `q` as a site search on
+every page view and would count page 2 as the same search again (see
+[Matomo](#matomo)).
+
+The page answers before the page tree, so a page whose slug is the same is hidden behind
+it. A locale left out of the array has no results page, and its popup works as with the
+page off.
+
 ## SEO
 
 Per-page `<title>`, meta description, canonical, Open Graph, Twitter Card and
@@ -452,6 +492,31 @@ this — GA4 and the rest belong behind consent in a `scripts_*` slot.
 This is not a free pass: cookieless Matomo also needs IP anonymisation on, no sharing with
 third parties, and a processing agreement. Those are settings in Matomo and paperwork, not
 code.
+
+Two things load no page, so the snippet in the layout hears of them through a browser
+event instead:
+
+- **`page:view`**: an address that changes with `pushState`. The tag filter sends one for
+  each filter picked, cleared or stepped back to. Anything a project adds that changes the
+  address the same way (a panel, a modal) sends it too:
+  ```js
+  document.dispatchEvent(new CustomEvent('page:view', {
+      detail: { url: location.href, title: document.title, referrer: previousUrl },
+  }));
+  ```
+  GA4 counts these history changes by itself (enhanced measurement, "page changes based
+  on browser history events"), so nothing is sent to it, or it would count each one twice.
+- **`site-search`**: the live search sends the term and the number of results on every
+  change. Matomo gets the term someone stops at as a site search (`trackSiteSearch`), once
+  the field has been still for 1.5 seconds or when the visitor leaves for a result, not
+  every prefix typed on the way. Site Search has to be switched on for the website in
+  Matomo, or the searches do not reach its report. The terms are free text a visitor
+  typed, which the privacy statement can mention under statistics.
+
+The results page (see [Search](#search)) counts its first page as the site search
+instead of a page view, and the pages after it as page views. The popup drops the term
+it was still waiting to report when Enter or "Show all" takes the visitor there, so a
+search is counted once.
 
 ### Shortening the accept label
 

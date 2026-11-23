@@ -799,6 +799,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | search
+    |--------------------------------------------------------------------------
+    |
+    | The frontend template's site search. The popup is always there; page adds
+    | a results page with every match, 20 at a time, which the popup links to
+    | ("Show all 23 results") and Enter submits to. Off by default: on a small
+    | site everything already fits in the popup.
+    |
+    | true serves it at /search, a string is the slug in every language, and an
+    | array gives one per locale (a locale left out has no results page):
+    | 'page' => ['nl' => 'zoeken', 'en' => 'search'],
+    |
+    | It answers before the page tree, so a page with the same slug is hidden by
+    | it. Needs nickdekruijk/leap-template 2.8 or later.
+    |
+    */
+    'search' => [
+        'page' => false,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ai
     |--------------------------------------------------------------------------
     |

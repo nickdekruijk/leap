@@ -5,6 +5,22 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] - 2026-11-23
+
+### Added
+
+- **`leap.search.page`, the switch for the template's search results page.** `false` by
+  default, so nothing changes. `true` serves the page at `/search`, a string is its slug in
+  every language, and an array gives one per locale (`['nl' => 'zoeken', 'en' =>
+  'search']`). The page itself comes with nickdekruijk/leap-template 2.8; the template
+  reads the key with `false` as its fallback, so it also works before this release.
+
+### Documentation
+
+- **`docs/template.md` describes the search** (the popup, the results page, its slugs and
+  its pagination) and how Matomo hears of what loads no page: the `page:view` event for an
+  address changed with `pushState`, and the `site-search` event of the live search.
+
 ## [1.20.0] - 2026-11-23
 
 ### Added
