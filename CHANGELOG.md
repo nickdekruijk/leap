@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every language, and an array gives one per locale (`['nl' => 'zoeken', 'en' =>
   'search']`). The page itself comes with nickdekruijk/leap-template 2.7; the template
   reads the key with `false` as its fallback, so it also works before this release.
+- **A video takes the whole YouTube or Vimeo link as well as the id.**
+  `NickDeKruijk\Leap\Classes\Video` reads the id out of `youtube.com/watch?v=…`,
+  `youtu.be/…`, `/embed/`, `/shorts/`, `/live/`, `vimeo.com/…` and
+  `player.vimeo.com/video/…`, so a pasted link plays instead of breaking the player
+  without a word. It does so when the video is used, so links already stored work too.
+  An unlisted Vimeo video (`vimeo.com/123/abc456`) keeps its hash in the new `$hash`
+  property, and its player and poster get it. A bare id behaves exactly as before.
 
 ### Documentation
 

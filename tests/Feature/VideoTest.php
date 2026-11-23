@@ -36,6 +36,70 @@ class VideoTest extends TestCase
         $this->assertStringContainsString('youtube-nocookie.com/embed/dQw4w9WgXcQ', (new Video('dQw4w9WgXcQ'))->embedUrl());
     }
 
+    /**
+     * Editors paste what the address bar or the share button gives them. Reading the id
+     * out of that turns a video that silently would not play into one that does.
+     */
+    public function test_the_id_is_read_out_of_a_link(): void
+    {
+        foreach ([
+            'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            'https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s&list=PL123',
+            'youtube.com/watch?v=dQw4w9WgXcQ',
+            'https://m.youtube.com/watch?v=dQw4w9WgXcQ',
+            'https://youtu.be/dQw4w9WgXcQ?si=abc123',
+            'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',
+            'https://www.youtube.com/shorts/dQw4w9WgXcQ',
+            'https://www.youtube.com/live/dQw4w9WgXcQ?feature=share',
+            ' dQw4w9WgXcQ ',
+        ] as $input) {
+            $video = new Video($input);
+
+            $this->assertSame('dQw4w9WgXcQ', $video->id, $input);
+            $this->assertFalse($video->isVimeo(), $input);
+        }
+
+        foreach ([
+            'https://vimeo.com/76979871',
+            'vimeo.com/76979871',
+            'https://player.vimeo.com/video/76979871?autoplay=1',
+            'https://vimeo.com/channels/staffpicks/76979871',
+            'https://vimeo.com/groups/shortfilms/videos/76979871',
+            '76979871',
+        ] as $input) {
+            $video = new Video($input);
+
+            $this->assertSame('76979871', $video->id, $input);
+            $this->assertNull($video->hash, $input);
+            $this->assertTrue($video->isVimeo(), $input);
+        }
+    }
+
+    /**
+     * An unlisted Vimeo video only plays with the hash from its link, so that goes along
+     * to the player, and to oEmbed for the poster.
+     */
+    public function test_an_unlisted_vimeo_video_keeps_its_hash(): void
+    {
+        foreach (['https://vimeo.com/76979871/abc456def', 'https://player.vimeo.com/video/76979871?h=abc456def', '76979871/abc456def'] as $input) {
+            $video = new Video($input);
+
+            $this->assertSame(['76979871', 'abc456def'], [$video->id, $video->hash], $input);
+            $this->assertSame('https://player.vimeo.com/video/76979871?h=abc456def&autoplay=1&playsinline=1&dnt=1', $video->embedUrl(), $input);
+        }
+
+        Http::fake([
+            'vimeo.com/api/oembed.json*' => Http::response(['thumbnail_url' => 'https://i.vimeocdn.com/video/1.jpg']),
+            'i.vimeocdn.com/*' => Http::response('jpeg'),
+        ]);
+
+        (new Video('https://vimeo.com/76979871/abc456def'))->poster();
+
+        Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'oembed.json')
+            && $request['url'] === 'https://vimeo.com/76979871/abc456def');
+    }
+
     public function test_it_uses_the_privacy_friendly_youtube_domain(): void
     {
         // The player only loads once a visitor clicks, and youtube-nocookie sets no

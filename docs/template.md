@@ -590,6 +590,13 @@ watch. The poster is fetched from the provider once, on the server, and stored o
 public disk; the player is an `<iframe>` built in the click handler. YouTube loads from
 `youtube-nocookie.com`, Vimeo with `dnt=1`.
 
+`video_id` takes the id or the whole link, whichever the editor has at hand:
+`youtube.com/watch?v=…`, `youtu.be/…`, `/embed/`, `/shorts/` and `/live/` on YouTube,
+`vimeo.com/…` and `player.vimeo.com/video/…` on Vimeo. `NickDeKruijk\Leap\Classes\Video`
+reads the id out of it when the video is used, so a link that is already stored works as
+well. An unlisted Vimeo video (`vimeo.com/123/abc456`) keeps its hash, which its player
+and its poster need.
+
 What a click on the poster does depends on `enabled`:
 
 | `enabled` | |

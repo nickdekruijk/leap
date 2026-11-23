@@ -12,6 +12,13 @@ use Throwable;
  * A video in a "video" section: YouTube or Vimeo, told apart by its id — Vimeo's are
  * numeric, YouTube's are not.
  *
+ * An editor may paste the whole link instead of the id, since that is what the address
+ * bar and the share button give them: youtube.com/watch?v=…, youtu.be/…, /embed/,
+ * /shorts/ and /live/ on YouTube, vimeo.com/… and player.vimeo.com/video/… on Vimeo.
+ * The id is read out of it here, when the video is used, so a link that is already
+ * stored works without touching the data. An unlisted Vimeo video has a second part,
+ * vimeo.com/123/abc456, that its player needs as well; it is kept as the hash.
+ *
  * The poster is fetched from the provider once and stored locally rather than
  * hotlinked. Hotlinking would put a request to YouTube or Vimeo on every page view,
  * which is the very thing the click-to-load player avoids: a visitor should only
@@ -22,7 +29,66 @@ class Video
 {
     private const POSTER_DIRECTORY = 'video-posters';
 
-    public function __construct(public readonly string $id) {}
+    /**
+     * The YouTube or Vimeo id, read out of a link when one was given.
+     */
+    public readonly string $id;
+
+    /**
+     * The private hash of an unlisted Vimeo video, or null.
+     */
+    public readonly ?string $hash;
+
+    public function __construct(string $id)
+    {
+        [$this->id, $this->hash] = self::parse(trim($id));
+    }
+
+    /**
+     * The id, and the hash of an unlisted Vimeo video, out of what an editor typed. A
+     * bare id comes back as it is, and so does anything that is not a link to one of
+     * the two: there is nothing better to make of it.
+     *
+     * @return array{0: string, 1: string|null}
+     */
+    private static function parse(string $input): array
+    {
+        // An id with its hash, as an unlisted Vimeo video is sometimes written down
+        if (preg_match('#^(\d+)/([0-9a-f]+)$#i', $input, $match)) {
+            return [$match[1], $match[2]];
+        }
+
+        $url = parse_url(str_contains($input, '://') ? $input : 'https://'.$input);
+        $host = strtolower(preg_replace('/^(www|m)\./', '', $url['host'] ?? ''));
+        $path = trim($url['path'] ?? '', '/');
+        parse_str($url['query'] ?? '', $query);
+
+        if (in_array($host, ['youtube.com', 'youtube-nocookie.com', 'music.youtube.com'], true)) {
+            if (is_string($query['v'] ?? null) && $query['v'] !== '') {
+                return [$query['v'], null];
+            }
+
+            if (preg_match('#^(?:embed|shorts|live|v)/([\w-]+)#', $path, $match)) {
+                return [$match[1], null];
+            }
+        }
+
+        if ($host === 'youtu.be' && preg_match('#^([\w-]+)#', $path, $match)) {
+            return [$match[1], null];
+        }
+
+        if ($host === 'player.vimeo.com' && preg_match('#^video/(\d+)#', $path, $match)) {
+            return [$match[1], is_string($query['h'] ?? null) && $query['h'] !== '' ? $query['h'] : null];
+        }
+
+        // vimeo.com/123, vimeo.com/123/abc456 for an unlisted one, and the same under
+        // channels/…/, groups/…/videos/ or showcase/…/video/
+        if ($host === 'vimeo.com' && preg_match('#(?:^|/)(\d+)(?:/([0-9a-f]+))?$#i', $path, $match)) {
+            return [$match[1], $match[2] ?? null];
+        }
+
+        return [$input, null];
+    }
 
     /**
      * Vimeo ids are numeric, YouTube's are not.
@@ -62,7 +128,7 @@ class Video
     public function embedUrl(): string
     {
         return $this->isVimeo()
-            ? 'https://player.vimeo.com/video/'.$this->id.'?autoplay=1&playsinline=1&dnt=1'
+            ? 'https://player.vimeo.com/video/'.$this->id.'?'.($this->hash ? 'h='.$this->hash.'&' : '').'autoplay=1&playsinline=1&dnt=1'
             : 'https://www.youtube-nocookie.com/embed/'.$this->id.'?autoplay=1&rel=0&playsinline=1';
     }
 
@@ -106,7 +172,7 @@ class Video
     {
         if ($this->isVimeo()) {
             $response = $this->get('https://vimeo.com/api/oembed.json', [
-                'url' => 'https://vimeo.com/'.$this->id,
+                'url' => 'https://vimeo.com/'.$this->id.($this->hash ? '/'.$this->hash : ''),
                 'width' => 1920,
             ]);
 
