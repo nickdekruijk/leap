@@ -39,16 +39,20 @@ class FileManagerUploadReplaceTest extends TestCase
         ]);
     }
 
-    private function upload(string $name, string $contents): void
+    /**
+     * @param  array<int, string>  $folders  The open folders, the way the file manager walks into them
+     */
+    private function upload(string $name, string $contents, array $folders = []): void
     {
         $file = UploadedFile::fake()->createWithContent($name, $contents);
 
         $fileManager = Livewire::test(FileManager::class)->instance();
+        $fileManager->openFolders = $folders;
         $fileManager->uploads = ['x' => ['name' => $name, 'path' => '', 'error' => false, 'file' => $file]];
         $fileManager->uploadDone('x');
     }
 
-    public function test_by_default_it_lands_beside_the_old_one(): void
+    public function test_by_default_it_lands_beside_the_old_one_outside_static(): void
     {
         Storage::disk('public')->put('pic.jpg', 'the first picture');
         $media = Media::forFile('pic.jpg');
@@ -101,5 +105,76 @@ class FileManagerUploadReplaceTest extends TestCase
         // without that permission the upload falls back to the numbered copy.
         Storage::disk('public')->assertExists('pic-1.jpg');
         $this->assertSame('the first picture', Storage::disk('public')->get('pic.jpg'));
+    }
+
+    public function test_a_list_of_folders_writes_over_in_those_folders_only(): void
+    {
+        config(['leap.filemanager.upload_replace' => ['static']]);
+        Storage::disk('public')->put('static/logo.png', 'the first logo');
+        Storage::disk('public')->put('news/logo.png', 'a news picture');
+        Storage::disk('public')->put('logo.png', 'a picture in the root');
+
+        $this->upload('logo.png', 'a new logo', ['static']);
+        $this->upload('logo.png', 'another news picture', ['news']);
+        $this->upload('logo.png', 'another picture in the root');
+
+        $this->assertSame('a new logo', Storage::disk('public')->get('static/logo.png'));
+        Storage::disk('public')->assertMissing('static/logo-1.png');
+
+        $this->assertSame('a news picture', Storage::disk('public')->get('news/logo.png'));
+        Storage::disk('public')->assertExists('news/logo-1.png');
+
+        $this->assertSame('a picture in the root', Storage::disk('public')->get('logo.png'));
+        Storage::disk('public')->assertExists('logo-1.png');
+    }
+
+    public function test_a_listed_folder_includes_its_subfolders_but_not_a_lookalike(): void
+    {
+        config(['leap.filemanager.upload_replace' => ['/static/']]);
+        Storage::disk('public')->put('static/logos/logo.png', 'the first logo');
+        Storage::disk('public')->put('staticky/logo.png', 'not that folder');
+
+        $this->upload('logo.png', 'a new logo', ['static', 'logos']);
+        $this->upload('logo.png', 'a new one there too', ['staticky']);
+
+        $this->assertSame('a new logo', Storage::disk('public')->get('static/logos/logo.png'));
+        $this->assertSame('not that folder', Storage::disk('public')->get('staticky/logo.png'));
+        Storage::disk('public')->assertExists('staticky/logo-1.png');
+    }
+
+    public function test_a_listed_folder_still_needs_the_update_permission(): void
+    {
+        config(['leap.filemanager.upload_replace' => ['static']]);
+        $this->permissions(['read' => true, 'create' => true, 'update' => false, 'delete' => false]);
+        Storage::disk('public')->put('static/logo.png', 'the first logo');
+
+        $this->upload('logo.png', 'a new logo', ['static']);
+
+        $this->assertSame('the first logo', Storage::disk('public')->get('static/logo.png'));
+        Storage::disk('public')->assertExists('static/logo-1.png');
+    }
+
+    public function test_by_default_it_writes_over_in_static(): void
+    {
+        Storage::disk('public')->put('static/logo.png', 'the first logo');
+        Storage::disk('public')->put('news/logo.png', 'a news picture');
+
+        $this->upload('logo.png', 'a new logo', ['static']);
+        $this->upload('logo.png', 'another news picture', ['news']);
+
+        $this->assertSame('a new logo', Storage::disk('public')->get('static/logo.png'));
+        Storage::disk('public')->assertMissing('static/logo-1.png');
+        Storage::disk('public')->assertExists('news/logo-1.png');
+    }
+
+    public function test_false_makes_the_numbered_copy_in_static_too(): void
+    {
+        config(['leap.filemanager.upload_replace' => false]);
+        Storage::disk('public')->put('static/logo.png', 'the first logo');
+
+        $this->upload('logo.png', 'a new logo', ['static']);
+
+        $this->assertSame('the first logo', Storage::disk('public')->get('static/logo.png'));
+        Storage::disk('public')->assertExists('static/logo-1.png');
     }
 }

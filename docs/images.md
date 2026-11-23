@@ -155,11 +155,19 @@ crop-as-new through `Str::slug`, keeping the extension, so `Zomer 2024, strand.j
 stored as `zomer-2024-strand.jpg`. Turn it off to keep the names people upload; the
 encoding above covers those either way, and nothing already on the disk is renamed.
 
-Uploading a new version of an image is what `leap.filemanager.upload_replace` is for. By
-default an upload with an existing name lands beside the old one as `name-1.jpg`, which is
-a habit from when a resized copy was addressed by file name alone and replacing a file
-therefore could not be seen. Turn it on and the upload writes over the old file, keeping
-the same Media row, so every page already showing that image shows the new one.
+Uploading a new version of an image is what `leap.filemanager.upload_replace` is for. An
+upload with an existing name normally lands beside the old one as `name-1.jpg`, which is a
+habit from when a resized copy was addressed by file name alone and replacing a file
+therefore could not be seen. Set it to `true` and the upload writes over the old file,
+keeping the same Media row, so every page already showing that image shows the new one.
+
+It can also be a list of folders, relative to the disk, and the default is one:
+`['static']`. In `static` and its subfolders an upload writes over a file of the same
+name, everywhere else it makes the numbered copy. That is the folder for the fixed files a
+site points at by name, such as its logos: an editor replaces `static/logo.svg` by
+uploading a new `logo.svg` there, while a news photo that happens to share a name with an
+older one still lands beside it. `false` makes the numbered copy everywhere. Writing over
+always takes the update permission; without it the upload is the numbered copy.
 
 **Files written from outside leap need `leap:images --sync`.** Upload or crop through the
 file manager and leap keeps up on its own. Overwrite a file with an rsync, a deploy script

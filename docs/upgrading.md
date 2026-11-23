@@ -3,6 +3,22 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.20, uploads in `static` write over a file of the same name
+
+`leap.filemanager.upload_replace` takes a list of folders now, and its default is
+`['static']`. In `static` and the folders below it, uploading a file whose name is already
+there replaces that file, for someone with update permission, instead of storing
+`name-1.jpg` beside it. That is the folder for the fixed files a site points at by name,
+its logos for instance, so an editor can replace one from the file manager. Every other
+folder keeps the numbered copy.
+
+- **A published `config/leap.php` that sets the option keeps its own answer.** Only a site
+  whose config does not mention `upload_replace` (published before the option existed) or that
+  has no published config picks up the new default.
+- **To keep the numbered copy in `static` too:** `'upload_replace' => false`.
+- **A list in the config needs 1.20.** Before it, a non-empty list simply reads as on, and
+  every upload on the site would write over a file of the same name.
+
 ## 1.18, robots.txt is a file that optimize writes
 
 Leap served `/robots.txt` from a route. Behind the nginx config Forge, Herd and Valet

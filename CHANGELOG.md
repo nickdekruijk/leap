@@ -5,6 +5,28 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-11-23
+
+### Added
+
+- **`leap.filemanager.upload_replace` can be a list of folders.** Besides `true` and
+  `false` it now takes folders relative to the disk, such as `['static']`: an upload with
+  an existing name writes over the file in those folders and their subfolders, and is
+  stored beside it as `name-1.jpg` everywhere else. That makes a folder of fixed files a
+  site points at by name, like its logos, replaceable from the file manager without
+  letting every other upload change what pages already show. The update permission is
+  still needed to write over a file. `true` and `false` behave as before.
+
+### Changed
+
+- **The default of `upload_replace` is `['static']` instead of `false`.** On a site that
+  does not set the option in its published `config/leap.php` (one published before the
+  option existed, or none at all), uploading a file with an existing name into `static` or a
+  folder below it now writes over that file instead of storing `name-1.jpg` beside it.
+  Every other folder keeps the numbered copy. To keep the numbered copy in `static` as
+  well, set `'upload_replace' => false`. A published `false` already wins and changes
+  nothing.
+
 ## [1.19.10] - 2026-11-20
 
 ### Fixed

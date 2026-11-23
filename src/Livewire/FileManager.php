@@ -185,7 +185,7 @@ class FileManager extends Module
             // the permission that matches: someone who may only add gets the
             // numbered copy instead of quietly changing a picture that pages are
             // already showing.
-            if (config('leap.filemanager.upload_replace') && Gate::allows('leap::update')) {
+            if ($this->replacesUploadsIn(implode('/', $this->openFolders)) && Gate::allows('leap::update')) {
                 $replacing = true;
                 $this->dispatch('toast-alert', __('leap::filemanager.upload_replaced', ['attribute' => $name]))->to(Toasts::class);
             } else {
@@ -359,6 +359,37 @@ class FileManager extends Module
     public function storagePrefix(): string
     {
         return '';
+    }
+
+    /**
+     * Whether an upload into this folder writes over a file of the same name, going by
+     * leap.filemanager.upload_replace: true or false for every folder alike, or a list
+     * of folders (relative to the disk, e.g. ['static']) in which it does, subfolders
+     * included, while everywhere else a numbered copy is made. That suits a folder of
+     * fixed files a site points at by name, like its logos, without letting every
+     * other upload change what pages already show.
+     *
+     * The update permission is checked by the caller, and needed either way.
+     */
+    protected function replacesUploadsIn(string $folder): bool
+    {
+        $setting = config('leap.filemanager.upload_replace');
+
+        if (! is_array($setting)) {
+            return (bool) $setting;
+        }
+
+        $folder = trim($folder, '/');
+
+        foreach ($setting as $allowed) {
+            $allowed = trim((string) $allowed, '/');
+
+            if ($folder === $allowed || ($allowed !== '' && str_starts_with($folder.'/', $allowed.'/'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
