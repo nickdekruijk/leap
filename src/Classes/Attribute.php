@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Classes;
 
+use DateTimeInterface;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -337,6 +338,17 @@ class Attribute
         $value = enum_value($value);
 
         return is_int($value) || is_string($value) ? ($this->values[$value] ?? $value) : $value;
+    }
+
+    /**
+     * The value as the index shows it: a date() without the midnight its cast adds
+     * ("2027-03-03", not "2027-03-03 00:00:00"). Anything else is returned as it is.
+     *
+     * @internal Leap rendering helper; not part of the public API.
+     */
+    public function indexValue(mixed $value): mixed
+    {
+        return $this->type === 'date' && $value instanceof DateTimeInterface ? $value->format('Y-m-d') : $value;
     }
 
     /**

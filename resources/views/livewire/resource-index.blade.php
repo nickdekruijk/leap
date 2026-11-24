@@ -53,7 +53,7 @@
                         @elseif (count($parts = explode('->', $attribute->name)) == 2)
                             {{ $row->{$parts[0]}[$parts[1]] }}
                         @else
-                            {{ $row->{$attribute->name} }}
+                            {{ $attribute->indexValue($row->{$attribute->name}) }}
                         @endif
                         @if ($loop->first)
                             </button>
