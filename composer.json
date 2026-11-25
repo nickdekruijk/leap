@@ -17,8 +17,8 @@
 		"livewire/livewire": "^3.7|^4.1",
 		"owenvoke/blade-fontawesome": "^3.2.2",
 		"spatie/laravel-translatable": "^6.10",
-		"laravel/fortify": "^1.31",
-		"laravel/passkeys": "^0.2.1",
+		"laravel/fortify": "^1.43",
+		"laravel/passkeys": "^0.3.0",
 		"enshrined/svg-sanitize": "^1.1.1"
 	},
 	"suggest": {

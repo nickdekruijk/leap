@@ -63,8 +63,8 @@ class User extends Authenticatable implements PasskeyUser
 ```
 
 Use the `Laravel\Passkeys` namespace directly, **not** the `Laravel\Fortify` wrapper of
-the same trait/contract: that wrapper only arrived in Fortify `^1.37`, and Leap allows
-`^1.31`, so depending on it breaks on any install still on 1.31–1.36.
+the same trait/contract: Leap talks to `laravel/passkeys` itself, and Fortify's own
+passkeys feature stays off.
 
 The `passkeys` table is added by the package migrations. Users register passkeys from
 the **Profile** screen and then sign in with just their device biometrics/PIN — no

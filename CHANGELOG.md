@@ -5,6 +5,24 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] - 2026-11-25
+
+### Changed
+
+- **`laravel/passkeys` 0.3 and `laravel/fortify` 1.43 are the new floors.** Fortify 1.43
+  and later ask for passkeys 0.3, so a host on `^0.2.1` stayed on Fortify 1.42. Both come
+  along with `composer update nickdekruijk/leap -W`. A host that pins `laravel/passkeys`
+  on 0.2 itself has to lift that pin. Nothing else to do: no migration, no config, and
+  Laravel 12 and 13 as before.
+
+### Fixed
+
+- **A passkey made in Safari on iOS signs in again.** The user handle was a string of raw
+  bytes, which iOS read as text and changed, so every later login failed with a 500. From
+  passkeys 0.3 a new passkey gets a hex handle that survives. Passkeys registered before
+  keep working with their old handle. One that a device already changed cannot be
+  repaired: it now gets a message to remove it and register a new one, instead of a 500.
+
 ## [1.21.1] - 2026-11-24
 
 ### Fixed
