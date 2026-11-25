@@ -2,8 +2,10 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Livewire\Livewire;
@@ -61,6 +63,35 @@ class TwoFactorEmailTest extends TestCase
         Mail::assertSent(TwoFactorCodeMail::class, 1);
         $this->assertNull($user->two_factor_email_confirmed_at);
         $this->assertNotNull($this->pendingCode($user));
+    }
+
+    /**
+     * In the mail layout of the site, as HTML and as text. It was a bare HTML fragment.
+     */
+    public function test_the_code_mail_is_rendered_in_the_mail_layout(): void
+    {
+        config(['app.name' => 'Site van de klant']);
+        $mail = new TwoFactorCodeMail('123456');
+
+        $mail->assertSeeInOrderInHtml(['Site van de klant', __('leap::auth.two_factor_email_body'), '123456', __('leap::auth.two_factor_email_expires_hint', ['minutes' => 15])]);
+        $mail->assertSeeInHtml('class="inner-body"', false);
+        $mail->assertSeeInOrderInText([__('leap::auth.two_factor_email_body'), '123456']);
+        $mail->assertDontSeeInText('<p');
+    }
+
+    public function test_the_code_mail_takes_the_mail_theme_of_the_site(): void
+    {
+        $views = sys_get_temp_dir().'/leap-mail-theme-'.uniqid();
+        mkdir($views.'/mail', 0777, true);
+        file_put_contents($views.'/mail/huisstijl.css', 'p { color: #123456; }');
+        View::addLocation($views);
+        config(['mail.markdown.theme' => 'huisstijl']);
+
+        try {
+            (new TwoFactorCodeMail('123456'))->assertSeeInHtml('color: #123456', false);
+        } finally {
+            (new Filesystem)->deleteDirectory($views);
+        }
     }
 
     public function test_confirm_email_with_valid_code_activates_two_factor(): void

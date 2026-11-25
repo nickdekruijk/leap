@@ -5,6 +5,16 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.1] - 2026-11-25
+
+### Changed
+
+- **The mail with the two factor code takes the mail theme of the site.** It was a bare
+  HTML fragment without a layout; it is a Markdown mail now, like the password reset mail,
+  so it follows `mail.markdown` and has a plain text part. A site that overrides
+  `views/vendor/leap/mail/two-factor-code.blade.php` should wrap its text in
+  `<x-mail::message>`.
+
 ## [1.22.0] - 2026-11-25
 
 ### Changed
