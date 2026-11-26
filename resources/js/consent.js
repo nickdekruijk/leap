@@ -192,14 +192,26 @@ window.consent = (function () {
 
                 init() {
                     this.open = !api.answered();
+                    this.sync();
 
                     // Reopened from the cookie table, or by anything else that asks. A
                     // granular banner opens on its categories, since someone changing a
                     // choice they already made is asking for exactly those.
                     document.addEventListener('consent:open', () => {
+                        this.sync();
                         this.open = true;
                         this.settings = config.granular === true;
                     });
+                },
+
+                /*
+                 * The switches show what is stored, not what the banner last held.
+                 * Without this they all started off on reopening, so someone who had
+                 * accepted everything saw "no", and saving without touching anything
+                 * quietly revoked the lot.
+                 */
+                sync() {
+                    this.choice = Object.fromEntries((config.categories || []).map((category) => [category, api.has(category)]));
                 },
 
                 accept() {

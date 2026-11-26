@@ -5,6 +5,15 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.2] - 2026-11-26
+
+### Fixed
+
+- **A reopened consent banner shows the choice that was made.** After "Accept all" the
+  switches on "Change cookie preferences" were all off again, because the banner never
+  read the stored choice. Saving without touching them then revoked everything without a
+  word. The switches now follow the stored choice, on first load and on every reopen.
+
 ## [1.22.1] - 2026-11-25
 
 ### Changed
