@@ -15,11 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   line, with the first image of the section beside it. A closed section takes one line,
   so about twice as many fit on the screen. A section switched off with an `active`
   field is struck through, like a row in the index.
-- **A section can be added anywhere in the list, and duplicated.** Every row shows a "+"
-  under it on hover that adds a section right below, and the first row has one above it
-  as well. Sections could only be added at the end and dragged up from there. The wide
-  select under the list made way for the same "+", always shown and with its name
-  beside it. "Duplicate" puts a copy right below a section, with its media.
+- **A section can be added anywhere in the list, and duplicated.** On hover a row shows
+  Insert beside Duplicate and Delete. Insert adds a section right above the row, and a
+  line shows where it will go. Sections could only be added at the end and dragged up
+  from there. The wide select under the list made way for an "Add section" button.
+  Duplicate puts a copy right below a section, with its media.
 - **`Section::divider()`** marks a section that structures the ones below it, such as a
   tab or a chapter. In the editor it becomes a heading in the list, the sections up to
   the next divider are its group, the group can be folded away, and a folded divider

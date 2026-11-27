@@ -322,29 +322,48 @@ class EditorSectionListTest extends TestCase
     }
 
     /**
-     * One "+" under every row but the last, whose place is taken by the control under
-     * the list, and one in front of the first row, which "under" cannot reach.
+     * Insert sits with Duplicate and Delete and puts a section above its row, on every
+     * row alike, the first one included. The end of the list has its own control under it.
      */
-    public function test_every_row_offers_to_add_a_section_below_it(): void
+    public function test_every_row_offers_to_insert_a_section_above_it(): void
     {
         $editor = $this->editor([$this->block('Een'), $this->block('Twee'), $this->block('Drie')]);
+        $html = $editor->html();
 
-        $editor->assertSeeHtml("insertSection('sections', \$event.target.value, 0, true)")
-            ->assertSeeHtml("insertSection('sections', \$event.target.value, 1, true)")
-            ->assertDontSeeHtml("insertSection('sections', \$event.target.value, 2, true)")
-            // In front of the first row only
-            ->assertSeeHtml("insertSection('sections', \$event.target.value, 0); ")
-            ->assertDontSeeHtml("insertSection('sections', \$event.target.value, 1); ")
-            // At the end
-            ->assertSeeHtml('class="leap-section-add"')
+        $this->assertSame(3, substr_count($html, 'class="leap-button leap-section-insert"'));
+        foreach ([0, 1, 2] as $index) {
+            $this->assertStringContainsString("insertSection('sections', \$event.target.value, {$index}); ", $html);
+        }
+        $this->assertStringNotContainsString('leap-section-insert-top', $html);
+        $this->assertStringNotContainsString(', true); ', $html);
+        // At the end
+        $editor->assertSeeHtml('class="leap-section-add"')
             ->assertSeeHtml("insertSection('sections', \$event.target.value); ");
+    }
+
+    public function test_insert_on_a_divider_adds_to_the_end_of_the_group_above_it(): void
+    {
+        $editor = $this->editor($this->page())->call('insertSection', 'sections', 'block', 4);
+
+        $this->assertSame([0, 1, 2, 3, 6, 4, 5], $this->order($editor));
+        $this->assertSame(1, $editor->instance()->sectionLayout('sections')[6]['group']);
+    }
+
+    public function test_insert_on_a_divider_after_a_folded_group_unfolds_it(): void
+    {
+        $editor = $this->editor($this->page())
+            ->call('toggleSectionGroup', 'sections', 1)
+            ->call('insertSection', 'sections', 'block', 4);
+
+        $this->assertSame(1, $editor->instance()->sectionLayout('sections')[6]['group']);
+        $this->assertFalse($editor->instance()->data['sections'][1]['_folded']);
     }
 
     public function test_an_empty_list_can_still_be_added_to(): void
     {
         $this->editor([])
             ->assertSeeHtml('class="leap-section-add"')
-            ->assertDontSeeHtml('leap-section-insert');
+            ->assertDontSeeHtml('leap-section-insert"');
     }
 
     public function test_the_control_under_the_list_steps_in_when_the_list_ends_in_a_group(): void

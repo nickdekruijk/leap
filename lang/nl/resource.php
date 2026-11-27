@@ -6,6 +6,7 @@ return [
     'add_section' => 'Sectie toevoegen',
     'duplicate' => 'Dupliceer',
     'fold_group' => 'Groep inklappen',
+    'insert' => 'Invoegen',
     'insert_section' => 'Sectie invoegen',
     'unfold_group' => 'Groep uitklappen',
     'cancel' => 'Annuleren',

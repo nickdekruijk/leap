@@ -117,46 +117,68 @@
                     }
                 }
             }
-            /* "Add a section here": on the line below the row, at its left edge, so
-               the one under the last section of a group is stepped in with it. */
-            > .leap-section-insert {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                translate: -50% -50%;
-                z-index: 2;
-                width: 18px;
-                height: 18px;
-                padding: 0;
+            /* The room between this row and the next, for the "+" and its line to sit
+               in the middle of: half a spacing between rows that stand apart, and
+               the line they share where the next one is closed up against it in a
+               group (it overlaps by its border). Measured from the outer edge of the
+               border, which is where 100% + 1px is: top is inside the border. */
+            --leap-section-gap: calc(var(--spacing) / 2);
+            &.leap-editor-section-closed:has(+ .leap-editor-section-grouped.leap-editor-section-closed) {
+                --leap-section-gap: -1px;
+            }
+            /* "Insert": a button like the ones beside it, with the select over it
+               unseen, so one click opens the list of sections. */
+            > .leap-section-actions .leap-section-insert {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                background-color: rgb(0 0 0 / .15);
                 border: 0 none;
-                border-radius: 50%;
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                appearance: none;
-                /* Grey until it is pointed at, like the buttons of the row: the colour
-                   comes with the line that shows where the section will go. */
-                background: color-mix(in srgb, black 35%, white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E") center / 12px no-repeat;
-                /* It is a select, and only its list should be read */
-                color: transparent;
+                margin: 0;
+                padding-block: 2px;
                 cursor: pointer;
-                opacity: 0;
-                /* :focus, not :focus-visible: it stays while its list is open */
-                &:focus {
-                    opacity: 1;
+                .leap-svg-icon {
+                    color: white;
                 }
-                &:is(:hover, :focus) {
-                    background-color: var(--leap-blue-light);
+                SELECT {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    opacity: 0;
+                    cursor: pointer;
+                    font: inherit;
                 }
-                OPTION {
-                    color: black;
-                    background-color: white;
+                /* :focus-within too: it stays lit while its list is open */
+                &:hover,
+                &:focus-within {
+                    background-color: var(--leap-button-hover-background);
+                }
+                &:has(SELECT:focus-visible) {
+                    outline: 2px solid var(--leap-blue-light);
+                    outline-offset: 1px;
                 }
             }
-            /* Where the section will come: a line along that edge of the row, shown
-               while the "+" is pointed at or has its list open. */
+            /* The room between this row and the next, and between this row and the
+               one above, for a line to sit in the middle of: half a spacing between
+               rows that stand apart, and the line they share where a row is closed up
+               against the one before it in a group (it overlaps by its border). A line
+               is placed from the outer edge of the border: 100% + 1px below, -1px
+               above, as top is inside the border. */
+            --leap-section-gap: calc(var(--spacing) / 2);
+            --leap-section-gap-above: calc(var(--spacing) / 2);
+            &.leap-editor-section-closed:has(+ .leap-editor-section-grouped.leap-editor-section-closed) {
+                --leap-section-gap: -1px;
+            }
+            &.leap-editor-section-grouped.leap-editor-section-closed,
+            &:first-child {
+                --leap-section-gap-above: -1px;
+            }
+            /* Where the section will come, shown while its button is pointed at or has
+               its list open: above the row for Insert, below it for Duplicate. */
             > .leap-section-insert-line {
                 position: absolute;
-                top: 100%;
+                top: calc(100% + 1px + var(--leap-section-gap) / 2);
                 left: 0;
                 right: 0;
                 height: 2px;
@@ -167,15 +189,17 @@
                 pointer-events: none;
                 opacity: 0;
             }
-            > .leap-section-insert:is(:hover, :focus) + .leap-section-insert-line {
+            > .leap-section-insert-line-top {
+                top: calc(-1px - var(--leap-section-gap-above) / 2);
+            }
+            &:has(> .leap-section-actions .leap-section-duplicate:is(:hover, :focus-within)) > .leap-section-insert-line:not(.leap-section-insert-line-top),
+            &:has(> .leap-section-actions .leap-section-insert:is(:hover, :focus-within)) > .leap-section-insert-line-top {
                 opacity: 1;
             }
-            /* In front of the first row, the one place "below" cannot reach */
-            > .leap-section-insert-before {
-                top: 0;
-            }
-            /* Under a divider is inside its group, so it steps in like the group does */
-            &.leap-editor-section-divider > :is(.leap-section-insert, .leap-section-insert-line):not(.leap-section-insert-before) {
+            /* Above a row that follows a divider or a section of a group, the new
+               section joins that group: the line steps in like the group does. A row
+               of the group is stepped in already. */
+            :is(.leap-editor-section-divider, .leap-editor-section-grouped) + &:not(.leap-editor-section-grouped) > .leap-section-insert-line-top {
                 left: calc(var(--spacing) * 1.5);
             }
             > .leap-section-fold {
@@ -292,40 +316,61 @@
                 box-shadow: inset var(--leap-blue-light) 0 0 0 2px;
             }
         }
+    }
 
-        /* Add a section at the end: the "+" of the rows, always there, with its name.
-           Its circle sits on the left edge like theirs. */
-        .leap-section-add {
-            display: block;
-            /* 8px, not 9: theirs are placed inside the border of their row */
-            margin: calc(var(--spacing) / 2) 0 0 -8px;
-            padding: 0 0 0 26px;
-            height: 18px;
-            line-height: 18px;
-            border: 0 none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            /* The plus over a disc: grey, and the panel's own colour when pointed at */
-            background:
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E") 3px center / 12px no-repeat,
-                radial-gradient(circle at 9px 50%, var(--leap-section-add-disc) 8.5px, transparent 9px);
-            --leap-section-add-disc: color-mix(in srgb, black 35%, white);
-            font: inherit;
-            font-size: 0.85em;
-            color: rgb(0 0 0 / .5);
+    /* Adding at the end shows where, like Insert and Duplicate: the line under the
+       last row, stepped in when the new section joins the group of a divider. */
+    .leap-editor-sections:has(> .leap-section-add:is(:hover, :focus-within)) > UL > .leap-editor-section:last-child {
+        > .leap-section-insert-line:not(.leap-section-insert-line-top) {
+            opacity: 1;
+        }
+        &.leap-editor-section-divider > .leap-section-insert-line:not(.leap-section-insert-line-top) {
+            left: calc(var(--spacing) * 1.5);
+        }
+    }
+
+    /* Add a section at the end of the list: a button with a border, lined up with the
+       rows, and filled in the panel's colour when pointed at like the buttons on them.
+       The select lies over it unseen and opens on the same click; on its own it would
+       be as wide as its longest option. */
+    .leap-section-add {
+        position: relative;
+        display: flex;
+        width: fit-content;
+        align-items: center;
+        gap: 0.3em;
+        margin-top: calc(var(--spacing) / 2);
+        padding: 2px calc(var(--spacing) / 2);
+        border: 1px solid rgb(0 0 0 / .2);
+        border-radius: var(--leap-radius);
+        font-size: var(--font-size-button);
+        line-height: 1.3;
+        color: rgb(0 0 0 / .55);
+        cursor: pointer;
+        .leap-svg-icon {
+            height: 0.9em;
+        }
+        SELECT {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
             cursor: pointer;
-            &:hover,
-            &:focus-visible {
-                color: black;
-                --leap-section-add-disc: var(--leap-blue-light);
-            }
-            &.leap-section-add-grouped {
-                margin-left: calc(var(--spacing) * 1.5 - 8px);
-            }
-            OPTION {
-                color: black;
-            }
+            font: inherit;
+        }
+        &:hover,
+        &:focus-within {
+            color: white;
+            background-color: var(--leap-button-hover-background);
+            border-color: transparent;
+        }
+        &:has(SELECT:focus-visible) {
+            outline: 2px solid var(--leap-blue-light);
+            outline-offset: 1px;
+        }
+        &.leap-section-add-grouped {
+            margin-left: calc(var(--spacing) * 1.5);
         }
     }
 
@@ -358,8 +403,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         }
     }
     &:hover {
-        > .leap-section-actions,
-        > .leap-section-insert {
+        > .leap-section-actions {
             opacity: 1;
         }
     }

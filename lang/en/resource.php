@@ -6,6 +6,7 @@ return [
     'add_section' => 'Add section',
     'duplicate' => 'Duplicate',
     'fold_group' => 'Fold group',
+    'insert' => 'Insert',
     'insert_section' => 'Insert section',
     'unfold_group' => 'Unfold group',
     'cancel' => 'Cancel',

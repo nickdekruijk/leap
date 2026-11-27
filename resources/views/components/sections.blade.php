@@ -6,14 +6,15 @@
     // divider, which group is it in, is that group folded away.
     $layout = $this->sectionLayout($attribute->name);
     $thumbnails = $this->sectionThumbnails($attribute->name);
-    // The rows on screen: the first one can have a section put in front of it, and the
-    // last one leaves adding below it to the control under the list.
+    // The rows on screen: whether the last one is in a group says where the control
+    // under the list sits.
     $rows = array_keys(array_filter($layout, fn ($row) => !$row['hidden']));
     $firstRow = $rows[0] ?? null;
     $lastRow = $rows ? end($rows) : null;
 @endphp
 
-<x-leap::label>
+{{-- tag="div": a <label> hands a click anywhere on it to the first button inside --}}
+<x-leap::label tag="div">
     @if ($this->hasOpenSection($attribute->name))
         <button wire:click="toggleAllSections('{{ $attribute->name }}',1)" class="leap-button-add" type="button">@svg('far-square-minus', 'svg-icon')</button>
     @endif
@@ -73,58 +74,35 @@
                     <span class="leap-section-thumbnail"></span>
                 @endif
                 <span class="leap-section-actions">
+                    {{-- Insert puts a section above this row: on the first row that is the
+                         top of the list, and on a divider it is the end of the group above
+                         it. The end of the list has its own control under it. The button is
+                         what shows, and the select lies over it unseen and opens on the
+                         same click: a select on its own is as wide as its longest option,
+                         which with long section names is half the row. --}}
+                    <span class="leap-button leap-section-insert">
+                        @svg('fas-plus', 'leap-svg-icon')@lang('leap::resource.insert')
+                        <select aria-label="@lang('leap::resource.insert_section')" title="@lang('leap::resource.insert_section')" x-on:change="$wire.insertSection('{{ $attribute->name }}', $event.target.value, {{ $index }}); $event.target.value = ''; $event.target.blur()">
+                            <option value="">@lang('leap::resource.insert')</option>
+                            @foreach ($attribute->sections as $option)
+                                <option value="{{ $option->name }}">{{ $option->label }}</option>
+                            @endforeach
+                        </select>
+                    </span>
                     @can('leap::update')
-                        <x-leap::button svg-icon="far-copy" wire:click="duplicateSection('{{ $attribute->name }}', {{ $index }})" label="leap::resource.duplicate" wire:loading.delay.shorter.attr="disabled" type="button" />
+                        <x-leap::button svg-icon="far-copy" wire:click="duplicateSection('{{ $attribute->name }}', {{ $index }})" label="leap::resource.duplicate" wire:loading.delay.shorter.attr="disabled" type="button" class="leap-section-duplicate" />
                     @endcan
                     @can('leap::delete')
                         <x-leap::button svg-icon="far-trash-alt" wire:click="removeSection('{{ $attribute->name }}', {{ $index }})" wire:confirm="{{ __('leap::resource.delete_confirm') }}" label="leap::resource.delete" wire:loading.delay.shorter.attr="disabled" class="secondary" />
                     @endcan
                 </span>
-                {{-- Add a section below this one: a select dressed as a button, so one
-                     click opens the list of sections. Below rather than above, so the
-                     one under the last section of a group is plainly inside that group.
-                     Inside the row, because every child of the list is a row to the
-                     sorting. The last row has none: the control under the list is it. --}}
-                @if ($index !== $lastRow)
-                    <select class="leap-section-insert" aria-label="@lang('leap::resource.insert_section')" title="@lang('leap::resource.insert_section')"
-                        x-on:change="$wire.insertSection('{{ $attribute->name }}', $event.target.value, {{ $index }}, true); $event.target.value = ''; $event.target.blur()">
-                        <option value="">@lang('leap::resource.insert_section')</option>
-                        @foreach ($attribute->sections as $option)
-                            <option value="{{ $option->name }}">{{ $option->label }}</option>
-                        @endforeach
-                    </select>
-                    {{-- Where the section will come, drawn while the "+" is pointed at.
-                         An element of its own: a select cannot carry a ::after. --}}
-                    <span class="leap-section-insert-line"></span>
-                @endif
-                {{-- And the one place "below" cannot reach: in front of the first row --}}
-                @if ($index === $firstRow)
-                    <select class="leap-section-insert leap-section-insert-before" aria-label="@lang('leap::resource.insert_section')" title="@lang('leap::resource.insert_section')"
-                        x-on:change="$wire.insertSection('{{ $attribute->name }}', $event.target.value, {{ $index }}); $event.target.value = ''; $event.target.blur()">
-                        <option value="">@lang('leap::resource.insert_section')</option>
-                        @foreach ($attribute->sections as $option)
-                            <option value="{{ $option->name }}">{{ $option->label }}</option>
-                        @endforeach
-                    </select>
-                    <span class="leap-section-insert-line leap-section-insert-before"></span>
-                @endif
+                {{-- Where the section will come, drawn while the button is pointed at:
+                     above the row for Insert, below it for Duplicate. Elements of their
+                     own: a select cannot carry a ::after. --}}
+                <span class="leap-section-insert-line leap-section-insert-line-top"></span>
+                <span class="leap-section-insert-line"></span>
                 @if (!$closed)
-                    <fieldset class="leap-fieldset">
-                        @if ($section)
-                            @foreach ($section->attributes as $sectionAttribute)
-                                <x-dynamic-component :component="'leap::' . $sectionAttribute->input" :attribute="$this->sectionAttribute($sectionAttribute, $attribute->name, $index, $sectionContent['_name'], $section)" :placeholder="$placeholder" :value="$this->sectionValue($sectionContent, $sectionAttribute)" />
-                            @endforeach
-                        @else
-                            {{-- No section definition matches _name: the section was renamed or removed
-                                 and this record still has it. Dump what is stored so it is not lost
-                                 silently; a value can be an array here, which e() cannot render. --}}
-                            @foreach ($sectionContent as $key => $value)
-                                @if ($key != '_name' && $key != '_sort')
-                                    <div>{{ $key }}: {{ is_scalar($value) || $value === null ? $value : json_encode($value) }}</div>
-                                @endif
-                            @endforeach
-                        @endif
-                    </fieldset>
+                    <x-leap::section-fields :attribute="$attribute" :index="$index" :section-content="$sectionContent" :section="$section" :placeholder="$placeholder" />
                 @endif
             </li>
         @endforeach
@@ -134,13 +112,16 @@
          with its name beside it: it is what an empty list starts from, and what somebody
          who has not found the ones on hover, or works on a tablet, adds a section with.
          Stepped in when the end of the list is inside a group. --}}
-    <select @class(['leap-section-add', 'leap-section-add-grouped' => $lastRow !== null && ($layout[$lastRow]['divider'] || $layout[$lastRow]['group'] !== null)])
-        aria-label="{{ strip_tags(__((string) ($attribute->label ?? ($label ?? $name)))) }}: @lang('leap::resource.add_section')"
-        x-on:change="$wire.insertSection('{{ $attribute->name }}', $event.target.value); $event.target.value = ''">
-        <option value="">@lang('leap::resource.add_section')</option>
-        @foreach ($attribute->sections as $section)
-            <option value="{{ $section->name }}">{{ $section->label }}</option>
-        @endforeach
-    </select>
+    <span @class(['leap-section-add', 'leap-section-add-grouped' => $lastRow !== null && ($layout[$lastRow]['divider'] || $layout[$lastRow]['group'] !== null)])>
+        @svg('fas-plus', 'leap-svg-icon')@lang('leap::resource.add_section')
+        <select aria-label="{{ strip_tags(__((string) ($attribute->label ?? ($label ?? $name)))) }}: @lang('leap::resource.add_section')"
+            x-on:change="$wire.insertSection('{{ $attribute->name }}', $event.target.value); $event.target.value = ''; $event.target.blur()">
+            <option value="">@lang('leap::resource.add_section')</option>
+            @foreach ($attribute->sections as $option)
+                <option value="{{ $option->name }}">{{ $option->label }}</option>
+            @endforeach
+        </select>
+    </span>
+
 
 </div>

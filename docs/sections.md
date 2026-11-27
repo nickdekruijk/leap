@@ -113,10 +113,10 @@ you are working on.
 - **A record with more than two blocks opens with them closed.** A block somebody opened
   or closed keeps that state. Set `leap.sections.collapsed` to `false` to open every
   block nobody closed, as before 1.24.
-- **Blocks are added where they are needed.** Every row shows a "+" under it on hover,
-  which adds a block right below; the first row has one above it as well. Under the list
-  the same "+" is always there, with "Add section" beside it, and adds one at the end.
-  "Duplicate" puts a copy right below a block, with its media.
+- **Blocks are added where they are needed.** On hover a row shows Insert, Duplicate and
+  Delete. Insert opens the list of blocks and adds one right above the row, and a line
+  shows where; on the first row that is the top of the list. Duplicate puts a copy right
+  below, with its media. "Add section" under the list adds a block at the end.
 
 ### Dividers
 
@@ -133,8 +133,8 @@ Nothing changes in what is stored or rendered on the site. In the editor the blo
 becomes a heading in the list and the blocks up to the next divider are its group. A
 group can be folded away, and a folded divider takes its group along when it is dragged.
 An open divider moves alone, which is how a block is moved from one group to the next.
-Blocks in front of the first divider belong to no group. The "+" under a divider adds the
-first block of its group, and the one under the last block of a group adds to that group.
+Blocks in front of the first divider belong to no group. Insert on a divider adds a block
+at the end of the group above it, and the line shows that by stepping in.
 
 ### What is stored about the list
 

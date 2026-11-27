@@ -210,6 +210,16 @@
                     });
                 }));
             },
+            // Taken out of the page (the list was redrawn, a section closed): close the
+            // editor with it, or TinyMCE keeps an instance for an element that is gone.
+            // Nothing to hand to the form here: that happened on blur, when the click
+            // that closed it moved the focus away.
+            destroy() {
+                if (this.editor) {
+                    tinymce.remove(this.editor);
+                    this.editor = null;
+                }
+            },
             deactivate() {
                 if (this.editor) {
                     // Only what was really changed: TinyMCE writing the same text its

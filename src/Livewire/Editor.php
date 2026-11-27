@@ -1372,12 +1372,12 @@ class Editor extends Component
     }
 
     /**
-     * Add a new section: at the end, or right after or in front of another one.
+     * Add a new section: at the end, or in front of or right after another one.
      *
-     * After is what the "+" under a row asks for, and it is what makes a group
-     * workable: after a divider is the first section of its group, after the last
-     * section of a group is still inside it. In front of is only needed for the very
-     * first row.
+     * In front of is what Insert on a row asks for: on the first row that is the top of
+     * the list, and on a divider it is the end of the group above it. After is there
+     * for a caller that has a section and wants the next place: after a divider is the
+     * first section of its group, after the last section of a group is still inside it.
      *
      * @param  string  $attribute  The sections attribute, e.g. "sections"
      * @param  string  $name  The name of the section to add, as the module declares it
