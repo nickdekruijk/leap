@@ -16,7 +16,8 @@ use Throwable;
  * allow is gone from that value for good. A site that embeds an iframe from its
  * own host, or keeps a script in a text on purpose, should know that before the
  * filter is on. This reads every rich-text field of every record, runs the filter
- * over it and reports what would go. It never writes.
+ * over it and reports what would go, and what would stay but be written another
+ * way. It never writes.
  *
  * It answers a second question on the way: whether something is stored that
  * should not be, since a script or an event handler in a record shows up here
@@ -51,6 +52,8 @@ class SanitizeCommand extends Command
 
         $dropped = [];
         $examples = [];
+        $rewritten = [];
+        $rewrites = [];
         $records = 0;
         $values = 0;
         $changing = 0;
@@ -84,19 +87,23 @@ class SanitizeCommand extends Command
                 $query->whereKey($only[2]);
             }
 
-            $query->chunkById(self::CHUNK, function ($chunk) use ($module, $name, $fields, $sanitizer, $show, &$dropped, &$examples, &$records, &$values, &$changing, &$undefined): void {
+            $query->chunkById(self::CHUNK, function ($chunk) use ($module, $name, $fields, $sanitizer, $show, &$dropped, &$examples, &$rewritten, &$rewrites, &$records, &$values, &$changing, &$undefined): void {
                 foreach ($chunk as $record) {
                     $records++;
                     foreach ($this->richtextValues($record, $module, $fields, $undefined) as $path => $html) {
                         $values++;
-                        $goes = $sanitizer->dropped($html);
-                        if ($goes === []) {
+                        $changes = $sanitizer->changes($html);
+                        if ($changes['dropped'] === [] && $changes['rewritten'] === []) {
                             continue;
                         }
                         $changing++;
-                        foreach ($goes as $what => $count) {
+                        foreach ($changes['dropped'] as $what => $count) {
                             $dropped[$what] = ($dropped[$what] ?? 0) + $count;
                             $examples[$what][$name.' '.$record->getKey()] = true;
+                        }
+                        foreach ($changes['rewritten'] as $what => $count) {
+                            $rewritten[$what] = ($rewritten[$what] ?? 0) + $count;
+                            $rewrites[$what][$name.' '.$record->getKey()] = true;
                         }
                         if ($show !== null) {
                             $this->newLine();
@@ -124,17 +131,17 @@ class SanitizeCommand extends Command
             return self::SUCCESS;
         }
 
-        if ($dropped === []) {
+        if ($dropped === [] && $rewritten === []) {
             $this->line('  <info>Nothing to remove.</info> '.$this->summary($records, $values));
         } else {
-            ksort($dropped);
-            $rows = [];
-            foreach ($dropped as $what => $count) {
-                $where = array_keys($examples[$what]);
-                $more = count($where) - self::EXAMPLES;
-                $rows[] = [$what, $count, implode(', ', array_slice($where, 0, self::EXAMPLES)).($more > 0 ? ' and '.$more.' more' : '')];
+            if ($dropped !== []) {
+                $this->table(['Would go', 'Times', 'In'], $this->rows($dropped, $examples));
             }
-            $this->table(['Would go', 'Times', 'In'], $rows);
+            if ($rewritten !== []) {
+                // Not a loss: the attribute stays, written another way. A link to
+                // "mailto: info@example.com" keeps working without the space.
+                $this->table(['Would stay, rewritten', 'Times', 'In'], $this->rows($rewritten, $rewrites));
+            }
             $this->line('  '.$changing.' of '.$this->summary($records, $values).' would change when saved with the filter on.');
             if ($show === null) {
                 $this->line('  <fg=gray>php artisan leap:sanitize --show=Module:id prints one record before and after.</>');
@@ -150,6 +157,25 @@ class SanitizeCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @param  array<string, array<string, true>>  $examples
+     * @return list<array{string, int, string}>
+     */
+    private function rows(array $counts, array $examples): array
+    {
+        ksort($counts);
+        $rows = [];
+
+        foreach ($counts as $what => $count) {
+            $where = array_keys($examples[$what]);
+            $more = count($where) - self::EXAMPLES;
+            $rows[] = [$what, $count, implode(', ', array_slice($where, 0, self::EXAMPLES)).($more > 0 ? ' and '.$more.' more' : '')];
+        }
+
+        return $rows;
     }
 
     private function summary(int $records, int $values): string

@@ -8,6 +8,7 @@ use RuntimeException;
 use Symfony\Component\HtmlSanitizer\HtmlSanitizer;
 use Symfony\Component\HtmlSanitizer\HtmlSanitizerConfig;
 use Symfony\Component\HtmlSanitizer\Parser\NativeParser;
+use Symfony\Component\HtmlSanitizer\Visitor\AttributeSanitizer\UrlAttributeSanitizer;
 
 /**
  * Filters the HTML of a rich-text field on the server.
@@ -58,18 +59,20 @@ final class RichtextSanitizer
     }
 
     /**
-     * The value as it is stored: untouched when nothing in it has to go, and the
-     * filtered HTML otherwise.
+     * The value as it is stored: untouched when the filter changes nothing in it,
+     * and the filtered HTML otherwise.
      *
      * The filter writes HTML its own way, with other entities and quotes than
      * TinyMCE, so running every value through it would change a record nobody
-     * touched. Only a value that loses something is replaced.
+     * touched. Only a value that loses something, or in which an address is
+     * written differently than a browser reads it, is replaced.
      */
     public function filter(string $html): string
     {
         $clean = $this->clean($html);
+        $changes = $this->compare($html, $clean);
 
-        return $this->difference($html, $clean) === [] ? $html : $clean;
+        return $changes['dropped'] === [] && $changes['rewritten'] === [] ? $html : $clean;
     }
 
     /**
@@ -96,59 +99,95 @@ final class RichtextSanitizer
      */
     public function dropped(string $html): array
     {
-        return $this->difference($html, $this->clean($html));
+        return $this->changes($html)['dropped'];
     }
 
     /**
-     * What is in the first HTML and not in the second, counted the same way.
+     * What the filter does to this HTML: what goes, and which attributes stay but
+     * come out with another value, such as "mailto: a@b.nl" without its space.
+     *
+     * @return array{dropped: array<string, int>, rewritten: array<string, int>}
+     */
+    public function changes(string $html): array
+    {
+        return $this->compare($html, $this->clean($html));
+    }
+
+    /**
+     * What is in the first HTML and not in the second.
      *
      * Both are read with the parser the filter itself uses, so anything the filter
-     * found and removed is found here as well.
+     * found and removed is found here as well. An address is compared the way a
+     * browser reads it: "/files/a b.pdf" and "/files/a%20b.pdf" lead to the same
+     * file, so the filter writing the second for the first has changed nothing.
      *
-     * @return array<string, int>
+     * @return array{dropped: array<string, int>, rewritten: array<string, int>}
      */
-    private function difference(string $before, string $after): array
+    private function compare(string $before, string $after): array
     {
-        $after = $this->inventory($after);
+        $was = $this->inventory($before, true);
+        $is = $this->inventory($after, false);
         $dropped = [];
+        $rewritten = [];
 
-        foreach ($this->inventory($before) as $key => $count) {
-            if ($count > ($after[$key] ?? 0)) {
-                // 'a[href]=javascript:x' is reported as 'a[href]'
-                $label = str_contains($key, ']=') ? strstr($key, ']=', true).']' : $key;
-                $dropped[$label] = ($dropped[$label] ?? 0) + $count - ($after[$key] ?? 0);
+        foreach ($was['elements'] as $tag => $count) {
+            if ($count > ($is['elements'][$tag] ?? 0)) {
+                $dropped[$tag] = $count - ($is['elements'][$tag] ?? 0);
+            }
+        }
+
+        foreach ($was['attributes'] as $name => $values) {
+            // Fewer of this attribute than before: those are gone.
+            $gone = max(0, array_sum($values) - array_sum($is['attributes'][$name] ?? []));
+            // Values that are not there any more: gone, or there with another value.
+            $changed = 0;
+            foreach ($values as $value => $count) {
+                $changed += max(0, $count - ($is['attributes'][$name][$value] ?? 0));
+            }
+
+            if ($gone > 0) {
+                $dropped[$name] = $gone;
+            }
+            if ($changed > $gone) {
+                $rewritten[$name] = $changed - $gone;
             }
         }
 
         ksort($dropped);
+        ksort($rewritten);
 
-        return $dropped;
+        return ['dropped' => $dropped, 'rewritten' => $rewritten];
     }
 
     /**
-     * Every element and every attribute with its value, counted.
+     * Every element, and every attribute with its values, counted.
      *
-     * @return array<string, int>
+     * @param  bool  $asBrowser  Read an address the way a browser does. For the HTML
+     *                           as it came in: what the filter wrote already is.
+     * @return array{elements: array<string, int>, attributes: array<string, array<string, int>>}
      */
-    private function inventory(string $html): array
+    private function inventory(string $html, bool $asBrowser): array
     {
-        $counts = [];
+        $counts = ['elements' => [], 'attributes' => []];
         $root = trim($html) === '' ? null : (new NativeParser)->parse($html);
 
         if ($root === null) {
             return $counts;
         }
 
-        $walk = function (Node $node) use (&$walk, &$counts): void {
+        $walk = function (Node $node) use (&$walk, &$counts, $asBrowser): void {
             foreach ($node->childNodes as $child) {
                 if (! $child instanceof Element) {
                     continue;
                 }
                 $tag = strtolower($child->localName);
-                $counts[$tag] = ($counts[$tag] ?? 0) + 1;
+                $counts['elements'][$tag] = ($counts['elements'][$tag] ?? 0) + 1;
                 foreach ($child->attributes as $attribute) {
-                    $key = $tag.'['.strtolower($attribute->name).']='.$attribute->value;
-                    $counts[$key] = ($counts[$key] ?? 0) + 1;
+                    $name = strtolower($attribute->name);
+                    $value = $asBrowser && in_array($name, AddressSanitizer::ATTRIBUTES, true)
+                        ? AddressSanitizer::asBrowserReadsIt($attribute->value)
+                        : $attribute->value;
+                    $counts['attributes'][$tag.'['.$name.']'][$value] = ($counts['attributes'][$tag.'['.$name.']'][$value] ?? 0) + 1;
                 }
                 // What a template holds is not among its children, and does not
                 // have to be: the template itself is counted, and it always goes.
@@ -189,6 +228,14 @@ final class RichtextSanitizer
             ->dropElement('template')
             ->allowElement('iframe', self::IFRAME_ATTRIBUTES)
             ->withAttributeSanitizer(new IframeHostSanitizer(array_values(array_filter((array) config('leap.tinymce.sanitize_iframe_hosts'), is_string(...)))));
+
+        // The sanitizer's own check of an address, with a browser's reading of it
+        // in front: see AddressSanitizer.
+        foreach ($config->getAttributeSanitizers() as $sanitizer) {
+            if ($sanitizer instanceof UrlAttributeSanitizer) {
+                $config = $config->withoutAttributeSanitizer($sanitizer)->withAttributeSanitizer(new AddressSanitizer($sanitizer));
+            }
+        }
 
         foreach ((array) config('leap.tinymce.sanitize_allow') as $element => $attributes) {
             $attributes = array_values(array_filter((array) $attributes, is_string(...)));

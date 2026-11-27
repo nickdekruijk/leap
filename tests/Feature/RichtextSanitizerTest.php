@@ -192,6 +192,117 @@ class RichtextSanitizerTest extends TestCase
         }
     }
 
+    /**
+     * A browser ignores the space around an address and follows these links today.
+     * The sanitizer's own check refuses each of them, which left a link without a
+     * href the first time its text was filtered.
+     */
+    public function test_a_link_keeps_its_address_when_there_is_whitespace_around_it(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<a href="http://www.nvdec.org " target="_blank" rel="noopener">x</a>' => '<a href="http://www.nvdec.org" target="_blank" rel="noopener">x</a>',
+            '<a href=" https://x.nl/ ">x</a>' => '<a href="https://x.nl/">x</a>',
+            '<a href="mailto: info@x.nl">x</a>' => '<a href="mailto:info&#64;x.nl">x</a>',
+            "<a href=\"/storage/files/a\u{00A0}b.pdf\">x</a>" => '<a href="/storage/files/a%C2%A0b.pdf">x</a>',
+            '<img src=" /storage/foto 1.png " alt="a">' => '<img src="/storage/foto%201.png" alt="a" />',
+            '<a href="mailto:x@y.nl?subject=Hallo daar">x</a>' => '<a href="mailto:x&#64;y.nl?subject&#61;Hallo%20daar">x</a>',
+            '<a href="tel:+31 20 123 45 67">x</a>' => '<a href="tel:&#43;31%2020%20123%2045%2067">x</a>',
+        ] as $html => $clean) {
+            $this->assertSame($clean, $sanitizer->clean($html), $html);
+            $this->assertSame([], $sanitizer->dropped($html), $html);
+        }
+    }
+
+    /**
+     * A file name with a space in it is everywhere on an older site. The filter
+     * writes the space as %20, which is the same address, so nothing was removed:
+     * the value stays as it is and the report does not name it.
+     */
+    public function test_an_address_the_filter_only_encodes_is_stored_byte_for_byte(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<p><a href="/storage/files/Reglement DEC Utrecht - 30 mei 2015.pdf">x</a></p>',
+            '<p><a href="/storage/files/Reglement DEC Utrecht - 30 mei 2015.pdf" target="_blank" rel="noopener">x</a></p>',
+            '<p><a href="https://x.nl/a b?c=d e#f g">x</a> <img src="/storage/foto 1.png" alt=""></p>',
+            // What a browser reads the same way: the space around it, a no-break space in a path
+            '<p><a href="http://www.nvdec.org " target="_blank" rel="noopener">x</a></p>',
+            "<p><a href=\"/storage/files/a\u{00A0}b.pdf\">x</a></p>",
+            '<p><a href="tel:+31 20 123 45 67">bel</a> <a href="mailto:x@y.nl?subject=Hallo daar">mail</a></p>',
+        ] as $html) {
+            $this->assertSame(['dropped' => [], 'rewritten' => []], $sanitizer->changes($html), $html);
+            $this->assertSame($html, $sanitizer->filter($html), $html);
+        }
+
+        $model = new SectionsModel;
+        config(['leap.tinymce.sanitize' => true]);
+        $html = '<p><a href="/storage/files/Reglement DEC Utrecht - 30 mei 2015.pdf" target="_blank" rel="noopener">x</a></p>';
+        $data = $this->apply($model, ['title' => ['nl' => $html]]);
+
+        $this->assertSame($html, $data['title']['nl']);
+        $this->assertSame($html, $model->getTranslation('title', 'nl'));
+    }
+
+    /**
+     * An address that stays but is written differently than a browser reads it is
+     * neither untouched nor gone, and the report says which of the two it is.
+     */
+    public function test_an_address_that_is_repaired_counts_as_rewritten_not_as_removed(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach (['<a href="mailto: info@x.nl">x</a>', '<a href="HTTP://X.NL/Pad">x</a>'] as $html) {
+            $this->assertSame(['dropped' => [], 'rewritten' => ['a[href]' => 1]], $sanitizer->changes($html), $html);
+            $this->assertNotSame($html, $sanitizer->filter($html), $html);
+        }
+
+        // One link gone and one repaired, of the same kind, are told apart.
+        $this->assertSame(
+            ['dropped' => ['a[href]' => 1], 'rewritten' => ['a[href]' => 1]],
+            $sanitizer->changes('<a href="javascript:alert(1)">j</a><a href="mailto: info@x.nl">m</a>'),
+        );
+    }
+
+    /**
+     * Reading an address the way a browser does must not let through what a
+     * browser would run, nor decide anything about the scheme or the host.
+     */
+    public function test_whitespace_does_not_carry_a_script_or_another_host_past_the_filter(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<a href=" javascript:alert(1)">x</a>',
+            "<a href=\"\x01javascript:alert(1)\">x</a>",
+            "<a href=\"java\tscript:alert(1)\">x</a>",
+            "<a href=\"\n javascript:alert(1) \">x</a>",
+            "<a href=\"\u{00A0}javascript:alert(1)\">x</a>",
+            '<a href="javascript :alert(1)">x</a>',
+            '<a href=" data:text/html,<script>alert(1)</script>">x</a>',
+            "<a href=\"http://evil\u{00A0}.example/\">x</a>",
+            '<a href="http://evil%C2%A0.example/a">x</a>',
+            '<a href="http://x.nl /a">x</a>',
+            '<img src=" javascript:alert(1)" alt="">',
+        ] as $html) {
+            $this->assertArrayHasKey(str_starts_with($html, '<img') ? 'img[src]' : 'a[href]', $sanitizer->dropped($html), $html);
+            $this->assertStringNotContainsString('href', $sanitizer->filter($html), $html);
+            $this->assertStringNotContainsString('src=', $sanitizer->filter($html), $html);
+        }
+
+        // An iframe is still judged by the host a browser would open.
+        $this->assertSame('', $sanitizer->filter('<iframe src=" https://evil.example/ "></iframe>'));
+        $padded = '<iframe src=" https://www.youtube.com/embed/abc "></iframe>';
+        $this->assertSame($padded, $sanitizer->filter($padded));
+        $this->assertSame('<iframe src="https://www.youtube.com/embed/abc"></iframe>', $sanitizer->clean($padded));
+    }
+
     public function test_an_iframe_keeps_its_src_only_for_a_host_on_the_list(): void
     {
         $this->needsTheFilter();
@@ -268,6 +379,38 @@ class RichtextSanitizerTest extends TestCase
         $this->assertStringContainsString('1 section has no definition in the module any more', $output);
         $this->assertStringContainsString('The filter is off', $output);
         $this->assertSame($before, DB::table('sections_models')->get()->toJson());
+    }
+
+    public function test_the_command_does_not_name_a_record_for_a_space_in_a_path(): void
+    {
+        $this->needsTheFilter();
+
+        SectionsModel::create(['title' => 'Reglement', 'sections' => [
+            ['_name' => 'block', 'body' => ['nl' => '<p><a href="/storage/files/Reglement DEC Utrecht - 30 mei 2015.pdf" target="_blank" rel="noopener">x</a> <a href="http://www.nvdec.org ">y</a></p>']],
+        ]]);
+
+        $this->assertSame(0, Artisan::call('leap:sanitize'));
+        $output = Artisan::output();
+
+        $this->assertStringContainsString('Nothing to remove. 1 rich-text value in 1 record', $output);
+        $this->assertStringNotContainsString('a[href]', $output);
+    }
+
+    public function test_the_command_lists_what_is_rewritten_apart_from_what_goes(): void
+    {
+        $this->needsTheFilter();
+
+        SectionsModel::create(['title' => 'Contact', 'sections' => [
+            ['_name' => 'block', 'body' => ['nl' => '<p><a href="mailto: info@x.nl">mail</a></p>']],
+            ['_name' => 'block', 'body' => ['nl' => '<p><a href="javascript:alert(1)">j</a></p>']],
+        ]]);
+
+        Artisan::call('leap:sanitize');
+        $output = Artisan::output();
+
+        $this->assertMatchesRegularExpression('/Would go\s+\|.*?a\[href\]\s+\|\s+1\s+\|\s+SectionsResource 1/s', $output);
+        $this->assertMatchesRegularExpression('/Would stay, rewritten\s+\|.*?a\[href\]\s+\|\s+1\s+\|\s+SectionsResource 1/s', $output);
+        $this->assertStringContainsString('2 of 2 rich-text values in 1 record would change', $output);
     }
 
     public function test_the_command_prints_one_record_before_and_after(): void

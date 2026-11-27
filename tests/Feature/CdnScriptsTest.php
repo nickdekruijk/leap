@@ -168,6 +168,35 @@ class CdnScriptsTest extends TestCase
         }
     }
 
+    /**
+     * The notice reads the file, it does not run it. Running it a second time is a
+     * fatal error for a config file that defines a function, and that would stop
+     * composer for a line of advice.
+     */
+    public function test_the_config_file_is_read_and_not_run(): void
+    {
+        $this->publishConfigFile(<<<'PHP'
+            <?php
+
+            throw new RuntimeException('this file was run');
+
+            function leap_config_helper_of_this_project(): string { return 'x'; }
+
+            return ['tinymce' => [
+                "cdn" => "https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js",
+            ]];
+            PHP);
+
+        $this->assertStringContainsString('still sets tinymce.cdn to tinymce@7', $this->discoverOutput());
+    }
+
+    public function test_the_old_url_under_another_key_is_not_the_setting(): void
+    {
+        $this->publishConfigFile("<?php return ['tinymce' => ['cdn' => null, 'note' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js']];");
+
+        $this->assertSame('', $this->discoverOutput());
+    }
+
     public function test_only_package_discover_carries_the_notice(): void
     {
         $this->publishConfigFile("<?php return ['tinymce' => ['cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js']];");

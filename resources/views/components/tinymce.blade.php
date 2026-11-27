@@ -72,7 +72,8 @@
                 return window.leapTinymceLoader;
             },
             // DOMPurify, for the preview below. Loaded the same way as TinyMCE and
-            // for the same reason, and only on a page that has a lazy field.
+            // for the same reason, and only by a lazy field: renderPreview() does
+            // not ask for it otherwise.
             ensurePurify() {
                 if (window.DOMPurify) {
                     return Promise.resolve();
@@ -95,6 +96,12 @@
             // DOMPurify first, and until that has loaded, or when it never does,
             // the preview is the text without the markup: never the raw HTML.
             renderPreview(preview) {
+                // A field that is not lazy opens in the editor and never shows its
+                // preview, so it gets no content and DOMPurify is not fetched for it.
+                if (!this.lazy) {
+                    preview.textContent = '';
+                    return;
+                }
                 const html = this.value || '';
                 const clean = () => DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style'] });
                 if (window.DOMPurify) {

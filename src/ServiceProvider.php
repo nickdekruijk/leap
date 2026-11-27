@@ -39,7 +39,6 @@ use NickDeKruijk\Leap\Middleware\RestrictIp;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
 use NickDeKruijk\Leap\Models\Media;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Throwable;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -512,24 +511,38 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      * was the default before 1.23.
      *
      * AssetController::tinymceCdn() reads that value as "leap decides", so nothing
-     * is wrong, but the file then says 7 while the panel loads 8. The file is read
-     * rather than the loaded config, which may come out of a cache.
+     * is wrong, but the file then says 7 while the panel loads 8.
+     *
+     * The file is read, not the loaded config, which may come out of a cache. And
+     * read as text, not run a second time: a config file that defines a function
+     * or a class would stop composer with a fatal error no try can catch. Going
+     * through the tokens rather than the text leaves a commented-out line out of it.
      */
     protected function publishedConfigHoldsRetiredTinymce(): bool
     {
         $path = $this->app->configPath('leap.php');
+        $source = is_file($path) ? (string) file_get_contents($path) : '';
 
-        if (! is_file($path)) {
+        if (! str_contains($source, AssetController::TINYMCE_CDN_RETIRED)) {
             return false;
         }
 
-        try {
-            $published = require $path;
-        } catch (Throwable) {
-            return false;
+        $tokens = array_values(array_filter(
+            token_get_all($source),
+            fn ($token) => ! is_array($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true),
+        ));
+
+        // 'cdn' => '<the old url>', in either kind of quotes
+        foreach ($tokens as $i => $token) {
+            if (is_array($token) && $token[0] === T_CONSTANT_ENCAPSED_STRING
+                && trim($token[1], '\'"') === AssetController::TINYMCE_CDN_RETIRED
+                && is_array($tokens[$i - 1] ?? null) && $tokens[$i - 1][0] === T_DOUBLE_ARROW
+                && is_array($tokens[$i - 2] ?? null) && trim($tokens[$i - 2][1], '\'"') === 'cdn') {
+                return true;
+            }
         }
 
-        return is_array($published) && ($published['tinymce']['cdn'] ?? null) === AssetController::TINYMCE_CDN_RETIRED;
+        return false;
     }
 
     /**

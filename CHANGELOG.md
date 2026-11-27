@@ -18,13 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   links go, and so does an iframe from a host that is not in
   `leap.tinymce.sanitize_iframe_hosts`. A value with nothing to remove is stored exactly
   as it was sent, so what TinyMCE writes by default is left alone;
-  `leap.tinymce.sanitize_allow` adds what a site uses beyond that. Off by default, and it
+  `leap.tinymce.sanitize_allow` adds what a site uses beyond that. An address is read the
+  way a browser reads it: a space around it or in a file name is not a reason to rewrite
+  a value, and does not cost a link its `href`. Off by default, and it
   needs PHP 8.4 and `composer require symfony/html-sanitizer`. See
   [attributes](docs/attributes.md#filtering-rich-text).
 - **`php artisan leap:sanitize` shows what the filter would remove.** It reads every
   rich-text field of every module, sections and translations included, and lists what
-  would go, how often and in which records; `--show=Page:12` prints one record before
-  and after. It writes nothing. Run it before turning the filter on, and to see whether
+  would go, how often and in which records, and apart from that what would stay but be
+  written differently; `--show=Page:12` prints one record before and after. It writes nothing. Run it before turning the filter on, and to see whether
   something is stored that should not be.
 
 ### Security

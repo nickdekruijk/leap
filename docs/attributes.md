@@ -160,6 +160,12 @@ What it does:
   HTML its own way (`<br />`, other entities), so only a value that loses something is
   rewritten. An HTML comment is no reason to rewrite a value, but does not survive a
   value that is rewritten.
+- **An address is read the way a browser reads it.** A space around it
+  (`href="https://example.com "`) is ignored, and a space in a file name
+  (`/storage/files/annual report.pdf`) is the same address as its `%20` form, so neither
+  is a reason to rewrite a value. A link that is repaired, such as `mailto: info@example.com`
+  with a space after the colon, stays a link and is written without the space. Only an
+  address a browser would not follow, or would run, loses its `href` or `src`.
 - **Rich text only.** A plain input or textarea is escaped where it is shown and is not
   touched. A field that holds an embed code on purpose should be a `textarea()` or
   `ace()`, not `richtext()`.
@@ -172,7 +178,8 @@ php artisan leap:sanitize --show=Page:12   # one record, stored and filtered
 ```
 
 The command reads every rich-text field of every module, in sections and per locale, and
-writes nothing. It works with the filter off, which is the point: an iframe from a host
+writes nothing. It lists what would go, and apart from that what would stay but be
+written differently, such as the `mailto:` link above. It works with the filter off, which is the point: an iframe from a host
 that is missing from the list, or an attribute a template relies on, shows up here first.
 Add those to `sanitize_iframe_hosts` or `sanitize_allow` and run it again. It also shows
 whether something is stored now that should not be.
