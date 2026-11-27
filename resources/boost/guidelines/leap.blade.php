@@ -61,7 +61,9 @@ of blocks in a JSON column. Build each with
 `Section::make('name')->view('sections.name')->attributes(Attribute::make(...), ...)`.
 Add the `NickDeKruijk\Leap\Traits\HasSections` trait to the model; it merges uploaded
 media onto `sections.{key}.{field}` and adds `_first`/`_last`/`_view` helpers used by
-the frontend partials.
+the frontend partials. Mark the field that names a block with `->sectionTitle()`, so the
+editor's list of blocks is readable, and a block that structures the ones below it (a
+tab, a chapter) with `Section::make('tab')->divider()`.
 
 ## Multilingual editing
 

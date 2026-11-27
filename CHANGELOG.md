@@ -5,6 +5,47 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.24.0] - 2026-11-27
+
+### Added
+
+- **A closed section says what it holds.** A record with many sections was a list of
+  section names: "Text" six times over. A closed section now shows the fields marked
+  `->sectionTitle()`, and otherwise the first text in it, without markup and cut to one
+  line, with the first image of the section beside it. A closed section takes one line,
+  so about twice as many fit on the screen. A section switched off with an `active`
+  field is struck through, like a row in the index.
+- **A section can be added anywhere in the list, and duplicated.** Every row shows a "+"
+  under it on hover that adds a section right below, and the first row has one above it
+  as well. Sections could only be added at the end and dragged up from there. The wide
+  select under the list made way for the same "+", always shown and with its name
+  beside it. "Duplicate" puts a copy right below a section, with its media.
+- **`Section::divider()`** marks a section that structures the ones below it, such as a
+  tab or a chapter. In the editor it becomes a heading in the list, the sections up to
+  the next divider are its group, the group can be folded away, and a folded divider
+  takes its group along when it is dragged. Nothing changes in what is stored or
+  rendered on the site. See [sections](docs/sections.md#dividers).
+- **`leap.sections.collapsed`**, see Changed.
+
+### Changed
+
+- **A record with more than two sections opens with them closed.** A section somebody
+  opened or closed keeps that state, and a section that was just added is open. Set
+  `leap.sections.collapsed` to `false` to open every section nobody closed, as before.
+  A published `config/leap.php` does not have the key and gets the new default.
+
+### Fixed
+
+- **Opening or closing a section is no longer a change to the record.** The state is
+  stored with the record, so closing a section raised the unsaved changes question, and
+  saving it showed "updated", moved `updated_at`, wrote a log entry and fired the
+  model's events. It is still stored, so the list looks the next day the way it was
+  left, but without any of that: a save in which nothing else changed says there were
+  no changes.
+- **Looking at another language tab is no longer an unsaved change.** The label of a
+  closed section is rebuilt in the language the editor shows and travels with the form,
+  so switching tabs was enough to be asked about changes nobody made.
+
 ## [1.23.0] - 2026-11-27
 
 ### Added

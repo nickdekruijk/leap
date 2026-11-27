@@ -3,6 +3,22 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.24, a page with many sections opens as a list
+
+Nothing to do after `composer update`, but the editor looks different on a record with
+sections.
+
+- **A record with more than two sections opens with them closed.** Each closed section
+  shows a line of what it holds. A section somebody opened or closed before keeps that
+  state, because it was already stored with the record. To keep the old behaviour, set
+  `'sections' => ['collapsed' => false]` in `config/leap.php`; a published config does
+  not have the key and gets the new default.
+- **Opening or closing a section is no longer a change.** It used to raise the unsaved
+  changes question and, when saved, updated the record: `updated_at`, the log, model
+  events. The state is still stored, without any of that.
+- **`Section::divider()` is new**, for a section that structures the ones below it, such
+  as a tab. See [sections.md](sections.md#dividers).
+
 ## 1.23, TinyMCE 8, and `tinymce.cdn` is `null`
 
 The panel loads TinyMCE 8 instead of 7. The open source build of 7 no longer gets security

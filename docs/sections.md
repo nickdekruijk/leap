@@ -36,6 +36,8 @@ Attribute::make('sections')->sections(
 - `->label($label)` — a display label (string or per-locale array).
 - `->view('sections.other')` — render a different Blade partial.
 - `->withoutView()` — data-only block with no frontend partial.
+- `->divider()`: this block structures the ones below it, like a tab or a chapter. See
+  [the list in the editor](#the-list-in-the-editor).
 - `->translatableOnly(...$names)` / `->translatableExcept(...$names)` — mark sub-fields
   translatable in bulk (see below).
 
@@ -96,3 +98,49 @@ Section::make('default')->attributes(
 
 Both call `Attribute::translatable()` under the hood, so individual `->translatable()`
 calls keep working and can be mixed in.
+
+## The list in the editor
+
+A page can hold dozens of blocks, so the editor shows them as a list and opens the one
+you are working on.
+
+- **A closed block says what it holds.** The fields marked `->sectionTitle()` when there
+  are any, and otherwise the first text in the block, without its markup and cut to one
+  line. Six blocks of the same kind can be told apart without opening them. A block with
+  an image shows the first one beside it.
+- **A block switched off with an `active` field is struck through**, the way a row in the
+  index is. It is the same test `HasSections` uses to leave it off the page.
+- **A record with more than two blocks opens with them closed.** A block somebody opened
+  or closed keeps that state. Set `leap.sections.collapsed` to `false` to open every
+  block nobody closed, as before 1.24.
+- **Blocks are added where they are needed.** Every row shows a "+" under it on hover,
+  which adds a block right below; the first row has one above it as well. Under the list
+  the same "+" is always there, with "Add section" beside it, and adds one at the end.
+  "Duplicate" puts a copy right below a block, with its media.
+
+### Dividers
+
+Some blocks are structure rather than content: a tab, a chapter, the start of a column.
+Mark such a block with `->divider()`:
+
+```php
+Section::make('tab')->divider()->attributes(
+    Attribute::make('title')->sectionTitle(),
+),
+```
+
+Nothing changes in what is stored or rendered on the site. In the editor the block
+becomes a heading in the list and the blocks up to the next divider are its group. A
+group can be folded away, and a folded divider takes its group along when it is dragged.
+An open divider moves alone, which is how a block is moved from one group to the next.
+Blocks in front of the first divider belong to no group. The "+" under a divider adds the
+first block of its group, and the one under the last block of a group adds to that group.
+
+### What is stored about the list
+
+Whether a block is open (`_closed`), whether a group is folded (`_folded`) and the label
+of a closed block (`_title`) are stored in the JSON with the record, so the list looks
+tomorrow the way it was left. They are not content. Opening or closing a block does not
+count as an unsaved change, and saving a record in which nothing else changed stores the
+state without touching `updated_at`, without model events and without a log entry. A
+template can ignore all three keys.

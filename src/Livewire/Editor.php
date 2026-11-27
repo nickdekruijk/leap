@@ -195,11 +195,99 @@ class Editor extends Component
     }
 
     /**
-     * A hash of the current form values.
+     * The keys of a section that say how the editor shows it, not what it holds.
+     *
+     * _closed and _folded are the open/closed state of a section and of a divider's
+     * group; _title is the collapsed label, derived from the content in the language the
+     * editor is showing. They are stored with the record so the list looks tomorrow the
+     * way it was left, but none of them is a change to the record: folding a section
+     * away must not raise "unsaved changes", and saving it must not touch updated_at.
+     */
+    private const SECTION_VIEW_KEYS = ['_closed', '_folded', '_title'];
+
+    /**
+     * A sections value without its view keys, in a form that compares strictly.
+     *
+     * Keys are sorted at every level so the order a section's fields happen to be in
+     * says nothing, and the result is a string because == on arrays would call null
+     * and false, or 0 and "", the same value.
+     */
+    private function sectionsContent(mixed $sections): string
+    {
+        if (is_string($sections)) {
+            $sections = json_decode($sections, true);
+        }
+        if (! is_iterable($sections)) {
+            return '[]';
+        }
+
+        $content = [];
+        foreach ($sections as $index => $section) {
+            // Through JSON, because a model may cast the column to a collection or to
+            // objects, and what is compared here is what the column holds.
+            $section = json_decode((string) json_encode($section, JSON_PARTIAL_OUTPUT_ON_ERROR), true);
+            if (! is_array($section)) {
+                $content[$index] = $section;
+
+                continue;
+            }
+            $content[$index] = array_diff_key($section, array_flip(self::SECTION_VIEW_KEYS));
+        }
+
+        $sort = function (array &$value) use (&$sort): void {
+            ksort($value);
+            foreach ($value as &$item) {
+                if (is_array($item)) {
+                    $sort($item);
+                }
+            }
+        };
+        $sort($content);
+
+        return (string) json_encode($content, JSON_PARTIAL_OUTPUT_ON_ERROR);
+    }
+
+    /**
+     * The dirty sections columns of a model that differ from what is stored only in
+     * how the editor shows them.
+     *
+     * Compared on the raw column values, so it does not matter what the model casts
+     * the column to.
+     *
+     * @param  array<string, mixed>  $dirty  What Eloquent reports as changed
+     * @return array<string, true> Keyed by column name
+     */
+    private function sectionViewChanges(Model $model, array $dirty): array
+    {
+        $viewOnly = [];
+
+        foreach ($this->attributes()->where('type', 'sections') as $attribute) {
+            if (! array_key_exists($attribute->name, $dirty)) {
+                continue;
+            }
+            $stored = $this->sectionsContent($model->getRawOriginal($attribute->name));
+            $current = $this->sectionsContent($model->getAttributes()[$attribute->name] ?? null);
+            if ($stored === $current) {
+                $viewOnly[$attribute->name] = true;
+            }
+        }
+
+        return $viewOnly;
+    }
+
+    /**
+     * A hash of the current form values, the view state of sections left out.
      */
     private function fingerprint(): string
     {
-        return md5((string) json_encode($this->data, JSON_PARTIAL_OUTPUT_ON_ERROR));
+        $data = $this->data;
+        foreach ($this->attributes()->where('type', 'sections') as $attribute) {
+            if (isset($data[$attribute->name])) {
+                $data[$attribute->name] = $this->sectionsContent($data[$attribute->name]);
+            }
+        }
+
+        return md5((string) json_encode($data, JSON_PARTIAL_OUTPUT_ON_ERROR));
     }
 
     /**
@@ -625,6 +713,7 @@ class Editor extends Component
         }
 
         $this->checkSectionValues();
+        $this->collapseUntouchedSections();
 
         // Clear existing validation errors
         $this->resetValidation();
@@ -634,6 +723,39 @@ class Editor extends Component
         // openEditor() again on success, so this reseeds itself once the changes are
         // safely stored.
         $this->dataFingerprint = $this->fingerprint();
+    }
+
+    /**
+     * How many sections a record may have and still open with all of them unfolded.
+     * A page that is one block of text should not cost a click to get at.
+     */
+    private const SECTIONS_OPEN_UP_TO = 2;
+
+    /**
+     * Close the sections nobody has opened or closed yet, so a long page opens as a
+     * list to pick from rather than as every field of every section.
+     *
+     * Only a section without a _closed key: toggleSection() always writes one, so a
+     * stored value, false included, is somebody's choice and stays. Called when a
+     * record is opened and nowhere else, which keeps a section added a moment ago open.
+     */
+    private function collapseUntouchedSections(): void
+    {
+        if (! config('leap.sections.collapsed', true)) {
+            return;
+        }
+
+        foreach ($this->attributes()->where('type', 'sections') as $attribute) {
+            $sections = $this->data[$attribute->name] ?? null;
+            if (! is_array($sections) || count($sections) <= self::SECTIONS_OPEN_UP_TO) {
+                continue;
+            }
+            foreach ($sections as $index => $section) {
+                if (is_array($section) && ! array_key_exists('_closed', $section)) {
+                    $this->data[$attribute->name][$index]['_closed'] = true;
+                }
+            }
+        }
     }
 
     /**
@@ -962,7 +1084,121 @@ class Editor extends Component
     }
 
     /**
-     * Move a section to a different position in the array
+     * The section definitions of a sections attribute, keyed by section name.
+     *
+     * @return Collection<string, Section>
+     */
+    private function sectionDefinitions(string $attribute): Collection
+    {
+        $definition = $this->attributes()->firstWhere('name', $attribute);
+
+        return collect($definition && $definition->type === 'sections' ? $definition->sections : [])->keyBy('name');
+    }
+
+    /**
+     * The keys of the sections of an attribute, in the order they are shown.
+     *
+     * @return list<int|string>
+     */
+    private function sectionOrder(string $attribute): array
+    {
+        return array_keys(collect($this->data[$attribute] ?? [])->sortBy('_sort')->all());
+    }
+
+    /**
+     * Store the sections of an attribute in the given order, renumbering _sort.
+     *
+     * @param  list<int|string>  $order
+     */
+    private function applySectionOrder(string $attribute, array $order): void
+    {
+        $sorted = [];
+        foreach ($order as $sort => $key) {
+            $sorted[$key] = $this->data[$attribute][$key];
+            $sorted[$key]['_sort'] = $sort;
+        }
+
+        $this->data[$attribute] = $sorted;
+    }
+
+    /**
+     * How the list of sections is laid out: which rows are dividers, which group a
+     * row belongs to, and which rows are folded away with their group.
+     *
+     * A divider (Section::divider()) starts a group that runs to the next divider.
+     * Sections before the first divider belong to no group. In display order, so the
+     * view can walk it and the sorting below can count the rows the browser sees.
+     *
+     * @return array<int|string, array{divider: bool, group: int|string|null, hidden: bool, members: int}>
+     */
+    public function sectionLayout(string $attribute): array
+    {
+        $definitions = $this->sectionDefinitions($attribute);
+        $layout = [];
+        $group = null;
+
+        foreach ($this->sectionOrder($attribute) as $index) {
+            $section = $this->data[$attribute][$index];
+
+            if ($definitions->get($section['_name'] ?? '')?->divider) {
+                $group = $index;
+                $layout[$index] = ['divider' => true, 'group' => null, 'hidden' => false, 'members' => 0];
+
+                continue;
+            }
+
+            $layout[$index] = [
+                'divider' => false,
+                'group' => $group,
+                'hidden' => $group !== null && ! empty($this->data[$attribute][$group]['_folded']),
+                'members' => 0,
+            ];
+            if ($group !== null) {
+                $layout[$group]['members']++;
+            }
+        }
+
+        return $layout;
+    }
+
+    /**
+     * Unfold the group a section sits in, so a section that was just added to or
+     * dropped into a folded group does not vanish from under the pointer.
+     */
+    private function revealSection(string $attribute, int|string $index): void
+    {
+        $group = $this->sectionLayout($attribute)[$index]['group'] ?? null;
+
+        if ($group !== null && ! empty($this->data[$attribute][$group]['_folded'])) {
+            $this->data[$attribute][$group]['_folded'] = false;
+        }
+    }
+
+    /**
+     * Write down how each section is shown right now, for the ones that have no
+     * stored state yet.
+     *
+     * Called before the list grows. A record with one or two sections shows them open
+     * without saying so anywhere; once a third is added it would count as a long list
+     * the next time it is opened, and the two that were being worked on would close.
+     */
+    private function settleSectionState(string $attribute): void
+    {
+        foreach ($this->data[$attribute] ?? [] as $index => $section) {
+            if (is_array($section)) {
+                $this->data[$attribute][$index]['_closed'] ??= false;
+            }
+        }
+    }
+
+    /**
+     * Move a section to a different position in the list
+     *
+     * The position is the one the browser reports: counted over the rows that are
+     * shown, the moved row left out. A folded group is one row there and many
+     * sections here, so the position is translated to the section the row was dropped
+     * in front of. A folded divider takes its group along; an open one moves alone,
+     * which is how a section is moved from one group to the next.
      *
      * @return void
      */
@@ -971,24 +1207,34 @@ class Editor extends Component
         // Make sure index is not null to prevent error when json content doesn't have index keys
         $index ??= 0;
 
-        // Sort all current data first
-        $this->data[$attribute] = collect($this->data[$attribute])->sortBy('_sort')->toArray();
+        $layout = $this->sectionLayout($attribute);
+        if (! isset($layout[$index])) {
+            return;
+        }
 
-        // Pick the item to move and remove it from the array
-        $itemToMove = [$index => $this->data[$attribute][$index]];
-        unset($this->data[$attribute][$index]);
+        // What moves: the section, and its group with it when that is folded away
+        $block = [$index];
+        $withGroup = $layout[$index]['divider'] && ! empty($this->data[$attribute][$index]['_folded']);
+        if ($withGroup) {
+            foreach ($layout as $key => $row) {
+                if ($row['group'] === $index) {
+                    $block[] = $key;
+                }
+            }
+        }
 
-        // Add the item to the new position
-        $this->data[$attribute] =
-            array_slice($this->data[$attribute], 0, $position, true)
-            + $itemToMove
-            + array_slice($this->data[$attribute], $position, null, true);
+        $rest = array_values(array_filter(array_keys($layout), fn ($key) => ! in_array($key, $block, true)));
+        $visible = array_values(array_filter($rest, fn ($key) => ! $layout[$key]['hidden']));
 
-        // Add _sort to all sections
-        $sort = 0;
-        foreach ($this->data[$attribute] as $index => $section) {
-            $this->data[$attribute][$index]['_sort'] = $sort;
-            $sort++;
+        // The row it was dropped in front of, or the end of the list
+        $before = $visible[$position] ?? null;
+        $at = $before === null ? count($rest) : (int) array_search($before, $rest, true);
+        array_splice($rest, $at, 0, $block);
+
+        $this->applySectionOrder($attribute, $rest);
+
+        if (! $layout[$index]['divider']) {
+            $this->revealSection($attribute, $index);
         }
 
         $this->setRandomSortSeed();
@@ -1005,6 +1251,16 @@ class Editor extends Component
     }
 
     /**
+     * Fold the group under a divider away, or bring it back.
+     */
+    public function toggleSectionGroup(string $field, int $index): void
+    {
+        if (isset($this->data[$field][$index])) {
+            $this->data[$field][$index]['_folded'] = empty($this->data[$field][$index]['_folded']);
+        }
+    }
+
+    /**
      * Open or close all sections
      *
      * @param  bool  $closed  true to close all sections, false to open all sections
@@ -1014,6 +1270,12 @@ class Editor extends Component
     {
         foreach ($this->data[$field] as $index => $section) {
             $this->data[$field][$index]['_closed'] = $closed;
+
+            // "Open everything" means everything: a section in a folded group would
+            // otherwise be open and still not on screen.
+            if (! $closed && ! empty($section['_folded'])) {
+                $this->data[$field][$index]['_folded'] = false;
+            }
         }
     }
 
@@ -1067,51 +1329,192 @@ class Editor extends Component
     }
 
     /**
-     * Add a new section
+     * Add a new section from the select below the list
      *
      * @return void
      */
     public function addSection(string $field, string $name)
     {
-        $field = substr($field, 0, -4);
-        $attribute = $this->attributes()->where('name', substr($field, 5))->first();
+        // data.{attribute}:add
+        $attribute = substr($field, 5, -4);
 
-        // The select opens on an empty placeholder option, so picking that one (or
-        // a section name the module no longer declares) arrives here with nothing
-        // to add. Reset the field and leave the data untouched.
-        $sectionDefinition = $attribute ? collect($attribute->sections)->where('name', $name)->first() : null;
-        if (! $sectionDefinition) {
-            $this->data[substr($field, 5).':add'] = null;
+        $this->insertSection($attribute, $name);
 
+        // Reset the :add field, also when nothing was added: the select opens on an
+        // empty placeholder option, and a section name the module no longer declares
+        // arrives here just the same.
+        $this->data[$attribute.':add'] = null;
+    }
+
+    /**
+     * Put a section into the list at its place and return its key, or null when
+     * the section was not added.
+     *
+     * @param  array<string, mixed>  $section  The section, without _sort
+     * @param  int|null  $before  The key of the section it goes in front of, null for the end
+     */
+    private function placeSection(string $attribute, array $section, ?int $before): int|string|null
+    {
+        $this->settleSectionState($attribute);
+
+        $order = $this->sectionOrder($attribute);
+
+        $this->data[$attribute][] = $section;
+        $new = array_key_last($this->data[$attribute]);
+
+        $at = $before === null ? false : array_search($before, $order, true);
+        array_splice($order, $at === false ? count($order) : $at, 0, [$new]);
+
+        $this->applySectionOrder($attribute, $order);
+        $this->revealSection($attribute, $new);
+
+        return $new;
+    }
+
+    /**
+     * Add a new section: at the end, or right after or in front of another one.
+     *
+     * After is what the "+" under a row asks for, and it is what makes a group
+     * workable: after a divider is the first section of its group, after the last
+     * section of a group is still inside it. In front of is only needed for the very
+     * first row.
+     *
+     * @param  string  $attribute  The sections attribute, e.g. "sections"
+     * @param  string  $name  The name of the section to add, as the module declares it
+     * @param  int|null  $at  The key of the section it is placed beside, null for the end
+     * @param  bool  $after  True to put it after that section, false to put it in front
+     */
+    public function insertSection(string $attribute, string $name, ?int $at = null, bool $after = false): void
+    {
+        $definition = $this->sectionDefinitions($attribute)->get($name);
+        if (! $definition) {
             return;
         }
 
-        // Determine the highest sort value currently in use
-        $sort = 0;
-        foreach ($this->data[$attribute->name] ?? [] as $section) {
-            if (isset($section['_sort']) && $section['_sort'] > $sort) {
-                $sort = $section['_sort'];
+        // After a section is in front of the next one, hidden ones counted: after a
+        // folded divider is the first place in its group, which unfolds to show it.
+        $before = $at;
+        if ($after && $at !== null) {
+            $order = $this->sectionOrder($attribute);
+            $position = array_search($at, $order, true);
+            $before = $position === false ? null : ($order[$position + 1] ?? null);
+        }
+
+        // Open, and said so: this is the section about to be filled in
+        $section = ['_name' => $name, '_closed' => false];
+
+        // Add default values
+        foreach (collect($definition->attributes)->where('default') as $default) {
+            $section[$default->name] = $default->default;
+        }
+
+        $this->placeSection($attribute, $section, $before);
+
+        $this->checkSectionValues();
+    }
+
+    /**
+     * Add a copy of a section right below it, with the media it has.
+     */
+    public function duplicateSection(string $field, int $index): void
+    {
+        if (! isset($this->data[$field][$index]) || ! $this->sectionDefinitions($field)->has($this->data[$field][$index]['_name'] ?? '')) {
+            return;
+        }
+
+        $order = $this->sectionOrder($field);
+        $next = $order[array_search($index, $order, true) + 1] ?? null;
+
+        $copy = $this->data[$field][$index];
+        $copy['_closed'] = false;
+        unset($copy['_folded']);
+
+        $new = $this->placeSection($field, $copy, $next);
+
+        // Media of a section lives beside it in the form, as {field}.{index}.{name}
+        $prefix = $field.'.'.$index.'.';
+        foreach ($this->data as $key => $value) {
+            if (is_string($key) && str_starts_with($key, $prefix)) {
+                $target = $field.'.'.$new.'.'.substr($key, strlen($prefix));
+                $this->data[$target] = $value;
+                $this->mediaUpdated[$target] = $target;
             }
         }
 
-        // Initialize the new section data values with higher sort
-        $data = [
-            '_name' => $name,
-            '_sort' => $sort + 1,
-        ];
+        $this->checkSectionValues();
+        $this->setRandomSortSeed();
+    }
 
-        // Add default values
-        foreach (collect($sectionDefinition->attributes)->where('default') as $default) {
-            $data[$default->name] = $default->default;
+    /**
+     * One line that says what a collapsed section holds.
+     *
+     * The fields marked sectionTitle() when the module has any, and otherwise the first
+     * text in it, so six sections of the same kind can be told apart without opening
+     * them. Worked out when the list is drawn and kept out of the form: it follows from
+     * the content, and storing it would make it one more thing to keep in step.
+     *
+     * @param  array<string, mixed>  $content  The section as it is stored
+     */
+    public function sectionSummary(array $content, ?Section $section): string
+    {
+        $summary = is_string($content['_title'] ?? null) ? $content['_title'] : '';
+
+        if (trim($summary) === '') {
+            foreach ($section?->textAttributes() ?? [] as $attribute) {
+                // A per-locale value is read in the language the editor is showing,
+                // whether or not this field is edited per locale on this site.
+                $value = Leap::localize($content[$attribute->name] ?? null, $this->activeLocale ?: null);
+                if (is_string($value) && trim(strip_tags($value)) !== '') {
+                    $summary = $value;
+                    break;
+                }
+            }
         }
 
-        // Add the new section to the data
-        $this->data[$attribute->name][] = $data;
+        // A space before every tag, or "<h2>Head</h2><p>Text</p>" reads as "HeadText"
+        $summary = html_entity_decode(strip_tags(str_replace('<', ' <', $summary)), ENT_QUOTES | ENT_HTML5);
 
-        $this->checkSectionValues();
+        // Longer than a row usually is: the list cuts it to the width it has
+        return Str::limit(Str::squish(str_replace("\u{A0}", ' ', $summary)), 160);
+    }
 
-        // Reset the :add field
-        $this->data[substr($field, 5).':add'] = null;
+    /**
+     * The first image of each section, to show beside a collapsed one.
+     *
+     * One query for the whole list: this runs on every render of the editor, and a
+     * page of thirty sections is exactly where it matters.
+     *
+     * @return array<int|string, Media>
+     */
+    public function sectionThumbnails(string $attribute): array
+    {
+        $definitions = $this->sectionDefinitions($attribute);
+
+        $first = [];
+        foreach ($this->data[$attribute] ?? [] as $index => $section) {
+            foreach ($definitions->get($section['_name'] ?? '')->attributes ?? [] as $sub) {
+                $ids = $sub->type === 'media' ? ($this->data[$attribute.'.'.$index.'.'.$sub->name] ?? null) : null;
+                if (is_array($ids) && $ids) {
+                    $first[$index] = reset($ids);
+                    break;
+                }
+            }
+        }
+
+        if (! $first) {
+            return [];
+        }
+
+        $media = Media::find(array_values(array_unique($first)))->keyBy('id');
+
+        $thumbnails = [];
+        foreach ($first as $index => $id) {
+            if ($media->get($id)?->isImage()) {
+                $thumbnails[$index] = $media->get($id);
+            }
+        }
+
+        return $thumbnails;
     }
 
     /**
@@ -1507,6 +1910,12 @@ class Editor extends Component
             $dirty = $model->getDirty();
             $pivotDirty = $this->pivotIsDirty();
 
+            // Sections that were only opened, closed or folded are not a change to the
+            // record. They are kept apart here: stored along with a real change, or on
+            // their own below, without the record saying it was updated.
+            $viewOnly = $this->editing == self::CREATE_NEW ? [] : $this->sectionViewChanges($model, $dirty);
+            $dirty = array_diff_key($dirty, $viewOnly);
+
             // Check if anything changed
             if ($dirty || $this->mediaUpdated || $pivotDirty) {
                 if ($this->editing == self::CREATE_NEW) {
@@ -1549,6 +1958,15 @@ class Editor extends Component
                     $this->close();
                 }
             } else {
+                if ($viewOnly) {
+                    // Remember how the list was left, and nothing else: no updated_at,
+                    // no model events, no log entry. An observer that clears a cache or
+                    // pings a search index has nothing to react to.
+                    $timestamps = $model->timestamps;
+                    $model->timestamps = false;
+                    $model->saveQuietly();
+                    $model->timestamps = $timestamps;
+                }
                 $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);
             }
 

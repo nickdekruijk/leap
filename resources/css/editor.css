@@ -36,46 +36,295 @@
         }
     }
 
+    /* A fieldset is at least as wide as its widest content, and the summary of a closed
+       section is one unbroken line: without this the whole editor grows to the longest
+       summary and scrolls sideways. */
+    .leap-fieldset:has(.leap-editor-sections) {
+        min-width: 0;
+    }
+
     .leap-editor-sections {
         .leap-editor-section {
+            /* An open section is a frame around its fields */
             background-color: rgb(0 0 0 / .025);
             border: 1px solid rgb(0 0 0 / .1);
             border-radius: var(--leap-radius);
-            margin-bottom: var(--spacing);
+            margin-block: calc(var(--spacing) / 2);
             padding: calc(var(--spacing) / 2);
             position: relative;
-            > BUTTON {
-                position: absolute;
-                background-color: rgb(0 0 0 / .15);
-                border: 0 none;
-                margin: 0;
-                right: calc(var(--spacing) / 2);
-                top: calc(var(--spacing) / 2);
-                opacity: 0;
-                &:focus {
-                    opacity: 1;
-                }
-                cursor: pointer;
-                .svg-icon {
-                    color: white;
-                    height: 16px;
-                }
+            /* One line for the label and what sits beside it; the fields of an open
+               section wrap onto the lines below. */
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            column-gap: calc(var(--spacing) / 2);
+            &:first-child {
+                margin-top: 0;
             }
-            > LABEL.leap-label:first-child {
-                > SPAN {
+
+            > LABEL.leap-label {
+                flex: 1 1 0;
+                min-width: 0;
+                /* The fold button of a divider comes first in the row, and a label
+                   that is not the first child gets room above it in a fieldset. */
+                margin-top: 0;
+                cursor: grab;
+                > SPAN.leap-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6em;
                     color: rgb(0 0 0 / .7);
                     font-weight: 600;
                 }
-                cursor: grab;
+                /* The grip: always there, so it is clear a row can be dragged */
                 .svg-icon {
-                    height: 1em;
-                    opacity: 0;
-                    vertical-align: -0.1em;
+                    flex: none;
+                    height: 0.9em;
+                    width: 0.6em;
+                    opacity: 0.25;
                 }
+            }
+            > .leap-fieldset {
+                flex: 0 0 100%;
+                min-width: 0;
+            }
+            /* Over the row, shown on hover: room kept for them would push the
+               thumbnails away from the edge. */
+            > .leap-section-actions {
+                position: absolute;
+                top: calc(var(--spacing) / 2);
+                right: calc(var(--spacing) / 2);
+                display: flex;
+                gap: calc(var(--spacing) / 4);
+                opacity: 0;
+                &:focus-within {
+                    opacity: 1;
+                }
+                BUTTON {
+                    background-color: rgb(0 0 0 / .15);
+                    border: 0 none;
+                    margin: 0;
+                    padding-block: 2px;
+                    cursor: pointer;
+                    .svg-icon {
+                        color: white;
+                        height: 16px;
+                    }
+                    /* The hover of a button in the header is a lighter shade of a dark
+                       bar, which is nothing at all on a white row. Delete has its red. */
+                    &:hover:not([disabled], .secondary) {
+                        background-color: var(--leap-button-hover-background);
+                    }
+                }
+            }
+            /* "Add a section here": on the line below the row, at its left edge, so
+               the one under the last section of a group is stepped in with it. */
+            > .leap-section-insert {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                translate: -50% -50%;
+                z-index: 2;
+                width: 18px;
+                height: 18px;
+                padding: 0;
+                border: 0 none;
+                border-radius: 50%;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                /* Grey until it is pointed at, like the buttons of the row: the colour
+                   comes with the line that shows where the section will go. */
+                background: color-mix(in srgb, black 35%, white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E") center / 12px no-repeat;
+                /* It is a select, and only its list should be read */
+                color: transparent;
+                cursor: pointer;
+                opacity: 0;
+                /* :focus, not :focus-visible: it stays while its list is open */
+                &:focus {
+                    opacity: 1;
+                }
+                &:is(:hover, :focus) {
+                    background-color: var(--leap-blue-light);
+                }
+                OPTION {
+                    color: black;
+                    background-color: white;
+                }
+            }
+            /* Where the section will come: a line along that edge of the row, shown
+               while the "+" is pointed at or has its list open. */
+            > .leap-section-insert-line {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                translate: 0 -50%;
+                z-index: 1;
+                border-radius: 1px;
+                background-color: var(--leap-blue-light);
+                pointer-events: none;
+                opacity: 0;
+            }
+            > .leap-section-insert:is(:hover, :focus) + .leap-section-insert-line {
+                opacity: 1;
+            }
+            /* In front of the first row, the one place "below" cannot reach */
+            > .leap-section-insert-before {
+                top: 0;
+            }
+            /* Under a divider is inside its group, so it steps in like the group does */
+            &.leap-editor-section-divider > :is(.leap-section-insert, .leap-section-insert-line):not(.leap-section-insert-before) {
+                left: calc(var(--spacing) * 1.5);
+            }
+            > .leap-section-fold {
+                order: -1;
+                background: none;
+                border: 0 none;
+                padding: 0;
+                color: rgb(0 0 0 / .5);
+                cursor: pointer;
+                line-height: 1;
+                .svg-icon {
+                    height: 0.8em;
+                    width: 0.8em;
+                }
+            }
+            > .leap-section-thumbnail {
+                flex: none;
+                width: 36px;
+                height: 24px;
+                object-fit: cover;
+                border-radius: 2px;
+            }
+            .leap-section-count {
+                flex: none;
+                font-size: 0.85em;
+                font-weight: 400;
+                padding: 0 0.5em;
+                border-radius: 1em;
+                background-color: rgb(0 0 0 / .1);
+            }
+
+            /* Closed: a row in a list. White, the kind of section in a narrow column
+               and what it holds beside it. Rows stand apart, except in the group of a
+               divider, where they close up under it. */
+            &.leap-editor-section-closed {
+                background-color: white;
+                border-color: var(--leap-section-line);
+                margin-block: calc(var(--spacing) / 2) 0;
+                padding-block: calc(var(--spacing) / 4);
+                --leap-section-line: color-mix(in srgb, black 12%, white);
+                &:first-child {
+                    margin-top: 0;
+                }
+                &.leap-editor-section-grouped {
+                    border-radius: 0;
+                    /* Rows of a group share the line between them */
+                    margin-top: -1px;
+                }
+                > LABEL.leap-label > SPAN.leap-label {
+                    margin-bottom: 0;
+                    white-space: nowrap;
+                    font-weight: 400;
+                }
+                .leap-section-name {
+                    flex: 0 0 10em;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    font-size: 0.85em;
+                    color: rgb(0 0 0 / .5);
+                    &.leap-section-name-only {
+                        flex: 1 1 0;
+                        min-width: 0;
+                    }
+                }
+                .leap-label-sub {
+                    display: block;
+                    flex: 1 1 0;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    color: rgb(0 0 0 / .85);
+                    font-weight: 400;
+                }
+                > .leap-section-actions {
+                    top: 50%;
+                    translate: 0 -50%;
+                    /* The row's own colour, so the text below does not show through */
+                    background-color: inherit;
+                    padding-left: calc(var(--spacing) / 2);
+                }
+                /* Beside the thumbnails, not over them */
+                &:has(> .leap-section-thumbnail) > .leap-section-actions {
+                    right: calc(var(--spacing) + 36px);
+                }
+            }
+            /* A divider heads the sections below it, which step in under it */
+            &.leap-editor-section-divider.leap-editor-section-closed {
+                background-color: color-mix(in srgb, black 7%, white);
+                /* Square below when its group hangs under it */
+                &:has(+ .leap-editor-section-grouped) {
+                    border-bottom-left-radius: 0;
+                    border-bottom-right-radius: 0;
+                }
+                .leap-label-sub,
+                .leap-section-name-only {
+                    font-weight: 600;
+                    color: rgb(0 0 0 / .85);
+                }
+                /* As wide as its text, so the number of folded sections follows it */
+                .leap-label-sub {
+                    flex: 0 1 auto;
+                }
+            }
+            &.leap-editor-section-grouped {
+                margin-left: calc(var(--spacing) * 1.5);
+            }
+            /* Switched off, so not on the page: struck through like a row in the index */
+            &.leap-editor-section-inactive > LABEL.leap-label :is(.leap-section-name, .leap-label-sub) {
+                text-decoration: line-through;
+                opacity: 0.5;
             }
             &.sortable-ghost {
                 background: white;
                 box-shadow: inset var(--leap-blue-light) 0 0 0 2px;
+            }
+        }
+
+        /* Add a section at the end: the "+" of the rows, always there, with its name.
+           Its circle sits on the left edge like theirs. */
+        .leap-section-add {
+            display: block;
+            /* 8px, not 9: theirs are placed inside the border of their row */
+            margin: calc(var(--spacing) / 2) 0 0 -8px;
+            padding: 0 0 0 26px;
+            height: 18px;
+            line-height: 18px;
+            border: 0 none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            /* The plus over a disc: grey, and the panel's own colour when pointed at */
+            background:
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'%3E%3Cline x1='12' y1='5' x2='12' y2='19'/%3E%3Cline x1='5' y1='12' x2='19' y2='12'/%3E%3C/svg%3E") 3px center / 12px no-repeat,
+                radial-gradient(circle at 9px 50%, var(--leap-section-add-disc) 8.5px, transparent 9px);
+            --leap-section-add-disc: color-mix(in srgb, black 35%, white);
+            font: inherit;
+            font-size: 0.85em;
+            color: rgb(0 0 0 / .5);
+            cursor: pointer;
+            &:hover,
+            &:focus-visible {
+                color: black;
+                --leap-section-add-disc: var(--leap-blue-light);
+            }
+            &.leap-section-add-grouped {
+                margin-left: calc(var(--spacing) * 1.5 - 8px);
+            }
+            OPTION {
+                color: black;
             }
         }
     }
@@ -96,17 +345,21 @@ BODY.sorting {
     }
 }
 BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
-    &:has(> LABEL.leap-label:first-child:hover) {
+    &:has(> LABEL.leap-label:hover) > LABEL.leap-label .svg-icon {
+        opacity: 0.6;
+    }
+    &:not(.leap-editor-section-closed):has(> LABEL.leap-label:hover) {
         background-color: var(--leap-tint-dark);
-        LABEL.leap-label .svg-icon {
-            opacity: 0.6;
+    }
+    &.leap-editor-section-closed:hover {
+        background-color: color-mix(in srgb, black 4%, white);
+        &.leap-editor-section-divider {
+            background-color: color-mix(in srgb, black 11%, white);
         }
     }
     &:hover {
-        > LABEL.leap-label:first-child .svg-icon {
-            opacity: 0.2;
-        }
-        > BUTTON {
+        > .leap-section-actions,
+        > .leap-section-insert {
             opacity: 1;
         }
     }

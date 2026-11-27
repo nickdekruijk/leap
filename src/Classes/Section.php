@@ -16,6 +16,11 @@ class Section
     public array $attributes = [];
 
     /**
+     * Whether this section structures the ones below it, see divider().
+     */
+    public bool $divider = false;
+
+    /**
      * Make a new Section instance and set default view based on name.
      */
     public static function make(string $name): Section
@@ -65,6 +70,22 @@ class Section
     }
 
     /**
+     * Mark this section as one that structures the sections below it: a tab, a
+     * chapter, the start of a column.
+     *
+     * It changes nothing about what is stored or rendered on the site. In the
+     * editor the section becomes a heading in the list, the sections up to the
+     * next divider are shown as its group, and the group can be folded away and
+     * dragged as a whole.
+     */
+    public function divider(bool $divider = true): Section
+    {
+        $this->divider = $divider;
+
+        return $this;
+    }
+
+    /**
      * Add one or more attributes to the section
      */
     public function attributes(Attribute ...$attributes): Section
@@ -81,6 +102,21 @@ class Section
      * while selects, file/media pickers, switches, dates, numbers, etc. are not.
      */
     private const TRANSLATABLE_INPUTS = ['input', 'textarea', 'tinymce'];
+
+    /**
+     * The sub-attributes that hold text somebody wrote, in the order they were
+     * declared. The editor reads the first filled one as the summary of a collapsed
+     * section.
+     *
+     * @return list<Attribute>
+     */
+    public function textAttributes(): array
+    {
+        return array_values(array_filter(
+            $this->attributes,
+            fn (Attribute $attribute): bool => $attribute->type === 'text' && in_array($attribute->input, self::TRANSLATABLE_INPUTS, true),
+        ));
+    }
 
     /**
      * Mark only the named sub-attributes as translatable (edited per locale).

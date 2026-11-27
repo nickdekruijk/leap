@@ -1064,6 +1064,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | sections
+    |--------------------------------------------------------------------------
+    |
+    | How the editor shows the list of an Attribute::sections() field.
+    |
+    | collapsed: A record with more than two sections opens with its sections
+    |            closed, as a list with a line of content per section. A
+    |            section somebody opened or closed keeps that state, which is
+    |            stored with the record. false opens every section nobody
+    |            closed, as before 1.24.
+    |
+    */
+    'sections' => [
+        'collapsed' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | ace
     |--------------------------------------------------------------------------
     | Ace code editor options like CDN and version to use.
