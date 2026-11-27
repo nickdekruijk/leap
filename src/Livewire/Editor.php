@@ -153,7 +153,7 @@ class Editor extends Component
      * it, so Cancel can put it back. Locked: the browser has no business pointing it at
      * another field, or handing it a section to restore.
      *
-     * @var array{attribute: string, index: int|string, new: bool, section: array<string, mixed>, media: array<string, mixed>}|null
+     * @var array{attribute: string, index: int|string, new: bool, section: array<string, mixed>, media: array<string, mixed>, flags: list<string>}|null
      */
     #[Locked]
     public ?array $sectionModal = null;
@@ -243,7 +243,16 @@ class Editor extends Component
 
                 continue;
             }
-            $content[$index] = array_diff_key($section, array_flip(self::SECTION_VIEW_KEYS));
+            // A missing key, '', null and a set of empty translations are the same
+            // nothing. checkSectionValues() adds an empty rich-text field, once per locale,
+            // that a stored section never had, and that is no change.
+            $empty = function (mixed $value) use (&$empty): bool {
+                return $value === null || $value === '' || (is_array($value) && array_filter($value, fn ($item): bool => ! $empty($item)) === []);
+            };
+            $content[$index] = array_filter(
+                array_diff_key($section, array_flip(self::SECTION_VIEW_KEYS)),
+                fn ($value): bool => ! $empty($value),
+            );
         }
 
         $sort = function (array &$value) use (&$sort): void {
@@ -858,17 +867,7 @@ class Editor extends Component
                     }
 
                     // Set section titles
-                    $sectionData = &$this->data[$sectionAttribute->name][$index];
-                    $sectionData['_title'] = collect($sectionAttributes)
-                        ->where('sectionTitle', true)
-                        ->map(function ($title) use ($sectionData) {
-                            // Translatable section fields are stored per locale; use the active one for the label
-                            $value = Leap::localize($sectionData[$title->name] ?? '', $this->activeLocale) ?? '';
-
-                            return strip_tags($value);
-                        })
-                        ->filter()
-                        ->implode(' - ');
+                    $this->data[$sectionAttribute->name][$index]['_title'] = $this->sectionTitle($this->data[$sectionAttribute->name][$index], $sectionAttributes ?? []);
                 }
             }
         }
@@ -1256,6 +1255,10 @@ class Editor extends Component
 
         if (! $layout[$index]['divider']) {
             $this->revealSection($attribute, $index);
+        } elseif ($withGroup && $this->sectionLayout($attribute)[$index]['members'] > count($block) - 1) {
+            // A folded group dropped among the sections of another group takes the ones
+            // below it in: they are its own now, and would vanish from the list folded.
+            $this->data[$attribute][$index]['_folded'] = false;
         }
 
         $this->setRandomSortSeed();
@@ -1451,6 +1454,19 @@ class Editor extends Component
         $order = $this->sectionOrder($field);
         $next = $order[array_search($index, $order, true) + 1] ?? null;
 
+        // A divider is copied as a new, empty group after its own. Right below it the
+        // copy would take over every section of the group, and leave the original empty.
+        $layout = $this->sectionLayout($field);
+        if ($layout[$index]['divider'] ?? false) {
+            $next = null;
+            foreach (array_slice($order, array_search($index, $order, true) + 1) as $key) {
+                if ($layout[$key]['divider']) {
+                    $next = $key;
+                    break;
+                }
+            }
+        }
+
         $copy = $this->data[$field][$index];
         $copy['_closed'] = false;
         unset($copy['_folded']);
@@ -1529,6 +1545,8 @@ class Editor extends Component
             'new' => $new,
             'section' => $this->data[$field][$index],
             'media' => $this->sectionMedia($field, $index),
+            // Which of its media fields syncMedia() was going to write already
+            'flags' => array_values(array_filter($this->mediaUpdated, fn ($key): bool => str_starts_with((string) $key, $field.'.'.$index.'.'))),
         ];
     }
 
@@ -1579,10 +1597,16 @@ class Editor extends Component
         foreach (array_keys($this->sectionMedia($field, $index)) as $key) {
             unset($this->data[$key]);
         }
-        // Media picked in the modal was flagged for syncMedia(); it now writes back what
-        // was there, which is the same rows.
         foreach ($modal['media'] as $key => $value) {
             $this->data[$key] = $value;
+        }
+        // And the flags for syncMedia() as they were: media picked and put back again is
+        // no change to save, and would rewrite its rows and say it was updated.
+        $prefix = $field.'.'.$index.'.';
+        foreach (array_keys($this->mediaUpdated) as $key) {
+            if (str_starts_with((string) $key, $prefix) && ! in_array($key, $modal['flags'], true)) {
+                unset($this->mediaUpdated[$key]);
+            }
         }
 
         // A rich-text field keeps its own copy of the value in the browser
@@ -1604,6 +1628,27 @@ class Editor extends Component
     }
 
     /**
+     * The fields marked sectionTitle() of a section, joined, in the language the editor
+     * shows: what is stored as _title, and the first choice for its summary.
+     *
+     * @param  array<string, mixed>  $content  The section as it is in the form
+     * @param  iterable<Attribute>  $attributes  The fields its definition declares
+     */
+    private function sectionTitle(array $content, iterable $attributes): string
+    {
+        return collect($attributes)
+            ->where('sectionTitle', true)
+            ->map(function (Attribute $title) use ($content): string {
+                // Translatable section fields are stored per locale; use the active one for the label
+                $value = Leap::localize($content[$title->name] ?? '', $this->activeLocale) ?? '';
+
+                return is_string($value) ? strip_tags($value) : '';
+            })
+            ->filter()
+            ->implode(' - ');
+    }
+
+    /**
      * One line that says what a collapsed section holds.
      *
      * The fields marked sectionTitle() when the module has any, and otherwise the first
@@ -1615,7 +1660,9 @@ class Editor extends Component
      */
     public function sectionSummary(array $content, ?Section $section): string
     {
-        $summary = is_string($content['_title'] ?? null) ? $content['_title'] : '';
+        // From the fields themselves, not the stored _title: that one is only worked out
+        // when the record opens, and would show the title from before it was changed.
+        $summary = $section ? $this->sectionTitle($content, $section->attributes) : '';
 
         if (trim($summary) === '') {
             foreach ($section?->textAttributes() ?? [] as $attribute) {
@@ -1673,6 +1720,25 @@ class Editor extends Component
         }
 
         return $thumbnails;
+    }
+
+    /**
+     * The address of the thumbnail beside a collapsed section.
+     *
+     * The smallest width of leap.images when images are resized, rather than the file
+     * itself: a page of thirty sections with a photo each would load every one in full
+     * for a picture of 36 pixels. Without resizing, or for a file that cannot be
+     * resized, the panel's own download address, which also serves a private disk.
+     */
+    public function sectionThumbnailUrl(Media $media): string
+    {
+        $widths = config('leap.images.widths') ?: [];
+
+        if (config('leap.images.enabled') && $media->isBitmap() && $widths) {
+            return $media->url(min($widths)) ?? $media->downloadUrl;
+        }
+
+        return $media->downloadUrl;
     }
 
     /**
@@ -2060,6 +2126,9 @@ class Editor extends Component
         if ($this->isValid($this->editing)) {
             // Get current model with data
             $model = $this->getModel($this->editing);
+
+            // _title from what the sections hold now, not from when the record opened
+            $this->checkSectionValues();
 
             $this->updateAttributes($model);
 

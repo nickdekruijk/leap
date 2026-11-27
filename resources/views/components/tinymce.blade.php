@@ -32,17 +32,22 @@
         wire:key="{{ $attribute->dataName . $this->randomSortSeed }}"
         wire:ignore
         data-leap-richtext="{{ $lazy ? 'lazy' : 'eager' }}"
+        x-on:leap-richtext-sync.window="sync()"
         x-data="{
             value: $wire.entangle('{{ $attribute->dataName }}'),
             lazy: {{ $lazy ? 'true' : 'false' }},
             editing: false,
             editor: null,
+            // What Livewire.on() hands back to stop listening, called in destroy(): a
+            // field that is gone must not go on reacting to the events of the editor.
+            off: [],
+            pickerOff: null,
             init() {
                 // A rich-text field sits in wire:ignore and is only read into TinyMCE
                 // when the editor opens, so a value written on the server — the AI
                 // translation — reaches neither the editor nor the click-to-edit
                 // preview until the field is rebuilt. Pull it back explicitly.
-                Livewire.on('leap-fields-translated', () => {
+                this.off.push(Livewire.on('leap-fields-translated', () => {
                     const fresh = this.$wire.get('{{ $attribute->dataName }}');
                     if (fresh != null && fresh !== this.value) {
                         this.value = fresh;
@@ -50,16 +55,16 @@
                             this.editor.resetContent(fresh);
                         }
                     }
-                });
+                }));
 
                 if (!this.lazy) {
                     this.activate();
                     return;
                 }
                 // Lazy fields drop back to the rendered-HTML preview after a save
-                Livewire.on('leap-editor-saved', () => {
+                this.off.push(Livewire.on('leap-editor-saved', () => {
                     if (this.lazy) this.deactivate();
-                });
+                }));
             },
             // Load TinyMCE on demand. The admin is a wire:navigate SPA, so relying
             // on Livewire's asset directive is unreliable when a field is first
@@ -163,7 +168,13 @@
                             target: this.$refs.textarea,
                             file_picker_callback: (callback, value, meta) => {
                                 this.$wire.$parent.tinymceBrowser();
-                                Livewire.on('tinymceBrowser', (e) => {
+                                // One pick, one listener: a browser closed without a
+                                // choice left its listener behind, and the next pick
+                                // ran that stale callback as well.
+                                if (this.pickerOff) this.pickerOff();
+                                this.pickerOff = Livewire.on('tinymceBrowser', (e) => {
+                                    this.pickerOff();
+                                    this.pickerOff = null;
                                     callback(e[0]);
                                 });
                             },
@@ -225,12 +236,31 @@
             },
             // Taken out of the page (the modal closed, the list was redrawn): close the
             // editor with it, or TinyMCE keeps an instance for an element that is gone.
-            // Nothing to hand to the form here: that happened on blur, when the click
-            // that closed it moved the focus away.
+            // Nothing to hand to the form here: that happened on blur, or on sync()
+            // when a section modal closed. Doing it now would undo a Cancel.
             destroy() {
+                this.off.forEach((stop) => stop());
+                if (this.pickerOff) this.pickerOff();
+                this.removeEditor();
+            },
+            // Alpine.raw(): this.editor is Alpine's reactive proxy of the editor, and
+            // TinyMCE looks the editor up in its own list by identity. Handed the proxy
+            // it takes the editor off the page and leaves it in that list for good.
+            removeEditor() {
                 if (this.editor) {
-                    tinymce.remove(this.editor);
+                    tinymce.remove(Alpine.raw(this.editor));
                     this.editor = null;
+                }
+            },
+            // Hand what was typed to the form now rather than on blur: the section modal
+            // asks for it before it closes, since a close does not always blur the editor
+            // first (Escape from a TinyMCE dialog, say). Cancel does not ask.
+            sync() {
+                if (this.editor) {
+                    const content = this.editor.getContent();
+                    if (!this.sameContent(this.value, content)) {
+                        this.value = content;
+                    }
                 }
             },
             deactivate() {
@@ -241,8 +271,7 @@
                     if (!this.sameContent(this.value, content)) {
                         this.value = content;
                     }
-                    tinymce.remove(this.editor);
-                    this.editor = null;
+                    this.removeEditor();
                 }
                 this.editing = false;
             },

@@ -1448,7 +1448,9 @@ BODY:not(.sorting) .leap-files LI {
 /* ==== TOASTS ==== */
 .toasts {
     position: fixed;
-    z-index: 200;
+    /* Above the section modal (1100), whose Done and save reports a failed validation
+       here; under the dialogs of TinyMCE (1300), the file browser and .leap-modal. */
+    z-index: 1200;
     right: 20px;
     top: var(--header-height);
 

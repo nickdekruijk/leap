@@ -448,7 +448,9 @@ class EditorSectionListTest extends TestCase
 
     public function test_the_summary_is_the_section_title_when_there_is_one(): void
     {
-        $this->assertSame('Kop', $this->summary(['_title' => 'Kop', 'body' => ['nl' => '<p>Tekst</p>']], 'block'));
+        $this->assertSame('Kop', $this->summary(['head' => ['nl' => 'Kop', 'en' => 'Head'], 'body' => ['nl' => '<p>Tekst</p>']], 'block'));
+        // Not the stored _title, which is from when the record opened
+        $this->assertSame('Kop', $this->summary(['_title' => 'Oud', 'head' => ['nl' => 'Kop'], 'body' => ['nl' => '']], 'block'));
     }
 
     public function test_the_summary_falls_back_to_the_first_text_without_its_markup(): void
@@ -777,6 +779,167 @@ class EditorSectionListTest extends TestCase
 
         SectionModalResource::$modal = true;
         $this->assertFalse($editor->sectionsInModal('title'));
+    }
+
+    // ---- Found in review ----------------------------------------------------------------
+
+    /**
+     * The summary comes from the title fields as they are now. It read the _title worked
+     * out when the record opened, so a row went on showing the old title after Done.
+     */
+    public function test_the_summary_follows_a_changed_title_right_away(): void
+    {
+        $editor = $this->editor([$this->block('Oud'), $this->block('Twee'), $this->block('Drie')])
+            ->set('data.sections.0.head.nl', 'Nieuw');
+
+        $editor->assertSeeHtml('<span class="leap-label-sub">Nieuw</span>')
+            ->assertDontSeeHtml('<span class="leap-label-sub">Oud</span>');
+    }
+
+    public function test_saving_stores_the_title_as_it_is_now(): void
+    {
+        $editor = $this->editor([$this->block('Oud'), $this->block('Twee')]);
+        $id = $editor->instance()->editing;
+
+        $editor->set('data.sections.0.head.nl', 'Nieuw')->call('save');
+
+        $this->assertSame('Nieuw', SectionsModel::find($id)->sections[0]['_title']);
+    }
+
+    /**
+     * Done and save reports a failed validation as a toast, and the modal stays open over
+     * the form. Under it, the toast was never seen.
+     */
+    public function test_toasts_show_above_the_section_modal(): void
+    {
+        $zIndex = function (string $file, string $selector): int {
+            $css = (string) file_get_contents(__DIR__.'/../../resources/css/'.$file);
+            $this->assertMatchesRegularExpression('/'.preg_quote($selector, '/').'\s*\{[^}]*?z-index:\s*(\d+)/s', $css);
+            preg_match('/'.preg_quote($selector, '/').'\s*\{[^}]*?z-index:\s*(\d+)/s', $css, $match);
+
+            return (int) $match[1];
+        };
+
+        $this->assertGreaterThan($zIndex('editor.css', '.leap-modal.leap-section-modal'), $zIndex('leap.css', '.toasts'));
+    }
+
+    /**
+     * TinyMCE hands its text to the form on blur, and closing the modal does not always
+     * blur it first. Done asks for the text before it closes; Cancel does not, or it would
+     * write back what Cancel just put back.
+     */
+    public function test_done_asks_the_rich_text_for_what_was_typed_and_cancel_does_not(): void
+    {
+        $editor = $this->modal([$this->block('Een')])->call('editSection', 'sections', 0);
+
+        $editor->assertSeeHtml("\$dispatch('leap-richtext-sync'); \$wire.closeSection()")
+            ->assertSeeHtml("\$dispatch('leap-richtext-sync'); \$wire.saveSection()")
+            ->assertSeeHtml('wire:click="cancelSection"')
+            ->assertSeeHtml('x-on:leap-richtext-sync.window="sync()"')
+            // An Escape that closes something of TinyMCE's own is not one for the modal
+            ->assertSeeHtml('closest?.(&#039;.tox&#039;)')
+            // And a field that is gone stops listening, and takes its editor out of
+            // TinyMCE's own list: handed Alpine's proxy, TinyMCE leaves it in there
+            ->assertSeeHtml('this.off.forEach((stop) => stop())')
+            ->assertSeeHtml('tinymce.remove(Alpine.raw(this.editor))')
+            ->assertDontSeeHtml('tinymce.remove(this.editor)');
+    }
+
+    /**
+     * A divider is copied as a new, empty group after its own. Right below it the copy
+     * took over the whole group and left the original empty.
+     */
+    public function test_a_duplicated_divider_leaves_its_group_with_the_original(): void
+    {
+        $editor = $this->editor($this->page())->call('duplicateSection', 'sections', 1);
+
+        $this->assertSame([0, 1, 2, 3, 6, 4, 5], $this->order($editor));
+        $layout = $editor->instance()->sectionLayout('sections');
+        $this->assertSame(2, $layout[1]['members']);
+        $this->assertTrue($layout[6]['divider']);
+        $this->assertSame(0, $layout[6]['members']);
+    }
+
+    /**
+     * A folded group dropped among the sections of another group takes the ones below
+     * it in. Folded, they would vanish from the list without a word.
+     */
+    public function test_a_folded_group_that_takes_sections_in_unfolds(): void
+    {
+        // On screen: intro, Aanleiding, Eerste, Tweede, the folded Programma. Programma is
+        // dropped in front of Tweede, which becomes one of its own.
+        $editor = $this->editor($this->page())
+            ->call('toggleSectionGroup', 'sections', 4)
+            ->call('sortSection', 'sections', 4, 3);
+
+        $this->assertSame([0, 1, 2, 4, 5, 3], $this->order($editor));
+        $this->assertFalse($editor->instance()->data['sections'][4]['_folded']);
+        $this->assertSame(4, $editor->instance()->sectionLayout('sections')[3]['group']);
+    }
+
+    /**
+     * A section stored before its rich-text field existed gets an empty one when the
+     * record opens. That is no change, so closing a section and saving stays quiet.
+     */
+    public function test_an_empty_field_added_on_opening_is_not_a_change_to_save(): void
+    {
+        $editor = $this->editor([
+            ['_name' => 'block', 'active' => true, 'head' => ['nl' => 'Een', 'en' => 'One']],
+            ['_name' => 'block', 'active' => true, 'head' => ['nl' => 'Twee', 'en' => 'Two']],
+        ]);
+        $id = $editor->instance()->editing;
+        $this->assertSame(['nl' => '', 'en' => ''], $editor->instance()->data['sections'][0]['body']);
+
+        $editor->call('toggleSection', 'sections', 0)->call('save');
+
+        $this->assertSame('2020-01-01 12:00:00', SectionsModel::find($id)->updated_at->toDateTimeString());
+        $this->assertSame(0, Log::where('action', 'update')->count());
+        $editor->assertNotDispatched('toast');
+    }
+
+    /**
+     * Media picked in the modal and put back by Cancel is no change: the flags for
+     * syncMedia() go back too, or the next save rewrote the rows and said "updated".
+     */
+    public function test_cancel_puts_back_the_media_flags_too(): void
+    {
+        Storage::disk('public')->put('photo.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        Storage::disk('public')->put('other.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        $media = Media::forFile('photo.jpg', 'public');
+
+        config(['leap.sections.modal' => true]);
+        $record = $this->record([$this->block('Een'), ['_name' => 'image', 'caption' => 'Het gebouw']]);
+        Mediable::create(['media_id' => $media->id, 'mediable_type' => SectionsModel::class, 'mediable_id' => $record->id, 'mediable_attribute' => 'sections.1.image', 'sort' => 0]);
+
+        $editor = Livewire::test(Editor::class)->call('openEditor', $record->id)
+            ->call('editSection', 'sections', 1)
+            ->call('selectMediaFiles', 'sections.1.image', ['other.jpg'])
+            ->call('cancelSection');
+
+        $this->assertSame([], $editor->instance()->mediaUpdated);
+
+        $editor->call('save')->assertNotDispatched('toast');
+        $this->assertSame([$media->id], Mediable::where('mediable_id', $record->id)->pluck('media_id')->all());
+    }
+
+    public function test_the_thumbnail_is_the_file_itself_without_resizing(): void
+    {
+        Storage::disk('public')->put('photo.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        $media = Media::forFile('photo.jpg', 'public');
+        config(['leap.images.enabled' => false]);
+
+        $this->assertSame($media->downloadUrl, (new Editor)->sectionThumbnailUrl($media));
+    }
+
+    public function test_the_thumbnail_is_the_smallest_width_with_resizing(): void
+    {
+        Storage::disk('public')->put('photo.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        $media = Media::forFile('photo.jpg', 'public');
+        config(['leap.images.enabled' => true, 'leap.images.widths' => [900, 600, 1200]]);
+        Storage::fake('leap-images');
+
+        $this->assertSame($media->url(600), (new Editor)->sectionThumbnailUrl($media));
+        $this->assertNotSame($media->downloadUrl, (new Editor)->sectionThumbnailUrl($media));
     }
 
     // ---- The site ---------------------------------------------------------------------

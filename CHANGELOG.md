@@ -40,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A record with more than two sections opens with them closed.** A section somebody
   opened or closed keeps that state, and a section that was just added is open. Set
   `leap.sections.collapsed` to `false` to open every section nobody closed, as before.
-  A published `config/leap.php` does not have the key and gets the new default.
+  A published `config/leap.php` does not have the key and gets the new default. On by
+  default on purpose: it changes the editor, not the site, and stores only view state.
 
 ### Fixed
 
@@ -50,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   model's events. It is still stored, so the list looks the next day the way it was
   left, but without any of that: a save in which nothing else changed says there were
   no changes.
+- **A rich-text field cleans up after itself.** Dropping back to its preview after a save
+  took the editor off the page and left it in TinyMCE's own list, and every time the file
+  browser was opened from a rich-text field a listener stayed behind, so a file picked
+  later was also handed to every dialog that had asked before. Both are gone, and a field
+  taken off the page stops listening to the editor's events.
 - **Looking at another language tab is no longer an unsaved change.** The label of a
   closed section is rebuilt in the language the editor shows and travels with the form,
   so switching tabs was enough to be asked about changes nobody made.

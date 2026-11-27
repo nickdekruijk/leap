@@ -24,7 +24,10 @@ package itself**. For using leap in a host application, see `README.md` and `doc
   `Resource` methods — that breaks every host's `app/Leap/*`. Add functionality
   additively and deprecate rather than remove.
 - **Multilingual and other new behaviour must stay gated** so `leap.locales === null`
-  is byte-for-byte identical to the old behaviour.
+  is byte-for-byte identical to the old behaviour. How the editor lays out its own
+  screen may change by default when it stores nothing but its view state (`_closed`,
+  `_folded`, `_title` in sections), as long as a config key brings the old layout back:
+  `leap.sections.collapsed` is that case. Say so in `docs/upgrading.md`.
 - **Request-scoped state** goes through `LeapContext` (`Leap::context()`), not
   Laravel `Context`. The old Context keys are mirrored for 1.x BC only.
 

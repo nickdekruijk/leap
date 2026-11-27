@@ -74,7 +74,7 @@
                 {{-- A column of its own once any section has an image, so every row
                      ends at the same place. --}}
                 @if ($closed && isset($thumbnails[$index]))
-                    <img class="leap-section-thumbnail" loading="lazy" src="{{ $thumbnails[$index]->downloadUrl }}" alt="">
+                    <img class="leap-section-thumbnail" loading="lazy" src="{{ $this->sectionThumbnailUrl($thumbnails[$index]) }}" alt="">
                 @elseif ($closed && $thumbnails)
                     <span class="leap-section-thumbnail"></span>
                 @endif
@@ -142,7 +142,10 @@
         {{-- Teleported to the root of the panel: the editor slides in with a transform,
              which would make a fixed overlay cover only the editor and scroll along.
              Backdrop and Escape mean Done, so nothing typed is ever lost by a stray
-             click; but not while the file browser or a TinyMCE dialog is open on top. --}}
+             click; but not while the file browser or a TinyMCE dialog is open on top,
+             nor for an Escape that closes something of TinyMCE's own. Done asks the rich
+             text for what was typed first (leap-richtext-sync): closing does not always
+             blur the editor, and then the text would not reach the form. --}}
         <div x-data wire:key="{{ $attribute->name }}-modal-{{ $index }}">
             {{-- Shown once the rich text in it has started: TinyMCE grows to its content,
                  and a centred dialog grows both ways, so its header and fields would jump
@@ -153,15 +156,15 @@
                 x-init="waiting = $el.querySelectorAll('[data-leap-richtext=eager]').length; if (!waiting) ready = true; setTimeout(() => ready = true, 1000)"
                 x-on:leap-richtext-ready="if (--waiting <= 0) ready = true"
                 x-bind:class="{ 'leap-section-modal-ready': ready }"
-                close="if (!document.querySelector('.leap-filebrowser, .tox-dialog')) $wire.closeSection()">
+                close="if (!$event.target.closest?.('.tox') && !document.querySelector('.leap-filebrowser, .tox-dialog')) { $dispatch('leap-richtext-sync'); $wire.closeSection() }">
                 {{-- Title and buttons stay at the top, and only the fields below them
                      scroll. That way TinyMCE's sticky toolbar, which sticks to the top of
                      whatever scrolls, stays under the bar instead of behind it. --}}
                 <header class="leap-header leap-section-modal-bar">
                     <h2>{{ $section?->label ?: $sectionContent['_name'] }}</h2>
-                    <x-leap::button svg-icon="far-check-circle" wire:click="closeSection" label="leap::resource.done" class="primary" type="button" />
+                    <x-leap::button svg-icon="far-check-circle" x-on:click="$dispatch('leap-richtext-sync'); $wire.closeSection()" label="leap::resource.done" class="primary" type="button" />
                     @can('leap::update')
-                        <x-leap::button svg-icon="far-floppy-disk" wire:click="saveSection" label="leap::resource.done_save" wire:loading.delay.shorter.attr="disabled" type="button" />
+                        <x-leap::button svg-icon="far-floppy-disk" x-on:click="$dispatch('leap-richtext-sync'); $wire.saveSection()" label="leap::resource.done_save" wire:loading.delay.shorter.attr="disabled" type="button" />
                     @endcan
                     <x-leap::button svg-icon="fas-times" wire:click="cancelSection" label="leap::resource.cancel" type="button" />
                 </header>

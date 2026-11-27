@@ -12,7 +12,9 @@ sections.
   shows a line of what it holds. A section somebody opened or closed before keeps that
   state, because it was already stored with the record. To keep the old behaviour, set
   `'sections' => ['collapsed' => false]` in `config/leap.php`; a published config does
-  not have the key and gets the new default.
+  not have the key and gets the new default. On by default on purpose, against the rule
+  that new behaviour is opt-in: it changes how the editor looks, not what a site shows,
+  and it stores nothing but the open/closed state.
 - **Opening or closing a section is no longer a change.** It used to raise the unsaved
   changes question and, when saved, updated the record: `updated_at`, the log, model
   events. The state is still stored, without any of that.
