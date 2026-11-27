@@ -80,3 +80,14 @@ drift between a host's copy and the current stubs.
 Update `CHANGELOG.md`, keep `docs/` in sync, and follow semver strictly from 1.0.
 CI runs the suite across PHP 8.3, 8.4 and 8.5, Laravel 12 and 13, and Livewire 3 and 4,
 plus Pint and Larastan in one job each (`.github/workflows/tests.yml`).
+
+**Check the editor majors before every release.** The panel loads TinyMCE, Ace, DOMPurify
+and two Alpine plugins from jsDelivr on a floating major (`tinymce@8`), so a fix within a
+major arrives on its own and a new major does not. Compare `npm view tinymce
+dist-tags.latest` (and the same for `ace-builds`, `dompurify`, `@alpinejs/sort` and
+`@marcreichel/alpine-autosize`) with the constants in `src/Controllers/AssetController.php`,
+`config/leap.php` and `resources/views/layouts/app.blade.php`. The open source build of
+TinyMCE gets security fixes for about six months after a new major: 7 stopped in November
+2025 and stayed in Leap for a year. A newer major means planning the move: test it in a
+throwaway host, then change the URL constant in `AssetController`. Every site whose config
+leaves `tinymce.cdn` at `null` follows with the next `composer update`.

@@ -22,7 +22,8 @@
 		"enshrined/svg-sanitize": "^1.1.1"
 	},
 	"suggest": {
-		"nickdekruijk/leap-template": "Frontend website template scaffolding (leap:template, leap:content) — install with composer require --dev"
+		"nickdekruijk/leap-template": "Frontend website template scaffolding (leap:template, leap:content) — install with composer require --dev",
+		"symfony/html-sanitizer": "Filter rich text on the server when it is saved (leap.tinymce.sanitize, leap:sanitize); needs PHP 8.4"
 	},
 	"autoload": {
 		"psr-4": {
@@ -53,6 +54,7 @@
 		"laravel/pint": "^1.18.1",
 		"orchestra/testbench": "^10.0|^11.0",
 		"phpunit/phpunit": "^11.0|^12.0",
-		"larastan/larastan": "^3.14"
+		"larastan/larastan": "^3.14",
+		"symfony/html-sanitizer": "^7.4|^8.0"
 	}
 }

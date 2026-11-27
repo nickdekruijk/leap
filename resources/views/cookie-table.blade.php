@@ -42,7 +42,7 @@
                     <tr>
                         <td colspan="4">
                             @lang('leap::consent.no_cookies', [
-                                'services' => collect($category['services'] ?? [])->pluck('name')->join(', ', ' ' . __('leap::consent.and') . ' '),
+                                'services' => e(collect($category['services'] ?? [])->pluck('name')->join(', ', ' ' . __('leap::consent.and') . ' ')),
                             ])
                         </td>
                     </tr>

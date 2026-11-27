@@ -197,7 +197,7 @@
                         <button
                             wire:click="selectBrowsedFiles"
                             class="leap-button primary">
-                            @svg('far-check-circle', 'leap-svg-icon')<span> @lang('leap::filemanager.select_file' . (count($selectedFiles) > 1 ? 's' : ''), ['count' => count($selectedFiles)])</span>
+                            @svg('far-check-circle', 'leap-svg-icon')<span> {{ __('leap::filemanager.select_file' . (count($selectedFiles) > 1 ? 's' : ''), ['count' => count($selectedFiles)]) }}</span>
                         </button>
                     @endif
                     <x-leap::button svg-icon="fas-xmark" x-on:click="$wire.selectFile" label="leap::filemanager.close" />

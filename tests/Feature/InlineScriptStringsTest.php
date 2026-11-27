@@ -43,7 +43,7 @@ class InlineScriptStringsTest extends TestCase
         // Defined in app/Leap by the developer, or derived from config('leap.locales').
         '$attribute->name', '$attribute->dataName', '$attribute->sectionName',
         '$attribute->showIfExpression', '$code', '$slugLocale', '$localeKey', '$translateFrom',
-        '$key', '$show', '$close', "config('leap.tinymce.cdn')",
+        '$key', '$show', '$close',
         "\$lazy ? 'true' : 'false'",
         "\$this->twoFactorEmailEnrolling ? 'confirmTwoFactorEmail' : 'confirmTwoFactor'",
         // Numbers.

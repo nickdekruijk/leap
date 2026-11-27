@@ -5,6 +5,66 @@ All notable changes to `nickdekruijk/leap` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] - 2026-11-27
+
+### Added
+
+- **Rich text can be filtered when it is saved.** TinyMCE cleans what is typed into it,
+  but that happens in the browser, and a request sent straight to the panel skips it.
+  The site prints rich text as it is stored, on the same origin as the panel, so a
+  script saved by an editor runs for an administrator who looks at the page. With
+  `leap.tinymce.sanitize` on, a rich-text value is filtered on the server before it is
+  stored, in sections and per locale as well: scripts, event handlers and `javascript:`
+  links go, and so does an iframe from a host that is not in
+  `leap.tinymce.sanitize_iframe_hosts`. A value with nothing to remove is stored exactly
+  as it was sent, so what TinyMCE writes by default is left alone;
+  `leap.tinymce.sanitize_allow` adds what a site uses beyond that. Off by default, and it
+  needs PHP 8.4 and `composer require symfony/html-sanitizer`. See
+  [attributes](docs/attributes.md#filtering-rich-text).
+- **`php artisan leap:sanitize` shows what the filter would remove.** It reads every
+  rich-text field of every module, sections and translations included, and lists what
+  would go, how often and in which records; `--show=Page:12` prints one record before
+  and after. It writes nothing. Run it before turning the filter on, and to see whether
+  something is stored that should not be.
+
+### Security
+
+- **A role name can no longer run script on the dashboard.** The line "You are logged
+  in as" was written with `@lang`, which does not escape its replacements, so a role
+  named `"><img src=x onerror=alert(1)>` ran script for every user with that role.
+  Whoever may edit roles could reach other administrators that way. The line is escaped
+  now. Found in a penetration test by Reqon.
+- **The click-to-edit preview of a rich-text field no longer runs what is stored.** The
+  preview put the stored HTML into the page as it was, so an `<img onerror>` saved in a
+  page ran for every editor who opened the record, without a click. TinyMCE cleans what
+  it loads, the preview did not. It goes through DOMPurify now, loaded from
+  `leap.tinymce.dompurify_cdn`. Until that script has loaded, or when it does not load,
+  the preview shows the text without its markup. An embedded iframe is no longer shown
+  in the preview, only in the editor.
+- **TinyMCE 8 instead of 7.** The open source build of TinyMCE 7 no longer gets security
+  fixes, and 7.9.3, the last one, runs script from stored content through the media
+  plugin (CVE-2026-116675). The fix is in 8.9.3 and later. See Changed below.
+- **The `aria-label` of an input is quoted.** It was written without quotes, so a label
+  of two words became a label of one word and a stray attribute. Labels come from
+  `app/Leap`, so nothing could be injected, but a label built from a record could have.
+  A radio button is named after its own option again, not after the field.
+
+### Changed
+
+- **`leap.tinymce.cdn` defaults to `null`, which loads the TinyMCE that Leap was tested
+  with: the latest 8.x.** A URL of your own still wins. A published config that holds
+  the old default (`tinymce@7`) follows along as if it were `null`, so there is nothing
+  to do after `composer update`; composer prints a line as long as that old value is
+  in `config/leap.php`, and setting it to `null` makes the line go away. To stay on 7,
+  set an exact version such as `tinymce@7.9.3`. The language pack stays on `langs7`:
+  the Dutch `langs8` has empty labels. TinyMCE 8 drops HTML comments that hold HTML;
+  set `allow_html_in_comments` in `leap.tinymce.options` to keep them. See
+  [upgrading](docs/upgrading.md).
+- **`alpine-autosize` is loaded as `@1`** instead of `@latest`, which would also follow
+  a new major.
+- **The cookie table escapes the service names it fills into "sets no cookies".** The
+  line itself is still printed as it is, so a link in a translation of it keeps working.
+
 ## [1.22.2] - 2026-11-26
 
 ### Fixed

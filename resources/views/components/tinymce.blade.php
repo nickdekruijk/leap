@@ -63,13 +63,55 @@
                 if (!window.leapTinymceLoader) {
                     window.leapTinymceLoader = new Promise((resolve, reject) => {
                         const script = document.createElement('script');
-                        script.src = '{{ config('leap.tinymce.cdn') }}';
+                        script.src = {{ Js::from(\NickDeKruijk\Leap\Controllers\AssetController::tinymceCdn()) }};
                         script.onload = resolve;
                         script.onerror = reject;
                         document.head.appendChild(script);
                     });
                 }
                 return window.leapTinymceLoader;
+            },
+            // DOMPurify, for the preview below. Loaded the same way as TinyMCE and
+            // for the same reason, and only on a page that has a lazy field.
+            ensurePurify() {
+                if (window.DOMPurify) {
+                    return Promise.resolve();
+                }
+                if (!window.leapPurifyLoader) {
+                    window.leapPurifyLoader = new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = {{ Js::from(\NickDeKruijk\Leap\Controllers\AssetController::dompurifyCdn()) }};
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                return window.leapPurifyLoader;
+            },
+            // The click-to-edit preview shows what is stored, and what is stored is
+            // whatever was sent to the server, not what TinyMCE would have let
+            // through. Put in the page as it is, an img with an onerror in a saved
+            // record ran for everyone who opened it. So the HTML goes through
+            // DOMPurify first, and until that has loaded, or when it never does,
+            // the preview is the text without the markup: never the raw HTML.
+            renderPreview(preview) {
+                const html = this.value || '';
+                const clean = () => DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, FORBID_TAGS: ['style'] });
+                if (window.DOMPurify) {
+                    preview.innerHTML = clean();
+                    return;
+                }
+                // Parsed in a document of its own, where nothing loads and nothing runs.
+                // Minus script and style, whose text is code and not something to read.
+                const inert = new DOMParser().parseFromString(html, 'text/html');
+                inert.querySelectorAll('script, style').forEach((el) => el.remove());
+                preview.textContent = inert.body.textContent.trim();
+                this.ensurePurify().then(() => {
+                    // Unless the value changed while the script was on its way
+                    if ((this.value || '') === html) {
+                        preview.innerHTML = clean();
+                    }
+                }).catch(() => {});
             },
             activate() {
                 if (this.editor) {
@@ -147,7 +189,7 @@
         }">
         <div
             x-show="!editing"
-            x-html="value"
+            x-effect="renderPreview($el)"
             @click.prevent="activate()"
             @keydown.enter.prevent="activate()"
             @keydown.space.prevent="activate()"

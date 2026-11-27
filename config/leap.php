@@ -1088,9 +1088,25 @@ return [
     |
     | Settings for the TinyMCE rich-text editor used by Attribute::richtext().
     |
-    | cdn:     The TinyMCE build to load. Defaults to the latest 7.x version.
-    | options: Passed as JSON to tinymce.init(). See the TinyMCE 7 docs:
-    |          https://www.tiny.cloud/docs/tinymce/7/
+    | cdn:     The TinyMCE build to load. null follows leap, which loads the
+    |          latest 8.x from jsDelivr and moves to a next major once it is
+    |          tested. A URL of your own wins: a self-hosted copy, or an exact
+    |          version to stay on.
+    | dompurify_cdn: DOMPurify cleans the click-to-edit preview of a lazy
+    |          field before it is shown. null follows leap (the latest 3.x), a
+    |          URL of your own wins.
+    | options: Passed as JSON to tinymce.init(). See the TinyMCE 8 docs:
+    |          https://www.tiny.cloud/docs/tinymce/latest/
+    |
+    | sanitize: Filter rich text on the server when it is saved, so a value
+    | sent straight to the panel, past TinyMCE, cannot store a script. Off by
+    | default. Needs PHP 8.4 and composer require symfony/html-sanitizer. Run
+    | php artisan leap:sanitize first: it lists what the filter would remove
+    | from what is stored now, and writes nothing.
+    | sanitize_iframe_hosts: The hosts an iframe may point at.
+    | sanitize_allow: What a site allows on top of what TinyMCE writes by
+    | default, as element => attributes, with '*' for every element:
+    | ['*' => ['data-aos'], 'video' => ['autoplay'], 'button' => ['type']]
     |
     | lazy / lazy_sections: "Lazy" fields show their rendered HTML as a
     | click-to-edit preview and only start TinyMCE when clicked (and drop back
@@ -1102,9 +1118,13 @@ return [
     |
     */
     'tinymce' => [
-        'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js',
+        'cdn' => null,
+        'dompurify_cdn' => null,
         'lazy' => false,
         'lazy_sections' => true,
+        'sanitize' => false,
+        'sanitize_iframe_hosts' => ['www.youtube.com', 'www.youtube-nocookie.com', 'player.vimeo.com'],
+        'sanitize_allow' => [],
         'options' => [
             'autoresize_bottom_margin' => 50,
             // Class on the editor iframe <body>, so a content_css scoped under
@@ -1122,6 +1142,9 @@ return [
             'remove_script_host' => true,
             // 'document_base_url' => env('APP_URL'),
             // 'height' => 200, // Not used with autoresize
+            // langs7 on purpose, also under TinyMCE 8: the Dutch langs8 has empty
+            // translations, which TinyMCE shows as empty labels. The few strings
+            // that are new in 8 fall back to English.
             'language_url' => 'https://cdn.jsdelivr.net/npm/tinymce-i18n@24.11.25/langs7/'.app()->getLocale().'.js',
             'language' => app()->getLocale(),
             'license_key' => 'gpl',

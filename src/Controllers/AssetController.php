@@ -15,6 +15,48 @@ class AssetController extends Controller
     const CACHE_DURATION = 3600;
 
     /**
+     * The TinyMCE that leap.tinymce.cdn loads when it is null: the major this
+     * release was tested with, floating, so a fix within it arrives on its own.
+     * A new major does not: see "Releasing" in AGENTS.md.
+     */
+    const TINYMCE_CDN = 'https://cdn.jsdelivr.net/npm/tinymce@8/tinymce.min.js';
+
+    /**
+     * What leap.tinymce.cdn defaulted to before 1.23. A config published back then
+     * holds this string without anybody having chosen it, so it is read as null.
+     */
+    const TINYMCE_CDN_RETIRED = 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js';
+
+    /**
+     * The DOMPurify that leap.tinymce.dompurify_cdn loads when it is null.
+     */
+    const DOMPURIFY_CDN = 'https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js';
+
+    /**
+     * The TinyMCE script to load: the configured one, or leap's own when the
+     * config leaves it null or still holds the default of an older release.
+     *
+     * Resolved on reading rather than while the config is merged, so a config
+     * cache written by an older release follows along as well.
+     */
+    public static function tinymceCdn(): string
+    {
+        $cdn = config('leap.tinymce.cdn');
+
+        return is_string($cdn) && $cdn !== '' && $cdn !== self::TINYMCE_CDN_RETIRED ? $cdn : self::TINYMCE_CDN;
+    }
+
+    /**
+     * The DOMPurify script that cleans the click-to-edit preview of a rich-text field.
+     */
+    public static function dompurifyCdn(): string
+    {
+        $cdn = config('leap.tinymce.dompurify_cdn');
+
+        return is_string($cdn) && $cdn !== '' ? $cdn : self::DOMPURIFY_CDN;
+    }
+
+    /**
      * Return the css config array but check if the files exist and
      * replace with resources/css or package resources/css if available
      */

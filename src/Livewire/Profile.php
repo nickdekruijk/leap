@@ -302,7 +302,8 @@ class Profile extends Module
 
     public function getTitle(): string
     {
-        return (string) Auth::user()->{$this->nameColumn()};
+        // Null-safe: the console lists modules as well, and has nobody logged in.
+        return (string) Auth::user()?->{$this->nameColumn()};
     }
 
     public function rules()

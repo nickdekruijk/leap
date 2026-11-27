@@ -11,8 +11,8 @@
                 @if ($attribute->disabled ?? false) disabled @endif
                 wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
                 value="{{ $key }}"
-                {{ $attribute->inputAttributes() }}
                 aria-label="{{ $value }}"
+                {{ $attribute->inputAttributes() }}
                 {{ $attributes }}>
         </label>
     @endforeach

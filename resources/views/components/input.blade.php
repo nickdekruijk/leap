@@ -44,6 +44,6 @@
             wire:model{{ isset($attribute->wire) ? '.' . $attribute->wire : '' }}="{{ $attribute->dataName }}"
             {{ $attribute->inputAttributes() }}
         @endisset
-        aria-label="@lang($attribute->label ?? ($label ?? ($name ?? '')))"
+        @empty($attribute) aria-label="{{ strip_tags(__((string) ($label ?? ($name ?? '')))) }}" @endempty
         {{ $attributes }}>
 </x-leap::label>

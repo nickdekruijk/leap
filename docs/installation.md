@@ -2,7 +2,8 @@
 
 ## Requirements
 
-- PHP 8.3–8.5
+- PHP 8.3–8.5. The optional rich-text filter (`leap.tinymce.sanitize`) needs 8.4 or
+  later, see [attributes.md](attributes.md#filtering-rich-text)
 - Laravel 12 or 13
 - Livewire 3.7 or 4.1
 
@@ -71,6 +72,7 @@ See [robots.txt](template.md#robotstxt).
 | `php artisan leap:module <Model>` | Generate (or update) an `App\Leap\<Model>` resource from an Eloquent model's schema — field types, required/unique, labels, icon and more, auto-detected. See [modules-and-resources.md](modules-and-resources.md#generating-a-resource-leapmodule). |
 | `php artisan leap:robots {--check}` | Print the `robots.txt` leap writes and report what is in the way of it. `--check` prints only problems and fails on them, for a deploy. See [template.md](template.md#robotstxt). |
 | `php artisan leap:robots-write` | Write `public/robots.txt`. `php artisan optimize` runs it. |
+| `php artisan leap:sanitize {--show=Module:id}` | Report what the rich-text filter (`leap.tinymce.sanitize`) would remove from the stored content, without changing anything. See [attributes.md](attributes.md#filtering-rich-text). |
 
 Run any command with `--help` for its full list of arguments and options.
 

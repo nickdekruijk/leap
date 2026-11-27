@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap\Classes;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use NickDeKruijk\Leap\Leap;
 use NickDeKruijk\Leap\Module;
@@ -795,19 +796,25 @@ class Attribute
     }
 
     /**
+     * The attributes every input of this field carries, ready to print.
+     *
+     * Quoted and escaped here, and handed over as HTML: without the quotes a
+     * label of two words came out as aria-label=Email plus a stray attribute
+     * called address, and Blade's own escaping does nothing about a space. The
+     * label is HTML wherever it is shown, so its text is what goes in here.
+     *
      * @internal Leap rendering helper; not part of the public API.
      */
-    public function inputAttributes(): string
+    public function inputAttributes(): HtmlString
     {
-        $attributes = '';
-        $attributes .= ' aria-label='.$this->label.'';
+        $attributes = ' aria-label="'.e(html_entity_decode(strip_tags((string) $this->label), ENT_QUOTES | ENT_HTML5)).'"';
         foreach (['type', 'step', 'rows', 'role'] as $attribute) {
             if ($this->$attribute) {
-                $attributes .= ' '.$attribute.'='.$this->$attribute.'';
+                $attributes .= ' '.$attribute.'="'.e((string) $this->$attribute).'"';
             }
         }
 
-        return $attributes;
+        return new HtmlString($attributes);
     }
 
     /**

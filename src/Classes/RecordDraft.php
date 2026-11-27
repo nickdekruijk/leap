@@ -80,13 +80,27 @@ final class RecordDraft
                 $data[$attribute->name] = $data[$attribute->name] ? json_encode(json_decode($data[$attribute->name]), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
                 $model->{$attribute->name} = $data[$attribute->name];
             } else {
+                // Rich text is filtered here, where both saving and previewing pass,
+                // and written back into $data so the form holds what was stored.
+                // Only when leap.tinymce.sanitize is on: off, nothing below runs.
+                if ($attribute->input == 'tinymce' && RichtextSanitizer::enabled()) {
+                    $data[$attribute->name] = self::filterRichtext($data[$attribute->name] ?? null);
+                }
                 if ($attribute->type == 'sections') {
                     // Extra treatment for each section
                     foreach ($data[$attribute->name] ?? [] as $key => $section) {
                         // Update section _view values
-                        $view = collect($attribute->sections)->where('name', $section['_name'])->first()?->view;
+                        $definition = collect($attribute->sections)->where('name', $section['_name'])->first();
+                        $view = $definition?->view;
                         if ($view) {
                             $data[$attribute->name][$key]['_view'] = $view;
+                        }
+                        if ($definition && RichtextSanitizer::enabled()) {
+                            foreach ($definition->attributes as $sectionAttribute) {
+                                if ($sectionAttribute->input == 'tinymce' && array_key_exists($sectionAttribute->name, $section)) {
+                                    $data[$attribute->name][$key][$sectionAttribute->name] = self::filterRichtext($section[$sectionAttribute->name]);
+                                }
+                            }
                         }
                         // Set empty values to null (use strict check to preserve boolean false)
                         $data[$attribute->name][$key] = array_map(fn ($value) => $value === '' || $value === [] ? null : $value, $data[$attribute->name][$key]);
@@ -101,6 +115,20 @@ final class RecordDraft
                     : $value;
             }
         }
+    }
+
+    /**
+     * A rich-text value through the filter. A translatable field holds one value
+     * per locale, so an array is filtered value by value; anything that is not
+     * text is handed back as it came.
+     */
+    private static function filterRichtext(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map(self::filterRichtext(...), $value);
+        }
+
+        return is_string($value) && $value !== '' ? app(RichtextSanitizer::class)->filter($value) : $value;
     }
 
     /**

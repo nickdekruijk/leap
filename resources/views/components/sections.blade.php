@@ -48,7 +48,7 @@
 
     <select class="leap-select leap-select-button"
         wire:model.live="{{ $attribute->dataName }}:add"
-        aria-label="@lang($attribute->label ?? ($label ?? $name))">
+        aria-label="{{ strip_tags(__((string) ($attribute->label ?? ($label ?? $name)))) }}">
         <option value="">@lang('leap::resource.add_section')</option>
         @foreach ($attribute->sections as $section)
             <option value="{{ $section->name }}">{{ $section->label }}</option>

@@ -4,6 +4,7 @@ namespace NickDeKruijk\Leap;
 
 use Closure;
 use Composer\InstalledVersions;
+use Illuminate\Console\Events\CommandFinished;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,9 @@ use NickDeKruijk\Leap\Commands\MediaCommand;
 use NickDeKruijk\Leap\Commands\ModuleCommand;
 use NickDeKruijk\Leap\Commands\RobotsCommand;
 use NickDeKruijk\Leap\Commands\RobotsWriteCommand;
+use NickDeKruijk\Leap\Commands\SanitizeCommand;
 use NickDeKruijk\Leap\Commands\UserCommand;
+use NickDeKruijk\Leap\Controllers\AssetController;
 use NickDeKruijk\Leap\Jobs\GenerateImageDerivatives;
 use NickDeKruijk\Leap\Middleware\Auth2FA;
 use NickDeKruijk\Leap\Middleware\LeapAuth;
@@ -36,6 +39,7 @@ use NickDeKruijk\Leap\Middleware\RestrictIp;
 use NickDeKruijk\Leap\Middleware\SetLeapLocale;
 use NickDeKruijk\Leap\Models\Media;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 class ServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -195,6 +199,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                 ModuleCommand::class,
                 RobotsCommand::class,
                 RobotsWriteCommand::class,
+                SanitizeCommand::class,
                 UserCommand::class,
             ]);
 
@@ -202,6 +207,17 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             // command on purpose: optimize:clear on a server would leave the site
             // without one until the next deploy.
             $this->optimizes(optimize: 'leap:robots-write', key: 'leap-robots');
+
+            // Composer runs package:discover after every install and update, which
+            // makes it the one moment a project is certain to hear from a package.
+            Event::listen(CommandFinished::class, function (CommandFinished $event): void {
+                if ($event->command === 'package:discover' && $this->publishedConfigHoldsRetiredTinymce()) {
+                    $event->output->writeln('');
+                    $event->output->writeln('  <comment>leap:</comment> config/leap.php still sets tinymce.cdn to tinymce@7. Leap loads TinyMCE 8');
+                    $event->output->writeln('  instead. Set the value to null, or remove the line, to follow Leap\'s default.');
+                    $event->output->writeln('');
+                }
+            });
         }
 
         Gate::define('leap::create', function ($user, ?Module $module = null) {
@@ -489,6 +505,31 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             $links[public_path($route)] = $root;
             config(['filesystems.links' => $links]);
         }
+    }
+
+    /**
+     * Whether the project's own config/leap.php still holds the TinyMCE URL that
+     * was the default before 1.23.
+     *
+     * AssetController::tinymceCdn() reads that value as "leap decides", so nothing
+     * is wrong, but the file then says 7 while the panel loads 8. The file is read
+     * rather than the loaded config, which may come out of a cache.
+     */
+    protected function publishedConfigHoldsRetiredTinymce(): bool
+    {
+        $path = $this->app->configPath('leap.php');
+
+        if (! is_file($path)) {
+            return false;
+        }
+
+        try {
+            $published = require $path;
+        } catch (Throwable) {
+            return false;
+        }
+
+        return is_array($published) && ($published['tinymce']['cdn'] ?? null) === AssetController::TINYMCE_CDN_RETIRED;
     }
 
     /**

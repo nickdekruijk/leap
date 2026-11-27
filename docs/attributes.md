@@ -38,8 +38,8 @@ Attribute::make('title')->index(1)->searchable()->required();
 | `->unique()` | validation `unique` on the table |
 | `->default($value)` | default value for new records |
 | `->validate([...])` | extra validation rules |
-| `->hint($text)` | an `(i)` tooltip next to the label |
-| `->label($label, $labelIndex = null)` | override the label (and column header) |
+| `->hint($text)` | an `(i)` tooltip next to the label. Printed as HTML, so write it yourself and never fill it from a record |
+| `->label($label, $labelIndex = null)` | override the label (and column header). Printed as HTML in the editor, so the same goes |
 | `->placeholder($text)` | input placeholder |
 
 ## Slugs
@@ -112,3 +112,70 @@ click, tearing it down again on save. This is controlled by two config toggles
 The preview looks like a field with a pencil affordance on hover, and shows a "click to
 edit" hint when empty. Set `lazy_sections` to `false` to restore immediate editors
 everywhere.
+
+The preview shows what is stored, and what is stored is not necessarily what TinyMCE would
+have let through, so it is cleaned with DOMPurify before it is shown: no scripts, no event
+handlers, no iframes. Until that script has loaded, or when it cannot be loaded, the
+preview is the text without its markup.
+
+## Filtering rich text
+
+TinyMCE cleans what is typed into it: a pasted `<script>` or an `onclick` does not make
+it into the field. That happens in the browser, though, and whoever may save a record can
+also send a value straight to the panel, past the editor. The site prints rich text as it
+is stored, on the same origin as the panel, so a script saved that way runs for an
+administrator who opens the page.
+
+`leap.tinymce.sanitize` filters a rich-text value on the server, at the moment it is
+stored. It is off by default, and it needs PHP 8.4 and one package:
+
+```bash
+composer require symfony/html-sanitizer
+```
+
+```php
+// config/leap.php
+'tinymce' => [
+    'sanitize' => true,
+    // The hosts an iframe may point at
+    'sanitize_iframe_hosts' => ['www.youtube.com', 'www.youtube-nocookie.com', 'player.vimeo.com'],
+    // What this site uses beyond what TinyMCE writes by default
+    'sanitize_allow' => [
+        '*' => ['data-aos'],          // an attribute on every element
+        'video' => ['autoplay'],      // an attribute on one element
+        'button' => ['type'],         // an element that is not allowed otherwise
+    ],
+],
+```
+
+What it does:
+
+- **Scripts, event handlers and `javascript:` links go**, and so do `<style>`, `<form>`,
+  `<svg>`, `<object>` and anything else that is not text markup. An element that is not
+  allowed goes with what is inside it.
+- **An iframe stays only when its host is on the list.**
+- **What TinyMCE writes with leap's default options stays**: headings, lists, tables,
+  links, images, `class` and `style`, the accordion, video and audio.
+- **A value with nothing to remove is stored exactly as it was sent.** The filter writes
+  HTML its own way (`<br />`, other entities), so only a value that loses something is
+  rewritten. An HTML comment is no reason to rewrite a value, but does not survive a
+  value that is rewritten.
+- **Rich text only.** A plain input or textarea is escaped where it is shown and is not
+  touched. A field that holds an embed code on purpose should be a `textarea()` or
+  `ace()`, not `richtext()`.
+
+Look before you turn it on:
+
+```bash
+php artisan leap:sanitize              # what would go, how often, in which records
+php artisan leap:sanitize --show=Page:12   # one record, stored and filtered
+```
+
+The command reads every rich-text field of every module, in sections and per locale, and
+writes nothing. It works with the filter off, which is the point: an iframe from a host
+that is missing from the list, or an attribute a template relies on, shows up here first.
+Add those to `sanitize_iframe_hosts` or `sanitize_allow` and run it again. It also shows
+whether something is stored now that should not be.
+
+Existing records are not rewritten when the filter is turned on. Each one is filtered the
+next time it is saved.

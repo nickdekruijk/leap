@@ -12,7 +12,7 @@
         @if (config('leap.auth_passkeys.enabled'))
             <script src="{{ route('leap.js') }}?{{ \NickDeKruijk\Leap\Controllers\AssetController::jsFilemtime() }}" defer></script>
         @endif
-        <script src="https://cdn.jsdelivr.net/npm/@marcreichel/alpine-autosize@latest/dist/alpine-autosize.min.js" defer></script>
+        <script src="https://cdn.jsdelivr.net/npm/@marcreichel/alpine-autosize@1/dist/alpine-autosize.min.js" defer></script>
         {{-- Whether the open editor has unsaved work, and what the preview tab is showing.
              In a store rather than in an x-data: both facts are read by the index and
              written by the editor, which are two Livewire components, and a plain variable

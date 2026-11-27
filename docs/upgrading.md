@@ -3,6 +3,38 @@
 Release by release, newest first. See [CHANGELOG.md](../CHANGELOG.md) for the full list;
 these are the practical notes.
 
+## 1.23, TinyMCE 8, and `tinymce.cdn` is `null`
+
+The panel loads TinyMCE 8 instead of 7. The open source build of 7 no longer gets security
+fixes, and its last release runs script from stored content through the media plugin
+(CVE-2026-116675).
+
+`leap.tinymce.cdn` is `null` now, which means "the TinyMCE leap was tested with": the
+latest 8.x, and a next major once leap has moved to it. For most sites there is nothing to
+do after `composer update`.
+
+- **A published `config/leap.php` that still holds the old default follows along.** The
+  line `'cdn' => 'https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js'` is read as
+  `null`, because nobody chose it: it was published along with the rest. Composer prints a
+  line about it after every install and update, until the value is `null` or the line is
+  gone. Nothing is wrong in the meantime, the file just says 7 while the panel loads 8.
+- **A URL of your own stays.** A self-hosted copy, or an exact version: to stay on 7 for
+  now, set `tinymce@7.9.3`. A URL that names another major than leap was tested with is
+  yours to keep up.
+- **`language_url` stays on `langs7`.** It works under TinyMCE 8. The Dutch `langs8` has
+  empty translations, which show as empty labels, so do not move it without looking.
+- **TinyMCE 8 drops an HTML comment that holds HTML** (`<!-- <b>x</b> -->`) when it loads
+  the content. A site that keeps such comments in rich text sets
+  `'allow_html_in_comments' => true` in `leap.tinymce.options`.
+- **Rich text can be filtered on the server now, and that is off.** Nothing changes
+  until `leap.tinymce.sanitize` is set. Run `php artisan leap:sanitize` first; see
+  [attributes.md](attributes.md#filtering-rich-text).
+- **The click-to-edit preview goes through DOMPurify**, loaded from jsDelivr. A site that
+  hosts TinyMCE itself, or that has a Content-Security-Policy, points
+  `leap.tinymce.dompurify_cdn` at its own copy as well. Without the script the preview
+  shows the text without its markup. An embedded iframe is no longer shown in the preview,
+  only in the editor.
+
 ## 1.20, uploads in `static` write over a file of the same name
 
 `leap.filemanager.upload_replace` takes a list of folders now, and its default is
