@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `leap.sections.collapsed` to `false` to open every section nobody closed, as before.
   A published `config/leap.php` does not have the key and gets the new default. On by
   default on purpose: it changes the editor, not the site, and stores only view state.
+- **The backdrop of a TinyMCE dialog is dark**, like the panel's own modals, where
+  TinyMCE lays a white haze over the page.
 
 ### Fixed
 

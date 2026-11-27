@@ -389,6 +389,12 @@ BODY.sorting {
         pointer-events: none;
     }
 }
+/* The backdrop of a TinyMCE dialog (link, image, source code), dark like the panel's
+   own modals instead of TinyMCE's white haze. TinyMCE hangs its dialogs on the body,
+   outside .leap, and loads its skin after this file: BODY in front outweighs it. */
+BODY .tox .tox-dialog-wrap__backdrop {
+    background-color: rgb(0 0 0 / .6);
+}
 BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     &:has(> LABEL.leap-label:hover) > LABEL.leap-label .svg-icon {
         opacity: 0.6;
