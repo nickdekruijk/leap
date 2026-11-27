@@ -112,7 +112,46 @@ final class RichtextSanitizer
 
         // An iframe from a host that is not on the list has lost its src by now,
         // and what is left of it is an empty box on the page.
-        return (string) preg_replace('~<iframe(?:\s+(?!src=)[a-z-]+(?:="[^"]*")?)*\s*></iframe>~', '', $clean);
+        $clean = (string) preg_replace('~<iframe(?:\s+(?!src=)[a-z-]+(?:="[^"]*")?)*\s*></iframe>~', '', $clean);
+
+        return $this->readable($clean);
+    }
+
+    /**
+     * The four characters the sanitizer writes as a code without HTML needing it:
+     *
+     * @ + = and the backtick, back as themselves.
+     *
+     * In a page nobody sees the difference. Where a site uses rich text as plain
+     * text it shows: strip_tags() for a meta description or a feed leaves
+     * "info&#64;example.com" standing, and a search for the address finds nothing.
+     * With every value stored the filter's way, that would be every value.
+     *
+     * None of the four can open or close a tag, an attribute or a value: the
+     * sanitizer writes every value between double quotes, and both quotes stay a
+     * code, as < > and & do. It also writes every & of a text as &amp; first, so
+     * a "&#64;" in what it wrote is always an @ it encoded, never text that reads
+     * "&#64;". They are put back in text and in attribute values only. A name is
+     * left as the sanitizer wrote it, so that no "@click" can come out of this.
+     */
+    private function readable(string $clean): string
+    {
+        $decode = fn (string $text): string => str_replace(['&#64;', '&#43;', '&#61;', '&#96;'], ['@', '+', '=', '`'], $text);
+
+        // The sanitizer puts a space behind every value that holds a backtick, for
+        // what Internet Explorer 8 made of one. Stored that way the value grows by
+        // a space with every save, so the one it added comes off again.
+        $value = fn (array $match): string => $decode(
+            str_contains($match[0], '&#96;') && str_ends_with($match[0], ' "') ? substr($match[0], 0, -2).'"' : $match[0]
+        );
+
+        // What the sanitizer wrote has no < or > outside a tag and no " outside the
+        // quotes around a value, so a tag and the values in it can be told by those.
+        return (string) preg_replace_callback('~<[^<>]*>|[^<]+~', function (array $match) use ($decode, $value): string {
+            return $match[0][0] === '<'
+                ? (string) preg_replace_callback('~"[^"]*"~', $value, $match[0])
+                : $decode($match[0]);
+        }, $clean);
     }
 
     /**

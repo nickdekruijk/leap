@@ -163,6 +163,13 @@ What it does:
   of a record with the filter on rewrites its rich text. What it says stays the same, and
   the next save finds nothing to do. HTML comments do not survive.
 
+  In a text it writes both quotes as a code, `&#34;` and `&#039;`, next to the `&amp;`,
+  `&lt;` and `&gt;` any HTML has. Everything else is written as it is, a mail address and
+  a `+` or `=` included. So when you take the text out of rich text, for a meta
+  description, a summary or a feed, decode it:
+  `html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5)`. That was needed before
+  the filter as well, for the `&eacute;` and `&nbsp;` TinyMCE writes.
+
   Keeping a value as it was sent when nothing had to go is not safe. A parser sets markup
   aside that a browser reads on the page after all: a stray `<body onload>` ends up on the
   real body, a tag left open at the end is finished by the markup after it, a loose `<td>`

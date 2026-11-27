@@ -20,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   TinyMCE writes by default stays, and `leap.tinymce.sanitize_allow` adds what a site
   uses beyond that. What is stored is always the HTML the filter wrote, never what was
   sent, so the first save of a record rewrites its rich text in the filter's notation
-  (`é` for `&eacute;`, `<br />` for `<br>`) without changing what it says. An address is
+  (`é` for `&eacute;`, `<br />` for `<br>`) without changing what it says. Both quotes
+  are a code in that notation (`&#34;`, `&#039;`); a mail address, a `+` and a `=` are
+  written as they are. Code that takes the text out of rich text decodes it with
+  `html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5)`. An address is
   read the way a browser reads it, so a space around it or in a file name does not cost
   a link its `href`. Off by default, and it needs PHP 8.4 and
   `composer require symfony/html-sanitizer`, 7.4 or later. See

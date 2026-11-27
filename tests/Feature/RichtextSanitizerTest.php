@@ -2,6 +2,7 @@
 
 namespace NickDeKruijk\Leap\Tests\Feature;
 
+use Dom\HTMLDocument;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -273,6 +274,8 @@ class RichtextSanitizerTest extends TestCase
             '<xmp><b>x</b></xmp><p>na</p>',
             '<pre><code>&lt;?php echo 1;</code></pre>',
             '<p>hi</p><img src=x onerror=alert(1) x="',
+            '<p>Mail info@x.nl, 1 + 1 = 2, "a" \'b\' `c` &amp;#64;</p><p><a href="mailto:info@x.nl?subject=a+b" title="a=b @ `c`">m</a></p>',
+            '<a href="/x" class="a&quot; onmouseover=&quot;alert(1)">x</a>',
         ] as $html) {
             $once = $sanitizer->filter($html);
 
@@ -288,6 +291,149 @@ class RichtextSanitizerTest extends TestCase
     }
 
     /**
+     * The sanitizer writes @ + = and the backtick as a code, in text and in values.
+     * In a page that shows nowhere. A site that takes the text out of rich text
+     * with strip_tags(), for a meta description or a feed, prints the code, and a
+     * search for a mail address finds nothing. With every value stored the
+     * filter's way that is every value, so those four are written as themselves.
+     */
+    public function test_an_at_a_plus_an_equals_and_a_backtick_stay_readable(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        $stored = $sanitizer->filter(
+            '<p>Mail info@dec-utrecht.nl, 1 + 1 = 2, "dubbel" \'enkel\' `x`</p>'
+            .'<p><a href="mailto:info@dec-utrecht.nl">mail</a></p>'
+        );
+
+        $this->assertSame(
+            '<p>Mail info@dec-utrecht.nl, 1 + 1 = 2, &#34;dubbel&#34; &#039;enkel&#039; `x`</p>'
+            .'<p><a href="mailto:info@dec-utrecht.nl">mail</a></p>',
+            $stored,
+        );
+        // What a site that takes the text out sees, and what a search looks through.
+        $this->assertStringContainsString('info@dec-utrecht.nl, 1 + 1 = 2', strip_tags($stored));
+        $this->assertSame(
+            'Mail info@dec-utrecht.nl, 1 + 1 = 2, "dubbel" \'enkel\' `x`mail',
+            html_entity_decode(strip_tags($stored), ENT_QUOTES | ENT_HTML5),
+        );
+        $this->assertSame($stored, $sanitizer->filter($stored));
+    }
+
+    /**
+     * Putting = back must not put a quote back with it: the quote is what keeps a
+     * value inside its attribute.
+     */
+    public function test_a_value_cannot_leave_its_attribute(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<a href="/x" class="a&quot; onmouseover=&quot;alert(1)">x</a>',
+            '<a href="/x" title="a&#39; onmouseover=&#39;alert(1)">x</a>',
+            '<a href="/x" title="a` onmouseover=`alert(1)">x</a>',
+            '<a href="/x?a=&quot;&gt;&lt;img src=x onerror=alert(1)&gt;" title="b=c">x</a>',
+            '<a href="/x" title="&gt;&lt;script&gt;alert(1)&lt;/script&gt;=@+`">x</a>',
+        ] as $html) {
+            $stored = $sanitizer->filter($html);
+
+            $document = HTMLDocument::createFromString('<!DOCTYPE html><body>'.$stored.'</body>', LIBXML_NOERROR);
+            $this->assertSame(1, $document->body->getElementsByTagName('*')->length, $stored);
+            $link = $document->body->firstElementChild;
+            $this->assertSame('a', $link->localName, $stored);
+            $this->assertFalse($link->hasAttribute('onmouseover'), $stored);
+            $this->assertEqualsCanonicalizing(
+                array_map(fn ($attribute) => $attribute->name, iterator_to_array(HTMLDocument::createFromString('<!DOCTYPE html><body>'.$html.'</body>', LIBXML_NOERROR)->body->firstElementChild->attributes)),
+                array_map(fn ($attribute) => $attribute->name, iterator_to_array($link->attributes)),
+                $stored,
+            );
+            $this->assertSame($stored, $sanitizer->filter($stored), $html);
+        }
+
+        $this->assertSame(
+            '<a href="/x" class="a&#34; onmouseover=&#34;alert(1)">x</a>',
+            $sanitizer->filter('<a href="/x" class="a&quot; onmouseover=&quot;alert(1)">x</a>'),
+        );
+    }
+
+    /**
+     * Whoever types "&#64;" wants to see those five characters, not an @. The
+     * sanitizer writes the & of a text as &amp; first, so a code it wrote itself
+     * is never mistaken for one that was typed.
+     */
+    public function test_a_code_that_is_text_stays_text(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<p>&amp;#64; &amp;#43; &amp;#61; &amp;#96;</p>',
+            '<p>&amp;amp;#64;</p>',
+            '<p title="&amp;#64; &amp;#61;">t</p>',
+        ] as $html) {
+            $this->assertSame($html, $sanitizer->filter($html));
+            $this->assertSame($html, $sanitizer->filter($sanitizer->filter($html)));
+        }
+
+        // Typed as a code for the character, it is that character, as in any browser.
+        $this->assertSame('<p>@ @ @ = +</p>', $sanitizer->filter('<p>&#64; &#x40; &commat; &equals; &plus;</p>'));
+    }
+
+    /**
+     * The characters go back in text and in values, not in the name of an
+     * attribute, where the sanitizer wrote them as a code as well.
+     */
+    public function test_no_attribute_name_is_made_out_of_a_code(): void
+    {
+        $this->needsTheFilter();
+        config(['leap.tinymce.sanitize_allow' => ['*' => ['@click']]]);
+
+        $stored = (new RichtextSanitizer)->filter('<p @click="alert(1)" title="a@b">x</p>');
+
+        $this->assertStringNotContainsString('@click', $stored);
+        $this->assertStringContainsString('title="a@b"', $stored);
+    }
+
+    /**
+     * The sanitizer adds a space behind a value that holds a backtick, a defence
+     * against Internet Explorer 8. With what it writes stored every time, the
+     * value grew by a space with every save.
+     */
+    public function test_a_value_with_a_backtick_does_not_grow_with_every_save(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<p title="a `b` c">x</p>',
+            '<p title="ends with a space and has a ` ">x</p>',
+            '<p title="`">x</p>',
+            '<a href="/a`b.pdf" title="geen backtick ">x</a>',
+        ] as $html) {
+            $stored = $sanitizer->filter($html);
+
+            $this->assertSame($html, $stored);
+            $this->assertSame($stored, $sanitizer->filter($sanitizer->filter($stored)));
+        }
+    }
+
+    public function test_an_iframe_is_still_cleaned_up_with_an_equals_in_its_values(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        $kept = '<iframe title="x = y src=z" src="https://www.youtube.com/embed/x?v=1&amp;t=2" allow="a=b; c"></iframe>';
+        $this->assertSame($kept, $sanitizer->filter($kept.'<iframe src="https://evil.example/?a=b" title="a=b"></iframe>'));
+        $this->assertSame($kept, $sanitizer->filter($sanitizer->filter($kept)));
+
+        // What is inside goes, and a host that is not on the list takes the frame along.
+        $this->assertSame($kept, $sanitizer->filter(str_replace('></iframe>', '>a = b + c @ `d`</iframe>', $kept)));
+        $this->assertSame('', $sanitizer->filter('<iframe title="src=https://www.youtube.com/embed/x" src="https://evil.example/">a=b</iframe>'));
+    }
+
+    /**
      * A browser ignores the space around an address and follows these links today.
      * The sanitizer's own check refuses each of them, which left a link without a
      * href the first time its text was filtered.
@@ -300,12 +446,12 @@ class RichtextSanitizerTest extends TestCase
         foreach ([
             '<a href="http://www.nvdec.org " target="_blank" rel="noopener">x</a>' => '<a href="http://www.nvdec.org" target="_blank" rel="noopener">x</a>',
             '<a href=" https://x.nl/ ">x</a>' => '<a href="https://x.nl/">x</a>',
-            '<a href="mailto: info@x.nl">x</a>' => '<a href="mailto:info&#64;x.nl">x</a>',
+            '<a href="mailto: info@x.nl">x</a>' => '<a href="mailto:info@x.nl">x</a>',
             "<a href=\"/storage/files/a\u{00A0}b.pdf\">x</a>" => '<a href="/storage/files/a%C2%A0b.pdf">x</a>',
             '<a href="/storage/files/a%c2%a0b%C2%A0c.pdf">x</a>' => '<a href="/storage/files/a%c2%a0b%C2%A0c.pdf">x</a>',
             '<img src=" /storage/foto 1.png " alt="a">' => '<img src="/storage/foto%201.png" alt="a" />',
-            '<a href="mailto:x@y.nl?subject=Hallo daar">x</a>' => '<a href="mailto:x&#64;y.nl?subject&#61;Hallo%20daar">x</a>',
-            '<a href="tel:+31 20 123 45 67">x</a>' => '<a href="tel:&#43;31%2020%20123%2045%2067">x</a>',
+            '<a href="mailto:x@y.nl?subject=Hallo daar">x</a>' => '<a href="mailto:x@y.nl?subject=Hallo%20daar">x</a>',
+            '<a href="tel:+31 20 123 45 67">x</a>' => '<a href="tel:+31%2020%20123%2045%2067">x</a>',
         ] as $html => $clean) {
             $this->assertSame($clean, $sanitizer->filter($html), $html);
             $this->assertSame([], $sanitizer->dropped($html), $html);
