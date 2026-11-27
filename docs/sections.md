@@ -136,6 +136,34 @@ An open divider moves alone, which is how a block is moved from one group to the
 Blocks in front of the first divider belong to no group. Insert on a divider adds a block
 at the end of the group above it, and the line shows that by stepping in.
 
+### Editing in a modal
+
+A page with long sections can keep the list as a list and edit one section at a time in
+a modal:
+
+```php
+Attribute::make('sections')->sections(...)->inModal(),
+```
+
+Or for every sections field at once, with `'sections' => ['modal' => true]` in
+`config/leap.php`; `->inModal(false)` keeps one attribute out of it. Every section is
+then one line. Clicking it opens its fields in a modal, and a section that is added opens
+there too.
+
+Without it a section still opens in the list, and the Edit button on the row of a closed
+one opens the same modal: handy for one long section on a page of short ones. The section is closed in
+the list while it is in the modal, and opens there again afterwards. Rich text in the modal opens straight away; in the list it waits for a click,
+so a long page does not start dozens of editors. The dialog shows itself once that rich
+text has started, so it does not grow and move while you look at it, and after a second
+if it has not.
+
+What is changed in the modal is part of the form, like any other field. **Done** closes
+it and keeps the changes, which are stored with the record's own Save; clicking beside
+the modal or pressing Escape does the same, so nothing is lost by a stray click.
+**Done and save** saves the whole record, the way Save above the form does: a section on
+its own cannot be stored. **Cancel** puts the section back the way it was when the modal
+opened, its media included, and takes a section that was just added away again.
+
 ### What is stored about the list
 
 Whether a block is open (`_closed`), whether a group is folded (`_folded`) and the label

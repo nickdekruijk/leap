@@ -708,3 +708,68 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
         }
     }
 }
+
+/* A section edited in a modal. Under the dialogs of TinyMCE (1300) and the file
+   browser (1500), which open on top of it from a field inside it; the plain
+   .leap-modal sits above both. Wide enough for rich text. */
+.leap-modal.leap-section-modal {
+    z-index: 1100;
+    .leap-modal-dialog {
+        /* Until the rich text in it has started, see sections.blade.php */
+        opacity: 0;
+        transition: opacity 0.15s;
+        max-width: min(900px, 100%);
+        background-color: var(--leap-grey-light);
+        /* The bar stays, the body scrolls: the dialog itself does not. Square
+           corners, like the file browser that opens on top of it. */
+        padding: 0;
+        gap: 0;
+        overflow: hidden;
+        border-radius: 0;
+    }
+    /* Title and buttons, always in view: the header of the panel, as the file
+       browser has it */
+    .leap-section-modal-bar {
+        position: static;
+        flex: none;
+        H2 {
+            flex: 1 1 auto;
+            min-width: 0;
+            text-overflow: ellipsis;
+        }
+    }
+    &.leap-section-modal-ready .leap-modal-dialog {
+        opacity: 1;
+    }
+    .leap-section-modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        padding: var(--spacing);
+        > .leap-fieldset {
+            margin: 0;
+            padding: 0;
+            border: 0 none;
+            min-width: 0;
+        }
+        /* The status bar of rich text (element path, word count) sticks to the bottom
+           while a long text scrolls, as the toolbar sticks to the top. Sticky only works
+           when nothing in between clips, so the editor's frame stops clipping and its
+           two ends round their own corners instead. */
+        .tox-tinymce {
+            overflow: visible;
+        }
+        .tox-tinymce .tox-editor-container .tox-editor-header {
+            border-radius: var(--leap-radius) var(--leap-radius) 0 0;
+        }
+        .tox-tinymce .tox-statusbar {
+            position: sticky;
+            /* On the very edge of the dialog: at 0 it stops above the body's padding,
+               and the text scrolls by in the strip under it */
+            bottom: calc(-1 * var(--spacing));
+            z-index: 1;
+            background-color: white;
+            border-radius: 0 0 var(--leap-radius) var(--leap-radius);
+        }
+    }
+}

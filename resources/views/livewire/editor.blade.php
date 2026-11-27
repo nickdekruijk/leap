@@ -10,7 +10,7 @@
     x-on:leap-editor-touched.window="$store.leapEditor.touched = true"
     x-on:leap-editor-saved.window="$store.leapEditor.touched = false">
     @if ($editing)
-        <div class="leap-buttons" role="group" x-on:keydown.escape.window="if (!document.querySelector('.leap-filebrowser')) $store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (ok) selectedRow = null })">
+        <div class="leap-buttons" role="group" x-on:keydown.escape.window="if (!document.querySelector('.leap-filebrowser, .leap-section-modal')) $store.leapEditor.confirmLeave({{ Js::from(__('leap::resource.unsaved_warning')) }}).then(ok => { if (ok) selectedRow = null })">
             @can('leap::update')
                 <x-leap::button svg-icon="far-check-circle" wire:click="save" label="{{ $this->parentModule()->saveLabel ?: 'leap::resource.save' }}" wire:loading.delay.shorter.attr="disabled" class="primary" type="submit" />
             @endcan

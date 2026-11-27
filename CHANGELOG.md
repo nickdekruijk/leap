@@ -25,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the next divider are its group, the group can be folded away, and a folded divider
   takes its group along when it is dragged. Nothing changes in what is stored or
   rendered on the site. See [sections](docs/sections.md#dividers).
+- **A section can be edited in a modal.** A closed section has an Edit button that opens
+  its fields in a modal. `->inModal()` on a sections attribute, or `leap.sections.modal` for
+  all of them, goes further and keeps the list a list: every section is one line, and a
+  click on it opens the modal. Done keeps the changes in the form,
+  Done and save saves the record, Cancel puts the section back as it was. The buttons
+  stay at the top while the fields scroll, rich text in the modal opens straight away,
+  and its toolbar and status bar stay in view while a long text scrolls. See
+  [sections](docs/sections.md#editing-in-a-modal).
 - **`leap.sections.collapsed`**, see Changed.
 
 ### Changed

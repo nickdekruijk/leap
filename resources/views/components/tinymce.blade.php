@@ -7,6 +7,12 @@
         ? config('leap.tinymce.lazy_sections', true)
         : config('leap.tinymce.lazy', false);
 
+    // A section open in the modal is the one being edited: no click in between. Other
+    // Livewire components use this view too, and have no modal.
+    if ($lazy && method_exists($this, 'inSectionModal') && $this->inSectionModal($attribute->dataName ?? '')) {
+        $lazy = false;
+    }
+
     // A stable, unique id per field so re-initializing (a second section, or
     // reopening after save) never collides with a stale editor.
     $fieldId = 'leap-rt-'.str_replace('.', '-', $attribute->dataName);
@@ -20,9 +26,12 @@
 @endphp
 
 <x-leap::label>
+    {{-- data-leap-richtext: whether TinyMCE starts right away, for a modal that waits
+         until it has (see leap-richtext-ready below) before it shows itself. --}}
     <div
         wire:key="{{ $attribute->dataName . $this->randomSortSeed }}"
         wire:ignore
+        data-leap-richtext="{{ $lazy ? 'lazy' : 'eager' }}"
         x-data="{
             value: $wire.entangle('{{ $attribute->dataName }}'),
             lazy: {{ $lazy ? 'true' : 'false' }},
@@ -184,6 +193,10 @@
                                         editor.setContent(this.value);
                                     }
                                     editor.setDirty(false);
+                                    // Loaded and sized to its content, on the next frame. A
+                                    // modal around it waits for this before it shows itself,
+                                    // so it does not grow and jump while you look at it.
+                                    requestAnimationFrame(() => this.$el.dispatchEvent(new CustomEvent('leap-richtext-ready', { bubbles: true })));
                                 });
                                 this.$watch('value', (newValue) => {
                                     const content = editor.getContent();
@@ -210,7 +223,7 @@
                     });
                 }));
             },
-            // Taken out of the page (the list was redrawn, a section closed): close the
+            // Taken out of the page (the modal closed, the list was redrawn): close the
             // editor with it, or TinyMCE keeps an instance for an element that is gone.
             // Nothing to hand to the form here: that happened on blur, when the click
             // that closed it moved the focus away.

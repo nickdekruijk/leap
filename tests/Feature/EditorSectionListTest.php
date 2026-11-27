@@ -5,6 +5,7 @@ namespace NickDeKruijk\Leap\Tests\Feature;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\Section;
@@ -18,6 +19,7 @@ use NickDeKruijk\Leap\Models\Media;
 use NickDeKruijk\Leap\Models\Mediable;
 use NickDeKruijk\Leap\Models\Role;
 use NickDeKruijk\Leap\Tests\Fixtures\SectionListResource;
+use NickDeKruijk\Leap\Tests\Fixtures\SectionModalResource;
 use NickDeKruijk\Leap\Tests\Fixtures\SectionsModel;
 use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
@@ -359,6 +361,31 @@ class EditorSectionListTest extends TestCase
         $this->assertFalse($editor->instance()->data['sections'][1]['_folded']);
     }
 
+    public function test_rich_text_waits_for_a_click_in_the_list_and_opens_straight_away_in_the_modal(): void
+    {
+        $this->editor([['_closed' => false] + $this->block('Een')])->assertSeeHtml('lazy: true')->assertDontSeeHtml('lazy: false');
+
+        $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->assertSeeHtml('lazy: false')
+            ->assertDontSeeHtml('lazy: true')
+            ->assertSeeHtml('data-leap-richtext="eager"');
+    }
+
+    /**
+     * The dialog shows itself once its rich text has started, so it does not grow and
+     * jump while it is looked at. It counts the editors that start right away, and gives
+     * up waiting after a second.
+     */
+    public function test_the_modal_waits_for_its_rich_text_before_it_shows(): void
+    {
+        $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->assertSeeHtml("querySelectorAll('[data-leap-richtext=eager]')")
+            ->assertSeeHtml('x-on:leap-richtext-ready="if (--waiting <= 0) ready = true"')
+            ->assertSeeHtml('setTimeout(() => ready = true, 1000)');
+    }
+
     public function test_an_empty_list_can_still_be_added_to(): void
     {
         $this->editor([])
@@ -581,6 +608,175 @@ class EditorSectionListTest extends TestCase
 
         $this->assertFalse($editor->instance()->data['sections'][4]['_folded']);
         $this->assertSame([0, 1, 2, 3, 4, 5, 6], $this->order($editor));
+    }
+
+    // ---- Editing in a modal -----------------------------------------------------------
+
+    private function modal(array $sections): Testable
+    {
+        config(['leap.sections.modal' => true]);
+
+        return $this->editor($sections);
+    }
+
+    public function test_in_modal_mode_the_list_draws_no_fields_and_a_click_opens_the_modal(): void
+    {
+        $editor = $this->modal([['_closed' => false] + $this->block('Een'), $this->block('Twee')]);
+
+        $editor->assertDontSeeHtml('data.sections.0.head.nl')
+            ->assertSeeHtml("editSection('sections', 0)")
+            ->assertDontSeeHtml("toggleSection('sections', 0)")
+            ->assertDontSeeHtml('toggleAllSections')
+            ->assertDontSeeHtml('class="leap-modal leap-section-modal"');
+
+        $editor->call('editSection', 'sections', 1);
+
+        $this->assertSame('sections', $editor->instance()->sectionModal['attribute']);
+        $this->assertSame(1, $editor->instance()->sectionModal['index']);
+        $editor->assertSeeHtml('class="leap-modal leap-section-modal"')
+            ->assertSeeHtml('data.sections.1.head.nl')
+            ->assertDontSeeHtml('data.sections.0.head.nl');
+    }
+
+    /**
+     * Without modal mode a row opens in the list, and the Edit button of a closed one
+     * opens the modal. A section open in the list is closed there meanwhile, or its
+     * fields would be on the page twice, and opens again when the modal closes.
+     */
+    public function test_without_modal_mode_the_edit_button_opens_the_modal(): void
+    {
+        $editor = $this->editor([['_closed' => false] + $this->block('Een'), ['_closed' => true] + $this->block('Twee')]);
+
+        // Only the closed one: an open section is being edited in the list already
+        $editor->assertSeeHtml("toggleSection('sections', 0)")
+            ->assertDontSeeHtml("editSection('sections', 0)")
+            ->assertSeeHtml("editSection('sections', 1)");
+        $this->assertSame(1, substr_count($editor->html(), 'leap-section-edit'));
+        // Open in the list: its rich text is there once
+        $this->assertSame(1, substr_count($editor->html(), 'leap-rt-data-sections-0-body-nl'));
+
+        $editor->call('editSection', 'sections', 0)
+            ->assertSeeHtml('class="leap-modal leap-section-modal"');
+        // Once, in the modal, and not in the list as well
+        $this->assertSame(1, substr_count($editor->html(), 'leap-rt-data-sections-0-body-nl'));
+        $this->assertFalse($editor->instance()->data['sections'][0]['_closed']);
+
+        $editor->call('closeSection')->assertDontSeeHtml('class="leap-modal leap-section-modal"');
+        $this->assertSame(1, substr_count($editor->html(), 'leap-rt-data-sections-0-body-nl'));
+    }
+
+    public function test_in_modal_mode_there_is_no_edit_button(): void
+    {
+        $this->modal([$this->block('Een')])->assertDontSeeHtml('leap-section-edit');
+    }
+
+    public function test_an_unknown_section_opens_no_modal(): void
+    {
+        $editor = $this->modal([$this->block('Een')])->call('editSection', 'sections', 7);
+
+        $this->assertNull($editor->instance()->sectionModal);
+    }
+
+    public function test_done_keeps_what_was_changed_in_the_form(): void
+    {
+        $editor = $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->set('data.sections.0.head.nl', 'Andere kop')
+            ->call('closeSection');
+
+        $this->assertNull($editor->instance()->sectionModal);
+        $this->assertSame('Andere kop', $editor->instance()->data['sections'][0]['head']['nl']);
+        $this->assertTrue($editor->instance()->isDirty());
+    }
+
+    public function test_cancel_puts_the_section_and_its_media_back(): void
+    {
+        Storage::disk('public')->put('photo.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        Storage::disk('public')->put('other.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+        $media = Media::forFile('photo.jpg', 'public');
+        $other = Media::forFile('other.jpg', 'public');
+
+        config(['leap.sections.modal' => true]);
+        $record = $this->record([$this->block('Een'), ['_name' => 'image', 'caption' => 'Het gebouw']]);
+        Mediable::create(['media_id' => $media->id, 'mediable_type' => SectionsModel::class, 'mediable_id' => $record->id, 'mediable_attribute' => 'sections.1.image', 'sort' => 0]);
+
+        $editor = Livewire::test(Editor::class)->call('openEditor', $record->id)
+            ->call('editSection', 'sections', 1)
+            ->set('data.sections.1.caption', 'Iets anders')
+            ->call('unselectMedia', 'sections.1.image', 0)
+            ->call('selectMediaFiles', 'sections.1.image', ['other.jpg'])
+            ->call('cancelSection');
+
+        $data = $editor->instance()->data;
+        $this->assertNull($editor->instance()->sectionModal);
+        $this->assertSame('Het gebouw', $data['sections'][1]['caption']);
+        $this->assertSame([$media->id], $data['sections.1.image']);
+        $this->assertNotSame($other->id, $media->id);
+        $this->assertFalse($editor->instance()->isDirty());
+    }
+
+    public function test_a_section_added_in_modal_mode_opens_in_the_modal_and_cancel_takes_it_away(): void
+    {
+        $editor = $this->modal([$this->block('Een')])->call('insertSection', 'sections', 'text', 0, true);
+
+        $this->assertSame(1, $editor->instance()->sectionModal['index']);
+        $this->assertTrue($editor->instance()->sectionModal['new']);
+        $editor->assertSeeHtml('data.sections.1.body.nl');
+
+        $editor->call('cancelSection');
+
+        $this->assertSame([0], array_keys($editor->instance()->data['sections']));
+        $this->assertNull($editor->instance()->sectionModal);
+    }
+
+    public function test_done_and_save_stores_the_record_and_closes_the_modal(): void
+    {
+        $editor = $this->modal([$this->block('Een')]);
+        $id = $editor->instance()->editing;
+
+        $editor->call('editSection', 'sections', 0)
+            ->set('data.sections.0.head.nl', 'Opgeslagen kop')
+            ->call('saveSection');
+
+        $this->assertSame('Opgeslagen kop', SectionsModel::find($id)->sections[0]['head']['nl']);
+        $this->assertNull($editor->instance()->sectionModal);
+        $this->assertFalse($editor->instance()->isDirty());
+        $editor->assertDispatchedTo(Toasts::class, 'toast');
+    }
+
+    public function test_opening_a_record_closes_the_modal(): void
+    {
+        $editor = $this->modal([$this->block('Een')])->call('editSection', 'sections', 0);
+
+        $editor->call('openEditor', $this->record([$this->block('Ander record')])->id);
+
+        $this->assertNull($editor->instance()->sectionModal);
+    }
+
+    public function test_the_browser_cannot_point_the_modal_anywhere(): void
+    {
+        $this->expectException(CannotUpdateLockedPropertyException::class);
+
+        $this->modal([$this->block('Een')])->set('sectionModal', ['attribute' => 'title', 'index' => 0, 'new' => false, 'section' => [], 'media' => []]);
+    }
+
+    public function test_an_attribute_says_for_itself_whether_its_sections_open_in_a_modal(): void
+    {
+        $this->app['config']->set('leap.default_modules', [Dashboard::class, SectionModalResource::class, FileManager::class]);
+        Leap::context()->setModule(SectionModalResource::class);
+        Leap::context()->setPermissions([SectionModalResource::class => ['read' => true, 'create' => true, 'update' => true, 'delete' => true]]);
+        $editor = new Editor;
+
+        config(['leap.sections.modal' => false]);
+        SectionModalResource::$modal = true;
+        $this->assertTrue($editor->sectionsInModal('sections'));
+
+        config(['leap.sections.modal' => true]);
+        SectionModalResource::$modal = false;
+        $this->assertFalse($editor->sectionsInModal('sections'));
+
+        SectionModalResource::$modal = true;
+        $this->assertFalse($editor->sectionsInModal('title'));
     }
 
     // ---- The site ---------------------------------------------------------------------

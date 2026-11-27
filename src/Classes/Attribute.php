@@ -98,6 +98,12 @@ class Attribute
 
     public bool $sectionTitle = false;
 
+    /**
+     * Whether the sections of this attribute are edited in a modal, see inModal().
+     * Null follows config('leap.sections.modal').
+     */
+    public ?bool $sectionsModal = null;
+
     public bool $raw = false;
 
     public ?string $showIf = null;
@@ -853,6 +859,22 @@ class Attribute
         $this->type = 'sections';
         $this->input = 'sections';
         $this->sections = $sections;
+
+        return $this;
+    }
+
+    /**
+     * Edit the sections of this attribute in a modal instead of opening them in the list
+     *
+     * The list then stays a list: every section is one line, and clicking it opens its
+     * fields in a modal. What is changed there is part of the form like any other
+     * field, so it is stored with the record's own Save. Without it a section opens in
+     * the list, and its Edit button opens the same modal. Without a call this follows
+     * config('leap.sections.modal').
+     */
+    public function inModal(bool $modal = true): Attribute
+    {
+        $this->sectionsModal = $modal;
 
         return $this;
     }

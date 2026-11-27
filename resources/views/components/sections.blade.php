@@ -11,14 +11,16 @@
     $rows = array_keys(array_filter($layout, fn ($row) => !$row['hidden']));
     $firstRow = $rows[0] ?? null;
     $lastRow = $rows ? end($rows) : null;
+    // Edited in a modal: the list stays a list, and a click opens a section's fields there
+    $modal = $this->sectionsInModal($attribute->name);
 @endphp
 
 {{-- tag="div": a <label> hands a click anywhere on it to the first button inside --}}
 <x-leap::label tag="div">
-    @if ($this->hasOpenSection($attribute->name))
+    @if (!$modal && $this->hasOpenSection($attribute->name))
         <button wire:click="toggleAllSections('{{ $attribute->name }}',1)" class="leap-button-add" type="button">@svg('far-square-minus', 'svg-icon')</button>
     @endif
-    @if ($this->hasClosedSection($attribute->name))
+    @if (!$modal && $this->hasClosedSection($attribute->name))
         <button wire:click="toggleAllSections('{{ $attribute->name }}',0)" class="leap-button-add" type="button">@svg('far-square-plus', 'svg-icon')</button>
     @endif
 </x-leap::label>
@@ -31,7 +33,10 @@
             @php
                 $sectionContent = $this->data[$attribute->name][$index];
                 $section = $definitions->get($sectionContent['_name']);
-                $closed = !empty($sectionContent['_closed']);
+                // The section open in the modal is closed here meanwhile: its fields
+                // cannot be on the page twice, two editors on one value would fight.
+                $editing = ($this->sectionModal['attribute'] ?? null) === $attribute->name && ($this->sectionModal['index'] ?? null) === $index;
+                $closed = $modal || $editing || !empty($sectionContent['_closed']);
                 $folded = $row['divider'] && !empty($sectionContent['_folded']);
                 $summary = $closed ? $this->sectionSummary($sectionContent, $section) : '';
             @endphp
@@ -44,7 +49,7 @@
                     // The same test HasSections uses to leave a section off the page
                     'leap-editor-section-inactive' => isset($sectionContent['active']) && !$sectionContent['active'],
                 ])>
-                <label x-sort:handle class="leap-label" wire:click="toggleSection('{{ $attribute->name }}', {{ $index }})">
+                <label x-sort:handle class="leap-label" @if ($modal) wire:click="editSection('{{ $attribute->name }}', {{ $index }})" @else wire:click="toggleSection('{{ $attribute->name }}', {{ $index }})" @endif>
                     <span class="leap-label">
                         @svg('fas-grip-vertical', 'svg-icon')
                         {{-- The kind of section is a narrow column in front of what it
@@ -74,6 +79,11 @@
                     <span class="leap-section-thumbnail"></span>
                 @endif
                 <span class="leap-section-actions">
+                    {{-- In modal mode a click on the row opens the modal; otherwise this does,
+                         for a closed section. An open one is being edited right here. --}}
+                    @if (!$modal && !empty($sectionContent['_closed']))
+                        <x-leap::button svg-icon="fas-pen" wire:click="editSection('{{ $attribute->name }}', {{ $index }})" label="leap::resource.edit" type="button" class="leap-section-edit" />
+                    @endif
                     {{-- Insert puts a section above this row: on the first row that is the
                          top of the list, and on a divider it is the end of the group above
                          it. The end of the list has its own control under it. The button is
@@ -123,5 +133,43 @@
         </select>
     </span>
 
+    @if (($this->sectionModal['attribute'] ?? null) === $attribute->name && isset($this->data[$attribute->name][$this->sectionModal['index']]))
+        @php
+            $index = $this->sectionModal['index'];
+            $sectionContent = $this->data[$attribute->name][$index];
+            $section = $definitions->get($sectionContent['_name']);
+        @endphp
+        {{-- Teleported to the root of the panel: the editor slides in with a transform,
+             which would make a fixed overlay cover only the editor and scroll along.
+             Backdrop and Escape mean Done, so nothing typed is ever lost by a stray
+             click; but not while the file browser or a TinyMCE dialog is open on top. --}}
+        <div x-data wire:key="{{ $attribute->name }}-modal-{{ $index }}">
+            {{-- Shown once the rich text in it has started: TinyMCE grows to its content,
+                 and a centred dialog grows both ways, so its header and fields would jump
+                 up while you look at them. The backdrop comes straight away, the dialog
+                 when every eager editor has said so, or after a second if one does not. --}}
+            <x-leap::modal show="true" teleport class="leap-section-modal"
+                x-data="{ waiting: 0, ready: false }"
+                x-init="waiting = $el.querySelectorAll('[data-leap-richtext=eager]').length; if (!waiting) ready = true; setTimeout(() => ready = true, 1000)"
+                x-on:leap-richtext-ready="if (--waiting <= 0) ready = true"
+                x-bind:class="{ 'leap-section-modal-ready': ready }"
+                close="if (!document.querySelector('.leap-filebrowser, .tox-dialog')) $wire.closeSection()">
+                {{-- Title and buttons stay at the top, and only the fields below them
+                     scroll. That way TinyMCE's sticky toolbar, which sticks to the top of
+                     whatever scrolls, stays under the bar instead of behind it. --}}
+                <header class="leap-header leap-section-modal-bar">
+                    <h2>{{ $section?->label ?: $sectionContent['_name'] }}</h2>
+                    <x-leap::button svg-icon="far-check-circle" wire:click="closeSection" label="leap::resource.done" class="primary" type="button" />
+                    @can('leap::update')
+                        <x-leap::button svg-icon="far-floppy-disk" wire:click="saveSection" label="leap::resource.done_save" wire:loading.delay.shorter.attr="disabled" type="button" />
+                    @endcan
+                    <x-leap::button svg-icon="fas-times" wire:click="cancelSection" label="leap::resource.cancel" type="button" />
+                </header>
+                <div class="leap-section-modal-body">
+                    <x-leap::section-fields :attribute="$attribute" :index="$index" :section-content="$sectionContent" :section="$section" :placeholder="$placeholder" />
+                </div>
+            </x-leap::modal>
+        </div>
+    @endif
 
 </div>

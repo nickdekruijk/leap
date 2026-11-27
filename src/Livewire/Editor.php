@@ -147,6 +147,18 @@ class Editor extends Component
     public string $dataFingerprint = '';
 
     /**
+     * The section open in the modal, for an attribute that edits its sections there.
+     *
+     * Holds the section as it was when the modal opened, and the media that belongs to
+     * it, so Cancel can put it back. Locked: the browser has no business pointing it at
+     * another field, or handing it a section to restore.
+     *
+     * @var array{attribute: string, index: int|string, new: bool, section: array<string, mixed>, media: array<string, mixed>}|null
+     */
+    #[Locked]
+    public ?array $sectionModal = null;
+
+    /**
      * Whether the form differs from what was loaded, for the browser to read.
      */
     #[Locked]
@@ -286,6 +298,10 @@ class Editor extends Component
                 $data[$attribute->name] = $this->sectionsContent($data[$attribute->name]);
             }
         }
+
+        // The order of the keys says nothing about the values. Media of a section lives
+        // in its own keys, and putting one back moves it to the end.
+        ksort($data);
 
         return md5((string) json_encode($data, JSON_PARTIAL_OUTPUT_ON_ERROR));
     }
@@ -633,6 +649,10 @@ class Editor extends Component
         // Set the editing id and open the editor
         $this->editing = $id;
 
+        // A section of the record that was open before has nothing to do with this one,
+        // and after a save the form is reloaded from what was stored.
+        $this->sectionModal = null;
+
         // We only want the attributes that are shown in the editor
         $attributes = $this->attributes()->pluck('name')->toArray();
 
@@ -864,6 +884,7 @@ class Editor extends Component
     public function close()
     {
         $this->editing = null;
+        $this->sectionModal = null;
     }
 
     /**
@@ -1408,9 +1429,14 @@ class Editor extends Component
             $section[$default->name] = $default->default;
         }
 
-        $this->placeSection($attribute, $section, $before);
+        $new = $this->placeSection($attribute, $section, $before);
 
         $this->checkSectionValues();
+
+        // A new section is there to be filled in. Cancel takes it away again.
+        if ($new !== null && $this->sectionsInModal($attribute)) {
+            $this->openSectionModal($attribute, $new, true);
+        }
     }
 
     /**
@@ -1443,6 +1469,138 @@ class Editor extends Component
 
         $this->checkSectionValues();
         $this->setRandomSortSeed();
+    }
+
+    /**
+     * Whether the sections of an attribute are edited in a modal rather than in the list.
+     */
+    public function sectionsInModal(string $attribute): bool
+    {
+        $definition = $this->attributes()->firstWhere('name', $attribute);
+
+        if (! $definition || $definition->type !== 'sections') {
+            return false;
+        }
+
+        return $definition->sectionsModal ?? (bool) config('leap.sections.modal', false);
+    }
+
+    /**
+     * Whether a field belongs to the section that is open in the modal.
+     *
+     * Rich text in the list waits for a click before it starts TinyMCE, because a page
+     * of thirty sections would otherwise start dozens of editors. The modal shows one
+     * section, so its rich text can open straight away.
+     */
+    public function inSectionModal(string $dataName): bool
+    {
+        if (! $this->sectionModal) {
+            return false;
+        }
+
+        return str_starts_with($dataName, 'data.'.$this->sectionModal['attribute'].'.'.$this->sectionModal['index'].'.');
+    }
+
+    /**
+     * Open a section in the modal: from a click on its row in modal mode, and from its
+     * Edit button otherwise.
+     */
+    public function editSection(string $field, int $index): void
+    {
+        $this->openSectionModal($field, $index, false);
+    }
+
+    /**
+     * Open a section in the modal, remembering how it was so Cancel can put it back.
+     *
+     * @param  bool  $new  Whether the section was added a moment ago: Cancel removes it
+     */
+    private function openSectionModal(string $field, int|string $index, bool $new): void
+    {
+        // Any sections attribute: without modal mode the list has an Edit button for it.
+        // What modal mode decides is what a click on the row does.
+        if ($this->attributes()->firstWhere('name', $field)?->type !== 'sections' || ! is_array($this->data[$field][$index] ?? null)) {
+            return;
+        }
+
+        $this->sectionModal = [
+            'attribute' => $field,
+            'index' => $index,
+            'new' => $new,
+            'section' => $this->data[$field][$index],
+            'media' => $this->sectionMedia($field, $index),
+        ];
+    }
+
+    /**
+     * The media of one section, which lives beside it in the form as {field}.{index}.{name}.
+     *
+     * @return array<string, mixed>
+     */
+    private function sectionMedia(string $field, int|string $index): array
+    {
+        $prefix = $field.'.'.$index.'.';
+
+        return array_filter($this->data, fn ($key): bool => is_string($key) && str_starts_with($key, $prefix), ARRAY_FILTER_USE_KEY);
+    }
+
+    /**
+     * Close the modal and keep what was changed in it. It is in the form now, and is
+     * stored with the record.
+     */
+    public function closeSection(): void
+    {
+        $this->sectionModal = null;
+    }
+
+    /**
+     * Close the modal and put the section back the way it was when it opened, or take it
+     * away again when it was added in the modal.
+     */
+    public function cancelSection(): void
+    {
+        $modal = $this->sectionModal;
+        $this->sectionModal = null;
+
+        if (! $modal || ! isset($this->data[$modal['attribute']][$modal['index']])) {
+            return;
+        }
+
+        $field = $modal['attribute'];
+        $index = $modal['index'];
+
+        if ($modal['new']) {
+            $this->removeSection($field, (string) $index);
+
+            return;
+        }
+
+        $this->data[$field][$index] = $modal['section'];
+        foreach (array_keys($this->sectionMedia($field, $index)) as $key) {
+            unset($this->data[$key]);
+        }
+        // Media picked in the modal was flagged for syncMedia(); it now writes back what
+        // was there, which is the same rows.
+        foreach ($modal['media'] as $key => $value) {
+            $this->data[$key] = $value;
+        }
+
+        // A rich-text field keeps its own copy of the value in the browser
+        $this->setRandomSortSeed();
+    }
+
+    /**
+     * Save the record from the modal, and close it.
+     *
+     * The whole record, as the Save button above the form does: a section on its own is
+     * not something that can be stored. When validation fails the exception leaves the
+     * modal open, with the errors beside the fields.
+     */
+    public function saveSection(): void
+    {
+        $this->save();
+
+        $this->sectionModal = null;
     }
 
     /**

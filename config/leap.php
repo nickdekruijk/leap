@@ -1074,10 +1074,14 @@ return [
     |            section somebody opened or closed keeps that state, which is
     |            stored with the record. false opens every section nobody
     |            closed, as before 1.24.
+    | modal:     Edit a section in a modal instead of opening it in the list.
+    |            The list then shows every section as one line. Per attribute
+    |            with Attribute::inModal(), which wins over this.
     |
     */
     'sections' => [
         'collapsed' => true,
+        'modal' => false,
     ],
 
     /*
