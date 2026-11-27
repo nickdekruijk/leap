@@ -56,8 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A rich-text field cleans up after itself.** Dropping back to its preview after a save
   took the editor off the page and left it in TinyMCE's own list, and every time the file
   browser was opened from a rich-text field a listener stayed behind, so a file picked
-  later was also handed to every dialog that had asked before. Both are gone, and a field
-  taken off the page stops listening to the editor's events.
+  later, in that field or another, was also handed to every dialog that had asked before.
+  There is one pick at a time now, a field taken off the page stops listening to the
+  editor's events, and one taken off while TinyMCE is still loading is not started.
 - **Looking at another language tab is no longer an unsaved change.** The label of a
   closed section is rebuilt in the language the editor shows and travels with the form,
   so switching tabs was enough to be asked about changes nobody made.

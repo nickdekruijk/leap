@@ -143,11 +143,14 @@
              which would make a fixed overlay cover only the editor and scroll along.
              Backdrop and Escape mean Done, so nothing typed is ever lost by a stray
              click; but not while the file browser or a TinyMCE dialog is open on top,
-             nor for an Escape that closes something of TinyMCE's own. Done asks the rich
+             or another modal of the panel (the AI image dialog of a media field), nor
+             for an Escape that closes something of TinyMCE's own. Done asks the rich
              text for what was typed first (leap-richtext-sync): closing does not always
              blur the editor, and then the text would not reach the form. --}}
         <div x-data wire:key="{{ $attribute->name }}-modal-{{ $index }}">
-            {{-- Shown once the rich text in it has started: TinyMCE grows to its content,
+            {{-- input and change: the modal is teleported out of the editor, whose own
+                 listeners mark typing that has not reached the server as unsaved work.
+                 Shown once the rich text in it has started: TinyMCE grows to its content,
                  and a centred dialog grows both ways, so its header and fields would jump
                  up while you look at them. The backdrop comes straight away, the dialog
                  when every eager editor has said so, or after a second if one does not. --}}
@@ -156,7 +159,9 @@
                 x-init="waiting = $el.querySelectorAll('[data-leap-richtext=eager]').length; if (!waiting) ready = true; setTimeout(() => ready = true, 1000)"
                 x-on:leap-richtext-ready="if (--waiting <= 0) ready = true"
                 x-bind:class="{ 'leap-section-modal-ready': ready }"
-                close="if (!$event.target.closest?.('.tox') && !document.querySelector('.leap-filebrowser, .tox-dialog')) { $dispatch('leap-richtext-sync'); $wire.closeSection() }">
+                x-on:input="if ($event.isTrusted) $store.leapEditor.touched = true"
+                x-on:change="if ($event.isTrusted) $store.leapEditor.touched = true"
+                close="if (!$event.target.closest?.('.tox') && !document.querySelector('.leap-filebrowser, .tox-dialog') && ![...document.querySelectorAll('.leap-modal:not(.leap-section-modal)')].some((other) => getComputedStyle(other).display !== 'none')) { $dispatch('leap-richtext-sync'); $wire.closeSection() }">
                 {{-- Title and buttons stay at the top, and only the fields below them
                      scroll. That way TinyMCE's sticky toolbar, which sticks to the top of
                      whatever scrolls, stays under the bar instead of behind it. --}}

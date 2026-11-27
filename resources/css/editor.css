@@ -96,9 +96,18 @@
                 right: calc(var(--spacing) / 2);
                 display: flex;
                 gap: calc(var(--spacing) / 4);
+                /* Hidden is out of reach too: a tap on the right of a row would land
+                   on Duplicate or Delete without anyone seeing them */
                 opacity: 0;
+                pointer-events: none;
                 &:focus-within {
                     opacity: 1;
+                    pointer-events: auto;
+                }
+                /* A touch screen has no hover to show them first */
+                @media (hover: none) {
+                    opacity: 1;
+                    pointer-events: auto;
                 }
                 BUTTON {
                     background-color: rgb(0 0 0 / .15);
@@ -411,6 +420,7 @@ BODY:not(.sorting) .leap-editor-sections .leap-editor-section {
     &:hover {
         > .leap-section-actions {
             opacity: 1;
+            pointer-events: auto;
         }
     }
 }

@@ -153,7 +153,7 @@ class Editor extends Component
      * it, so Cancel can put it back. Locked: the browser has no business pointing it at
      * another field, or handing it a section to restore.
      *
-     * @var array{attribute: string, index: int|string, new: bool, section: array<string, mixed>, media: array<string, mixed>, flags: list<string>}|null
+     * @var array{attribute: string, index: int|string, new: bool, section: array<string, mixed>, media: array<string, mixed>, flags: array<string, string>, sorts: array<int|string, mixed>}|null
      */
     #[Locked]
     public ?array $sectionModal = null;
@@ -1432,13 +1432,18 @@ class Editor extends Component
             $section[$default->name] = $default->default;
         }
 
+        // How the list was before, for Cancel to put back: placing the section numbers
+        // every _sort again, and the form would count that as a change.
+        $sorts = array_map(fn ($section) => is_array($section) ? ($section['_sort'] ?? null) : null, $this->data[$attribute] ?? []);
+        $flags = $this->mediaUpdated;
+
         $new = $this->placeSection($attribute, $section, $before);
 
         $this->checkSectionValues();
 
         // A new section is there to be filled in. Cancel takes it away again.
         if ($new !== null && $this->sectionsInModal($attribute)) {
-            $this->openSectionModal($attribute, $new, true);
+            $this->openSectionModal($attribute, $new, true, $sorts, $flags);
         }
     }
 
@@ -1530,8 +1535,10 @@ class Editor extends Component
      * Open a section in the modal, remembering how it was so Cancel can put it back.
      *
      * @param  bool  $new  Whether the section was added a moment ago: Cancel removes it
+     * @param  array<int|string, mixed>  $sorts  For a new one, the _sort of the others from before it was placed
+     * @param  array<string, string>|null  $flags  For a new one, the media flags from before it was placed
      */
-    private function openSectionModal(string $field, int|string $index, bool $new): void
+    private function openSectionModal(string $field, int|string $index, bool $new, array $sorts = [], ?array $flags = null): void
     {
         // Any sections attribute: without modal mode the list has an Edit button for it.
         // What modal mode decides is what a click on the row does.
@@ -1545,8 +1552,10 @@ class Editor extends Component
             'new' => $new,
             'section' => $this->data[$field][$index],
             'media' => $this->sectionMedia($field, $index),
-            // Which of its media fields syncMedia() was going to write already
-            'flags' => array_values(array_filter($this->mediaUpdated, fn ($key): bool => str_starts_with((string) $key, $field.'.'.$index.'.'))),
+            // What syncMedia() was going to write when the modal opened. The whole set:
+            // the modal covers the form, so nothing else can change it meanwhile.
+            'flags' => $flags ?? $this->mediaUpdated,
+            'sorts' => $sorts,
         ];
     }
 
@@ -1590,6 +1599,17 @@ class Editor extends Component
         if ($modal['new']) {
             $this->removeSection($field, (string) $index);
 
+            // The list as it was before the section was placed
+            foreach ($modal['sorts'] as $key => $sort) {
+                if (isset($this->data[$field][$key]) && is_array($this->data[$field][$key])) {
+                    $this->data[$field][$key]['_sort'] = $sort;
+                    if ($sort === null) {
+                        unset($this->data[$field][$key]['_sort']);
+                    }
+                }
+            }
+            $this->mediaUpdated = $modal['flags'];
+
             return;
         }
 
@@ -1602,12 +1622,7 @@ class Editor extends Component
         }
         // And the flags for syncMedia() as they were: media picked and put back again is
         // no change to save, and would rewrite its rows and say it was updated.
-        $prefix = $field.'.'.$index.'.';
-        foreach (array_keys($this->mediaUpdated) as $key) {
-            if (str_starts_with((string) $key, $prefix) && ! in_array($key, $modal['flags'], true)) {
-                unset($this->mediaUpdated[$key]);
-            }
-        }
+        $this->mediaUpdated = $modal['flags'];
 
         // A rich-text field keeps its own copy of the value in the browser
         $this->setRandomSortSeed();
@@ -1642,7 +1657,8 @@ class Editor extends Component
                 // Translatable section fields are stored per locale; use the active one for the label
                 $value = Leap::localize($content[$title->name] ?? '', $this->activeLocale) ?? '';
 
-                return is_string($value) ? strip_tags($value) : '';
+                // A number is a title too: a seeder or an import may store 2024 as one
+                return is_string($value) || is_int($value) || is_float($value) ? strip_tags((string) $value) : '';
             })
             ->filter()
             ->implode(' - ');
@@ -1669,8 +1685,8 @@ class Editor extends Component
                 // A per-locale value is read in the language the editor is showing,
                 // whether or not this field is edited per locale on this site.
                 $value = Leap::localize($content[$attribute->name] ?? null, $this->activeLocale ?: null);
-                if (is_string($value) && trim(strip_tags($value)) !== '') {
-                    $summary = $value;
+                if ((is_string($value) || is_int($value) || is_float($value)) && trim(strip_tags((string) $value)) !== '') {
+                    $summary = (string) $value;
                     break;
                 }
             }
@@ -2191,7 +2207,8 @@ class Editor extends Component
                     // pings a search index has nothing to react to.
                     $timestamps = $model->timestamps;
                     $model->timestamps = false;
-                    $model->saveQuietly();
+                    // touch: false, or a parent in $touches gets a new updated_at
+                    $model->saveQuietly(['touch' => false]);
                     $model->timestamps = $timestamps;
                 }
                 $this->dispatch('toast-alert', __('leap::resource.no_changes'))->to(Toasts::class);

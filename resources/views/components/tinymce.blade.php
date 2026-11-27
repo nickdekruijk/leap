@@ -42,6 +42,7 @@
             // field that is gone must not go on reacting to the events of the editor.
             off: [],
             pickerOff: null,
+            destroyed: false,
             init() {
                 // A rich-text field sits in wire:ignore and is only read into TinyMCE
                 // when the editor opens, so a value written on the server — the AI
@@ -160,6 +161,9 @@
                     // height before TinyMCE's autoresize measures it — otherwise a
                     // field activated while TinyMCE is already loaded inits at height 0.
                     requestAnimationFrame(() => {
+                        // Taken off the page while TinyMCE was still loading (a modal
+                        // closed straight away): there is nothing left to start it on
+                        if (this.destroyed || !this.$refs.textarea?.isConnected) return;
                         // Drop any stale editor bound to this id before re-initializing
                         if (tinymce.get(this.$refs.textarea.id)) {
                             tinymce.remove('#' + this.$refs.textarea.id);
@@ -168,15 +172,17 @@
                             target: this.$refs.textarea,
                             file_picker_callback: (callback, value, meta) => {
                                 this.$wire.$parent.tinymceBrowser();
-                                // One pick, one listener: a browser closed without a
-                                // choice left its listener behind, and the next pick
-                                // ran that stale callback as well.
-                                if (this.pickerOff) this.pickerOff();
-                                this.pickerOff = Livewire.on('tinymceBrowser', (e) => {
-                                    this.pickerOff();
-                                    this.pickerOff = null;
+                                // One pick at a time, across every field on the page: a
+                                // browser closed without a choice left its listener behind,
+                                // and the next pick, in this field or another, handed the
+                                // file to that stale dialog as well.
+                                if (window.leapPickerOff) window.leapPickerOff();
+                                const off = Livewire.on('tinymceBrowser', (e) => {
+                                    off();
+                                    if (window.leapPickerOff === off) window.leapPickerOff = null;
                                     callback(e[0]);
                                 });
+                                window.leapPickerOff = this.pickerOff = off;
                             },
                             setup: (editor) => {
                                 this.editor = editor;
@@ -200,6 +206,11 @@
                                     }
                                 });
                                 editor.on('init', (e) => {
+                                    // Gone while it started: take it out again
+                                    if (this.destroyed) {
+                                        this.removeEditor();
+                                        return;
+                                    }
                                     if (this.value != null) {
                                         editor.setContent(this.value);
                                     }
@@ -239,8 +250,13 @@
             // Nothing to hand to the form here: that happened on blur, or on sync()
             // when a section modal closed. Doing it now would undo a Cancel.
             destroy() {
+                this.destroyed = true;
                 this.off.forEach((stop) => stop());
-                if (this.pickerOff) this.pickerOff();
+                // Only if the pick waiting is still this field's own
+                if (this.pickerOff && window.leapPickerOff === this.pickerOff) {
+                    this.pickerOff();
+                    window.leapPickerOff = null;
+                }
                 this.removeEditor();
             },
             // Alpine.raw(): this.editor is Alpine's reactive proxy of the editor, and

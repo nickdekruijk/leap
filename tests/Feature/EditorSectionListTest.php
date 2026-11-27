@@ -942,6 +942,93 @@ class EditorSectionListTest extends TestCase
         $this->assertNotSame($media->downloadUrl, (new Editor)->sectionThumbnailUrl($media));
     }
 
+    // ---- Found in the second review --------------------------------------------------
+
+    /**
+     * Placing a section numbers every _sort again. Cancel on a section added in the modal
+     * puts the list back as it was, so the form is untouched again.
+     */
+    public function test_cancel_on_a_new_section_leaves_the_form_untouched(): void
+    {
+        $editor = $this->modal([$this->block('Een'), $this->block('Twee'), $this->block('Drie')])
+            ->call('insertSection', 'sections', 'text', 0)
+            ->call('cancelSection');
+
+        $this->assertSame([0, 1, 2], array_keys($editor->instance()->data['sections']));
+        $this->assertSame([0, 1, 2], array_column($editor->instance()->data['sections'], '_sort'));
+        $this->assertSame([], $editor->instance()->mediaUpdated);
+        $this->assertFalse($editor->instance()->isDirty());
+    }
+
+    public function test_cancel_on_a_new_section_with_media_picked_leaves_no_flags(): void
+    {
+        Storage::disk('public')->put('photo.jpg', (string) Media::imageManager()->createImage(20, 10)->encodeUsingFileExtension('jpg'));
+
+        $editor = $this->modal([$this->block('Een')])
+            ->call('insertSection', 'sections', 'image')
+            ->call('selectMediaFiles', 'sections.1.image', ['photo.jpg'])
+            ->call('cancelSection');
+
+        $this->assertSame([], $editor->instance()->mediaUpdated);
+        $this->assertArrayNotHasKey('sections.1.image', $editor->instance()->data);
+        $editor->call('save')->assertNotDispatched('toast');
+    }
+
+    /**
+     * Hidden buttons are out of reach as well: a tap on the right of a row landed on
+     * Duplicate or Delete unseen. A touch screen, with no hover, shows them.
+     */
+    public function test_hidden_row_buttons_cannot_be_clicked(): void
+    {
+        $css = (string) file_get_contents(__DIR__.'/../../resources/css/editor.css');
+
+        $this->assertMatchesRegularExpression('/> \.leap-section-actions \{[^}]*opacity: 0;\s*pointer-events: none;/s', $css);
+        $this->assertStringContainsString('@media (hover: none)', $css);
+    }
+
+    /**
+     * The modal is teleported out of the editor, whose listeners mark typing that has not
+     * reached the server yet as unsaved work. It has its own.
+     */
+    public function test_typing_in_the_modal_counts_as_unsaved_work(): void
+    {
+        $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->assertSeeHtml('x-on:input="if ($event.isTrusted) $store.leapEditor.touched = true"');
+    }
+
+    /**
+     * Escape in a modal on top of it, the AI image dialog of a media field, closes that
+     * one and not the section modal under it.
+     */
+    public function test_escape_in_a_modal_on_top_leaves_the_section_modal_open(): void
+    {
+        $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->assertSeeHtml('document.querySelectorAll(&#039;.leap-modal:not(.leap-section-modal)&#039;)');
+    }
+
+    public function test_a_number_is_a_title_too(): void
+    {
+        $this->assertSame('2024', $this->summary(['head' => 2024], 'tab'));
+
+        $editor = $this->editor([$this->tab('Een'), ['_name' => 'tab', 'head' => 2024], $this->tab('Drie')]);
+        $this->assertSame('2024', $editor->instance()->data['sections'][1]['_title']);
+    }
+
+    /**
+     * One pick at a time, across every rich-text field: a browser closed without a choice
+     * left a listener that handed the next file to a stale dialog. And a field taken off
+     * the page before TinyMCE had loaded is not started after all.
+     */
+    public function test_rich_text_keeps_one_file_pick_and_does_not_start_once_gone(): void
+    {
+        $this->modal([$this->block('Een')])
+            ->call('editSection', 'sections', 0)
+            ->assertSeeHtml('if (window.leapPickerOff) window.leapPickerOff();')
+            ->assertSeeHtml('if (this.destroyed || !this.$refs.textarea?.isConnected) return;');
+    }
+
     // ---- The site ---------------------------------------------------------------------
 
     public function test_the_site_renders_the_same_sections_whatever_the_editor_folded(): void
