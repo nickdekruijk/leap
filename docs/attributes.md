@@ -127,7 +127,8 @@ is stored, on the same origin as the panel, so a script saved that way runs for 
 administrator who opens the page.
 
 `leap.tinymce.sanitize` filters a rich-text value on the server, at the moment it is
-stored. It is off by default, and it needs PHP 8.4 and one package:
+stored, in the editor and in a CSV import. It is off by default, and it needs PHP 8.4 and
+one package, version 7.4 or later:
 
 ```bash
 composer require symfony/html-sanitizer
@@ -153,19 +154,30 @@ What it does:
 - **Scripts, event handlers and `javascript:` links go**, and so do `<style>`, `<form>`,
   `<svg>`, `<object>` and anything else that is not text markup. An element that is not
   allowed goes with what is inside it.
-- **An iframe stays only when its host is on the list.**
+- **An iframe stays only when its host is on the list**, with the attributes an embed
+  code carries (`allow`, `allowfullscreen`, `frameborder`, `referrerpolicy`, `loading`).
 - **What TinyMCE writes with leap's default options stays**: headings, lists, tables,
   links, images, `class` and `style`, the accordion, video and audio.
-- **A value with nothing to remove is stored exactly as it was sent.** The filter writes
-  HTML its own way (`<br />`, other entities), so only a value that loses something is
-  rewritten. An HTML comment is no reason to rewrite a value, but does not survive a
-  value that is rewritten.
+- **What is stored is always what the filter wrote**, never what was sent. It writes HTML
+  its own way: `é` where TinyMCE writes `&eacute;`, `<br />` for `<br>`. So the first save
+  of a record with the filter on rewrites its rich text. What it says stays the same, and
+  the next save finds nothing to do. HTML comments do not survive.
+
+  Keeping a value as it was sent when nothing had to go is not safe. A parser sets markup
+  aside that a browser reads on the page after all: a stray `<body onload>` ends up on the
+  real body, a tag left open at the end is finished by the markup after it, a loose `<td>`
+  is a cell once it is printed inside a table. What the filter writes is closed and
+  escaped, and has none of that.
 - **An address is read the way a browser reads it.** A space around it
-  (`href="https://example.com "`) is ignored, and a space in a file name
-  (`/storage/files/annual report.pdf`) is the same address as its `%20` form, so neither
-  is a reason to rewrite a value. A link that is repaired, such as `mailto: info@example.com`
-  with a space after the colon, stays a link and is written without the space. Only an
-  address a browser would not follow, or would run, loses its `href` or `src`.
+  (`href="https://example.com "`) is dropped, and a space in a file name
+  (`/storage/files/annual report.pdf`) becomes `%20`: the same address, and the link keeps
+  working. A link that is repaired, such as `mailto: info@example.com` with a space after
+  the colon, stays a link. Only an address a browser would not follow, or would run, loses
+  its `href` or `src`.
+- **`sanitize_allow` adds, it never takes away.** An attribute allowed on one element
+  stays where it was allowed already, and an element you add carries `class`, `style` and
+  whatever is under `'*'`, like every other. Do not add `script`, `style` or an `on…`
+  attribute here: that is switching the filter off for it.
 - **Rich text only.** A plain input or textarea is escaped where it is shown and is not
   touched. A field that holds an embed code on purpose should be a `textarea()` or
   `ace()`, not `richtext()`.
@@ -178,11 +190,19 @@ php artisan leap:sanitize --show=Page:12   # one record, stored and filtered
 ```
 
 The command reads every rich-text field of every module, in sections and per locale, and
-writes nothing. It lists what would go, and apart from that what would stay but be
-written differently, such as the `mailto:` link above. It works with the filter off, which is the point: an iframe from a host
-that is missing from the list, or an attribute a template relies on, shows up here first.
-Add those to `sanitize_iframe_hosts` or `sanitize_allow` and run it again. It also shows
-whether something is stored now that should not be.
+writes nothing. It works with the filter off, which is the point. It lists:
+
+- what would go, such as an iframe from a host that is missing from the list or an
+  attribute a template relies on. Add those to `sanitize_iframe_hosts` or `sanitize_allow`
+  and run it again;
+- what would stay but be written differently, such as the `mailto:` link above;
+- the records in which a tag or a comment is left open at the end of a value;
+- how many values are only written another way. Those are not listed one by one: nothing
+  is lost in them.
+
+It also shows whether something is stored now that should not be, as far as a parser can
+see it. A loose `<td onmouseover>` outside a table is set aside by the parser and is not
+in the list. Saving the record with the filter on removes it all the same.
 
 Existing records are not rewritten when the filter is turned on. Each one is filtered the
 next time it is saved.

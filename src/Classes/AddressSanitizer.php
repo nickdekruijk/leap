@@ -55,19 +55,28 @@ final class AddressSanitizer implements AttributeSanitizerInterface
         // The wrapped check refuses a no-break space wherever it is, encoded or
         // not. Behind the host it is a character in a file name like any other, so
         // there something else stands in for it while the check looks: a string
-        // that is not in the address, and that the check passes on as it is.
+        // that is not in the address, and that the check passes on as it is. Each
+        // one goes back the way it was written, %C2%A0 or %c2%a0.
         do {
             $marker = '__leap-'.bin2hex(random_bytes(6)).'__';
         } while (str_contains($value, $marker));
 
-        $checked = $this->urls->sanitizeAttribute(
-            $element,
-            $attribute,
-            substr($value, 0, $start).str_ireplace('%C2%A0', $marker, substr($value, $start)),
-            $config,
-        );
+        $written = [];
+        $tail = (string) preg_replace_callback('/%C2%A0/i', function (array $match) use (&$written, $marker): string {
+            $written[] = $match[0];
 
-        return $checked === null ? null : str_replace($marker, '%C2%A0', $checked);
+            return $marker;
+        }, substr($value, $start));
+
+        $checked = $this->urls->sanitizeAttribute($element, $attribute, substr($value, 0, $start).$tail, $config);
+
+        if ($checked === null) {
+            return null;
+        }
+
+        return (string) preg_replace_callback('/'.preg_quote($marker, '/').'/', function () use (&$written): string {
+            return array_shift($written) ?? '%C2%A0';
+        }, $checked);
     }
 
     /**

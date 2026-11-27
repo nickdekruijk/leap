@@ -21,6 +21,7 @@ return [
     'moved' => ':title moved',
     'no_changes' => 'No changes to save',
     'preview' => 'Preview',
+    'preview_no_text' => 'Image or embedded content, click to edit',
     'repeat' => 'Repeat',
     'save' => 'Save',
     'save_copy' => 'Save as copy',

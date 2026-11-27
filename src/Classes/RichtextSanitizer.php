@@ -20,17 +20,23 @@ use Symfony\Component\HtmlSanitizer\Visitor\AttributeSanitizer\UrlAttributeSanit
  * where the value is stored is the one place that covers the editor, the preview
  * and the site at once.
  *
- * Off unless leap.tinymce.sanitize is true, and it needs symfony/html-sanitizer
- * and PHP 8.4: the HTML is read with PHP's own HTML5 parser, which reads it the
- * way a browser does. That matters for filter(), which leaves a value alone when
- * nothing has to go, and so has to see everything a browser would see in it.
+ * Off unless leap.tinymce.sanitize is on, and it needs symfony/html-sanitizer
+ * and PHP 8.4, for PHP's own HTML5 parser.
+ *
+ * What is stored is always what the filter wrote, never what came in. Keeping a
+ * value as it was sent when "nothing has to go" sounds harmless and is not: a
+ * parser sets markup aside that a browser reads on the site after all. A stray
+ * <body onload> lands on the real body, a tag left open at the end is finished
+ * by the markup that follows it, a loose <td> becomes a cell inside a table.
+ * None of that is in the tree, so none of it would count as something to remove.
+ * The HTML the filter writes is balanced and escaped, and has none of it.
  */
 final class RichtextSanitizer
 {
     /**
      * What an iframe may carry besides its src.
      */
-    private const IFRAME_ATTRIBUTES = ['src', 'width', 'height', 'title', 'allow', 'allowfullscreen', 'loading', 'class', 'style'];
+    private const IFRAME_ATTRIBUTES = ['src', 'width', 'height', 'title', 'allow', 'allowfullscreen', 'frameborder', 'referrerpolicy', 'loading'];
 
     private ?HtmlSanitizer $sanitizer = null;
 
@@ -39,7 +45,9 @@ final class RichtextSanitizer
      */
     public static function enabled(): bool
     {
-        return config('leap.tinymce.sanitize') === true;
+        // Not === true: an env value arrives as "1" or "on" as easily as true, and
+        // a filter that stays off over that would do so without a word.
+        return filter_var(config('leap.tinymce.sanitize'), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -51,6 +59,10 @@ final class RichtextSanitizer
             return 'Filtering rich text needs symfony/html-sanitizer: composer require symfony/html-sanitizer';
         }
 
+        if (! class_exists(NativeParser::class)) {
+            return 'Filtering rich text needs symfony/html-sanitizer 7.4 or later: composer require symfony/html-sanitizer:^7.4';
+        }
+
         if (PHP_VERSION_ID < 80400) {
             return 'Filtering rich text needs PHP 8.4 or later, for its HTML5 parser. This is PHP '.PHP_VERSION.'.';
         }
@@ -59,20 +71,28 @@ final class RichtextSanitizer
     }
 
     /**
-     * The value as it is stored: untouched when the filter changes nothing in it,
-     * and the filtered HTML otherwise.
+     * The value as it is stored: the HTML the filter wrote.
      *
-     * The filter writes HTML its own way, with other entities and quotes than
-     * TinyMCE, so running every value through it would change a record nobody
-     * touched. Only a value that loses something, or in which an address is
-     * written differently than a browser reads it, is replaced.
+     * Always that, also when nothing had to go. It is written the filter's way,
+     * with other entities and quotes than TinyMCE uses, so the first save of a
+     * record changes how its rich text is written, and not what it says.
      */
     public function filter(string $html): string
     {
-        $clean = $this->clean($html);
-        $changes = $this->compare($html, $clean);
+        return $this->clean($html);
+    }
 
-        return $changes['dropped'] === [] && $changes['rewritten'] === [] ? $html : $clean;
+    /**
+     * A rich-text value as it comes out of a form or an import: one text, or one
+     * per locale for a translatable field. Anything else is handed back as it came.
+     */
+    public function filterValue(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map($this->filterValue(...), $value);
+        }
+
+        return is_string($value) && $value !== '' ? $this->filter($value) : $value;
     }
 
     /**
@@ -82,18 +102,22 @@ final class RichtextSanitizer
     {
         $clean = $this->sanitizer()->sanitize($html);
 
+        // The filter wrote this HTML itself, with every < and > in a text or an
+        // attribute value escaped, so the two patterns below can rely on it.
+        //
+        // What is inside an iframe is text a browser never shows, and never
+        // decodes either: the sanitizer escapes it, the next save reads those
+        // entities as text and escapes them again, and so on with every save.
+        $clean = (string) preg_replace('~(<iframe(?:\s[^<>]*)?>)[^<]*</iframe>~', '$1</iframe>', $clean);
+
         // An iframe from a host that is not on the list has lost its src by now,
-        // and what is left of it is an empty box on the page. The filter wrote
-        // this HTML itself, attribute values escaped, so the pattern can rely on it.
+        // and what is left of it is an empty box on the page.
         return (string) preg_replace('~<iframe(?:\s+(?!src=)[a-z-]+(?:="[^"]*")?)*\s*></iframe>~', '', $clean);
     }
 
     /**
      * What the filter takes out of this HTML, and how often: 'script' => 1 for an
      * element, 'img[onerror]' => 2 for an attribute. Empty when nothing has to go.
-     *
-     * HTML comments are not counted. They do nothing in a page, so they are no
-     * reason to rewrite a value, but they do not survive a value that is rewritten.
      *
      * @return array<string, int>
      */
@@ -103,14 +127,44 @@ final class RichtextSanitizer
     }
 
     /**
-     * What the filter does to this HTML: what goes, and which attributes stay but
-     * come out with another value, such as "mailto: a@b.nl" without its space.
+     * What the filter does to this HTML, for a report. Nothing is decided by it:
+     * filter() stores its own HTML either way.
      *
-     * @return array{dropped: array<string, int>, rewritten: array<string, int>}
+     * - dropped: what goes.
+     * - rewritten: attributes that stay with another value, such as
+     *   "mailto: a@b.nl" without its space.
+     * - unclosed: whether something is left open at the end, a tag or a comment
+     *   that the markup after the value would finish on the page.
+     *
+     * It reports what a parser can see. A loose <td onmouseover> outside a table
+     * is set aside by the parser and is not in here, though filter() removes it.
+     * HTML comments are not counted either, and do not survive filter().
+     *
+     * @return array{dropped: array<string, int>, rewritten: array<string, int>, unclosed: bool}
      */
     public function changes(string $html): array
     {
-        return $this->compare($html, $this->clean($html));
+        return $this->compare($html, $this->clean($html)) + ['unclosed' => $this->unclosed($html)];
+    }
+
+    /**
+     * Whether the HTML leaves something open at its end.
+     *
+     * Told by what comes after it. A rule put behind the HTML is the last thing on
+     * the top level when everything before it was closed, and ends up inside an
+     * element, an attribute or a comment when something was not. A paragraph left
+     * open is closed by the rule, as it would be by whatever follows on a page.
+     */
+    private function unclosed(string $html): bool
+    {
+        if (trim($html) === '') {
+            return false;
+        }
+
+        $root = (new NativeParser)->parse($html.'<hr>');
+        $last = $root instanceof Element ? $root->lastElementChild : null;
+
+        return $last === null || strtolower($last->localName) !== 'hr';
     }
 
     /**
@@ -175,6 +229,15 @@ final class RichtextSanitizer
             return $counts;
         }
 
+        // A stray <body> or <html> tag adds its attributes to the body and html
+        // element of the document, which on a page are the real ones. They are not
+        // among the children counted below, so they are counted here.
+        foreach (['body' => $root, 'html' => $root->ownerDocument?->documentElement] as $tag => $element) {
+            foreach ($element instanceof Element ? $element->attributes : [] as $attribute) {
+                $counts['attributes'][$tag.'['.strtolower($attribute->name).']'][$attribute->value] = 1;
+            }
+        }
+
         $walk = function (Node $node) use (&$walk, &$counts, $asBrowser): void {
             foreach ($node->childNodes as $child) {
                 if (! $child instanceof Element) {
@@ -220,36 +283,44 @@ final class RichtextSanitizer
             // Leap stores its own links and images without a host: /contact, /storage/photo.jpg
             ->allowRelativeLinks()
             ->allowRelativeMedias()
-            // Alignment, widths and classes are how TinyMCE lays a text out.
-            ->allowAttribute('class', '*')
-            ->allowAttribute('style', '*')
-            ->allowAttribute('border', 'table')
             // Inert in a page, and so not something this can vouch for.
             ->dropElement('template')
-            ->allowElement('iframe', self::IFRAME_ATTRIBUTES)
-            ->withAttributeSanitizer(new IframeHostSanitizer(array_values(array_filter((array) config('leap.tinymce.sanitize_iframe_hosts'), is_string(...)))));
+            // Obsolete, and its content is text that is never decoded, like that
+            // of an iframe: see clean().
+            ->dropElement('xmp');
+
+        // Every element with its attributes in one map first, and handed to the
+        // sanitizer element by element afterwards. Its allowAttribute() takes an
+        // attribute away from every element it is not given, and its '*' only
+        // reaches the elements allowed at that moment, so adding to it step by
+        // step made the outcome depend on the order of the site's own list.
+        $elements = $config->getAllowedElements();
+        $elements['iframe'] = array_fill_keys(self::IFRAME_ATTRIBUTES, true);
+        $elements['table']['border'] = true;
+        // Alignment, widths and classes are how TinyMCE lays a text out.
+        $everywhere = ['class' => true, 'style' => true];
+
+        foreach ((array) config('leap.tinymce.sanitize_allow') as $element => $attributes) {
+            $attributes = array_fill_keys(array_filter((array) $attributes, is_string(...)), true);
+
+            if ($element === '*') {
+                $everywhere += $attributes;
+            } elseif (is_string($element)) {
+                $elements[strtolower($element)] = ($elements[strtolower($element)] ?? []) + $attributes;
+            }
+        }
+
+        foreach ($elements as $element => $attributes) {
+            $config = $config->allowElement((string) $element, array_map(strval(...), array_keys($attributes + $everywhere)));
+        }
+
+        $config = $config->withAttributeSanitizer(new IframeHostSanitizer(array_values(array_filter((array) config('leap.tinymce.sanitize_iframe_hosts'), is_string(...)))));
 
         // The sanitizer's own check of an address, with a browser's reading of it
         // in front: see AddressSanitizer.
         foreach ($config->getAttributeSanitizers() as $sanitizer) {
             if ($sanitizer instanceof UrlAttributeSanitizer) {
                 $config = $config->withoutAttributeSanitizer($sanitizer)->withAttributeSanitizer(new AddressSanitizer($sanitizer));
-            }
-        }
-
-        foreach ((array) config('leap.tinymce.sanitize_allow') as $element => $attributes) {
-            $attributes = array_values(array_filter((array) $attributes, is_string(...)));
-
-            if ($element === '*') {
-                foreach ($attributes as $attribute) {
-                    $config = $config->allowAttribute($attribute, '*');
-                }
-            } elseif (is_string($element) && isset($config->getAllowedElements()[$element])) {
-                foreach ($attributes as $attribute) {
-                    $config = $config->allowAttribute($attribute, $element);
-                }
-            } elseif (is_string($element)) {
-                $config = $config->allowElement($element, $attributes);
             }
         }
 

@@ -16,6 +16,7 @@ use Livewire\Attributes\Url;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use NickDeKruijk\Leap\Classes\Attribute;
+use NickDeKruijk\Leap\Classes\RichtextSanitizer;
 use NickDeKruijk\Leap\Livewire\Toasts;
 use NickDeKruijk\Leap\Traits\ToastsValidationErrors;
 use Spatie\Translatable\HasTranslations;
@@ -627,11 +628,18 @@ class Resource extends Module
         }
 
         if (count($this->importErrors) == 0) {
+            $sanitizer = null;
+
             // Import each row
             foreach ($this->importData() as $index => $row) {
                 // Create new model instance
                 $model = $this->getModel();
                 foreach ($row as $key => $value) {
+                    // An import writes to the model itself, past RecordDraft, so rich
+                    // text is filtered here the way the editor filters it there.
+                    if (RichtextSanitizer::enabled() && $this->getAttribute($key)?->input === 'tinymce') {
+                        $value = ($sanitizer ??= app(RichtextSanitizer::class))->filterValue($value);
+                    }
                     $model->{$key} = $value;
                 }
                 if ($save) {

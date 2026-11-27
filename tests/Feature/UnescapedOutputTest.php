@@ -92,7 +92,9 @@ class UnescapedOutputTest extends TestCase
         // Never the raw value on the way to DOMPurify: the text only.
         $this->assertStringContainsString('preview.textContent =', $html);
         $this->assertSame(2, substr_count($html, 'preview.innerHTML = clean()'));
-        $this->assertSame(2, substr_count($html, 'innerHTML'));
+        // Nothing else is ever assigned as HTML; sameContent() only reads it back
+        // out of a document of its own.
+        $this->assertSame(2, substr_count($html, 'innerHTML ='));
     }
 
     public function test_the_attributes_of_an_input_are_quoted(): void

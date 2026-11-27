@@ -21,6 +21,9 @@
 		"laravel/passkeys": "^0.3.0",
 		"enshrined/svg-sanitize": "^1.1.1"
 	},
+	"conflict": {
+		"symfony/html-sanitizer": "<7.4"
+	},
 	"suggest": {
 		"nickdekruijk/leap-template": "Frontend website template scaffolding (leap:template, leap:content) — install with composer require --dev",
 		"symfony/html-sanitizer": "Filter rich text on the server when it is saved (leap.tinymce.sanitize, leap:sanitize); needs PHP 8.4"

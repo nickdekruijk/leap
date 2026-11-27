@@ -44,6 +44,10 @@ final class RecordDraft
      */
     public static function apply(Model $model, Collection $attributes, array &$data, bool $passwords = true): void
     {
+        // Made on first use, and then the same one for every rich-text value of this
+        // record: building its list of allowed elements is the costly part.
+        $sanitizer = null;
+
         // Update each attribute
         foreach ($attributes as $attribute) {
             if ($attribute->type == 'password' && (! $passwords || ! ($data[$attribute->name] ?? null))) {
@@ -84,7 +88,7 @@ final class RecordDraft
                 // and written back into $data so the form holds what was stored.
                 // Only when leap.tinymce.sanitize is on: off, nothing below runs.
                 if ($attribute->input == 'tinymce' && RichtextSanitizer::enabled()) {
-                    $data[$attribute->name] = self::filterRichtext($data[$attribute->name] ?? null);
+                    $data[$attribute->name] = ($sanitizer ??= app(RichtextSanitizer::class))->filterValue($data[$attribute->name] ?? null);
                 }
                 if ($attribute->type == 'sections') {
                     // Extra treatment for each section
@@ -98,7 +102,7 @@ final class RecordDraft
                         if ($definition && RichtextSanitizer::enabled()) {
                             foreach ($definition->attributes as $sectionAttribute) {
                                 if ($sectionAttribute->input == 'tinymce' && array_key_exists($sectionAttribute->name, $section)) {
-                                    $data[$attribute->name][$key][$sectionAttribute->name] = self::filterRichtext($section[$sectionAttribute->name]);
+                                    $data[$attribute->name][$key][$sectionAttribute->name] = ($sanitizer ??= app(RichtextSanitizer::class))->filterValue($section[$sectionAttribute->name]);
                                 }
                             }
                         }
@@ -115,20 +119,6 @@ final class RecordDraft
                     : $value;
             }
         }
-    }
-
-    /**
-     * A rich-text value through the filter. A translatable field holds one value
-     * per locale, so an array is filtered value by value; anything that is not
-     * text is handed back as it came.
-     */
-    private static function filterRichtext(mixed $value): mixed
-    {
-        if (is_array($value)) {
-            return array_map(self::filterRichtext(...), $value);
-        }
-
-        return is_string($value) && $value !== '' ? app(RichtextSanitizer::class)->filter($value) : $value;
     }
 
     /**

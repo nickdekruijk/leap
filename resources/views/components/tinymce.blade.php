@@ -112,13 +112,28 @@
                 // Minus script and style, whose text is code and not something to read.
                 const inert = new DOMParser().parseFromString(html, 'text/html');
                 inert.querySelectorAll('script, style').forEach((el) => el.remove());
-                preview.textContent = inert.body.textContent.trim();
+                // A field that holds a picture or an embed and not a word has no text
+                // to show, and an empty preview reads as an empty field. Say what it is.
+                preview.textContent = inert.body.textContent.trim()
+                    || (inert.body.querySelector('img, picture, iframe, video, audio, table, hr') ? preview.dataset.noTextHint : '');
                 this.ensurePurify().then(() => {
                     // Unless the value changed while the script was on its way
                     if ((this.value || '') === html) {
                         preview.innerHTML = clean();
                     }
                 }).catch(() => {});
+            },
+            // Whether two pieces of HTML say the same, however they are written. With
+            // rich text filtered on the server, what comes back after a save is the
+            // filter's notation of what TinyMCE holds: other entities, <br /> for
+            // <br>. Both are read in a document of their own, where nothing loads and
+            // nothing runs, and written out the one way a browser writes HTML.
+            sameContent(a, b) {
+                if ((a || '') === (b || '')) {
+                    return true;
+                }
+                const read = (html) => new DOMParser().parseFromString(html || '', 'text/html').body.innerHTML;
+                return read(a) === read(b);
             },
             activate() {
                 if (this.editor) {
@@ -171,14 +186,24 @@
                                     editor.setDirty(false);
                                 });
                                 this.$watch('value', (newValue) => {
-                                    if (newValue !== editor.getContent()) {
-                                        editor.resetContent(newValue || '');
-                                        // Put cursor at the end
-                                        editor.selection.select(editor.getBody(), true);
-                                        editor.selection.collapse(false);
-                                        // The value came from the form, not from typing here
-                                        editor.setDirty(false);
+                                    const content = editor.getContent();
+                                    if (newValue === content) {
+                                        return;
                                     }
+                                    // The same text written another way is what a save
+                                    // returns once the server filters it. Loading that
+                                    // would move the cursor and empty the undo history
+                                    // after every save, for a text that did not change.
+                                    if (this.sameContent(newValue, content)) {
+                                        editor.setDirty(false);
+                                        return;
+                                    }
+                                    editor.resetContent(newValue || '');
+                                    // Put cursor at the end
+                                    editor.selection.select(editor.getBody(), true);
+                                    editor.selection.collapse(false);
+                                    // The value came from the form, not from typing here
+                                    editor.setDirty(false);
                                 });
                             },
                         }));
@@ -187,7 +212,12 @@
             },
             deactivate() {
                 if (this.editor) {
-                    this.value = this.editor.getContent();
+                    // Only what was really changed: TinyMCE writing the same text its
+                    // own way is not a change to hand to the form.
+                    const content = this.editor.getContent();
+                    if (!this.sameContent(this.value, content)) {
+                        this.value = content;
+                    }
                     tinymce.remove(this.editor);
                     this.editor = null;
                 }
@@ -202,6 +232,7 @@
             @keydown.space.prevent="activate()"
             class="leap-richtext-preview tinymce"
             data-empty-hint="{{ __('leap::resource.click_to_edit') }}"
+            data-no-text-hint="{{ __('leap::resource.preview_no_text') }}"
             role="button"
             tabindex="0"></div>
         <textarea

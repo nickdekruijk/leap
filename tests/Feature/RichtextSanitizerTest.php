@@ -5,12 +5,18 @@ namespace NickDeKruijk\Leap\Tests\Feature;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Livewire;
 use NickDeKruijk\Leap\Classes\Attribute;
 use NickDeKruijk\Leap\Classes\RecordDraft;
 use NickDeKruijk\Leap\Classes\RichtextSanitizer;
+use NickDeKruijk\Leap\Models\Role;
+use NickDeKruijk\Leap\Tests\Fixtures\Article;
+use NickDeKruijk\Leap\Tests\Fixtures\RichtextImportResource;
 use NickDeKruijk\Leap\Tests\Fixtures\SectionsModel;
 use NickDeKruijk\Leap\Tests\Fixtures\SectionsResource;
+use NickDeKruijk\Leap\Tests\Fixtures\User;
 use NickDeKruijk\Leap\Tests\TestCase;
 use RuntimeException;
 
@@ -100,19 +106,30 @@ class RichtextSanitizerTest extends TestCase
         $this->assertSame(self::EVIL, $data['sections'][0]['body']['nl']);
     }
 
-    public function test_on_what_tinymce_writes_is_stored_byte_for_byte(): void
+    /**
+     * What is stored is always what the filter wrote, also when nothing had to go.
+     * It says the same as what came in, and filtering it again leaves it alone, so
+     * a record is rewritten once and not with every save.
+     */
+    public function test_on_what_tinymce_writes_loses_nothing_and_settles(): void
     {
         $this->needsTheFilter();
         config(['leap.tinymce.sanitize' => true]);
+        $sanitizer = app(RichtextSanitizer::class);
 
-        $this->assertSame([], app(RichtextSanitizer::class)->dropped(self::TINYMCE));
-        $this->assertSame(self::TINYMCE, app(RichtextSanitizer::class)->filter(self::TINYMCE));
+        $this->assertSame(['dropped' => [], 'rewritten' => [], 'unclosed' => false], $sanitizer->changes(self::TINYMCE));
+
+        $stored = $sanitizer->filter(self::TINYMCE);
+        $this->assertSame($sanitizer->clean(self::TINYMCE), $stored);
+        $this->assertSame($stored, $sanitizer->filter($stored));
+        $this->assertSame(['dropped' => [], 'rewritten' => [], 'unclosed' => false], $sanitizer->changes($stored));
 
         $model = new SectionsModel;
         $data = $this->apply($model, ['title' => ['nl' => self::TINYMCE]]);
 
-        $this->assertSame(self::TINYMCE, $data['title']['nl']);
-        $this->assertSame(self::TINYMCE, $model->getTranslation('title', 'nl'));
+        $this->assertSame($stored, $model->getTranslation('title', 'nl'));
+        // The form holds what was stored.
+        $this->assertSame($stored, $data['title']['nl']);
     }
 
     public function test_on_a_script_a_handler_and_a_javascript_link_go(): void
@@ -121,14 +138,12 @@ class RichtextSanitizerTest extends TestCase
         config(['leap.tinymce.sanitize' => true]);
 
         $model = new SectionsModel;
-        $data = $this->apply($model, ['title' => ['nl' => self::EVIL, 'en' => self::TINYMCE]]);
+        $data = $this->apply($model, ['title' => ['nl' => self::EVIL, 'en' => '<p>ok</p>']]);
 
         $stored = $model->getTranslation('title', 'nl');
         $this->assertSame('<p>a<img src="x" /><a>j</a></p>', $stored);
-        // The form holds what was stored, so the editor shows it too.
         $this->assertSame($stored, $data['title']['nl']);
-        // One locale losing something is no reason to rewrite the other.
-        $this->assertSame(self::TINYMCE, $data['title']['en']);
+        $this->assertSame('<p>ok</p>', $data['title']['en']);
     }
 
     public function test_on_rich_text_in_a_section_is_filtered_per_locale(): void
@@ -138,17 +153,70 @@ class RichtextSanitizerTest extends TestCase
 
         $model = new SectionsModel;
         $data = $this->apply($model, ['sections' => [
-            ['_name' => 'block', 'head' => ['nl' => '<script>x</script>'], 'body' => ['nl' => self::EVIL, 'en' => self::TINYMCE]],
+            ['_name' => 'block', 'head' => ['nl' => '<script>x</script>'], 'body' => ['nl' => self::EVIL, 'en' => '<p>ok</p>']],
             ['_name' => 'gone', 'body' => self::EVIL],
         ]]);
 
         $this->assertSame('<p>a<img src="x" /><a>j</a></p>', $data['sections'][0]['body']['nl']);
-        $this->assertSame(self::TINYMCE, $data['sections'][0]['body']['en']);
+        $this->assertSame('<p>ok</p>', $data['sections'][0]['body']['en']);
         // Not a rich-text field: escaped where it is shown, and not this filter's to touch.
         $this->assertSame('<script>x</script>', $data['sections'][0]['head']['nl']);
         // A section the module no longer defines has no fields to tell rich text by.
         $this->assertSame(self::EVIL, $data['sections'][1]['body']);
         $this->assertSame($data['sections'][0]['body'], $model->sections[0]['body']);
+    }
+
+    /**
+     * Each of these is read differently on a page than by a parser that gets the
+     * value on its own. The attributes of a stray body tag land on the real body.
+     * A tag or a comment left open at the end is finished by the markup after it.
+     * A table cell outside a table is set aside, and is a cell again once the value
+     * is printed inside one. None of it is in the tree, so a filter that kept a
+     * value in which it found nothing to remove kept every one of these.
+     */
+    public function test_what_a_parser_sets_aside_is_never_stored(): void
+    {
+        $this->needsTheFilter();
+        config(['leap.tinymce.sanitize' => true]);
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            '<p>hi</p><body onload="alert(1)">',
+            '<p>hi</p><html onclick="alert(1)">',
+            '<p>hi</p></td><td onmouseover="alert(1)">',
+            '<p>hi</p><tr onclick="alert(1)">',
+            '<p>hi</p><caption onclick="alert(1)">',
+            '<p>hi</p><img src=x onerror=alert(1) x="',
+            '<p>hi</p><script src=//evil.example/x.js x="',
+            '<p>hi</p><a href="javascript:alert(1)',
+            '<p>hi</p><!--',
+            '<p>hi</p><xmp>',
+            '<p>hi</p></div></div>',
+        ] as $html) {
+            $this->assertSame('<p>hi</p>', $sanitizer->filter($html), $html);
+
+            $model = new SectionsModel;
+            $this->apply($model, ['title' => ['nl' => $html]]);
+            $this->assertSame('<p>hi</p>', $model->getTranslation('title', 'nl'), $html);
+        }
+    }
+
+    public function test_the_report_names_what_a_stray_body_tag_carries_and_what_is_left_open(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        $this->assertSame(['body[onload]' => 1], $sanitizer->dropped('<p>hi</p><body onload="alert(1)">'));
+        $this->assertSame(['html[onclick]' => 1], $sanitizer->dropped('<p>hi</p><html onclick="alert(1)">'));
+
+        foreach (['<p>hi</p><img src=x onerror=alert(1) x="', '<p>hi</p><!--', '<p>hi</p><a href="javascript:alert(1)', '<div>open'] as $html) {
+            $this->assertTrue($sanitizer->changes($html)['unclosed'], $html);
+        }
+
+        // A paragraph left open is closed by whatever follows it, on a page too.
+        foreach (['<p>hi</p>', '<p>open alinea', '<ul><li>a</li><li>b</ul>', ''] as $html) {
+            $this->assertFalse($sanitizer->changes($html)['unclosed'], $html);
+        }
     }
 
     public function test_the_report_says_what_goes_and_how_often(): void
@@ -161,12 +229,7 @@ class RichtextSanitizerTest extends TestCase
         );
     }
 
-    /**
-     * A browser with scripting on reads the content of noscript as text, and ends
-     * it at the first closing tag, wherever that is. The filter must not keep a
-     * value because its own parser read an element where the browser reads none.
-     */
-    public function test_what_a_browser_would_read_differently_is_not_left_as_it_is(): void
+    public function test_what_a_browser_would_read_differently_does_not_pass(): void
     {
         $this->needsTheFilter();
         $sanitizer = app(RichtextSanitizer::class);
@@ -187,9 +250,41 @@ class RichtextSanitizerTest extends TestCase
             $this->assertStringNotContainsStringIgnoringCase('onerror', $filtered, $html);
             $this->assertStringNotContainsStringIgnoringCase('javascript:', $filtered, $html);
             $this->assertStringNotContainsString('<iframe', $filtered, $html);
-            // Filtering what was filtered leaves it alone: it settles.
-            $this->assertSame($filtered, $sanitizer->filter($filtered), $html);
         }
+    }
+
+    /**
+     * The first save rewrites a value, and the second must find nothing to do. An
+     * element whose content is text that a browser does not decode broke that: the
+     * filter escaped what was in an iframe, and escaped those entities again with
+     * every save after it.
+     */
+    public function test_filtering_what_was_filtered_changes_nothing(): void
+    {
+        $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
+
+        foreach ([
+            self::TINYMCE,
+            self::EVIL,
+            '<p>a &amp; b &lt; c "d" \'e\' &nbsp;f é € 😀</p><p><a href="/a b.pdf?x=1&amp;y=2">x</a><br></p>',
+            '<p>hi</p><iframe src="https://www.youtube.com/embed/a">tekst <b>x</b></iframe><p>na</p>',
+            '<p>hi</p><iframe src="https://www.youtube.com/embed/a">',
+            '<xmp><b>x</b></xmp><p>na</p>',
+            '<pre><code>&lt;?php echo 1;</code></pre>',
+            '<p>hi</p><img src=x onerror=alert(1) x="',
+        ] as $html) {
+            $once = $sanitizer->filter($html);
+
+            $this->assertSame($once, $sanitizer->filter($once), $html);
+        }
+
+        // What is inside an iframe goes, and with it the reason it kept growing.
+        $this->assertSame(
+            '<iframe src="https://www.youtube.com/embed/a"></iframe>',
+            $sanitizer->filter('<iframe src="https://www.youtube.com/embed/a">tekst <b>x</b></iframe>'),
+        );
+        $this->assertSame('<p>na</p>', $sanitizer->filter('<xmp><b>x</b></xmp><p>na</p>'));
     }
 
     /**
@@ -207,21 +302,22 @@ class RichtextSanitizerTest extends TestCase
             '<a href=" https://x.nl/ ">x</a>' => '<a href="https://x.nl/">x</a>',
             '<a href="mailto: info@x.nl">x</a>' => '<a href="mailto:info&#64;x.nl">x</a>',
             "<a href=\"/storage/files/a\u{00A0}b.pdf\">x</a>" => '<a href="/storage/files/a%C2%A0b.pdf">x</a>',
+            '<a href="/storage/files/a%c2%a0b%C2%A0c.pdf">x</a>' => '<a href="/storage/files/a%c2%a0b%C2%A0c.pdf">x</a>',
             '<img src=" /storage/foto 1.png " alt="a">' => '<img src="/storage/foto%201.png" alt="a" />',
             '<a href="mailto:x@y.nl?subject=Hallo daar">x</a>' => '<a href="mailto:x&#64;y.nl?subject&#61;Hallo%20daar">x</a>',
             '<a href="tel:+31 20 123 45 67">x</a>' => '<a href="tel:&#43;31%2020%20123%2045%2067">x</a>',
         ] as $html => $clean) {
-            $this->assertSame($clean, $sanitizer->clean($html), $html);
+            $this->assertSame($clean, $sanitizer->filter($html), $html);
             $this->assertSame([], $sanitizer->dropped($html), $html);
         }
     }
 
     /**
      * A file name with a space in it is everywhere on an older site. The filter
-     * writes the space as %20, which is the same address, so nothing was removed:
-     * the value stays as it is and the report does not name it.
+     * writes the space as %20, which is the same address, so the report does not
+     * name it: nothing goes and nothing leads anywhere else.
      */
-    public function test_an_address_the_filter_only_encodes_is_stored_byte_for_byte(): void
+    public function test_an_address_the_filter_only_encodes_is_not_reported(): void
     {
         $this->needsTheFilter();
         $sanitizer = app(RichtextSanitizer::class);
@@ -233,19 +329,12 @@ class RichtextSanitizerTest extends TestCase
             // What a browser reads the same way: the space around it, a no-break space in a path
             '<p><a href="http://www.nvdec.org " target="_blank" rel="noopener">x</a></p>',
             "<p><a href=\"/storage/files/a\u{00A0}b.pdf\">x</a></p>",
+            '<p><a href="/files/a%c2%a0b.pdf">x</a></p>',
             '<p><a href="tel:+31 20 123 45 67">bel</a> <a href="mailto:x@y.nl?subject=Hallo daar">mail</a></p>',
         ] as $html) {
-            $this->assertSame(['dropped' => [], 'rewritten' => []], $sanitizer->changes($html), $html);
-            $this->assertSame($html, $sanitizer->filter($html), $html);
+            $this->assertSame(['dropped' => [], 'rewritten' => [], 'unclosed' => false], $sanitizer->changes($html), $html);
+            $this->assertStringContainsString('href="', $sanitizer->filter($html), $html);
         }
-
-        $model = new SectionsModel;
-        config(['leap.tinymce.sanitize' => true]);
-        $html = '<p><a href="/storage/files/Reglement DEC Utrecht - 30 mei 2015.pdf" target="_blank" rel="noopener">x</a></p>';
-        $data = $this->apply($model, ['title' => ['nl' => $html]]);
-
-        $this->assertSame($html, $data['title']['nl']);
-        $this->assertSame($html, $model->getTranslation('title', 'nl'));
     }
 
     /**
@@ -258,13 +347,12 @@ class RichtextSanitizerTest extends TestCase
         $sanitizer = app(RichtextSanitizer::class);
 
         foreach (['<a href="mailto: info@x.nl">x</a>', '<a href="HTTP://X.NL/Pad">x</a>'] as $html) {
-            $this->assertSame(['dropped' => [], 'rewritten' => ['a[href]' => 1]], $sanitizer->changes($html), $html);
-            $this->assertNotSame($html, $sanitizer->filter($html), $html);
+            $this->assertSame(['dropped' => [], 'rewritten' => ['a[href]' => 1], 'unclosed' => false], $sanitizer->changes($html), $html);
         }
 
         // One link gone and one repaired, of the same kind, are told apart.
         $this->assertSame(
-            ['dropped' => ['a[href]' => 1], 'rewritten' => ['a[href]' => 1]],
+            ['dropped' => ['a[href]' => 1], 'rewritten' => ['a[href]' => 1], 'unclosed' => false],
             $sanitizer->changes('<a href="javascript:alert(1)">j</a><a href="mailto: info@x.nl">m</a>'),
         );
     }
@@ -298,9 +386,10 @@ class RichtextSanitizerTest extends TestCase
 
         // An iframe is still judged by the host a browser would open.
         $this->assertSame('', $sanitizer->filter('<iframe src=" https://evil.example/ "></iframe>'));
-        $padded = '<iframe src=" https://www.youtube.com/embed/abc "></iframe>';
-        $this->assertSame($padded, $sanitizer->filter($padded));
-        $this->assertSame('<iframe src="https://www.youtube.com/embed/abc"></iframe>', $sanitizer->clean($padded));
+        $this->assertSame(
+            '<iframe src="https://www.youtube.com/embed/abc"></iframe>',
+            $sanitizer->filter('<iframe src=" https://www.youtube.com/embed/abc "></iframe>'),
+        );
     }
 
     public function test_an_iframe_keeps_its_src_only_for_a_host_on_the_list(): void
@@ -315,28 +404,126 @@ class RichtextSanitizerTest extends TestCase
         $this->assertSame('', $sanitizer->filter($own));
 
         config(['leap.tinymce.sanitize_iframe_hosts' => ['maps.example.com']]);
-        $this->assertSame($own, (new RichtextSanitizer)->filter($own));
+        $this->assertSame([], (new RichtextSanitizer)->dropped($own));
         $this->assertSame('', (new RichtextSanitizer)->filter($vimeo));
     }
 
-    public function test_a_site_allows_more_than_tinymce_writes_by_default(): void
+    /**
+     * The embed code YouTube hands out, as TinyMCE keeps it when it is pasted into
+     * the media dialog. All of it is what TinyMCE writes by default.
+     */
+    public function test_the_embed_code_of_youtube_loses_nothing(): void
     {
         $this->needsTheFilter();
 
-        $html = '<p data-aos="fade">x</p><video autoplay="autoplay" src="/v.mp4"></video><button type="button">b</button>';
-        $this->assertSame(['button' => 1, 'button[type]' => 1, 'p[data-aos]' => 1, 'video[autoplay]' => 1], app(RichtextSanitizer::class)->dropped($html));
+        $embed = '<iframe title="YouTube video player" src="https://www.youtube.com/embed/x" width="560" height="315" frameborder="0" allow="accelerometer; autoplay; clipboard-write" allowfullscreen="allowfullscreen" referrerpolicy="strict-origin-when-cross-origin" class="video" style="border: 0;"></iframe>';
 
-        config(['leap.tinymce.sanitize_allow' => ['*' => ['data-aos'], 'video' => ['autoplay'], 'button' => ['type']]]);
+        $this->assertSame(['dropped' => [], 'rewritten' => [], 'unclosed' => false], app(RichtextSanitizer::class)->changes($embed));
+    }
 
-        $sanitizer = new RichtextSanitizer;
-        $this->assertSame($html, $sanitizer->filter($html));
-        // Allowing an attribute on video did not take its other attributes away.
-        $this->assertSame([], $sanitizer->dropped('<video controls="controls" src="/v.mp4" width="300"></video>'));
+    /**
+     * The sanitizer takes an attribute away from every element it is not told about
+     * when one is added to a single element, and its '*' only reaches the elements
+     * allowed so far. Adding the site's list to it step by step took width off every
+     * image for a site that allowed it on a table cell.
+     */
+    public function test_what_a_site_allows_takes_nothing_from_what_was_allowed(): void
+    {
+        $this->needsTheFilter();
+
+        $html = '<p><img src="/a.png" width="320" title="t" alt=""></p><table><tbody><tr><td width="50" bgcolor="#eeeeee">x</td></tr></tbody></table>'
+            .'<iframe title="t" src="https://www.youtube.com/embed/x" loading="lazy"></iframe><p title="t"><abbr title="t">a</abbr></p>';
+        $this->assertSame(['td[bgcolor]' => 1], app(RichtextSanitizer::class)->dropped($html));
+
+        // width on a cell, which every image has too; loading and title, which an
+        // iframe, a link and an abbreviation carry already.
+        config(['leap.tinymce.sanitize_allow' => ['td' => ['width', 'bgcolor'], 'img' => ['loading'], 'div' => ['title']]]);
+        $this->assertSame([], (new RichtextSanitizer)->dropped($html));
+
+        config(['leap.tinymce.sanitize_allow' => ['video' => ['autoplay'], 'audio' => ['autoplay']]]);
+        $this->assertSame([], (new RichtextSanitizer)->dropped('<video autoplay="autoplay" src="/v.mp4"></video><audio autoplay="autoplay" src="/a.mp3"></audio>'));
+    }
+
+    /**
+     * The example in the docs: an attribute on every element, and an element that
+     * is not allowed otherwise. The new element carries class, style and what is
+     * allowed everywhere like any other, whichever of the two is listed first.
+     */
+    public function test_an_element_a_site_adds_carries_what_every_element_carries(): void
+    {
+        $this->needsTheFilter();
+
+        $html = '<p data-aos="fade">x</p><video autoplay="autoplay" src="/v.mp4"></video><button type="button" class="btn" style="color: red;" data-aos="fade">b</button>';
+        $this->assertSame(['button' => 1, 'button[class]' => 1, 'button[data-aos]' => 1, 'button[style]' => 1, 'button[type]' => 1, 'p[data-aos]' => 1, 'video[autoplay]' => 1], app(RichtextSanitizer::class)->dropped($html));
+
+        foreach ([
+            ['*' => ['data-aos'], 'video' => ['autoplay'], 'button' => ['type']],
+            ['button' => ['type'], 'video' => ['autoplay'], '*' => ['data-aos']],
+        ] as $allow) {
+            config(['leap.tinymce.sanitize_allow' => $allow]);
+            $sanitizer = new RichtextSanitizer;
+
+            $this->assertSame([], $sanitizer->dropped($html));
+            // Allowing an attribute on video did not take its other attributes away.
+            $this->assertSame([], $sanitizer->dropped('<video controls="controls" src="/v.mp4" width="300"></video>'));
+        }
+    }
+
+    /**
+     * The switch of a security filter. An env value arrives as a string, and a
+     * filter that stayed off for "1" did so without a word.
+     */
+    public function test_the_filter_is_on_for_every_way_of_writing_on(): void
+    {
+        foreach ([true, 1, '1', 'true', 'on', 'yes'] as $on) {
+            config(['leap.tinymce.sanitize' => $on]);
+            $this->assertTrue(RichtextSanitizer::enabled(), var_export($on, true));
+        }
+
+        foreach ([false, 0, '0', '', null, 'false', 'off', 'no', []] as $off) {
+            config(['leap.tinymce.sanitize' => $off]);
+            $this->assertFalse(RichtextSanitizer::enabled(), var_export($off, true));
+        }
+    }
+
+    /**
+     * An import writes to the model itself, past the editor, so it is filtered on
+     * its own. Off, a CSV file is stored as it came, as before.
+     */
+    public function test_an_import_filters_a_rich_text_column(): void
+    {
+        $this->needsTheFilter();
+        Schema::create('articles', function (Blueprint $table): void {
+            $table->id();
+            $table->boolean('active')->default(true);
+            $table->text('title')->nullable();
+            $table->timestamps();
+        });
+        $user = User::create(['name' => 'Test User', 'email' => 'test'.uniqid().'@example.com', 'password' => bcrypt('password')]);
+        $user->roles()->attach(Role::find(1));
+        Gate::before(fn () => true);
+
+        $import = fn () => Livewire::actingAs($user)->test(RichtextImportResource::class)
+            ->set('importData', [['<p>een</p><script>alert(1)</script>'], ['<p onclick="x()">twee</p><body onload="alert(1)">']])
+            ->set('importColumns', [0 => 'title'])
+            ->set('importRows', [true, true])
+            ->call('import');
+
+        $import();
+        $this->assertSame(
+            ['<p>een</p><script>alert(1)</script>', '<p onclick="x()">twee</p><body onload="alert(1)">'],
+            Article::orderBy('id')->pluck('title')->all(),
+        );
+
+        Article::query()->delete();
+        config(['leap.tinymce.sanitize' => 'on']);
+        $import();
+        $this->assertSame(['<p>een</p>', '<p>twee</p>'], Article::orderBy('id')->pluck('title')->all());
     }
 
     /**
      * The sanitizer stops reading at 20,000 bytes unless told otherwise, and a long
-     * page would lose its end the first time it lost anything.
+     * page would lose its end.
      */
     public function test_a_long_text_is_not_cut_short(): void
     {
@@ -349,13 +536,13 @@ class RichtextSanitizerTest extends TestCase
         $this->assertStringEndsWith('woord </p>', app(RichtextSanitizer::class)->filter('<script>x</script>'.$long));
     }
 
-    public function test_an_html_comment_is_no_reason_to_rewrite_a_value(): void
+    public function test_an_html_comment_goes_without_being_reported_as_a_loss(): void
     {
         $this->needsTheFilter();
+        $sanitizer = app(RichtextSanitizer::class);
 
-        $html = '<p>a &amp; b</p><!-- more --><p>c</p>';
-
-        $this->assertSame($html, app(RichtextSanitizer::class)->filter($html));
+        $this->assertSame('<p>a &amp; b</p><p>c</p>', $sanitizer->filter('<p>a &amp; b</p><!-- more --><p>c</p>'));
+        $this->assertSame(['dropped' => [], 'rewritten' => [], 'unclosed' => false], $sanitizer->changes('<p>a &amp; b</p><!-- more --><p>c</p>'));
     }
 
     public function test_the_command_lists_what_would_go_and_writes_nothing(): void
@@ -375,10 +562,27 @@ class RichtextSanitizerTest extends TestCase
 
         $this->assertMatchesRegularExpression('/script\s+\|\s+2\s+\|\s+SectionsResource 2/', $output);
         $this->assertMatchesRegularExpression('/img\[onerror\]\s+\|\s+1\s+\|\s+SectionsResource 2/', $output);
-        $this->assertStringContainsString('2 of 4 rich-text values in 2 records would change', $output);
+        $this->assertStringContainsString('2 of 4 rich-text values in 2 records would lose or change something', $output);
+        // The clean one is only written another way, and is counted apart from a loss.
+        $this->assertStringContainsString('1 other value is not written the filter\'s way yet', $output);
         $this->assertStringContainsString('1 section has no definition in the module any more', $output);
         $this->assertStringContainsString('The filter is off', $output);
         $this->assertSame($before, DB::table('sections_models')->get()->toJson());
+    }
+
+    public function test_the_command_names_what_a_parser_can_still_see_of_a_hidden_script(): void
+    {
+        $this->needsTheFilter();
+
+        SectionsModel::create(['title' => 'Body', 'sections' => [['_name' => 'block', 'body' => ['nl' => '<p>hi</p><body onload="alert(1)">']]]]);
+        SectionsModel::create(['title' => 'Open', 'sections' => [['_name' => 'block', 'body' => ['nl' => '<p>hi</p><img src=x onerror=alert(1) x="']]]]);
+
+        Artisan::call('leap:sanitize');
+        $output = Artisan::output();
+
+        $this->assertMatchesRegularExpression('/body\[onload\]\s+\|\s+1\s+\|\s+SectionsResource 1/', $output);
+        $this->assertStringContainsString('Left open at the end of a value, and closed or cut off by the filter: SectionsResource 2', $output);
+        $this->assertStringContainsString('2 of 2 rich-text values in 2 records would lose or change something', $output);
     }
 
     public function test_the_command_does_not_name_a_record_for_a_space_in_a_path(): void
@@ -410,7 +614,7 @@ class RichtextSanitizerTest extends TestCase
 
         $this->assertMatchesRegularExpression('/Would go\s+\|.*?a\[href\]\s+\|\s+1\s+\|\s+SectionsResource 1/s', $output);
         $this->assertMatchesRegularExpression('/Would stay, rewritten\s+\|.*?a\[href\]\s+\|\s+1\s+\|\s+SectionsResource 1/s', $output);
-        $this->assertStringContainsString('2 of 2 rich-text values in 1 record would change', $output);
+        $this->assertStringContainsString('2 of 2 rich-text values in 1 record would lose or change something', $output);
     }
 
     public function test_the_command_prints_one_record_before_and_after(): void

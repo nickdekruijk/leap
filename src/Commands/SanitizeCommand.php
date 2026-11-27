@@ -50,13 +50,19 @@ class SanitizeCommand extends Command
             return self::INVALID;
         }
 
+        // What goes and what is rewritten, each with the records it is in.
         $dropped = [];
         $examples = [];
         $rewritten = [];
         $rewrites = [];
+        // Records with something left open at the end of a value.
+        $unclosed = [];
         $records = 0;
         $values = 0;
+        // Values that lose or change something, and values that only get written
+        // the filter's way.
         $changing = 0;
+        $renotated = 0;
         $undefined = 0;
         $unread = [];
 
@@ -87,31 +93,39 @@ class SanitizeCommand extends Command
                 $query->whereKey($only[2]);
             }
 
-            $query->chunkById(self::CHUNK, function ($chunk) use ($module, $name, $fields, $sanitizer, $show, &$dropped, &$examples, &$rewritten, &$rewrites, &$records, &$values, &$changing, &$undefined): void {
+            $query->chunkById(self::CHUNK, function ($chunk) use ($module, $name, $fields, $sanitizer, $show, &$dropped, &$examples, &$rewritten, &$rewrites, &$unclosed, &$records, &$values, &$changing, &$renotated, &$undefined): void {
                 foreach ($chunk as $record) {
                     $records++;
+                    $label = $name.' '.$record->getKey();
                     foreach ($this->richtextValues($record, $module, $fields, $undefined) as $path => $html) {
                         $values++;
                         $changes = $sanitizer->changes($html);
-                        if ($changes['dropped'] === [] && $changes['rewritten'] === []) {
+                        $clean = $sanitizer->clean($html);
+
+                        if ($changes['dropped'] === [] && $changes['rewritten'] === [] && ! $changes['unclosed']) {
+                            $renotated += $clean === $html ? 0 : 1;
+
                             continue;
                         }
                         $changing++;
                         foreach ($changes['dropped'] as $what => $count) {
                             $dropped[$what] = ($dropped[$what] ?? 0) + $count;
-                            $examples[$what][$name.' '.$record->getKey()] = true;
+                            $examples[$what][$label] = true;
                         }
                         foreach ($changes['rewritten'] as $what => $count) {
                             $rewritten[$what] = ($rewritten[$what] ?? 0) + $count;
-                            $rewrites[$what][$name.' '.$record->getKey()] = true;
+                            $rewrites[$what][$label] = true;
+                        }
+                        if ($changes['unclosed']) {
+                            $unclosed[$label] = true;
                         }
                         if ($show !== null) {
                             $this->newLine();
-                            $this->line('  <options=bold>'.$name.' '.$record->getKey().'</>, '.$path);
+                            $this->line('  <options=bold>'.$label.'</>, '.$path);
                             $this->line('  <fg=gray>stored</>');
                             $this->line($html);
                             $this->line('  <fg=gray>filtered</>');
-                            $this->line($sanitizer->clean($html));
+                            $this->line($clean);
                         }
                     }
                 }
@@ -131,7 +145,7 @@ class SanitizeCommand extends Command
             return self::SUCCESS;
         }
 
-        if ($dropped === [] && $rewritten === []) {
+        if ($changing === 0) {
             $this->line('  <info>Nothing to remove.</info> '.$this->summary($records, $values));
         } else {
             if ($dropped !== []) {
@@ -142,12 +156,22 @@ class SanitizeCommand extends Command
                 // "mailto: info@example.com" keeps working without the space.
                 $this->table(['Would stay, rewritten', 'Times', 'In'], $this->rows($rewritten, $rewrites));
             }
-            $this->line('  '.$changing.' of '.$this->summary($records, $values).' would change when saved with the filter on.');
+            if ($unclosed !== []) {
+                // A tag, an attribute or a comment that is not finished: on a page the
+                // markup after the value finishes it. The filter closes or drops it.
+                $this->line('  <fg=yellow>Left open at the end of a value, and closed or cut off by the filter:</> '.$this->records(array_keys($unclosed)));
+            }
+            $this->line('  '.$changing.' of '.$this->summary($records, $values).' would lose or change something when saved with the filter on.');
             if ($show === null) {
                 $this->line('  <fg=gray>php artisan leap:sanitize --show=Module:id prints one record before and after.</>');
             }
         }
 
+        if ($renotated > 0) {
+            // Everything the filter stores is in its own notation. That is not a loss,
+            // and not something to go through record by record.
+            $this->line('  <fg=gray>'.$renotated.' other '.($renotated === 1 ? 'value is' : 'values are').' not written the filter\'s way yet (&eacute; for é, <br> for <br />). The first save rewrites '.($renotated === 1 ? 'it' : 'them').', and what '.($renotated === 1 ? 'it says' : 'they say').' stays the same.</>');
+        }
         if ($undefined > 0) {
             $this->line('  <fg=yellow>'.$undefined.' '.($undefined === 1 ? 'section has' : 'sections have').' no definition in the module any more and were skipped.</>');
         }
@@ -157,6 +181,16 @@ class SanitizeCommand extends Command
         $this->newLine();
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  list<string>  $where
+     */
+    private function records(array $where): string
+    {
+        $more = count($where) - self::EXAMPLES;
+
+        return implode(', ', array_slice($where, 0, self::EXAMPLES)).($more > 0 ? ' and '.$more.' more' : '');
     }
 
     /**
@@ -170,9 +204,7 @@ class SanitizeCommand extends Command
         $rows = [];
 
         foreach ($counts as $what => $count) {
-            $where = array_keys($examples[$what]);
-            $more = count($where) - self::EXAMPLES;
-            $rows[] = [$what, $count, implode(', ', array_slice($where, 0, self::EXAMPLES)).($more > 0 ? ' and '.$more.' more' : '')];
+            $rows[] = [$what, $count, $this->records(array_keys($examples[$what]))];
         }
 
         return $rows;

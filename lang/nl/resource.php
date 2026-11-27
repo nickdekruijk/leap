@@ -21,6 +21,7 @@ return [
     'moved' => ':title verplaatst',
     'no_changes' => 'Geen wijzigingen om op te slaan',
     'preview' => 'Bekijken',
+    'preview_no_text' => 'Afbeelding of ingesloten inhoud, klik om te bewerken',
     'repeat' => 'Herhaal',
     'save' => 'Opslaan',
     'save_copy' => 'Opslaan als kopie',

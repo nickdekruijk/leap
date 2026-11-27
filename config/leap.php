@@ -1098,15 +1098,18 @@ return [
     | options: Passed as JSON to tinymce.init(). See the TinyMCE 8 docs:
     |          https://www.tiny.cloud/docs/tinymce/latest/
     |
-    | sanitize: Filter rich text on the server when it is saved, so a value
-    | sent straight to the panel, past TinyMCE, cannot store a script. Off by
-    | default. Needs PHP 8.4 and composer require symfony/html-sanitizer. Run
-    | php artisan leap:sanitize first: it lists what the filter would remove
-    | from what is stored now, and writes nothing.
+    | sanitize: Filter rich text on the server when it is saved or imported,
+    | so a value sent straight to the panel, past TinyMCE, cannot store a
+    | script. Off by default. Needs PHP 8.4 and composer require
+    | symfony/html-sanitizer (7.4 or later). What is stored is then always the
+    | HTML the filter wrote, so the first save of a record rewrites how its
+    | rich text is written, not what it says. Run php artisan leap:sanitize
+    | first: it lists what the filter would remove from what is stored now,
+    | and writes nothing.
     | sanitize_iframe_hosts: The hosts an iframe may point at.
     | sanitize_allow: What a site allows on top of what TinyMCE writes by
-    | default, as element => attributes, with '*' for every element:
-    | ['*' => ['data-aos'], 'video' => ['autoplay'], 'button' => ['type']]
+    | default, as element => attributes, with '*' for every element. It only
+    | adds: ['*' => ['data-aos'], 'video' => ['autoplay'], 'button' => ['type']]
     |
     | lazy / lazy_sections: "Lazy" fields show their rendered HTML as a
     | click-to-edit preview and only start TinyMCE when clicked (and drop back

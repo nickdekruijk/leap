@@ -16,18 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `leap.tinymce.sanitize` on, a rich-text value is filtered on the server before it is
   stored, in sections and per locale as well: scripts, event handlers and `javascript:`
   links go, and so does an iframe from a host that is not in
-  `leap.tinymce.sanitize_iframe_hosts`. A value with nothing to remove is stored exactly
-  as it was sent, so what TinyMCE writes by default is left alone;
-  `leap.tinymce.sanitize_allow` adds what a site uses beyond that. An address is read the
-  way a browser reads it: a space around it or in a file name is not a reason to rewrite
-  a value, and does not cost a link its `href`. Off by default, and it
-  needs PHP 8.4 and `composer require symfony/html-sanitizer`. See
+  `leap.tinymce.sanitize_iframe_hosts`. A CSV import is filtered the same way. What
+  TinyMCE writes by default stays, and `leap.tinymce.sanitize_allow` adds what a site
+  uses beyond that. What is stored is always the HTML the filter wrote, never what was
+  sent, so the first save of a record rewrites its rich text in the filter's notation
+  (`é` for `&eacute;`, `<br />` for `<br>`) without changing what it says. An address is
+  read the way a browser reads it, so a space around it or in a file name does not cost
+  a link its `href`. Off by default, and it needs PHP 8.4 and
+  `composer require symfony/html-sanitizer`, 7.4 or later. See
   [attributes](docs/attributes.md#filtering-rich-text).
 - **`php artisan leap:sanitize` shows what the filter would remove.** It reads every
   rich-text field of every module, sections and translations included, and lists what
-  would go, how often and in which records, and apart from that what would stay but be
-  written differently; `--show=Page:12` prints one record before and after. It writes nothing. Run it before turning the filter on, and to see whether
-  something is stored that should not be.
+  would go, how often and in which records, what would stay but be written differently,
+  and where a tag is left open at the end of a value; `--show=Page:12` prints one record
+  before and after. It writes nothing. Run it before turning the filter on, and to see
+  whether something is stored that should not be.
 
 ### Security
 
